@@ -1,5 +1,15 @@
 package com.peakmeshop.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.peakmeshop.security.JwtAuthenticationEntryPoint;
+import com.peakmeshop.security.JwtAuthenticationFilter;
+import com.peakmeshop.security.JwtTokenProvider;
+import com.peakmeshop.security.oauth2.CustomOAuth2UserService;
+import com.peakmeshop.security.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
+import com.peakmeshop.security.oauth2.OAuth2AuthenticationFailureHandler;
+import com.peakmeshop.security.oauth2.OAuth2AuthenticationSuccessHandler;
+import com.peakmeshop.service.AuthService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,66 +23,75 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.peakmeshop.security.JwtAuthenticationEntryPoint;
-import com.peakmeshop.security.JwtAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthenticationEntryPoint unauthorizedHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final ObjectMapper objectMapper;
+    private final JwtTokenProvider tokenProvider;
 
-    public SecurityConfig(
-            JwtAuthenticationEntryPoint unauthorizedHandler,
-            JwtAuthenticationFilter jwtAuthenticationFilter) {
-        this.unauthorizedHandler = unauthorizedHandler;
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    }
+    // OAuth2 관련 빈들을 주입받도록 수정
+    private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(request -> {
-                    CorsConfiguration configuration = new CorsConfiguration();
-                    configuration.setAllowedOrigins(List.of("http://localhost"));
-                    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-                    configuration.setAllowedHeaders(List.of("*"));
-                    configuration.setAllowCredentials(true);
-                    return configuration;
-                }))
-                .csrf(csrf -> csrf.disable())
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorize -> authorize
-                        // 공개 API
-                        .requestMatchers("/api/auth/**", "/api/members/register", "/api/members/check-email").permitAll()
-                        .requestMatchers("/api/products/**", "/api/categories/**").permitAll()
-                        // Swagger UI
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        // 정적 리소스
-                        .requestMatchers("/", "/favicon.ico", "/css/**", "/js/**", "/images/**").permitAll()
-                        // 나머지 API는 인증 필요
-                        .anyRequest().authenticated()
-                );
+                .cors()
+                .and()
+                .csrf()
+                .disable()
+                .exceptionHandling()
+                .authenticationEntryPoint(unauthorizedHandler)
+                .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .authorizeHttpRequests()
+                .requestMatchers("/api/auth/**", "/api/oauth2/**", "/oauth2/**")
+                .permitAll()
+                .requestMatchers("/api/public/**")
+                .permitAll()
+                .requestMatchers("/api/admin/**")
+                .hasRole("ADMIN")
+                .anyRequest()
+                .authenticated()
+                .and()
+                .formLogin()
+                .usernameParameter("userId")
+                .and()
+                .oauth2Login()
+                .authorizationEndpoint()
+                .baseUri("/oauth2/authorize")
+                .authorizationRequestRepository(cookieAuthorizationRequestRepository)
+                .and()
+                .redirectionEndpoint()
+                .baseUri("/oauth2/callback/*")
+                .and()
+                .userInfoEndpoint()
+                .userService(customOAuth2UserService)
+                .and()
+                .successHandler(oAuth2AuthenticationSuccessHandler)
+                .failureHandler(oAuth2AuthenticationFailureHandler);
 
-        // JWT 필터 추가
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-        return authConfig.getAuthenticationManager();
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 }

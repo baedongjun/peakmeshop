@@ -1,49 +1,48 @@
 package com.peakmeshop.service;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 
 import com.peakmeshop.dto.StatisticsDTO;
 
 public interface StatisticsService {
 
-    /**
-     * 대시보드 통계 조회
-     * @return 통계 정보
-     */
-    StatisticsDTO getDashboardStatistics();
+    StatisticsDTO getDailyStatistics(LocalDate date);
 
-    /**
-     * 기간별 매출 통계 조회
-     * @param startDate 시작일
-     * @param endDate 종료일
-     * @return 매출 통계
-     */
-    java.util.Map<String, java.math.BigDecimal> getSalesByPeriod(LocalDate startDate, LocalDate endDate);
+    StatisticsDTO getWeeklyStatistics(LocalDate startDate);
 
-    /**
-     * 카테고리별 매출 통계 조회
-     * @param startDate 시작일
-     * @param endDate 종료일
-     * @return 카테고리별 매출 통계
-     */
-    java.util.List<CategorySalesDTO> getSalesByCategory(LocalDate startDate, LocalDate endDate);
+    StatisticsDTO getMonthlyStatistics(int year, int month);
 
-    /**
-     * 인기 상품 조회
-     * @param limit 조회 개수
-     * @return 인기 상품 목록
-     */
-    java.util.List<ProductSummaryDTO> getTopSellingProducts(int limit);
+    StatisticsDTO getYearlyStatistics(int year);
 
-    /**
-     * 신규 회원 통계 조회
-     * @return 신규 회원 통계
-     */
-    java.util.Map<String, Integer> getNewMembersStatistics();
+    StatisticsDTO getStatisticsForDateRange(LocalDate startDate, LocalDate endDate);
 
-    /**
-     * 주문 상태별 통계 조회
-     * @return 주문 상태별 통계
-     */
-    java.util.Map<String, Integer> getOrdersByStatus();
+    List<StatisticsDTO> getDailyStatisticsForRange(LocalDate startDate, LocalDate endDate);
+
+    List<StatisticsDTO> getMonthlyStatisticsForYear(int year);
+
+    Map<String, Double> getSalesByCategory(LocalDate startDate, LocalDate endDate);
+
+    Map<String, Double> getSalesByProduct(LocalDate startDate, LocalDate endDate, int limit);
+
+    Map<String, Integer> getOrdersByStatus(LocalDate startDate, LocalDate endDate);
+
+    Map<String, Double> getSalesByPaymentMethod(LocalDate startDate, LocalDate endDate);
+
+    Map<String, Double> getSalesByRegion(LocalDate startDate, LocalDate endDate);
+
+    double getTotalSales(LocalDate startDate, LocalDate endDate);
+
+    int getTotalOrders(LocalDate startDate, LocalDate endDate);
+
+    int getNewCustomers(LocalDate startDate, LocalDate endDate);
+
+    double getConversionRate(LocalDate startDate, LocalDate endDate);
+
+    void generateDailyStatistics();
+
+    void generateMonthlyStatistics();
+
+    void generateYearlyStatistics();
 }

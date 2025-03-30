@@ -1,59 +1,73 @@
 package com.peakmeshop.service;
 
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
+import java.util.Map;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+import com.peakmeshop.dto.EmailDTO;
 
-@Service
-public class EmailService {
+public interface EmailService {
 
-    private final JavaMailSender mailSender;
-    private final TemplateEngine templateEngine;
+    // 기본 이메일 전송
+    void sendEmail(EmailDTO emailDTO);
 
-    public EmailService(JavaMailSender mailSender, TemplateEngine templateEngine) {
-        this.mailSender = mailSender;
-        this.templateEngine = templateEngine;
-    }
+    // 문자열 파라미터로 이메일 전송 (오버로딩)
+    void sendEmail(String to, String subject, String content);
 
-    @Async
-    public void sendOrderConfirmation(String to, String name, String orderNumber) throws MessagingException {
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+    // 단순 이메일 전송 (컨트롤러에서 사용)
+    void sendSimpleEmail(String to, String subject, String content);
 
-        Context context = new Context();
-        context.setVariable("name", name);
-        context.setVariable("orderNumber", orderNumber);
+    // 템플릿 이메일 전송 (컨트롤러에서 사용)
+    void sendTemplatedEmail(String to, String subject, String templateName, Map<String, Object> templateModel);
 
-        String htmlContent = templateEngine.process("order-confirmation", context);
+    // 회원가입 확인 이메일
+    void sendSignupConfirmationEmail(String to, String username);
 
-        helper.setTo(to);
-        helper.setSubject("PeakMeShop - 주문 확인");
-        helper.setText(htmlContent, true);
+    // 이메일 인증 이메일 (AuthServiceImpl에서 사용) - 3개 인자
+    void sendVerificationEmail(String to, String username, String verificationToken);
 
-        mailSender.send(message);
-    }
+    // 이메일 인증 이메일 (MemberServiceImpl에서 사용) - 2개 인자
+    void sendVerificationEmail(String to, String verificationToken);
 
-    @Async
-    public void sendPasswordResetLink(String to, String name, String resetLink) throws MessagingException {
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+    // 비밀번호 재설정 이메일
+    void sendPasswordResetEmail(String to, String resetToken);
 
-        Context context = new Context();
-        context.setVariable("name", name);
-        context.setVariable("resetLink", resetLink);
+    // 비밀번호 재설정 요청 이메일 (AuthServiceImpl에서 사용) - 3개 인자
+    void sendPasswordResetRequestEmail(String to, String username, String resetToken);
 
-        String htmlContent = templateEngine.process("password-reset", context);
+    // 비밀번호 재설정 요청 이메일 (MemberServiceImpl에서 사용) - 2개 인자
+    void sendPasswordResetRequestEmail(String to, String resetToken);
 
-        helper.setTo(to);
-        helper.setSubject("PeakMeShop - 비밀번호 재설정");
-        helper.setText(htmlContent, true);
+    // 주문 확인 이메일
+    void sendOrderConfirmationEmail(String to, Long orderId, String orderNumber);
 
-        mailSender.send(message);
-    }
+    // 배송 알림 이메일
+    void sendShippingNotificationEmail(String to, Long orderId, String trackingNumber);
+
+    // 쿠폰 발급 이메일
+    void sendCouponEmail(String to, String couponCode, String couponName);
+
+    // 환불 확인 이메일
+    void sendRefundConfirmationEmail(String to, Long orderId, String orderNumber);
+
+    void sendRefundRequestEmail(String email, Long orderId, String orderNumber);
+    void sendRefundRejectionEmail(String email, Long orderId, String orderNumber, String reason);
+
+    /**
+     * 배송 시작 알림 이메일 발송
+     *
+     * @param email 수신자 이메일
+     * @param orderId 주문 ID
+     * @param orderNumber 주문 번호
+     * @param carrier 배송사
+     * @param trackingNumber 운송장 번호
+     */
+    void sendShipmentNotificationEmail(String email, Long orderId, String orderNumber, String carrier, String trackingNumber);
+
+    /**
+     * 배송 완료 알림 이메일 발송
+     *
+     * @param email 수신자 이메일
+     * @param orderId 주문 ID
+     * @param orderNumber 주문 번호
+     */
+    void sendDeliveryCompletionEmail(String email, Long orderId, String orderNumber);
 }

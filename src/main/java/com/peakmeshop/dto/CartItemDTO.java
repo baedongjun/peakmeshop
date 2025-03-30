@@ -1,28 +1,30 @@
 package com.peakmeshop.dto;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 
-/**
- * 장바구니 아이템 정보를 전송하기 위한 DTO
- */
-public record CartItemDTO(
-        Long id,
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-        @NotNull(message = "상품 ID는 필수입니다")
-        Long productId,
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CartItemDTO {
 
-        String productName,
-
-        String productImage,
-
-        @NotNull(message = "수량은 필수입니다")
-        @Positive(message = "수량은 양수여야 합니다")
-        Integer quantity,
-
-        java.math.BigDecimal price,
-
-        java.math.BigDecimal subtotal,
-
-        Boolean isAvailable
-) {}
+    private Long id;
+    private Long productId;
+    private String productName;
+    private Long variantId;
+    private String variantName;
+    private List<CartItemOptionDTO> options;
+    private int quantity;
+    private BigDecimal price;
+    private BigDecimal totalPrice;
+    private String thumbnailUrl;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+}

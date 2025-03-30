@@ -1,10 +1,11 @@
 package com.peakmeshop.controller;
 
-import java.security.Principal;
-import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,100 +15,222 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.peakmeshop.dto.CartItemDTO;
-import com.peakmeshop.dto.MemberDTO;
+import com.peakmeshop.dto.CartDTO;
+import com.peakmeshop.dto.CartRequestDTO;
+import com.peakmeshop.dto.CartUpdateDTO;
 import com.peakmeshop.service.CartService;
 import com.peakmeshop.service.MemberService;
 
-import jakarta.validation.Valid;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/cart")
+@RequiredArgsConstructor
 public class CartController {
 
     private final CartService cartService;
     private final MemberService memberService;
 
-    public CartController(CartService cartService, MemberService memberService) {
-        this.cartService = cartService;
-        this.memberService = memberService;
-    }
+    private static final String GUEST_CART_COOKIE_NAME = "guest_cart_id";
+    private static final int COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30일
 
     @GetMapping
-    public ResponseEntity<List<CartItemDTO>> getCartItems(Principal principal) {
-        MemberDTO member = memberService.findByEmail(principal.getName())
-                .orElseThrow(() -> new IllegalStateException("로그인 정보를 찾을 수 없습니다."));
+    public ResponseEntity<CartDTO> getCart(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @CookieValue(name = GUEST_CART_COOKIE_NAME, required = false) String guestCartId,
+            HttpServletRequest request,
+            HttpServletResponse response) {
 
-        List<CartItemDTO> cartItems = cartService.getCartItems(member.id());
-        return ResponseEntity.ok(cartItems);
+        // 로그인한 사용자
+        if (userDetails != null) {
+            // 게스트 장바구니가 있으면 병합
+            if (guestCartId != null && !guestCartId.isEmpty()) {
+                CartDTO mergedCart = cartService.mergeGuestCartWithMemberCart(
+                        guestCartId,
+                        memberService.getMemberByUserId(userDetails.getUsername()).getId());
+
+                // 게스트 장바구니 쿠키 삭제
+                Cookie cookie = new Cookie(GUEST_CART_COOKIE_NAME, null);
+                cookie.setMaxAge(0);
+                cookie.setPath("/");
+                response.addCookie(cookie);
+
+                return ResponseEntity.ok(mergedCart);
+            }
+
+            // 회원 장바구니 조회 또는 생성
+            CartDTO cart = cartService.getOrCreateCart(
+                    memberService.getMemberByUserId(userDetails.getUsername()).getId());
+            return ResponseEntity.ok(cart);
+        }
+
+        // 비로그인 사용자
+        if (guestCartId == null || guestCartId.isEmpty()) {
+            // 게스트 장바구니 ID 생성
+            guestCartId = UUID.randomUUID().toString();
+
+            // 쿠키 설정
+            Cookie cookie = new Cookie(GUEST_CART_COOKIE_NAME, guestCartId);
+            cookie.setMaxAge(COOKIE_MAX_AGE);
+            cookie.setPath("/");
+            response.addCookie(cookie);
+
+            // 게스트 장바구니 생성
+            CartDTO cart = cartService.createGuestCart(guestCartId);
+            return ResponseEntity.ok(cart);
+        }
+
+        // 기존 게스트 장바구니 조회
+        CartDTO cart = cartService.getCartBySessionId(guestCartId);
+        return ResponseEntity.ok(cart);
     }
 
     @PostMapping("/items")
-    public ResponseEntity<CartItemDTO> addToCart(
-            @Valid @RequestBody Map<String, Object> request,
-            Principal principal) {
+    public ResponseEntity<CartDTO> addItemToCart(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @CookieValue(name = GUEST_CART_COOKIE_NAME, required = false) String guestCartId,
+            @RequestBody CartRequestDTO requestDTO,
+            HttpServletResponse response) {
 
-        MemberDTO member = memberService.findByEmail(principal.getName())
-                .orElseThrow(() -> new IllegalStateException("로그인 정보를 찾을 수 없습니다."));
+        // 로그인한 사용자
+        if (userDetails != null) {
+            CartDTO updatedCart = cartService.addItemToCart(
+                    memberService.getMemberByUserId(userDetails.getUsername()).getId(),
+                    requestDTO);
+            return ResponseEntity.ok(updatedCart);
+        }
 
-        Long productId = Long.valueOf(request.get("productId").toString());
-        Integer quantity = Integer.valueOf(request.get("quantity").toString());
+        // 비로그인 사용자
+        if (guestCartId == null || guestCartId.isEmpty()) {
+            // 게스트 장바구니 ID 생성
+            guestCartId = UUID.randomUUID().toString();
 
-        CartItemDTO cartItem = cartService.addToCart(member.id(), productId, quantity);
-        return ResponseEntity.ok(cartItem);
+            // 쿠키 설정
+            Cookie cookie = new Cookie(GUEST_CART_COOKIE_NAME, guestCartId);
+            cookie.setMaxAge(COOKIE_MAX_AGE);
+            cookie.setPath("/");
+            response.addCookie(cookie);
+        }
+
+        CartDTO updatedCart = cartService.addItemToGuestCart(guestCartId, requestDTO);
+        return ResponseEntity.ok(updatedCart);
     }
 
-    @PutMapping("/items/{id}")
-    public ResponseEntity<CartItemDTO> updateCartItem(
-            @PathVariable Long id,
-            @Valid @RequestBody Map<String, Integer> request,
-            Principal principal) {
+    @PutMapping("/items/{itemId}")
+    public ResponseEntity<CartDTO> updateCartItem(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @CookieValue(name = GUEST_CART_COOKIE_NAME, required = false) String guestCartId,
+            @PathVariable Long itemId,
+            @RequestBody CartUpdateDTO updateDTO) {
 
-        MemberDTO member = memberService.findByEmail(principal.getName())
-                .orElseThrow(() -> new IllegalStateException("로그인 정보를 찾을 수 없습니다."));
+        // 아이템 ID 설정
+        updateDTO.setCartItemId(itemId);
 
-        Integer quantity = request.get("quantity");
+        // 로그인한 사용자
+        if (userDetails != null) {
+            CartDTO updatedCart = cartService.updateCartItem(
+                    memberService.getMemberByUserId(userDetails.getUsername()).getId(),
+                    updateDTO);
+            return ResponseEntity.ok(updatedCart);
+        }
 
-        CartItemDTO cartItem = cartService.updateCartItemQuantity(member.id(), id, quantity);
-        return ResponseEntity.ok(cartItem);
+        // 비로그인 사용자
+        if (guestCartId == null || guestCartId.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        CartDTO updatedCart = cartService.updateGuestCartItem(guestCartId, updateDTO);
+        return ResponseEntity.ok(updatedCart);
     }
 
-    @DeleteMapping("/items/{id}")
-    public ResponseEntity<Void> removeFromCart(
-            @PathVariable Long id,
-            Principal principal) {
+    @DeleteMapping("/items/{itemId}")
+    public ResponseEntity<CartDTO> removeCartItem(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @CookieValue(name = GUEST_CART_COOKIE_NAME, required = false) String guestCartId,
+            @PathVariable Long itemId) {
 
-        MemberDTO member = memberService.findByEmail(principal.getName())
-                .orElseThrow(() -> new IllegalStateException("로그인 정보를 찾을 수 없습니다."));
+        // 로그인한 사용자
+        if (userDetails != null) {
+            CartDTO updatedCart = cartService.removeItemFromCart(
+                    memberService.getMemberByUserId(userDetails.getUsername()).getId(),
+                    itemId);
+            return ResponseEntity.ok(updatedCart);
+        }
 
-        cartService.removeFromCart(member.id(), id);
-        return ResponseEntity.noContent().build();
+        // 비로그인 사용자
+        if (guestCartId == null || guestCartId.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        CartDTO updatedCart = cartService.removeItemFromGuestCart(guestCartId, itemId);
+        return ResponseEntity.ok(updatedCart);
     }
 
     @DeleteMapping
-    public ResponseEntity<Void> clearCart(Principal principal) {
-        MemberDTO member = memberService.findByEmail(principal.getName())
-                .orElseThrow(() -> new IllegalStateException("로그인 정보를 찾을 수 없습니다."));
+    public ResponseEntity<CartDTO> clearCart(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @CookieValue(name = GUEST_CART_COOKIE_NAME, required = false) String guestCartId) {
 
-        cartService.clearCart(member.id());
-        return ResponseEntity.noContent().build();
+        // 로그인한 사용자
+        if (userDetails != null) {
+            CartDTO clearedCart = cartService.clearCart(
+                    memberService.getMemberByUserId(userDetails.getUsername()).getId());
+            return ResponseEntity.ok(clearedCart);
+        }
+
+        // 비로그인 사용자
+        if (guestCartId == null || guestCartId.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        CartDTO clearedCart = cartService.clearGuestCart(guestCartId);
+        return ResponseEntity.ok(clearedCart);
     }
 
-    @GetMapping("/count")
-    public ResponseEntity<Map<String, Integer>> getCartItemCount(Principal principal) {
-        MemberDTO member = memberService.findByEmail(principal.getName())
-                .orElseThrow(() -> new IllegalStateException("로그인 정보를 찾을 수 없습니다."));
+    @PostMapping("/coupon/{couponCode}")
+    public ResponseEntity<CartDTO> applyCoupon(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @CookieValue(name = GUEST_CART_COOKIE_NAME, required = false) String guestCartId,
+            @PathVariable String couponCode) {
 
-        int count = cartService.getCartItemCount(member.id());
-        return ResponseEntity.ok(Map.of("count", count));
+        // 로그인한 사용자
+        if (userDetails != null) {
+            CartDTO updatedCart = cartService.applyCoupon(
+                    memberService.getMemberByUserId(userDetails.getUsername()).getId(),
+                    couponCode);
+            return ResponseEntity.ok(updatedCart);
+        }
+
+        // 비로그인 사용자
+        if (guestCartId == null || guestCartId.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        CartDTO updatedCart = cartService.applyGuestCoupon(guestCartId, couponCode);
+        return ResponseEntity.ok(updatedCart);
     }
 
-    @GetMapping("/total")
-    public ResponseEntity<Map<String, java.math.BigDecimal>> getCartTotal(Principal principal) {
-        MemberDTO member = memberService.findByEmail(principal.getName())
-                .orElseThrow(() -> new IllegalStateException("로그인 정보를 찾을 수 없습니다."));
+    @DeleteMapping("/coupon")
+    public ResponseEntity<CartDTO> removeCoupon(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @CookieValue(name = GUEST_CART_COOKIE_NAME, required = false) String guestCartId) {
 
-        java.math.BigDecimal total = cartService.calculateCartTotal(member.id());
-        return ResponseEntity.ok(Map.of("total", total));
+        // 로그인한 사용자
+        if (userDetails != null) {
+            CartDTO updatedCart = cartService.removeCoupon(
+                    memberService.getMemberByUserId(userDetails.getUsername()).getId());
+            return ResponseEntity.ok(updatedCart);
+        }
+
+        // 비로그인 사용자
+        if (guestCartId == null || guestCartId.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        CartDTO updatedCart = cartService.removeGuestCoupon(guestCartId);
+        return ResponseEntity.ok(updatedCart);
     }
 }

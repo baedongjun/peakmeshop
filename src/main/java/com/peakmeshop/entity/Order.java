@@ -5,20 +5,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-
+import com.peakmeshop.enums.OrderStatus;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -28,6 +18,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Order {
 
     @Id
@@ -41,40 +33,120 @@ public class Order {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    @Column(nullable = false)
-    private BigDecimal totalAmount;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shipping_address_id")
+    private Address shippingAddress;
 
-    @Enumerated(EnumType.STRING)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "billing_address_id")
+    private Address billingAddress;
+    @Enumerated(EnumType.ORDINAL)
     @Column(nullable = false)
     private OrderStatus status;
 
-    private String paymentMethod;
+    @Column(nullable = false)
+    private BigDecimal subtotal;
 
-    private String shippingAddress;
+    @Column
+    private BigDecimal discountAmount;
 
-    private String shippingDetailAddress;
+    @Column
+    private BigDecimal shippingCost;
 
-    private String shippingZipCode;
-
-    private String recipientName;
-
-    private String recipientPhone;
+    @Column
+    private BigDecimal tax;
 
     @Column(nullable = false)
-    private LocalDateTime orderDate;
+    private BigDecimal totalAmount;
 
-    private LocalDateTime paymentDate;
+    @Column
+    private String paymentMethod;
 
-    private LocalDateTime shippingDate;
+    @Column
+    private String paymentStatus;
 
-    private LocalDateTime completionDate;
+    @Column
+    private String paymentTransactionId;
 
+    @Column
+    private String shippingMethod;
+
+    @Column
+    private String trackingNumber;
+
+    @Column
+    private String shippingCompany;
+
+    @Column
     private String cancelReason;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItem> orderItems = new ArrayList<>();
+    @Column
+    private String refundReason;
 
-    public enum OrderStatus {
-        PENDING, PAID, SHIPPING, COMPLETED, CANCELLED
+    @Column
+    private LocalDateTime paidAt;
+
+    @Column
+    private LocalDateTime shippedAt;
+
+    @Column
+    private LocalDateTime deliveredAt;
+
+    @Column
+    private LocalDateTime cancelledAt;
+
+    @Column
+    private LocalDateTime refundedAt;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column
+    private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> items = new ArrayList<>();
+
+    public BigDecimal getTotalAmount() {
+        if (totalAmount != null) {
+            return totalAmount;
+        }
+
+        // 주문 항목이 없는 경우
+        if (items == null || items.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        // 주문 항목의 총 금액 계산
+        BigDecimal total = items.stream()
+                .map(item -> {
+                    BigDecimal itemPrice = item.getPrice().multiply(new BigDecimal(item.getQuantity()));
+                    if (item.getDiscount() != null) {
+                        itemPrice = itemPrice.subtract(item.getDiscount());
+                    }
+                    return itemPrice;
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // 배송비 추가
+        if (shippingCost != null) {
+            total = total.add(shippingCost);
+        }
+
+        // 세금 추가
+        if (tax != null) {
+            total = total.add(tax);
+        }
+
+        // 할인 적용
+        if (discountAmount != null) {
+            total = total.subtract(discountAmount);
+        }
+
+        return total;
+    }
+
+    public List<OrderItem> getItems() {
+        return items;
     }
 }

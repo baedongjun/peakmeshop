@@ -1,110 +1,109 @@
 package com.peakmeshop.controller;
 
-import java.security.Principal;
-import java.util.List;
-
+import com.peakmeshop.dto.OrderDTO;
+import com.peakmeshop.dto.OrderItemDTO;
+import com.peakmeshop.dto.OrderRequestDTO;
+import com.peakmeshop.dto.OrderStatusUpdateDTO;
+import com.peakmeshop.enums.OrderStatus;
+import com.peakmeshop.security.oauth2.user.UserPrincipal;
+import com.peakmeshop.service.OrderService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
-import com.peakmeshop.dto.MemberDTO;
-import com.peakmeshop.dto.OrderCreateRequestDTO;
-import com.peakmeshop.dto.OrderDTO;
-import com.peakmeshop.dto.OrderStatusUpdateDTO;
-import com.peakmeshop.dto.OrderSummaryDTO;
-import com.peakmeshop.service.MemberService;
-import com.peakmeshop.service.OrderService;
-
-import jakarta.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
+@RequiredArgsConstructor
 public class OrderController {
 
     private final OrderService orderService;
-    private final MemberService memberService;
 
-    public OrderController(OrderService orderService, MemberService memberService) {
-        this.orderService = orderService;
-        this.memberService = memberService;
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @orderService.getOrderById(#id).memberId == authentication.principal.id")
+    public ResponseEntity<OrderDTO> getOrderById(@PathVariable Long id) {
+        OrderDTO order = orderService.getOrderDTOById(id);
+        return ResponseEntity.ok(order);
+    }
+
+    @GetMapping("/number/{orderNumber}")
+    @PreAuthorize("hasRole('ADMIN') or @orderService.getOrderByOrderNumber(#orderNumber).memberId == authentication.principal.id")
+    public ResponseEntity<OrderDTO> getOrderByOrderNumber(@PathVariable String orderNumber) {
+        OrderDTO order = orderService.getOrderByOrderNumber(orderNumber);
+        return ResponseEntity.ok(order);
     }
 
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<OrderDTO> createOrder(
-            @Valid @RequestBody OrderCreateRequestDTO request,
-            Principal principal) {
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody OrderRequestDTO orderRequestDTO) {
 
-        // 현재 로그인한 회원 정보 조회
-        MemberDTO member = memberService.findByEmail(principal.getName())
-                .orElseThrow(() -> new IllegalStateException("로그인 정보를 찾을 수 없습니다."));
-
-        // 주문 생성
-        OrderDTO order = orderService.createOrder(
-                member.id(),
-                request.items().stream()
-                        .map(item -> new OrderItemDTO(null, item.productId(), null, null, item.quantity(), null))
-                        .toList(),
-                request.shippingAddress(),
-                request.shippingDetailAddress(),
-                request.shippingZipCode(),
-                request.recipientName(),
-                request.recipientPhone(),
-                request.paymentMethod(),
-                request.impUid());
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(order);
+        OrderDTO createdOrder = orderService.createOrder(userPrincipal.getId(), orderRequestDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
     }
 
-    @GetMapping
-    public ResponseEntity<Page<OrderSummaryDTO>> getMyOrders(
-            Principal principal,
-            @PageableDefault(size = 10) Pageable pageable) {
-
-        // 현재 로그인한 회원 정보 조회
-        MemberDTO member = memberService.findByEmail(principal.getName())
-                .orElseThrow(() -> new IllegalStateException("로그인 정보를 찾을 수 없습니다."));
-
-        // 회원의 주문 목록 조회
-        Page<OrderSummaryDTO> orders = orderService.getOrdersByMemberId(member.id(), pageable);
-
+    @GetMapping("/my-orders")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<OrderDTO>> getMyOrders(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        List<OrderDTO> orders = orderService.getOrdersByMemberId(userPrincipal.getId());
         return ResponseEntity.ok(orders);
     }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @orderSecurity.isOrderOwner(#id, principal)")
-    public ResponseEntity<OrderDTO> getOrderById(@PathVariable Long id) {
-        OrderDTO order = orderService.getOrderById(id);
-        return ResponseEntity.ok(order);
+    @GetMapping("/my-orders/paged")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<OrderDTO>> getMyOrdersPaged(
+            @AuthenticationPrincipal UserPrincipal userPrincipal, Pageable pageable) {
+
+        Page<OrderDTO> orders = orderService.getOrdersByMemberId(userPrincipal.getId(), pageable);
+        return ResponseEntity.ok(orders);
+    }
+
+    @GetMapping("/{id}/items")
+    @PreAuthorize("hasRole('ADMIN') or @orderService.getOrderById(#id).memberId == authentication.principal.id")
+    public ResponseEntity<List<OrderItemDTO>> getOrderItems(@PathVariable Long id) {
+        List<OrderItemDTO> orderItems = orderService.getOrderItems(id);
+        return ResponseEntity.ok(orderItems);
     }
 
     @PutMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<OrderDTO> updateOrderStatus(
-            @PathVariable Long id,
-            @Valid @RequestBody OrderStatusUpdateDTO request) {
+            @PathVariable Long id, @Valid @RequestBody OrderStatusUpdateDTO statusUpdateDTO) {
 
-        OrderDTO updatedOrder = orderService.updateOrderStatus(id, request.status(), request.reason());
+        OrderDTO updatedOrder = orderService.updateOrderStatus(id, statusUpdateDTO);
         return ResponseEntity.ok(updatedOrder);
     }
 
-    @GetMapping("/admin")
+    @PutMapping("/{id}/tracking")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<OrderSummaryDTO>> getAllOrders(
-            @RequestParam(required = false) String status,
-            @PageableDefault(size = 20) Pageable pageable) {
+    public ResponseEntity<OrderDTO> updateTrackingInfo(
+            @PathVariable Long id,
+            @RequestBody OrderStatusUpdateDTO trackingInfo) {
 
-        Page<OrderSummaryDTO> orders = orderService.getAllOrders(status, pageable);
-        return ResponseEntity.ok(orders);
+        OrderDTO updatedOrder = orderService.updateTrackingInfo(
+                id, trackingInfo.getTrackingNumber(), trackingInfo.getShippingCompany());
+        return ResponseEntity.ok(updatedOrder);
+    }
+
+    @PutMapping("/{id}/refund")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<OrderDTO> refundOrder(@PathVariable Long id) {
+        OrderDTO refundedOrder = orderService.refundOrder(id);
+        return ResponseEntity.ok(refundedOrder);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
+        orderService.deleteOrder(id);
+        return ResponseEntity.noContent().build();
     }
 }

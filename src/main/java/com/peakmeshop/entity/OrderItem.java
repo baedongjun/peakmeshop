@@ -11,7 +11,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,6 +22,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class OrderItem {
 
     @Id
@@ -38,12 +41,26 @@ public class OrderItem {
     @Column(nullable = false)
     private String productName;
 
+    @Column
+    private String productImage;
+
+    @Column(nullable = false)
+    private int quantity;
+
     @Column(nullable = false)
     private BigDecimal price;
 
-    @Column(nullable = false)
-    private Integer quantity;
+    @Column
+    private BigDecimal discount;
 
-    @Column(nullable = false)
-    private BigDecimal subtotal;
+    @Column
+    private String options;
+
+    public BigDecimal getTotalPrice() {
+        BigDecimal itemPrice = price.multiply(new BigDecimal(quantity));
+        if (discount != null) {
+            itemPrice = itemPrice.subtract(discount.multiply(new BigDecimal(quantity)));
+        }
+        return itemPrice;
+    }
 }

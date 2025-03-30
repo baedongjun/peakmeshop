@@ -1,107 +1,126 @@
 package com.peakmeshop.controller;
 
-import java.security.Principal;
-
+import com.peakmeshop.dto.ReviewDTO;
+import com.peakmeshop.security.oauth2.user.UserPrincipal;
+import com.peakmeshop.service.ReviewService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-
-import com.peakmeshop.dto.MemberDTO;
-import com.peakmeshop.dto.ReviewDTO;
-import com.peakmeshop.service.MemberService;
-import com.peakmeshop.service.ReviewService;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/reviews")
+@RequiredArgsConstructor
 public class ReviewController {
 
     private final ReviewService reviewService;
-    private final MemberService memberService;
 
-    public ReviewController(ReviewService reviewService, MemberService memberService) {
-        this.reviewService = reviewService;
-        this.memberService = memberService;
+    @GetMapping
+    public ResponseEntity<Page<ReviewDTO>> getAllReviews(Pageable pageable) {
+        Page<ReviewDTO> reviews = reviewService.getAllReviews(pageable);
+        return ResponseEntity.ok(reviews);
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ReviewDTO> createReview(
-            @RequestParam Long productId,
-            @RequestParam Integer rating,
-            @RequestParam String content,
-            @RequestPart(required = false) MultipartFile image,
-            Principal principal) {
-
-        MemberDTO member = memberService.findByEmail(principal.getName())
-                .orElseThrow(() -> new IllegalStateException("로그인 정보를 찾을 수 없습니다."));
-
-        ReviewDTO review = reviewService.createReview(member.id(), productId, rating, content, image);
-        return ResponseEntity.status(HttpStatus.CREATED).body(review);
-    }
-
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ReviewDTO> updateReview(
-            @PathVariable Long id,
-            @RequestParam Integer rating,
-            @RequestParam String content,
-            @RequestPart(required = false) MultipartFile image,
-            Principal principal) {
-
-        MemberDTO member = memberService.findByEmail(principal.getName())
-                .orElseThrow(() -> new IllegalStateException("로그인 정보를 찾을 수 없습니다."));
-
-        ReviewDTO review = reviewService.updateReview(id, member.id(), rating, content, image);
-        return ResponseEntity.ok(review);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteReview(
-            @PathVariable Long id,
-            Principal principal) {
-
-        MemberDTO member = memberService.findByEmail(principal.getName())
-                .orElseThrow(() -> new IllegalStateException("로그인 정보를 찾을 수 없습니다."));
-
-        reviewService.deleteReview(id, member.id());
-        return ResponseEntity.noContent().build();
+    @GetMapping("/{id}")
+    public ResponseEntity<ReviewDTO> getReviewById(@PathVariable Long id) {
+        ReviewDTO reviewDTO = reviewService.getReviewById(id);
+        return ResponseEntity.ok(reviewDTO);
     }
 
     @GetMapping("/product/{productId}")
     public ResponseEntity<Page<ReviewDTO>> getReviewsByProductId(
-            @PathVariable Long productId,
-            @PageableDefault(size = 10) Pageable pageable) {
-
+            @PathVariable Long productId, Pageable pageable) {
         Page<ReviewDTO> reviews = reviewService.getReviewsByProductId(productId, pageable);
         return ResponseEntity.ok(reviews);
     }
 
-    @GetMapping("/member")
-    public ResponseEntity<Page<ReviewDTO>> getMyReviews(
-            Principal principal,
-            @PageableDefault(size = 10) Pageable pageable) {
+    @GetMapping("/member/{memberId}")
+    public ResponseEntity<Page<ReviewDTO>> getReviewsByMemberId(
+            @PathVariable Long memberId, Pageable pageable, @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        // 일반 사용자는 자신의 리뷰만 조회 가능
+        if (!userPrincipal.isAdmin() && !userPrincipal.getId().equals(memberId)) {
+            return ResponseEntity.status(403).build();
+        }
 
-        MemberDTO member = memberService.findByEmail(principal.getName())
-                .orElseThrow(() -> new IllegalStateException("로그인 정보를 찾을 수 없습니다."));
-
-        Page<ReviewDTO> reviews = reviewService.getReviewsByMemberId(member.id(), pageable);
+        Page<ReviewDTO> reviews = reviewService.getReviewsByMemberId(memberId, pageable);
         return ResponseEntity.ok(reviews);
     }
 
-    @GetMapping("/product/{productId}/rating")
-    public ResponseEntity<Double> getProductAverageRating(@PathVariable Long productId) {
-        Double averageRating = reviewService.calculateAverageRating(productId);
-        return ResponseEntity.ok(averageRating);
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Page<ReviewDTO>> getMyReviews(
+            Pageable pageable, @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        Page<ReviewDTO> reviews = reviewService.getReviewsByMemberId(userPrincipal.getId(), pageable);
+        return ResponseEntity.ok(reviews);
+    }
+
+    @PostMapping
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ReviewDTO> createReview(
+            @Valid @RequestBody ReviewDTO reviewDTO, @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        // 사용자는 자신의 리뷰만 작성 가능
+        reviewDTO.setMemberId(userPrincipal.getId());
+
+        ReviewDTO createdReview = reviewService.createReview(reviewDTO);
+        return ResponseEntity.ok(createdReview);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<ReviewDTO> updateReview(
+            @PathVariable Long id, @Valid @RequestBody ReviewDTO reviewDTO,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        ReviewDTO existingReview = reviewService.getReviewById(id);
+
+        // 일반 사용자는 자신의 리뷰만 수정 가능
+        if (!userPrincipal.isAdmin() && !userPrincipal.getId().equals(existingReview.getMemberId())) {
+            return ResponseEntity.status(403).build();
+        }
+
+        // 관리자가 아닌 경우, 관리자 관련 필드는 수정 불가
+        if (!userPrincipal.isAdmin()) {
+            reviewDTO.setRecommended(existingReview.isRecommended());
+            reviewDTO.setHelpfulCount(existingReview.getHelpfulCount());
+            reviewDTO.setAdminReplied(existingReview.isAdminReplied());
+            reviewDTO.setAdminReply(existingReview.getAdminReply());
+            reviewDTO.setAdminReplyDate(existingReview.getAdminReplyDate());
+        }
+
+        reviewDTO.setId(id);
+        ReviewDTO updatedReview = reviewService.updateReview(reviewDTO);
+        return ResponseEntity.ok(updatedReview);
+    }
+
+    @PutMapping("/{id}/helpful")
+    public ResponseEntity<ReviewDTO> incrementHelpfulCount(@PathVariable Long id) {
+        ReviewDTO updatedReview = reviewService.incrementHelpfulCount(id);
+        return ResponseEntity.ok(updatedReview);
+    }
+
+    @PutMapping("/{id}/admin-reply")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ReviewDTO> addAdminReply(
+            @PathVariable Long id, @RequestParam String reply) {
+        ReviewDTO updatedReview = reviewService.addAdminReply(id, reply);
+        return ResponseEntity.ok(updatedReview);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteReview(
+            @PathVariable Long id, @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        ReviewDTO reviewDTO = reviewService.getReviewById(id);
+
+        // 일반 사용자는 자신의 리뷰만 삭제 가능
+        if (!userPrincipal.isAdmin() && !userPrincipal.getId().equals(reviewDTO.getMemberId())) {
+            return ResponseEntity.status(403).build();
+        }
+
+        reviewService.deleteReview(id);
+        return ResponseEntity.ok().build();
     }
 }

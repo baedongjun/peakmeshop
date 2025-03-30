@@ -1,31 +1,31 @@
 package com.peakmeshop.repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import com.peakmeshop.entity.Member;
 
-@Repository
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Optional<Member> findByEmail(String email);
 
+    Optional<Member> findByUserId(String userId);
+
+    Optional<Member> findByVerificationToken(String token);
+
+    Optional<Member> findByResetToken(String token);
+
     boolean existsByEmail(String email);
 
-    Page<Member> findByNameContainingIgnoreCase(String name, Pageable pageable);
+    List<Member> findByEmailContainingOrNameContaining(String email, String name);
 
-    @Query("SELECT m FROM Member m WHERE " +
-            "(:keyword IS NULL OR LOWER(m.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(m.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(m.phone) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    Page<Member> searchMembers(@Param("keyword") String keyword, Pageable pageable);
+    Page<Member> findByEmailContainingOrNameContaining(String email, String name, Pageable pageable);
 
-    @Query("SELECT COUNT(m) FROM Member m WHERE m.createdAt >= CURRENT_DATE")
-    long countNewMembersToday();
+    // 특정 기간 동안 가입한 회원 수 계산
+    long countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
 }

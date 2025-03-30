@@ -1,60 +1,44 @@
 package com.peakmeshop.service;
 
-import java.util.List;
-
-import com.peakmeshop.dto.CartItemDTO;
+import com.peakmeshop.dto.CartDTO;
+import com.peakmeshop.dto.CartRequestDTO;
+import com.peakmeshop.dto.CartUpdateDTO;
 
 public interface CartService {
 
-    /**
-     * 장바구니에 상품 추가
-     * @param memberId 회원 ID
-     * @param productId 상품 ID
-     * @param quantity 수량
-     * @return 추가된 장바구니 아이템
-     */
-    CartItemDTO addToCart(Long memberId, Long productId, Integer quantity);
+    CartDTO getCartByMemberId(Long memberId);
 
-    /**
-     * 장바구니 아이템 수량 업데이트
-     * @param memberId 회원 ID
-     * @param cartItemId 장바구니 아이템 ID
-     * @param quantity 변경할 수량
-     * @return 업데이트된 장바구니 아이템
-     */
-    CartItemDTO updateCartItemQuantity(Long memberId, Long cartItemId, Integer quantity);
+    CartDTO getCartByGuestId(String guestId);
 
-    /**
-     * 장바구니에서 아이템 제거
-     * @param memberId 회원 ID
-     * @param cartItemId 장바구니 아이템 ID
-     */
-    void removeFromCart(Long memberId, Long cartItemId);
+    CartDTO getOrCreateCart(Long memberId);
 
-    /**
-     * 회원의 장바구니 아이템 목록 조회
-     * @param memberId 회원 ID
-     * @return 장바구니 아이템 목록
-     */
-    List<CartItemDTO> getCartItems(Long memberId);
+    CartDTO getCartBySessionId(String sessionId);
 
-    /**
-     * 장바구니 비우기
-     * @param memberId 회원 ID
-     */
-    void clearCart(Long memberId);
+    CartDTO createGuestCart(String guestId);
 
-    /**
-     * 장바구니 아이템 수 조회
-     * @param memberId 회원 ID
-     * @return 장바구니 아이템 수
-     */
-    int getCartItemCount(Long memberId);
+    CartDTO addItemToCart(Long memberId, CartRequestDTO requestDTO);
 
-    /**
-     * 장바구니 총액 계산
-     * @param memberId 회원 ID
-     * @return 장바구니 총액
-     */
-    java.math.BigDecimal calculateCartTotal(Long memberId);
+    CartDTO addItemToGuestCart(String guestId, CartRequestDTO requestDTO);
+
+    CartDTO updateCartItem(Long memberId, CartUpdateDTO updateDTO);
+
+    CartDTO updateGuestCartItem(String guestId, CartUpdateDTO updateDTO);
+
+    CartDTO removeItemFromCart(Long memberId, Long cartItemId);
+
+    CartDTO removeItemFromGuestCart(String guestId, Long cartItemId);
+
+    CartDTO clearCart(Long memberId);
+
+    CartDTO clearGuestCart(String guestId);
+
+    CartDTO applyCoupon(Long memberId, String couponCode);
+
+    CartDTO applyGuestCoupon(String guestId, String couponCode);
+
+    CartDTO removeCoupon(Long memberId);
+
+    CartDTO removeGuestCoupon(String guestId);
+
+    CartDTO mergeGuestCartWithMemberCart(String guestId, Long memberId);
 }

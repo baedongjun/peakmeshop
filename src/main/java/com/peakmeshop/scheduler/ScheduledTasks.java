@@ -1,39 +1,36 @@
 package com.peakmeshop.scheduler;
 
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.peakmeshop.service.OrderService;
-import com.peakmeshop.service.ProductService;
+import com.peakmeshop.service.PasswordResetTokenService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
-@EnableScheduling
+@RequiredArgsConstructor
+@Slf4j
 public class ScheduledTasks {
 
     private final OrderService orderService;
-    private final ProductService productService;
+    private final PasswordResetTokenService passwordResetTokenService;
 
-    public ScheduledTasks(OrderService orderService, ProductService productService) {
-        this.orderService = orderService;
-        this.productService = productService;
-    }
+    @Scheduled(cron = "0 0 1 * * ?") // 매일 새벽 1시에 실행
+    public void cleanupTasks() {
+        log.info("Running scheduled cleanup tasks");
 
-    // 매일 자정에 실행
-    @Scheduled(cron = "0 0 0 * * ?")
-    public void cleanupExpiredCarts() {
-        orderService.cleanupAbandonedCarts();
-    }
+        try {
+            // 미결제 주문 취소
+            orderService.cancelAbandonedOrders();
+            log.info("Abandoned orders cleanup completed");
 
-    // 매시간 실행
-    @Scheduled(cron = "0 0 * * * ?")
-    public void updateProductInventory() {
-        productService.syncInventory();
-    }
-
-    // 매주 월요일 오전 1시에 실행
-    @Scheduled(cron = "0 0 1 ? * MON")
-    public void generateWeeklyReport() {
-        orderService.generateWeeklyReport();
+            // 만료된 비밀번호 재설정 토큰 정리
+            passwordResetTokenService.cleanExpiredTokens();
+            log.info("Expired password reset tokens cleanup completed");
+        } catch (Exception e) {
+            log.error("Error during scheduled cleanup tasks", e);
+        }
     }
 }

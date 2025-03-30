@@ -1,6 +1,8 @@
 package com.peakmeshop.service;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -43,7 +45,7 @@ public class RefreshTokenService {
         refreshTokenRepository.deleteByMemberId(memberId);
 
         refreshToken.setMember(member);
-        refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
+        refreshToken.setExpiryDate(LocalDateTime.ofInstant(Instant.now().plusMillis(refreshTokenDurationMs), ZoneId.systemDefault()));
         refreshToken.setToken(UUID.randomUUID().toString());
 
         refreshToken = refreshTokenRepository.save(refreshToken);
@@ -52,7 +54,9 @@ public class RefreshTokenService {
 
     @Transactional
     public RefreshToken verifyExpiration(RefreshToken token) {
-        if (token.getExpiryDate().compareTo(Instant.now()) < 0) {
+        // Instant를 LocalDateTime으로 변환
+        LocalDateTime now = LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault());
+        if (token.getExpiryDate().isBefore(now)) {
             refreshTokenRepository.delete(token);
             throw new TokenRefreshException(token.getToken(), "Refresh token was expired. Please make a new signin request");
         }

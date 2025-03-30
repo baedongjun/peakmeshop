@@ -1,68 +1,71 @@
 package com.peakmeshop.service;
 
 import java.util.List;
-import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.peakmeshop.dto.ProductDTO;
 
-/**
- * 상품 관련 비즈니스 로직을 처리하는 서비스 인터페이스
- */
 public interface ProductService {
 
-    /**
-     * 모든 상품 목록을 조회합니다.
-     * @return 상품 목록
-     */
+    // 모든 상품 조회 (기존)
+    List<ProductDTO> getAllProducts();
+
+    // 모든 상품 조회 (컨트롤러에서 사용)
     List<ProductDTO> findAllProducts();
 
-    /**
-     * 카테고리별 상품 목록을 조회합니다.
-     * @param categoryId 카테고리 ID
-     * @return 해당 카테고리의 상품 목록
-     */
-    List<ProductDTO> findProductsByCategory(Long categoryId);
+    // 상품 ID로 조회 (기존)
+    ProductDTO getProductById(Long id);
 
-    /**
-     * ID로 상품을 조회합니다.
-     * @param id 상품 ID
-     * @return 상품 정보
-     */
-    Optional<ProductDTO> findProductById(Long id);
+    // 상품 ID로 조회 (컨트롤러에서 사용)
+    ProductDTO findProductById(Long id);
 
-    /**
-     * 상품명으로 상품을 검색합니다.
-     * @param keyword 검색어
-     * @return 검색 결과 상품 목록
-     */
-    List<ProductDTO> searchProductsByName(String keyword);
+    // 상품 생성 (기존)
+    ProductDTO createProduct(ProductDTO productDTO);
 
-    /**
-     * 새 상품을 저장합니다.
-     * @param productDTO 저장할 상품 정보
-     * @return 저장된 상품 정보
-     */
+    // 상품 생성 (컨트롤러에서 사용)
     ProductDTO saveProduct(ProductDTO productDTO);
 
-    /**
-     * 상품 정보를 업데이트합니다.
-     * @param id 업데이트할 상품 ID
-     * @param productDTO 업데이트할 상품 정보
-     * @return 업데이트된 상품 정보
-     */
+    // 상품 수정 (기존)
     ProductDTO updateProduct(Long id, ProductDTO productDTO);
 
-    /**
-     * 상품을 삭제합니다.
-     * @param id 삭제할 상품 ID
-     */
+    // 상품 수정 (컨트롤러에서 사용)
+    ProductDTO updateProduct(ProductDTO productDTO);
+
+    // 상품 삭제
     void deleteProduct(Long id);
 
-    /**
-     * 상품 재고를 업데이트합니다.
-     * @param id 상품 ID
-     * @param quantity 변경할 수량 (감소는 음수)
-     * @return 업데이트된 상품 정보
-     */
-    ProductDTO updateProductStock(Long id, Integer quantity);
+    // 상품 활성화/비활성화
+    ProductDTO toggleProductStatus(Long id);
+
+    // 상품 재고 업데이트 (컨트롤러에서 사용)
+    ProductDTO updateProductStock(Long id, int stock);
+
+    // 상품 상태 업데이트 (컨트롤러에서 사용)
+    ProductDTO updateProductStatus(Long id, String status);
+
+    // 카테고리별 상품 조회
+    Page<ProductDTO> getProductsByCategory(Long categoryId, Pageable pageable);
+
+    // 브랜드별 상품 조회
+    Page<ProductDTO> getProductsByBrand(String brand, Pageable pageable);
+
+    // 상품 검색
+    Page<ProductDTO> searchProducts(String keyword, Pageable pageable);
+
+    // 추천 상품 조회
+    List<ProductDTO> getFeaturedProducts(int limit);
+
+    // 신상품 조회
+    List<ProductDTO> getNewArrivals(int limit);
+
+    // 베스트셀러 조회
+    List<ProductDTO> getBestSellers(int limit);
+
+    // 할인 상품 조회
+    List<ProductDTO> getDiscountedProducts(int limit);
+
+    // 상품 랭킹 업데이트
+    void updateProductRankings();
 }

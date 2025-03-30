@@ -2,103 +2,77 @@ package com.peakmeshop.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import com.peakmeshop.entity.Brand;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-/**
- * 상품 정보를 전송하기 위한 DTO
- * Java 17의 Record 기능을 사용하여 불변 객체로 구현
- */
-public record ProductDTO(
-        Long id,
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProductDTO {
 
-        @NotBlank(message = "상품명은 필수입니다")
-        @Size(min = 2, max = 100, message = "상품명은 2-100자 사이여야 합니다")
-        String name,
+    private Long id;
+    private String code; // 상품 코드
+    private String name;
+    private String description;
+    private BigDecimal price;
+    private BigDecimal salePrice; // 판매가 (할인가)
+    private BigDecimal discountedPrice; // 할인가 (다른 이름)
+    private Brand brand; // 브랜드
+    private Long categoryId;
+    private String categoryName;
+    private String mainImage;
+    private List<String> images;
+    private Integer stock;
+    private String status; // 상품 상태 (ACTIVE, INACTIVE, OUT_OF_STOCK 등)
+    private Boolean active; // 활성화 여부
+    private Boolean featured; // 추천 상품 여부
+    private Double averageRating;
+    private Integer reviewCount;
+    private Integer salesCount; // 판매 수량
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
-        @Size(max = 1000, message = "상품 설명은 1000자를 초과할 수 없습니다")
-        String description,
+    @Builder.Default
+    private Map<String, Object> attributes = new HashMap<>(); // 상품 속성
 
-        @NotNull(message = "가격은 필수입니다")
-        @Positive(message = "가격은 양수여야 합니다")
-        BigDecimal price,
+    @Builder.Default
+    private List<ProductOptionDTO> options = new ArrayList<>();
 
-        BigDecimal discountPrice,
+    // 할인율 계산
+    public BigDecimal getDiscountRate() {
+        if (price == null || salePrice == null || price.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
 
-        @NotNull(message = "재고 수량은 필수입니다")
-        @Positive(message = "재고 수량은 양수여야 합니다")
-        Integer stockQuantity,
-
-        String mainImageUrl,
-
-        List<String> additionalImageUrls,
-
-        @NotNull(message = "카테고리 ID는 필수입니다")
-        Long categoryId,
-
-        String categoryName,
-
-        Boolean isAvailable,
-
-        LocalDateTime createdAt,
-
-        LocalDateTime updatedAt,
-
-        String brand,
-
-        Double averageRating,
-
-        Integer reviewCount
-) {
-    // 빌더 패턴을 위한 정적 메서드 (Record는 기본적으로 불변이므로 빌더가 유용)
-    public static Builder builder() {
-        return new Builder();
+        BigDecimal discount = price.subtract(salePrice);
+        return discount.multiply(new BigDecimal(100)).divide(price, 0, BigDecimal.ROUND_HALF_UP);
     }
 
-    // 빌더 클래스
-    public static class Builder {
-        private Long id;
-        private String name;
-        private String description;
-        private BigDecimal price;
-        private BigDecimal discountPrice;
-        private Integer stockQuantity;
-        private String mainImageUrl;
-        private List<String> additionalImageUrls;
-        private Long categoryId;
-        private String categoryName;
-        private Boolean isAvailable;
-        private LocalDateTime createdAt;
-        private LocalDateTime updatedAt;
-        private String brand;
-        private Double averageRating;
-        private Integer reviewCount;
-
-        public Builder id(Long id) { this.id = id; return this; }
-        public Builder name(String name) { this.name = name; return this; }
-        public Builder description(String description) { this.description = description; return this; }
-        public Builder price(BigDecimal price) { this.price = price; return this; }
-        public Builder discountPrice(BigDecimal discountPrice) { this.discountPrice = discountPrice; return this; }
-        public Builder stockQuantity(Integer stockQuantity) { this.stockQuantity = stockQuantity; return this; }
-        public Builder mainImageUrl(String mainImageUrl) { this.mainImageUrl = mainImageUrl; return this; }
-        public Builder additionalImageUrls(List<String> additionalImageUrls) { this.additionalImageUrls = additionalImageUrls; return this; }
-        public Builder categoryId(Long categoryId) { this.categoryId = categoryId; return this; }
-        public Builder categoryName(String categoryName) { this.categoryName = categoryName; return this; }
-        public Builder isAvailable(Boolean isAvailable) { this.isAvailable = isAvailable; return this; }
-        public Builder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
-        public Builder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
-        public Builder brand(String brand) { this.brand = brand; return this; }
-        public Builder averageRating(Double averageRating) { this.averageRating = averageRating; return this; }
-        public Builder reviewCount(Integer reviewCount) { this.reviewCount = reviewCount; return this; }
-
-        public ProductDTO build() {
-            return new ProductDTO(id, name, description, price, discountPrice, stockQuantity,
-                    mainImageUrl, additionalImageUrls, categoryId, categoryName, isAvailable,
-                    createdAt, updatedAt, brand, averageRating, reviewCount);
+    // 할인 금액 계산
+    public BigDecimal getDiscountAmount() {
+        if (price == null || salePrice == null) {
+            return BigDecimal.ZERO;
         }
+
+        return price.subtract(salePrice);
+    }
+
+    // 활성화 여부 확인
+    public boolean isActive() {
+        return Boolean.TRUE.equals(active);
+    }
+
+    // 추천 상품 여부 확인
+    public boolean isFeatured() {
+        return Boolean.TRUE.equals(featured);
     }
 }

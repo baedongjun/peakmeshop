@@ -1,16 +1,27 @@
 package com.peakmeshop.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import com.peakmeshop.entity.Category;
 
-@Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
-    List<Category> findByParentIdIsNull();
+    List<Category> findByParentIsNull();
 
     List<Category> findByParentId(Long parentId);
+
+    List<Category> findByActiveTrue();
+
+    List<Category> findByFeaturedTrue();
+
+    Optional<Category> findBySlug(String slug);
+
+    boolean existsBySlug(String slug);
+
+    boolean existsBySlugAndIdNot(String slug, Long id);
+
+    int countByParentId(Long parentId);
 }
