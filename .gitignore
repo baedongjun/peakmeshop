@@ -1,10 +1,50 @@
-HELP.md
-target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+### Java ###
+# 컴파일된 클래스 파일
+*.class
 
-### STS ###
+# 로그 파일
+*.log
+
+# BlueJ 파일
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# 패키지 파일 #
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# 가상 머신 충돌 로그
+hs_err_pid*
+replay_pid*
+
+### Maven ###
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+### Gradle ###
+.gradle
+**/build/
+!src/**/build/
+gradle-app.setting
+!gradle-wrapper.jar
+.gradletasknamecache
+
+### STS/Eclipse ###
 .apt_generated
 .classpath
 .factorypath
@@ -18,6 +58,9 @@ target/
 *.iws
 *.iml
 *.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
 
 ### NetBeans ###
 /nbproject/private/
@@ -25,9 +68,108 @@ target/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
 ### VS Code ###
 .vscode/
+*.code-workspace
+
+### Spring Boot ###
+**/application-local.properties
+**/application-dev.properties
+**/application-prod.properties
+**/application-*.yml
+**/application-*.yaml
+!**/application.properties
+!**/application.yml
+!**/application.yaml
+
+### Docker ###
+.env
+.env.*
+!.env.example
+
+# Docker 설정 파일
+docker-compose.yml
+docker-compose.yaml
+docker-compose.override.yml
+docker-compose.override.yaml
+
+### 민감한 정보 ###
+# 키 파일
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+
+# 환경 변수 파일
+.env
+.env.*
+!.env.example
+
+# 비밀번호 파일
+**/secrets/
+**/credentials/
+
+### 운영체제 파일 ###
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+### 기타 ###
+# 임시 파일
+tmp/
+temp/
+
+# 로그 파일
+logs/
+*.log
+
+# 캐시 파일
+.cache/
+.sass-cache/
+.eslintcache
+
+# 노드 모듈 (프론트엔드 통합 프로젝트의 경우)
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+
+# 테스트 보고서
+test-output/
+reports/
+
+# 데이터베이스 파일
+*.db
+*.sqlite
+*.sqlite3
+
+# Redis 덤프 파일
+dump.rdb
+
+# 백업 파일
+*.bak
+*.backup
+*~
