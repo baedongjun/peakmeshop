@@ -12,10 +12,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthResponseDTO {
-    private String accessToken;
-    private String tokenType;
     private Long id;
+    private String accessToken;
+    private String refreshToken;
+    private String tokenType;
+    private Long expiresIn;
+    private String userId;
     private String email;
     private String name;
-    private List<String> roles;
+    private String role;
 }

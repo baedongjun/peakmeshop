@@ -23,7 +23,7 @@ public class FileStorageServiceImpl implements FileStorageService {
 
     public FileStorageServiceImpl(
             @Value("${file.upload-dir:./uploads}") String uploadDir,
-            @Value("${file.base-url:http://localhost:8080/api/files}") String baseUrl) {
+            @Value("${file.base-url:http://localhost/api/files}") String baseUrl) {
 
         this.fileStorageLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
         this.fileBaseUrl = baseUrl;

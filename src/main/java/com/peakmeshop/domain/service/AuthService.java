@@ -2,14 +2,15 @@ package com.peakmeshop.domain.service;
 
 import java.util.Map;
 
-import com.peakmeshop.api.dto.AuthResponseDTO;
-import com.peakmeshop.api.dto.LoginRequest;
-import com.peakmeshop.api.dto.PasswordResetDTO;
-import com.peakmeshop.api.dto.SignupRequest;
+import com.peakmeshop.api.dto.*;
+import com.peakmeshop.domain.entity.Member;
+import jakarta.validation.Valid;
 
 public interface AuthService {
 
     AuthResponseDTO login(LoginRequest loginRequest);
+
+    public Member register(MemberDTO memberDTO);
 
     AuthResponseDTO signup(SignupRequest signupRequest);
 

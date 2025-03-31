@@ -4,6 +4,7 @@ import com.peakmeshop.common.thymeleaf.WebRequestDialect;
 import nz.net.ultraq.thymeleaf.layoutdialect.LayoutDialect;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.thymeleaf.extras.springsecurity6.dialect.SpringSecurityDialect;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.thymeleaf.spring6.templateresolver.SpringResourceTemplateResolver;
 import org.thymeleaf.templatemode.TemplateMode;
@@ -25,8 +26,16 @@ public class ThymeleafConfig {
     public SpringTemplateEngine templateEngine() {
         SpringTemplateEngine templateEngine = new SpringTemplateEngine();
         templateEngine.setTemplateResolver(templateResolver());
-        templateEngine.addDialect(new LayoutDialect()); // 레이아웃 다이얼렉트 추가
-        templateEngine.addDialect(new WebRequestDialect()); // 웹 요청 다이얼렉트 추가
+
+        // 레이아웃 다이얼렉트 추가
+        templateEngine.addDialect(new LayoutDialect());
+
+        // 커스텀 웹 요청 다이얼렉트 추가
+        templateEngine.addDialect(new WebRequestDialect());
+
+        // Spring Security 다이얼렉트 추가
+        templateEngine.addDialect(new SpringSecurityDialect());
+
         return templateEngine;
     }
 }
