@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title layout:title-pattern="$CONTENT_TITLE - $LAYOUT_TITLE">PeakMeShop</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <!-- 추가 스타일시트 -->
+    <th:block layout:fragment="css"></th:block>
+</head>
+<body>
+<!-- 헤더 -->
+<header class="sticky-top" th:fragment="header">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" th:href="@{/}">Peak<span>Me</span>Shop</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/}" th:classappend="${#req != null && #req.isPath('/') ? 'active' : ''}">홈</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/shop}" th:classappend="${#req != null && #req.startsWith('/shop') ? 'active' : ''}">쇼핑</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            카테고리
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" th:href="@{/category/clothing}">의류</a></li>
+                            <li><a class="dropdown-item" th:href="@{/category/shoes}">신발</a></li>
+                            <li><a class="dropdown-item" th:href="@{/category/accessories}">액세서리</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" th:href="@{/products}">모든 상품</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/about}" th:classappend="${#req != null && #req.startsWith('/about') ? 'active' : ''}">브랜드 소개</a>
+                    </li>
+                </ul>
+                <form class="d-flex me-3 search-form" th:action="@{/search}" method="get">
+                    <input class="form-control" type="search" placeholder="상품 검색..." aria-label="Search" name="query">
+                    <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
+                </form>
+                <ul class="navbar-nav">
+                    <li class="nav-item me-2">
+                        <a class="nav-link position-relative" th:href="@{/cart}">
+                            <i class="fas fa-shopping-cart fs-5"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cart-badge">
+                                  <span th:text="${session.cartItemCount != null ? session.cartItemCount : '0'}">0</span>
+                              </span>
+                        </a>
+                    </li>
+                    <li class="nav-item me-2">
+                        <a class="nav-link" th:href="@{/wishlist}">
+                            <i class="fas fa-heart fs-5"></i>
+                        </a>
+                    </li>
+                    <!-- 로그인하지 않은 경우 -->
+                    <li class="nav-item" sec:authorize="!isAuthenticated()">
+                        <a class="btn btn-outline-primary" th:href="@{/login}">로그인</a>
+                    </li>
+                    <!-- 로그인한 경우 -->
+                    <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                        <a class="nav-link dropdown-toggle text-decoration-none" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle fs-5 me-1"></i> <span sec:authentication="name">사용자명</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" th:href="@{/mypage}"><i class="fas fa-user me-2"></i>마이페이지</a></li>
+                            <li><a class="dropdown-item" th:href="@{/mypage/orders}"><i class="fas fa-box me-2"></i>주문 내역</a></li>
+                            <li sec:authorize="hasRole('ROLE_ADMIN')"><a class="dropdown-item" th:href="@{/admin}"><i class="fas fa-cog me-2"></i>관리자</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form th:action="@{/auth/logout}" method="post">
+                                    <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i>로그아웃</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<!-- 메인 콘텐츠 -->
+<main layout:fragment="content">
+    <!-- 페이지별 콘텐츠가 여기에 들어갑니다 -->
+</main>
+
+<!-- 푸터 -->
+<footer th:fragment="footer">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <h5>PeakMeShop</h5>
+                <p>최고의 제품을 최저가로 만나보세요. PeakMeShop은 고객 만족을 최우선으로 생각합니다.</p>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
+                <h5>쇼핑하기</h5>
+                <ul class="list-unstyled">
+                    <li><a th:href="@{/category/clothing}">의류</a></li>
+                    <li><a th:href="@{/category/shoes}">신발</a></li>
+                    <li><a th:href="@{/category/accessories}">액세서리</a></li>
+                    <li><a th:href="@{/category/new-arrivals}">신상품</a></li>
+                    <li><a th:href="@{/category/sale}">할인 상품</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
+                <h5>고객 서비스</h5>
+                <ul class="list-unstyled">
+                    <li><a th:href="@{/contact}">문의하기</a></li>
+                    <li><a th:href="@{/faq}">자주 묻는 질문</a></li>
+                    <li><a th:href="@{/shipping}">배송 정보</a></li>
+                    <li><a th:href="@{/returns}">교환 및 반품</a></li>
+                    <li><a th:href="@{/size-guide}">사이즈 가이드</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-4 col-md-4">
+                <h5>고객센터</h5>
+                <p><i class="fas fa-phone-alt me-2"></i> 02-123-4567</p>
+                <p><i class="fas fa-envelope me-2"></i> support@peakmeshop.com</p>
+                <p><i class="fas fa-map-marker-alt me-2"></i> 서울특별시 강남구 테헤란로 123</p>
+                <p><i class="fas fa-clock me-2"></i> 평일 09:00 - 18:00 (주말/공휴일 휴무)</p>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-6">
+                <p class="copyright">&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2023</span> PeakMeShop. All rights reserved.</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <ul class="list-inline mb-0">
+                    <li class="list-inline-item"><a th:href="@{/terms}">이용약관</a></li>
+                    <li class="list-inline-item"><a th:href="@{/privacy}">개인정보처리방침</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom JS -->
+<script th:src="@{/js/main.js}"></script>
+<!-- 추가 스크립트 -->
+<th:block layout:fragment="script"></th:block>
+</body>
+</html>
+

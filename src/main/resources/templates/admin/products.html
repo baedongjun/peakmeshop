@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main-layout}">
+<head>
+    <title>상품 관리</title>
+    <th:block layout:fragment="css">
+        <style>
+            .products-container {
+                min-height: 60vh;
+            }
+            .product-table {
+                border-radius: 0.5rem;
+                overflow: hidden;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            }
+            .product-table th {
+                background-color: var(--gray-100);
+                font-weight: 600;
+            }
+            .product-thumbnail {
+                width: 60px;
+                height: 60px;
+                object-fit: cover;
+                border-radius: 0.25rem;
+            }
+            .product-status {
+                display: inline-block;
+                padding: 0.25rem 0.75rem;
+                border-radius: 50rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+            .status-active {
+                background-color: var(--success-color);
+                color: white;
+            }
+            .status-inactive {
+                background-color: var(--gray-500);
+                color: white;
+            }
+            .status-out-of-stock {
+                background-color: var(--warning-color);
+                color: white;
+            }
+            .filter-card {
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+                overflow: hidden;
+                border: none;
+                margin-bottom: 1.5rem;
+            }
+            .filter-card-body {
+                padding: 1.5rem;
+            }
+            .action-btn {
+                width: 32px;
+                height: 32px;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 0.25rem;
+                margin-right: 0.25rem;
+            }
+            .bulk-action-dropdown {
+                min-width: 200px;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+<main layout:fragment="content">
+    <section class="py-5">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">상품 관리</h2>
+                <a th:href="@{/admin/products/new}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i> 상품 등록
+                </a>
+            </div>
+
+            <div class="products-container">
+                <!-- 필터 및 검색 -->
+                <div class="filter-card mb-4">
+                    <div class="filter-card-body">
+                        <div class="row">
+                            <div class="col-md-8 mb-3 mb-md-0">
+                                <form th:action="@{/admin/products}" method="get" class="d-flex">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" placeholder="상품명, 코드, 브랜드 검색" name="keyword" th:value="${param.keyword}">
+                                        <button class="btn btn-primary" type="submit">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex">
+                                    <select class="form-select me-2" id="categoryFilter" name="category">
+                                        <option value="">모든 카테고리</option>
+                                        <option value="의류" th:selected="${param.category == '의류'}">의류</option>
+                                        <option value="신발" th:selected="${param.category == '신발'}">신발</option>
+                                        <option value="액세서리" th:selected="${param.category == '액세서리'}">액세서리</option>
+                                        <option value="가방" th:selected="${param.category == '가방'}">가방</option>
+                                    </select>
+                                    <select class="form-select" id="statusFilter" name="status">
+                                        <option value="">모든 상태</option>
+                                        <option value="active" th:selected="${param.status == 'active'}">판매중</option>
+                                        <option value="inactive" th:selected="${param.status == 'inactive'}">판매중지</option>
+                                        <option value="out-of-stock" th:selected="${param.status == 'out-of-stock'}">품절</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 상품 목록 -->
+                <div class="card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover product-table mb-0">
+                                <thead>
+                                <tr>
+                                    <th style="width: 40px;">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="selectAll">
+                                        </div>
+                                    </th>
+                                    <th style="width: 80px;">이미지</th>
+                                    <th>상품명</th>
+                                    <th>코드</th>
+                                    <th>카테고리</th>
+                                    <th>가격</th>
+                                    <th>재고</th>
+                                    <th>상태</th>
+                                    <th style="width: 150px;">액션</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <!-- 상품 목록 (실제로는 DB에서 가져올 것) -->
+                                <tr th:each="product, stat : ${products != null ? products : {
+                                                {1, '프리미엄 데님 자켓', 'DJ-1001', '의류', 52000, 65000, 15, 'active', '/placeholder.svg?height=60&width=60'},
+                                                {2, '캐주얼 티셔츠', 'TS-1002', '의류', 35000, 35000, 25, 'active', '/placeholder.svg?height=60&width=60'},
+                                                {3, '슬림핏 청바지', 'JP-1003', '의류', 60000, 75000, 10, 'active', '/placeholder.svg?height=60&width=60'},
+                                                {4, '캐주얼 스니커즈', 'SH-1004', '신발', 85000, 85000, 5, 'active', '/placeholder.svg?height=60&width=60'},
+                                                {5, '클래식 레더 자켓', 'LJ-1005', '의류', 120000, 120000, 0, 'out-of-stock', '/placeholder.svg?height=60&width=60'},
+                                                {6, '프리미엄 백팩', 'BP-1006', '가방', 76000, 95000, 8, 'active', '/placeholder.svg?height=60&width=60'},
+                                                {7, '캐주얼 후드티', 'HD-1007', '의류', 55000, 55000, 20, 'active', '/placeholder.svg?height=60&width=60'},
+                                                {8, '스포츠 런닝화', 'SR-1008', '신발', 88000, 110000, 12, 'active', '/placeholder.svg?height=60&width=60'},
+                                                {9, '캐주얼 셔츠', 'CS-1009', '의류', 45000, 45000, 0, 'out-of-stock', '/placeholder.svg?height=60&width=60'},
+                                                {10, '슬림핏 치노팬츠', 'CP-1010', '의류', 52000, 65000, 18, 'active', '/placeholder.svg?height=60&width=60'}
+                                            }}">
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input product-checkbox" type="checkbox" th:value="${product[0]}">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <img th:src="${product[8]}" class="product-thumbnail" th:alt="${product[1]}">
+                                    </td>
+                                    <td>
+                                        <a th:href="@{'/admin/products/edit/' + ${product[0]}}" class="fw-medium text-decoration-none text-dark" th:text="${product[1]}">상품명</a>
+                                    </td>
+                                    <td th:text="${product[2]}">코드</td>
+                                    <td th:text="${product[3]}">카테고리</td>
+                                    <td>
+                                        <div th:if="${product[4] < product[5]}">
+                                            <span class="text-decoration-line-through text-muted" th:text="${'₩' + #numbers.formatInteger(product[5], 0, 'COMMA')}">₩65,000</span><br>
+                                            <span class="fw-bold text-primary" th:text="${'₩' + #numbers.formatInteger(product[4], 0, 'COMMA')}">₩52,000</span>
+                                        </div>
+                                        <div th:unless="${product[4] < product[5]}">
+                                            <span class="fw-bold" th:text="${'₩' + #numbers.formatInteger(product[4], 0, 'COMMA')}">₩35,000</span>
+                                        </div>
+                                    </td>
+                                    <td th:text="${product[6] + '개'}">재고</td>
+                                    <td>
+                                                <span th:class="${'product-status status-' + product[7]}"
+                                                      th:text="${product[7] == 'active' ? '판매중' :
+                                                               product[7] == 'inactive' ? '판매중지' :
+                                                               product[7] == 'out-of-stock' ? '품절' : product[7]}">
+                                                    상태
+                                                </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex">
+                                            <a th:href="@{'/admin/products/edit/' + ${product[0]}}" class="btn btn-sm btn-outline-primary action-btn" title="수정">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger action-btn" title="삭제"
+                                                    th:onclick="'confirmDelete(' + ${product[0]} + ')'">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-outline-secondary action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="더 보기">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li><a class="dropdown-item" th:href="@{'/products/' + ${product[0]}}" target="_blank">상품 보기</a></li>
+                                                    <li><a class="dropdown-item" href="#" th:onclick="'duplicateProduct(' + ${product[0]} + '); return false;'">복제</a></li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li th:if="${product[7] == 'active'}">
+                                                        <a class="dropdown-item" href="#" th:onclick="'changeStatus(' + ${product[0]} + ', \'inactive\'); return false;'">판매 중지</a>
+                                                    </li>
+                                                    <li th:if="${product[7] == 'inactive'}">
+                                                        <a class="dropdown-item" href="#" th:onclick="'changeStatus(' + ${product[0]} + ', \'active\'); return false;'">판매 시작</a>
+                                                    </li>
+                                                    <li th:if="${product[7] == 'out-of-stock'}">
+                                                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#restockModal" th:data-product-id="${product[0]}">재고 추가</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 페이지네이션 및 일괄 액션 -->
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <div class="d-flex align-items-center">
+                        <div class="dropdown me-2">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="bulkActionDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                일괄 작업
+                            </button>
+                            <ul class="dropdown-menu bulk-action-dropdown" aria-labelledby="bulkActionDropdown">
+                                <li><a class="dropdown-item" href="#" onclick="bulkAction('active'); return false;">판매 시작</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="bulkAction('inactive'); return false;">판매 중지</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" onclick="bulkAction('delete'); return false;">삭제</a></li>
+                            </ul>
+                        </div>
+                        <span id="selectedCount">0개 선택됨</span>
+                    </div>
+
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination mb-0">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">이전</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">다음</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 삭제 확인 모달 -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">상품 삭제</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>정말로 이 상품을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">삭제</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 재고 추가 모달 -->
+    <div class="modal fade" id="restockModal" tabindex="-1" aria-labelledby="restockModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="restockModalLabel">재고 추가</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="restockForm">
+                        <input type="hidden" id="restockProductId" name="productId">
+                        <div class="mb-3">
+                            <label for="stockQuantity" class="form-label">추가할 수량</label>
+                            <input type="number" class="form-control" id="stockQuantity" name="quantity" min="1" value="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="stockNote" class="form-label">메모 (선택사항)</label>
+                            <textarea class="form-control" id="stockNote" name="note" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="confirmRestockBtn">재고 추가</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<th:block layout:fragment="script">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 전체 선택 체크박스
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const productCheckboxes = document.querySelectorAll('.product-checkbox');
+            const selectedCountElement = document.getElementById('selectedCount');
+
+            // 전체 선택 체크박스 이벤트
+            selectAllCheckbox.addEventListener('change', function() {
+                productCheckboxes.forEach(checkbox => {
+                    checkbox.checked = selectAllCheckbox.checked;
+                });
+                updateSelectedCount();
+            });
+
+            // 개별 체크박스 이벤트
+            productCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateSelectAllCheckbox();
+                    updateSelectedCount();
+                });
+            });
+
+            // 카테고리 및 상태 필터 변경 이벤트
+            document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+
+            // 재고 추가 모달 이벤트
+            const restockModal = document.getElementById('restockModal');
+            if (restockModal) {
+                restockModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const productId = button.getAttribute('data-product-id');
+                    document.getElementById('restockProductId').value = productId;
+                });
+
+                document.getElementById('confirmRestockBtn').addEventListener('click', function() {
+                    const form = document.getElementById('restockForm');
+                    const productId = document.getElementById('restockProductId').value;
+                    const quantity = document.getElementById('stockQuantity').value;
+
+                    // 실제 구현에서는 서버에 요청
+                    console.log(`상품 ID: ${productId}, 추가 수량: ${quantity} 재고 추가`);
+
+                    // 임시 알림
+                    alert('재고가 추가되었습니다.');
+
+                    // 모달 닫기
+                    const modal = bootstrap.Modal.getInstance(restockModal);
+                    modal.hide();
+                });
+            }
+
+            // 전체 선택 체크박스 상태 업데이트 함수
+            function updateSelectAllCheckbox() {
+                const totalCheckboxes = productCheckboxes.length;
+                const checkedCheckboxes = document.querySelectorAll('.product-checkbox:checked').length;
+
+                selectAllCheckbox.checked = totalCheckboxes > 0 && totalCheckboxes === checkedCheckboxes;
+            }
+
+            // 선택된 항목 수 업데이트 함수
+            function updateSelectedCount() {
+                const checkedCount = document.querySelectorAll('.product-checkbox:checked').length;
+                selectedCountElement.textContent = `${checkedCount}개 선택됨`;
+            }
+
+            // 필터 적용 함수
+            function applyFilters() {
+                const category = document.getElementById('categoryFilter').value;
+                const status = document.getElementById('statusFilter').value;
+
+                // 실제 구현에서는 서버에 요청하여 필터링된 결과를 가져와야 함
+                // 임시 알림
+                alert(`필터 적용: 카테고리=${category}, 상태=${status}`);
+
+                // 페이지 새로고침 (실제로는 AJAX로 구현)
+                // window.location.href = `/admin/products?category=${category}&status=${status}`;
+            }
+        });
+
+        // 상품 삭제 확인 함수
+        function confirmDelete(productId) {
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+            confirmDeleteBtn.onclick = function() {
+                deleteProduct(productId);
+                deleteModal.hide();
+            };
+
+            deleteModal.show();
+        }
+
+        // 상품 삭제 함수
+        function deleteProduct(productId) {
+            // 실제 구현에서는 서버에 삭제 요청을 보내야 함
+            console.log(`상품 ID: ${productId} 삭제`);
+
+            // 임시 알림
+            alert('상품이 삭제되었습니다.');
+
+            // 페이지 새로고침 (실제로는 AJAX로 구현)
+            // location.reload();
+        }
+
+        // 상품 상태 변경 함수
+        function changeStatus(productId, status) {
+            // 실제 구현에서는 서버에 상태 변경 요청을 보내야 함
+            console.log(`상품 ID: ${productId}, 상태: ${status}로 변경`);
+
+            // 임시 알림
+            const statusText = status === 'active' ? '판매 시작' : status === 'inactive' ? '판매 중지' : status;
+            alert(`상품 상태가 ${statusText}(으)로 변경되었습니다.`);
+
+            // 페이지 새로고침 (실제로는 AJAX로 구현)
+            // location.reload();
+        }
+
+        // 상품 복제 함수
+        function duplicateProduct(productId) {
+            // 실제 구현에서는 서버에 복제 요청을 보내야 함
+            console.log(`상품 ID: ${productId} 복제`);
+
+            // 임시 알림
+            alert('상품이 복제되었습니다.');
+
+            // 페이지 새로고침 (실제로는 AJAX로 구현)
+            // location.reload();
+        }
+
+        // 일괄 작업 함수
+        function bulkAction(action) {
+            const selectedProducts = Array.from(document.querySelectorAll('.product-checkbox:checked')).map(checkbox => checkbox.value);
+
+            if (selectedProducts.length === 0) {
+                alert('선택된 상품이 없습니다.');
+                return;
+            }
+
+            let confirmMessage = '';
+            switch (action) {
+                case 'active':
+                    confirmMessage = '선택한 상품을 판매 시작 상태로 변경하시겠습니까?';
+                    break;
+                case 'inactive':
+                    confirmMessage = '선택한 상품을 판매 중지 상태로 변경하시겠습니까?';
+                    break;
+                case 'delete':
+                    confirmMessage = '선택한 상품을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.';
+                    break;
+            }
+
+            if (confirm(confirmMessage)) {
+                // 실제 구현에서는 서버에 일괄 작업 요청을 보내야 함
+                console.log(`일괄 작업: ${action}, 선택된 상품 ID: ${selectedProducts.join(', ')}`);
+
+                // 임시 알림
+                const actionText = action === 'active' ? '판매 시작' : action === 'inactive' ? '판매 중지' : '삭제';
+                alert(`선택한 상품이 ${actionText} 처리되었습니다.`);
+
+                // 페이지 새로고침 (실제로는 AJAX로 구현)
+                // location.reload();
+            }
+        }
+    </script>
+</th:block>
+</body>
+</html>

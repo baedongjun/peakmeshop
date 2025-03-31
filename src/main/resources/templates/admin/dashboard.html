@@ -1,0 +1,392 @@
+&lt;!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main-layout}">
+<head>
+    <title>관리자 대시보드</title>
+    <th:block layout:fragment="css">
+        <style>
+            .dashboard-container {
+                min-height: 60vh;
+            }
+            .stat-card {
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+                overflow: hidden;
+                border: none;
+                margin-bottom: 1.5rem;
+                transition: all 0.3s ease;
+            }
+            .stat-card:hover {
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+                transform: translateY(-5px);
+            }
+            .stat-card-body {
+                padding: 1.5rem;
+            }
+            .stat-icon {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.5rem;
+                color: white;
+                margin-bottom: 1rem;
+            }
+            .stat-icon.sales {
+                background-color: var(--primary-color);
+            }
+            .stat-icon.orders {
+                background-color: var(--success-color);
+            }
+            .stat-icon.customers {
+                background-color: var(--warning-color);
+            }
+            .stat-icon.products {
+                background-color: var(--secondary-color);
+            }
+            .stat-value {
+                font-size: 2rem;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+            }
+            .stat-label {
+                color: var(--gray-600);
+                font-weight: 500;
+            }
+            .chart-card {
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+                overflow: hidden;
+                border: none;
+                margin-bottom: 1.5rem;
+            }
+            .chart-card-header {
+                background-color: var(--gray-100);
+                padding: 1rem 1.5rem;
+                border-bottom: 1px solid var(--gray-200);
+            }
+            .chart-card-body {
+                padding: 1.5rem;
+                height: 300px;
+            }
+            .recent-order-card {
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+                overflow: hidden;
+                border: none;
+                margin-bottom: 1.5rem;
+            }
+            .recent-order-card-header {
+                background-color: var(--gray-100);
+                padding: 1rem 1.5rem;
+                border-bottom: 1px solid var(--gray-200);
+            }
+            .recent-order-card-body {
+                padding: 1.5rem;
+            }
+            .order-status {
+                display: inline-block;
+                padding: 0.25rem 0.75rem;
+                border-radius: 50rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+            .status-pending {
+                background-color: var(--warning-color);
+                color: white;
+            }
+            .status-processing {
+                background-color: var(--primary-color);
+                color: white;
+            }
+            .status-shipped {
+                background-color: var(--success-color);
+                color: white;
+            }
+            .status-delivered {
+                background-color: var(--dark-color);
+                color: white;
+            }
+            .status-canceled {
+                background-color: var(--danger-color);
+                color: white;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+<main layout:fragment="content">
+    <section class="py-5">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">관리자 대시보드</h2>
+                <div>
+                    <button class="btn btn-outline-primary me-2">
+                        <i class="fas fa-download me-1"></i> 보고서 다운로드
+                    </button>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-sync-alt me-1"></i> 새로고침
+                    </button>
+                </div>
+            </div>
+
+            <div class="dashboard-container">
+                &lt;!-- 통계 카드 -->
+                <div class="row">
+                    &lt;!-- 매출 통계 -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-card-body">
+                                <div class="stat-icon sales">
+                                    <i class="fas fa-won-sign"></i>
+                                </div>
+                                <div class="stat-value" th:text="${#numbers.formatInteger(totalSales != null ? totalSales : 1500000, 0, 'COMMA') + '원'}">1,500,000원</div>
+                                <div class="stat-label">총 매출</div>
+                                <div class="mt-2 text-success">
+                                    <i class="fas fa-arrow-up me-1"></i> 15% 증가
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    &lt;!-- 주문 통계 -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-card-body">
+                                <div class="stat-icon orders">
+                                    <i class="fas fa-shopping-bag"></i>
+                                </div>
+                                <div class="stat-value" th:text="${totalOrders != null ? totalOrders : 120}">120</div>
+                                <div class="stat-label">총 주문</div>
+                                <div class="mt-2 text-success">
+                                    <i class="fas fa-arrow-up me-1"></i> 8% 증가
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    &lt;!-- 고객 통계 -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-card-body">
+                                <div class="stat-icon customers">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="stat-value" th:text="${newCustomers != null ? newCustomers : 45}">45</div>
+                                <div class="stat-label">신규 고객</div>
+                                <div class="mt-2 text-success">
+                                    <i class="fas fa-arrow-up me-1"></i> 12% 증가
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    &lt;!-- 상품 통계 -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="stat-card-body">
+                                <div class="stat-icon products">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                                <div class="stat-value" th:text="${pendingShipments != null ? pendingShipments : 15}">15</div>
+                                <div class="stat-label">배송 대기</div>
+                                <div class="mt-2 text-danger">
+                                    <i class="fas fa-arrow-down me-1"></i> 5% 감소
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                &lt;!-- 차트 -->
+                <div class="row">
+                    &lt;!-- 매출 차트 -->
+                    <div class="col-lg-8">
+                        <div class="chart-card">
+                            <div class="chart-card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">월별 매출 추이</h5>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary active">일주일</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary">한달</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary">일년</button>
+                                </div>
+                            </div>
+                            <div class="chart-card-body">
+                                <canvas id="salesChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    &lt;!-- 주문 상태 차트 -->
+                    <div class="col-lg-4">
+                        <div class="chart-card">
+                            <div class="chart-card-header">
+                                <h5 class="mb-0">주문 상태</h5>
+                            </div>
+                            <div class="chart-card-body">
+                                <canvas id="orderStatusChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                &lt;!-- 최근 주문 -->
+                <div class="recent-order-card">
+                    <div class="recent-order-card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">최근 주문</h5>
+                        <a th:href="@{/admin/orders}" class="btn btn-sm btn-outline-primary">모든 주문 보기</a>
+                    </div>
+                    <div class="recent-order-card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th>주문번호</th>
+                                    <th>고객명</th>
+                                    <th>주문일자</th>
+                                    <th>금액</th>
+                                    <th>상태</th>
+                                    <th>액션</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                &lt;!-- 최근 주문 목록 (실제로는 DB에서 가져올 것) -->
+                                <tr th:each="order, stat : ${recentOrders != null ? recentOrders : {
+                                                {1, 'ORD-1001', '홍길동', '2023-07-15', 125000, 'PROCESSING'},
+                                                {2, 'ORD-1002', '김철수', '2023-07-14', 85000, 'PENDING'},
+                                                {3, 'ORD-1003', '이영희', '2023-07-13', 210000, 'SHIPPED'},
+                                                {4, 'ORD-1004', '박민수', '2023-07-12', 45000, 'DELIVERED'},
+                                                {5, 'ORD-1005', '정지훈', '2023-07-11', 95000, 'CANCELED'}
+                                            }}">
+                                    <td th:text="${order[1]}">ORD-1001</td>
+                                    <td th:text="${order[2]}">홍길동</td>
+                                    <td th:text="${order[3]}">2023-07-15</td>
+                                    <td th:text="${'₩' + #numbers.formatInteger(order[4], 0, 'COMMA')}">₩125,000</td>
+                                    <td>
+                                                <span th:class="${'order-status status-' + #strings.toLowerCase(order[5])}"
+                                                      th:text="${#strings.equals(order[5], 'PENDING') ? '결제대기' :
+                                                               #strings.equals(order[5], 'PROCESSING') ? '처리중' :
+                                                               #strings.equals(order[5], 'SHIPPED') ? '배송중' :
+                                                               #strings.equals(order[5], 'DELIVERED') ? '배송완료' :
+                                                               #strings.equals(order[5], 'CANCELED') ? '주문취소' : order[5]}">
+                                                    상태
+                                                </span>
+                                    </td>
+                                    <td>
+                                        <a th:href="@{'/admin/orders/' + ${order[0]}}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<th:block layout:fragment="script">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 매출 차트
+            const salesChartCtx = document.getElementById('salesChart').getContext('2d');
+            const salesChart = new Chart(salesChartCtx, {
+                type: 'line',
+                data: {
+                    labels: ['1월', '2월', '3월', '4월', '5월', '6월', '7월'],
+                    datasets: [{
+                        label: '매출',
+                        data: [650000, 590000, 800000, 810000, 960000, 1050000, 1500000],
+                        backgroundColor: 'rgba(58, 134, 255, 0.2)',
+                        borderColor: 'rgba(58, 134, 255, 1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '₩' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '매출: ₩' + context.raw.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 주문 상태 차트
+            const orderStatusChartCtx = document.getElementById('orderStatusChart').getContext('2d');
+            const orderStatusChart = new Chart(orderStatusChartCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['결제대기', '처리중', '배송중', '배송완료', '주문취소'],
+                    datasets: [{
+                        data: [15, 25, 20, 30, 10],
+                        backgroundColor: [
+                            'rgba(255, 190, 11, 0.8)',
+                            'rgba(58, 134, 255, 0.8)',
+                            'rgba(76, 201, 164, 0.8)',
+                            'rgba(33, 37, 41, 0.8)',
+                            'rgba(255, 90, 95, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 190, 11, 1)',
+                            'rgba(58, 134, 255, 1)',
+                            'rgba(76, 201, 164, 1)',
+                            'rgba(33, 37, 41, 1)',
+                            'rgba(255, 90, 95, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((acc, data) => acc + data, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value}건 (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</th:block>
+</body>
+</html>
+

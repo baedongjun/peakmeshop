@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/default}">
+<head>
+    <title>주문 내역 - PeakMeShop</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <section class="mypage-section py-5">
+        <div class="container">
+            <div class="row">
+                <!-- 마이페이지 사이드바 -->
+                <div class="col-lg-3 mb-4 mb-lg-0">
+                    <div th:replace="~{fragments/mypage-sidebar :: sidebar}"></div>
+                </div>
+
+                <!-- 주문 내역 콘텐츠 -->
+                <div class="col-lg-9">
+                    <h1 class="mypage-title mb-4">주문 내역</h1>
+
+                    <!-- 기간 선택 -->
+                    <div class="period-selector mb-4">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-outline-secondary period-btn" data-period="7">최근 7일</button>
+                                    <button type="button" class="btn btn-outline-secondary period-btn" data-period="30">1개월</button>
+                                    <button type="button" class="btn btn-outline-secondary period-btn" data-period="90">3개월</button>
+                                    <button type="button" class="btn btn-outline-secondary period-btn" data-period="180">6개월</button>
+                                    <button type="button" class="btn btn-outline-secondary period-btn" data-period="365">1년</button>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mt-3 mt-md-0">
+                                <div class="input-group">
+                                    <input type="date" class="form-control" id="startDate">
+                                    <span class="input-group-text">~</span>
+                                    <input type="date" class="form-control" id="endDate">
+                                    <button class="btn btn-primary" type="button" id="searchPeriod">조회</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ```좋습니다! 모든 템플릿을 구현해 드리겠습니다. 양이 많으니 논리적인 그룹으로 나누어 제공하겠습니다. 먼저 상품 관련 템플릿부터 시작하겠습니다.
+
+                    ## 1. 상품 관련 템플릿
+
+                    ### 상품 목록 페이지 (templates/shop/products/list.html)
+
+                    ```html project="PeakMeShop" file="templates/shop/products/list.html" type="html"
+                    <!DOCTYPE html>
+                    <html xmlns:th="http://www.thymeleaf.org"
+                          xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+                          layout:decorate="~{layouts/default}">
+                    <head>
+                        <title>상품 목록 - PeakMeShop</title>
+                    </head>
+                    <body>
+                    <div layout:fragment="content">
+                        <!-- 카테고리 배너 -->
+                        <section class="category-banner" th:if="${category != null}">
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="category-header">
+                                            <h1 class="category-title" th:text="${category.name}">카테고리명</h1>
+                                            <p class="category-description" th:text="${category.description}">카테고리 설명</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- 검색 결과 배너 -->
+                        <section class="search-banner" th:if="${searchKeyword != null}">
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="search-header">
+                                            <h1 class="search-title">검색 결과: <span th:text="${searchKeyword}">검색어</span></h1>
+                                            <p class="search-count" th:text="${'총 ' + products.size() + '개의 상품이 검색되었습니다.'}">검색 결과 수</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- 상품 목록 -->
+                        <section class="product-list-section py-5">
+                            <div class="container">
+                                <div class="row">
+                                    <!-- 필터 사이드바 -->
+                                    <div class="col-lg-3 mb-4 mb-lg-0">
+                                        <div class="filter-sidebar">
+                                            <div class="filter-header d-flex justify-content-between align-items-center mb-3">
+                                                <h3 class="filter-title">필터</h3>
+                                                <button class="btn btn-sm btn-outline-secondary d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                                                    <i class="fas fa-filter"></i>
+                                                </button>
+                                            </div>
+
+                                            <div class="collapse d-lg-block" id="filterCollapse">
+                                                <!-- 카테고리 필터 -->
+                                                <div class="filter-group mb-4">
+                                                    <h4 class="filter-group-title">카테고리</h4>
+                                                    <ul class="filter-list">
+                                                        <li th:each="cat : ${categories}">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" th:id="${'category-' + cat.id}"
+                                                                       th:checked="${category != null && category.id == cat.id}">
+                                                                <label class="form-check-label" th:for="${'category-' + cat.id}" th:text="${cat.name}">카테고리명</label>
+                                                            </div>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+
+                                                <!-- 브랜드 필터 -->
+                                                <div class="filter-group mb-4">
+                                                    <h4 class="filter-group-title">브랜드</h4>
+                                                    <ul class="filter-list">
+                                                        <li th:each="brand : ${brands}">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" th:id="${'brand-' + brand.id}">
+                                                                <label class="form-check-label" th:for="${'brand-' + brand.id}" th:text="${brand.name}">브랜드명</label>
+                                                            </div>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+
+                                                <!-- 가격 필터 -->
+                                                <div class="filter-group mb-4">
+                                                    <h4 class="filter-group-title">가격</h4>
+                                                    <div class="price-slider">
+                                                        <div class="price-range">
+                                                            <input type="range" class="form-range" id="priceMin" min="0" max="1000000" step="10000">
+                                                            <input type="range" class="form-range" id="priceMax" min="0" max="1000000" step="10000">
+                                                        </div>
+                                                        <div class="price-inputs d-flex align-items-center mt-2">
+                                                            <input type="number" class="form-control form-control-sm" id="minPrice" placeholder="최소">
+                                                            <span class="mx-2">-</span>
+                                                            <input type="number" class="form-control form-control-sm" id="maxPrice" placeholder="최대">
+                                                            <button class="btn btn-sm btn-primary ms-2">적용</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- 태그 필터 -->
+                                                <div class="filter-group mb-4">
+                                                    <h4 class="filter-group-title">태그</h4>
+                                                    <div class="tag-cloud">
+                                                        <a href="#" class="tag-item" th:each="tag : ${tags}" th:text="${tag.name}">태그명</a>
+                                                    </div>
+                                                </div>
+
+                                                <!-- 필터 적용 버튼 -->
+                                                <div class="filter-actions">
+                                                    <button class="btn btn-primary w-100">필터 적용</button>
+                                                    <button class="btn btn-outline-secondary w-100 mt-2">필터 초기화</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 상품 목록 -->
+                                    <div class="col-lg-9">
+                                        <!-- 정렬 옵션 -->
+                                        <div class="product-sort mb-4">
+                                            <div class="row align-items-center">
+                                                <div class="col-md-6 mb-3 mb-md-0">
+                                                    <p class="product-count" th:text="${'총 ' + products.size() + '개 상품'}">총 상품 수</p>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="d-flex justify-content-md-end">
+                                                        <select class="form-select form-select-sm me-2" id="sortOption">
+                                                            <option value="newest">최신순</option>
+                                                            <option value="popularity">인기순</option>
+                                                            <option value="priceLow">가격 낮은순</option>
+                                                            <option value="priceHigh">가격 높은순</option>
+                                                            <option value="rating">평점순</option>
+                                                        </select>
+                                                        <div class="view-options">
+                                                            <button class="btn btn-sm btn-outline-secondary view-option active" data-view="grid">
+                                                                <i class="fas fa-th"></i>
+                                                            </button>
+                                                            <button class="btn btn-sm btn-outline-secondary view-option" data-view="list">
+                                                                <i class="fas fa-list"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 상품 그리드 -->
+                                        <div class="product-grid">
+                                            <div class="row" id="productContainer">
+                                                <div class="col-6 col-md-4 mb-4" th:each="product : ${products}">
+                                                    <div class="product-card">
+                                                        <div class="product-badge new" th:if="${product.isNew}">NEW</div>
+                                                        <div class="product-badge sale" th:if="${product.discountRate > 0}" th:text="${'-' + product.discountRate + '%'}">-20%</div>
+                                                        <a th:href="@{/shop/products/{id}(id=${product.id})}" class="product-image">
+                                                            <img th:src="${product.thumbnailUrl}" alt="상품 이미지" class="img-fluid">
+                                                        </a>
+                                                        <div class="product-info">
+                                                            <h3 class="product-name">
+                                                                <a th:href="@{/shop/products/{id}(id=${product.id})}" th:text="${product.name}">상품명</a>
+                                                            </h3>
+                                                            <div class="product-price">
+                                                                <span class="current-price" th:text="${#numbers.formatCurrency(product.price)}">10,000원</span>
+                                                                <span class="original-price" th:if="${product.originalPrice > product.price}"
+                                                                      th:text="${#numbers.formatCurrency(product.originalPrice)}">12,000원</span>
+                                                            </div>
+                                                            <div class="product-rating">
+                                                                <div class="stars">
+                                                                    <i class="fas fa-star" th:each="i : ${#numbers.sequence(1, product.rating)}"></i>
+                                                                    <i class="far fa-star" th:each="i : ${#numbers.sequence(product.rating + 1, 5)}"></i>
+                                                                </div>
+                                                                <span class="rating-count" th:text="${'(' + product.reviewCount + ')'}">리뷰 수</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="product-actions">
+                                                            <button class="btn btn-sm btn-outline-primary add-to-cart"
+                                                                    th:onclick="'addToCart(' + ${product.id} + ', 1)'">
+                                                                <i class="fas fa-shopping-cart"></i> 장바구니
+                                                            </button>
+                                                            <button class="btn btn-sm btn-outline-secondary add-to-wishlist"
+                                                                    th:onclick="'addToWishlist(' + ${product.id} + ')'">
+                                                                <i class="far fa-heart"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 상품이 없을 경우 -->
+                                        <div class="no-products text-center py-5" th:if="${products.isEmpty()}">
+                                            <i class="fas fa-search fa-3x mb-3 text-muted"></i>
+                                            <h3>상품이 없습니다</h3>
+                                            <p>검색 조건을 변경하거나 다른 카테고리를 선택해 보세요.</p>
+                                            <a th:href="@{/shop}" class="btn btn-primary mt-3">모든 상품 보기</a>
+                                        </div>
+
+                                        <!-- 페이지네이션 -->
+                                        <nav aria-label="Page navigation" class="mt-5" th:if="${!products.isEmpty()}">
+                                            <ul class="pagination justify-content-center">
+                                                <li class="page-item" th:classappend="${currentPage == 1 ? 'disabled' : ''}">
+                                                    <a class="page-link" th:href="@{${#httpServletRequest.requestURI}(page=${currentPage - 1})}" aria-label="Previous">
+                                                        <span aria-hidden="true">&laquo;</span>
+                                                    </a>
+                                                </li>
+                                                <li class="page-item" th:each="i : ${#numbers.sequence(1, totalPages)}" th:classappend="${i == currentPage ? 'active' : ''}">
+                                                    <a class="page-link" th:href="@{${#httpServletRequest.requestURI}(page=${i})}" th:text="${i}">1</a>
+                                                </li>
+                                                <li class="page-item" th:classappend="${currentPage == totalPages ? 'disabled' : ''}">
+                                                    <a class="page-link" th:href="@{${#httpServletRequest.requestURI}(page=${currentPage + 1})}" aria-label="Next">
+                                                        <span aria-hidden="true">&raquo;</span>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </nav>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <th:block layout:fragment="script">
+                        <script>
+                            $(document).ready(function() {
+                                // 그리드/리스트 뷰 전환
+                                $('.view-option').click(function() {
+                                    $('.view-option').removeClass('active');
+                                    $(this).addClass('active');
+
+                                    const viewType = $(this).data('view');
+                                    if (viewType === 'grid') {
+                                        $('#productContainer').removeClass('list-view').addClass('grid-view');
+                                    } else {
+                                        $('#productContainer').removeClass('grid-view').addClass('list-view');
+                                    }
+                                });
+
+                                // 정렬 옵션 변경 시
+                                $('#sortOption').change(function() {
+                                    // 정렬 로직 구현
+                                    const sortBy = $(this).val();
+                                    // AJAX 요청으로 정렬된 상품 목록 가져오기
+                                });
+
+                                // 가격 슬라이더
+                                $('#priceMin, #priceMax').on('input', function() {
+                                    const minVal = parseInt($('#priceMin').val());
+                                    const maxVal = parseInt($('#priceMax').val());
+
+                                    $('#minPrice').val(minVal);
+                                    $('#maxPrice').val(maxVal);
+                                });
+
+                                $('#minPrice, #maxPrice').on('change', function() {
+                                    const minVal = parseInt($('#minPrice').val());
+                                    const maxVal = parseInt($('#maxPrice').val());
+
+                                    $('#priceMin').val(minVal);
+                                    $('#priceMax').val(maxVal);
+                                });
+                            });
+                        </script>
+                    </th:block>
+                    </body>
+                    </html>

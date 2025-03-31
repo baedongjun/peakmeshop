@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main-layout}">
+<head>
+    <title>주문 상세</title>
+    <th:block layout:fragment="css">
+        <style>
+            .order-detail-container {
+                min-height: 60vh;
+            }
+            .order-detail-card {
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+                overflow: hidden;
+                border: none;
+                margin-bottom: 1.5rem;
+            }
+            .order-detail-card-header {
+                background-color: var(--gray-100);
+                padding: 1rem 1.5rem;
+                border-bottom: 1px solid var(--gray-200);
+            }
+            .order-detail-card-body {
+                padding: 1.5rem;
+            }
+            .order-status {
+                display: inline-block;
+                padding: 0.25rem 0.75rem;
+                border-radius: 50rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+            .status-pending {
+                background-color: var(--warning-color);
+                color: white;
+            }
+            .status-processing {
+                background-color: var(--primary-color);
+                color: white;
+            }
+            .status-shipped {
+                background-color: var(--success-color);
+                color: white;
+            }
+            .status-delivered {
+                background-color: var(--dark-color);
+                color: white;
+            }
+            .status-canceled {
+                background-color: var(--danger-color);
+                color: white;
+            }
+            .order-timeline {
+                position: relative;
+                padding-left: 30px;
+            }
+            .timeline-item {
+                position: relative;
+                padding-bottom: 1.5rem;
+            }
+            .timeline-item:last-child {
+                padding-bottom: 0;
+            }
+            .timeline-item::before {
+                content: "";
+                position: absolute;
+                left: -30px;
+                top: 0;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background-color: var(--primary-color);
+                z-index: 1;
+            }
+            .timeline-item::after {
+                content: "";
+                position: absolute;
+                left: -20px;
+                top: 20px;
+                width: 2px;
+                height: calc(100% - 20px);
+                background-color: var(--gray-300);
+            }
+            .timeline-item:last-child::after {
+                display: none;
+            }
+            .timeline-date {
+                font-size: 0.85rem;
+                color: var(--gray-600);
+            }
+            .timeline-title {
+                font-weight: 600;
+                margin-bottom: 0.25rem;
+            }
+            .timeline-text {
+                color: var(--gray-700);
+            }
+            .order-item-img {
+                width: 80px;
+                height: 80px;
+                object-fit: cover;
+                border-radius: 0.5rem;
+            }
+            .tracking-info {
+                background-color: var(--gray-100);
+                border-radius: 0.5rem;
+                padding: 1rem;
+            }
+            .tracking-info-item {
+                display: flex;
+                align-items: center;
+                margin-bottom: 0.5rem;
+            }
+            .tracking-info-item i {
+                width: 24px;
+                color: var(--primary-color);
+                margin-right: 0.5rem;
+            }
+            .tracking-info-item:last-child {
+                margin-bottom: 0;
+            }
+            .payment-info-item {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 0.5rem;
+            }
+            .payment-info-item:last-child {
+                margin-bottom: 0;
+                padding-top: 0.5rem;
+                border-top: 1px solid var(--gray-300);
+                font-weight: 700;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+<main layout:fragment="content">
+    <section class="py-5">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-0">주문 상세</h2>
+                    <p class="text-muted mb-0" th:text="${'주문번호: ' + (order != null ? order.orderNumber : 'ORD-1001')}">주문번호: ORD-1001</p>
+                </div>
+                <div>
+                    <a th:href="@{/mypage/orders}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left me-1"></i> 목록으로
+                    </a>
+                    <button class="btn btn-primary" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i> 인쇄
+                    </button>
+                </div>
+            </div>
+
+            <div class="order-detail-container">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <!-- 주문 상태 -->
+                        <div class="order-detail-card">
+                            <div class="order-detail-card-header d-flex justify-content-between align-items-center">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-info-circle me-2"></i> 주문 상태
+                                </h4>
+                                <span th:class="${'order-status status-' + #strings.toLowerCase(order != null ? order.status : 'SHIPPED')}"
+                                      th:text="${#strings.equals(order != null ? order.status : 'SHIPPED', 'PENDING') ? '결제대기' :
+                                                   #strings.equals(order != null ? order.status : 'SHIPPED', 'PROCESSING') ? '처리중' :
+                                                   #strings.equals(order != null ? order.status : 'SHIPPED', 'SHIPPED') ? '배송중' :
+                                                   #strings.equals(order != null ? order.status : 'SHIPPED', 'DELIVERED') ? '배송완료' :
+                                                   #strings.equals(order != null ? order.status : 'SHIPPED', 'CANCELED') ? '주문취소' : (order != null ? order.status : 'SHIPPED')}">
+                                        배송중
+                                    </span>
+                            </div>
+                            <div class="order-detail-card-body">
+                                <div class="order-timeline">
+                                    <!-- 주문 타임라인 (실제로는 DB에서 가져올 것) -->
+                                    <div th:each="timeline, stat : ${orderTimeline != null ? orderTimeline : {
+                                                {1, '2023-07-15 14:30', '주문 접수', '고객님의 주문이 접수되었습니다.'},
+                                                {2, '2023-07-15 15:45', '결제 완료', '신용카드 결제가 완료되었습니다.'},
+                                                {3, '2023-07-16 09:20', '상품 준비중', '주문하신 상품을 준비 중입니다.'},
+                                                {4, '2023-07-17 11:10', '배송 시작', 'CJ대한통운(123456789012)으로 배송이 시작되었습니다.'}
+                                            }}"
+                                         class="timeline-item">
+                                        <div class="timeline-date" th:text="${timeline[1]}">2023-07-15 14:30</div>
+                                        <div class="timeline-title" th:text="${timeline[2]}">주문 접수</div>
+                                        <div class="timeline-text" th:text="${timeline[3]}">고객님의 주문이 접수되었습니다.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 주문 상품 정보 -->
+                        <div class="order-detail-card">
+                            <div class="order-detail-card-header">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-shopping-bag me-2"></i> 주문 상품 정보
+                                </h4>
+                            </div>
+                            <div class="order-detail-card-body">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                        <tr>
+                                            <th>상품</th>
+                                            <th>가격</th>
+                                            <th>수량</th>
+                                            <th class="text-end">소계</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <!-- 주문 상품 목록 (실제로는 DB에서 가져올 것) -->
+                                        <tr th:each="item, stat : ${orderItems != null ? orderItems : {
+                                                        {1, '프리미엄 데님 자켓', 52000, 1, '/placeholder.svg?height=80&width=80'},
+                                                        {2, '캐주얼 티셔츠', 35000, 2, '/placeholder.svg?height=80&width=80'}
+                                                    }}">
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <img th:src="${item[4]}" th:alt="${item[1]}" class="order-item-img me-3">
+                                                    <div>
+                                                        <h6 class="mb-0" th:text="${item[1]}">상품명</h6>
+                                                        <a th:href="@{'/products/' + ${item[0]}}" class="text-decoration-none">상품 보기</a>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td th:text="${'₩' + #numbers.formatInteger(item[2], 0, 'COMMA')}">가격</td>
+                                            <td th:text="${item[3]}">수량</td>
+                                            <td class="text-end" th:text="${'₩' + #numbers.formatInteger(item[2] * item[3], 0, 'COMMA')}">소계</td>
+                                        </tr>
+                                        </tbody>
+                                        <tfoot>
+                                        <tr>
+                                            <td colspan="3" class="text-end fw-bold">상품 금액</td>
+                                            <td class="text-end fw-bold" th:text="${'₩' + #numbers.formatInteger(order != null ? order.subtotal : 122000, 0, 'COMMA')}">₩122,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="3" class="text-end fw-bold">배송비</td>
+                                            <td class="text-end fw-bold" th:text="${'₩' + #numbers.formatInteger(order != null ? order.shippingFee : 3000, 0, 'COMMA')}">₩3,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="3" class="text-end fw-bold">할인 금액</td>
+                                            <td class="text-end fw-bold text-danger" th:text="${'-₩' + #numbers.formatInteger(order != null ? order.discount : 0, 0, 'COMMA')}">-₩0</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="3" class="text-end fw-bold">총 결제금액</td>
+                                            <td class="text-end fw-bold text-primary" th:text="${'₩' + #numbers.formatInteger(order != null ? order.totalAmount : 125000, 0, 'COMMA')}">₩125,000</td>
+                                        </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 배송 정보 -->
+                        <div class="order-detail-card">
+                            <div class="order-detail-card-header">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-shipping-fast me-2"></i> 배송 정보
+                                </h4>
+                            </div>
+                            <div class="order-detail-card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <p class="mb-1 text-muted">받는 사람</p>
+                                        <p class="mb-0 fw-bold" th:text="${order != null ? order.receiverName : '홍길동'}">홍길동</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <p class="mb-1 text-muted">연락처</p>
+                                        <p class="mb-0 fw-bold" th:text="${order != null ? order.receiverPhone : '010-1234-5678'}">010-1234-5678</p>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <p class="mb-1 text-muted">배송지 주소</p>
+                                        <p class="mb-0 fw-bold" th:text="${order != null ? order.address : '서울시 강남구 테헤란로 123, 456동 789호'}">서울시 강남구 테헤란로 123, 456동 789호</p>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <p class="mb-1 text-muted">배송 요청사항</p>
+                                        <p class="mb-0 fw-bold" th:text="${order != null ? order.deliveryRequest : '문 앞에 놓아주세요.'}">문 앞에 놓아주세요.</p>
+                                    </div>
+                                </div>
+
+                                <!-- 배송 추적 정보 -->
+                                <div th:if="${order != null && (order.status == 'SHIPPED' || order.status == 'DELIVERED')}" class="tracking-info mt-3">
+                                    <h5 class="mb-3">배송 추적 정보</h5>
+                                    <div class="tracking-info-item">
+                                        <i class="fas fa-truck"></i>
+                                        <span>택배사: <strong th:text="${order != null ? order.courierCompany : 'CJ대한통운'}">CJ대한통운</strong></span>
+                                    </div>
+                                    <div class="tracking-info-item">
+                                        <i class="fas fa-barcode"></i>
+                                        <span>운송장번호: <strong th:text="${order != null ? order.trackingNumber : '123456789012'}">123456789012</strong></span>
+                                    </div>
+                                    <div class="tracking-info-item">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        <span>발송일: <strong th:text="${order != null ? order.shippedDate : '2023-07-17'}">2023-07-17</strong></span>
+                                    </div>
+                                    <div class="tracking-info-item">
+                                        <i class="fas fa-clock"></i>
+                                        <span>예상 배송일: <strong th:text="${order != null ? order.estimatedDeliveryDate : '2023-07-19'}">2023-07-19</strong></span>
+                                    </div>
+                                    <div class="mt-3">
+                                        <a href="#" class="btn btn-sm btn-primary" target="_blank">
+                                            <i class="fas fa-search me-1"></i> 배송 조회
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <!-- 결제 정보 -->
+                        <div class="order-detail-card">
+                            <div class="order-detail-card-header">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-credit-card me-2"></i> 결제 정보
+                                </h4>
+                            </div>
+                            <div class="order-detail-card-body">
+                                <div class="mb-4">
+                                    <p class="mb-1 text-muted">결제 방법</p>
+                                    <p class="mb-0 fw-bold" th:text="${order != null ? order.paymentMethod : '신용카드'}">신용카드</p>
+                                </div>
+
+                                <div class="mb-4">
+                                    <p class="mb-1 text-muted">결제 상세</p>
+                                    <div th:if="${order != null && order.paymentMethod == '신용카드'}">
+                                        <p class="mb-0">카드사: <strong th:text="${order != null ? order.cardCompany : '신한카드'}">신한카드</strong></p>
+                                        <p class="mb-0">카드번호: <strong th:text="${order != null ? order.cardNumber : '****-****-****-1234'}">****-****-****-1234</strong></p>
+                                        <p class="mb-0">할부: <strong th:text="${order != null ? order.installment : '일시불'}">일시불</strong></p>
+                                    </div>
+                                    <div th:if="${order != null && order.paymentMethod == '무통장입금'}">
+                                        <p class="mb-0">입금자명: <strong th:text="${order != null ? order.depositorName : '홍길동'}">홍길동</strong></p>
+                                        <p class="mb-0">입금계좌: <strong th:text="${order != null ? order.bankAccount : '신한은행 123-456-789012'}">신한은행 123-456-789012</strong></p>
+                                        <p class="mb-0">입금기한: <strong th:text="${order != null ? order.depositDueDate : '2023-07-16 23:59:59'}">2023-07-16 23:59:59</strong></p>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <p class="mb-1 text-muted">결제 금액 상세</p>
+                                    <div class="payment-info-item">
+                                        <span>상품 금액</span>
+                                        <span th:text="${'₩' + #numbers.formatInteger(order != null ? order.subtotal : 122000, 0, 'COMMA')}">₩122,000</span>
+                                    </div>
+                                    <div class="payment-info-item">
+                                        <span>배송비</span>
+                                        <span th:text="${'₩' + #numbers.formatInteger(order != null ? order.shippingFee : 3000, 0, 'COMMA')}">₩3,000</span>
+                                    </div>
+                                    <div class="payment-info-item">
+                                        <span>할인 금액</span>
+                                        <span class="text-danger" th:text="${'-₩' + #numbers.formatInteger(order != null ? order.discount : 0, 0, 'COMMA')}">-₩0</span>
+                                    </div>
+                                    <div class="payment-info-item">
+                                        <span>총 결제금액</span>
+                                        <span class="text-primary" th:text="${'₩' + #numbers.formatInteger(order != null ? order.totalAmount : 125000, 0, 'COMMA')}">₩125,000</span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <p class="mb-1 text-muted">결제일</p>
+                                    <p class="mb-0 fw-bold" th:text="${order != null ? order.paidAt : '2023-07-15 15:45:30'}">2023-07-15 15:45:30</p>
+                                </div>
+
+                                <!-- 영수증 다운로드 버튼 -->
+                                <div class="d-grid gap-2">
+                                    <a href="#" class="btn btn-outline-primary">
+                                        <i class="fas fa-file-invoice me-1"></i> 영수증 다운로드
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 주문 액션 -->
+                        <div class="order-detail-card">
+                            <div class="order-detail-card-header">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-cog me-2"></i> 주문 관리
+                                </h4>
+                            </div>
+                            <div class="order-detail-card-body">
+                                <div class="d-grid gap-2">
+                                    <!-- 주문 취소 버튼 (결제대기, 처리중 상태일 때만 표시) -->
+                                    <button th:if="${order == null || order.status == 'PENDING' || order.status == 'PROCESSING'}"
+                                            class="btn btn-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#cancelOrderModal">
+                                        <i class="fas fa-times me-1"></i> 주문 취소
+                                    </button>
+
+                                    <!-- 배송 조회 버튼 (배송중, 배송완료 상태일 때만 표시) -->
+                                    <a th:if="${order == null || order.status == 'SHIPPED' || order.status == 'DELIVERED'}"
+                                       href="#"
+                                       class="btn btn-primary"
+                                       target="_blank">
+                                        <i class="fas fa-truck me-1"></i> 배송 조회
+
+
+                                    </a>
+
+                                    <!-- 구매 확정 버튼 (배송중, 배송완료 상태일 때만 표시) -->
+                                    <button th:if="${order == null || order.status == 'SHIPPED' || order.status == 'DELIVERED'}"
+                                            class="btn btn-success"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#confirmOrderModal">
+                                        <i class="fas fa-check me-1"></i> 구매 확정
+                                    </button>
+
+                                    <!-- 교환/반품 버튼 (배송중, 배송완료 상태일 때만 표시) -->
+                                    <button th:if="${order == null || order.status == 'SHIPPED' || order.status == 'DELIVERED'}"
+                                            class="btn btn-outline-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#returnOrderModal">
+                                        <i class="fas fa-exchange-alt me-1"></i> 교환/반품 신청
+                                    </button>
+
+                                    <!-- 리뷰 작성 버튼 (배송완료 상태일 때만 표시) -->
+                                    <a th:if="${order != null && order.status == 'DELIVERED'}"
+                                       th:href="@{'/mypage/orders/' + ${order.id} + '/review'}"
+                                       class="btn btn-outline-primary">
+                                        <i class="fas fa-star me-1"></i> 리뷰 작성
+                                    </a>
+
+                                    <!-- 1:1 문의 버튼 -->
+                                    <a href="#" class="btn btn-outline-secondary">
+                                        <i class="fas fa-question-circle me-1"></i> 1:1 문의하기
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 주문 취소 모달 -->
+    <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelOrderModalLabel">주문 취소</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>정말로 이 주문을 취소하시겠습니까?</p>
+                    <div class="mb-3">
+                        <label for="cancelReason" class="form-label">취소 사유</label>
+                        <select class="form-select" id="cancelReason" required>
+                            <option value="">취소 사유 선택</option>
+                            <option value="단순변심">단순변심</option>
+                            <option value="상품정보와 상이">상품정보와 상이</option>
+                            <option value="배송지연">배송지연</option>
+                            <option value="품절">품절</option>
+                            <option value="기타">기타</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="cancelReasonDetailDiv" style="display: none;">
+                        <label for="cancelReasonDetail" class="form-label">상세 사유</label>
+                        <textarea class="form-control" id="cancelReasonDetail" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-danger" id="confirmCancelBtn">주문 취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 구매 확정 모달 -->
+    <div class="modal fade" id="confirmOrderModal" tabindex="-1" aria-labelledby="confirmOrderModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmOrderModalLabel">구매 확정</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>구매 확정 시 교환/반품이 불가능합니다. 정말로 구매를 확정하시겠습니까?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-success" id="confirmOrderBtn">구매 확정</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 교환/반품 모달 -->
+    <div class="modal fade" id="returnOrderModal" tabindex="-1" aria-labelledby="returnOrderModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="returnOrderModalLabel">교환/반품 신청</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="returnForm">
+                        <div class="mb-3">
+                            <label class="form-label">신청 유형</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="returnType" id="returnTypeExchange" value="exchange" checked>
+                                <label class="form-check-label" for="returnTypeExchange">교환</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="returnType" id="returnTypeRefund" value="refund">
+                                <label class="form-check-label" for="returnTypeRefund">반품</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">대상 상품</label>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead>
+                                    <tr>
+                                        <th style="width: 50px;">선택</th>
+                                        <th>상품</th>
+                                        <th>가격</th>
+                                        <th>수량</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <!-- 주문 상품 목록 (실제로는 DB에서 가져올 것) -->
+                                    <tr th:each="item, stat : ${orderItems != null ? orderItems : {
+                                                    {1, '프리미엄 데님 자켓', 52000, 1, '/placeholder.svg?height=50&width=50'},
+                                                    {2, '캐주얼 티셔츠', 35000, 2, '/placeholder.svg?height=50&width=50'}
+                                                }}">
+                                        <td>
+                                            <div class="form-check">
+                                                <input class="form-check-input return-item-check" type="checkbox" th:value="${item[0]}" th:id="${'returnItem' + item[0]}">
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img th:src="${item[4]}" th:alt="${item[1]}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 0.25rem;" class="me-2">
+                                                <span th:text="${item[1]}">상품명</span>
+                                            </div>
+                                        </td>
+                                        <td th:text="${'₩' + #numbers.formatInteger(item[2], 0, 'COMMA')}">가격</td>
+                                        <td>
+                                            <select class="form-select form-select-sm return-item-quantity" th:disabled="${!item[3] > 1}">
+                                                <option th:each="i : ${#numbers.sequence(1, item[3])}" th:value="${i}" th:text="${i}">1</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="returnReason" class="form-label">사유</label>
+                            <select class="form-select" id="returnReason" required>
+                                <option value="">사유 선택</option>
+                                <option value="단순변심">단순변심</option>
+                                <option value="상품불량">상품불량</option>
+                                <option value="상품정보와 상이">상품정보와 상이</option>
+                                <option value="오배송">오배송</option>
+                                <option value="기타">기타</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="returnReasonDetailDiv" style="display: none;">
+                            <label for="returnReasonDetail" class="form-label">상세 사유</label>
+                            <textarea class="form-control" id="returnReasonDetail" rows="3"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="returnImages" class="form-label">이미지 첨부 (선택)</label>
+                            <input type="file" class="form-control" id="returnImages" multiple accept="image/*">
+                            <div class="form-text">상품 불량, 오배송의 경우 이미지를 첨부하면 처리가 빨라집니다.</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="submitReturnBtn">신청하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<th:block layout:fragment="script">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 주문 취소 모달
+            const cancelReasonSelect = document.getElementById('cancelReason');
+            const cancelReasonDetailDiv = document.getElementById('cancelReasonDetailDiv');
+            const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+
+            if (cancelReasonSelect) {
+                cancelReasonSelect.addEventListener('change', function() {
+                    if (this.value === '기타') {
+                        cancelReasonDetailDiv.style.display = 'block';
+                    } else {
+                        cancelReasonDetailDiv.style.display = 'none';
+                    }
+                });
+            }
+
+            if (confirmCancelBtn) {
+                confirmCancelBtn.addEventListener('click', function() {
+                    const cancelReason = cancelReasonSelect.value;
+
+                    if (!cancelReason) {
+                        alert('취소 사유를 선택해주세요.');
+                        return;
+                    }
+
+                    if (cancelReason === '기타') {
+                        const cancelReasonDetail = document.getElementById('cancelReasonDetail').value;
+                        if (!cancelReasonDetail) {
+                            alert('상세 사유를 입력해주세요.');
+                            return;
+                        }
+                    }
+
+                    // 실제 구현에서는 서버에 주문 취소 요청
+                    console.log('주문 취소 요청:', {
+                        orderId: 1,
+                        reason: cancelReason,
+                        reasonDetail: cancelReason === '기타' ? document.getElementById('cancelReasonDetail').value : ''
+                    });
+
+                    // 임시 알림
+                    alert('주문이 취소되었습니다.');
+
+                    // 모달 닫기
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('cancelOrderModal'));
+                    modal.hide();
+
+                    // 페이지 새로고침 (실제로는 AJAX로 구현)
+                    // location.reload();
+                });
+            }
+
+            // 구매 확정 모달
+            const confirmOrderBtn = document.getElementById('confirmOrderBtn');
+
+            if (confirmOrderBtn) {
+                confirmOrderBtn.addEventListener('click', function() {
+                    // 실제 구현에서는 서버에 구매 확정 요청
+                    console.log('구매 확정 요청:', {
+                        orderId: 1
+                    });
+
+                    // 임시 알림
+                    alert('구매가 확정되었습니다.');
+
+                    // 모달 닫기
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('confirmOrderModal'));
+                    modal.hide();
+
+                    // 페이지 새로고침 (실제로는 AJAX로 구현)
+                    // location.reload();
+                });
+            }
+
+            // 교환/반품 모달
+            const returnReasonSelect = document.getElementById('returnReason');
+            const returnReasonDetailDiv = document.getElementById('returnReasonDetailDiv');
+            const submitReturnBtn = document.getElementById('submitReturnBtn');
+
+            if (returnReasonSelect) {
+                returnReasonSelect.addEventListener('change', function() {
+                    if (this.value === '기타') {
+                        returnReasonDetailDiv.style.display = 'block';
+                    } else {
+                        returnReasonDetailDiv.style.display = 'none';
+                    }
+                });
+            }
+
+            if (submitReturnBtn) {
+                submitReturnBtn.addEventListener('click', function() {
+                    const returnType = document.querySelector('input[name="returnType"]:checked').value;
+                    const returnReason = returnReasonSelect.value;
+                    const selectedItems = document.querySelectorAll('.return-item-check:checked');
+
+                    if (selectedItems.length === 0) {
+                        alert('교환/반품할 상품을 선택해주세요.');
+                        return;
+                    }
+
+                    if (!returnReason) {
+                        alert('사유를 선택해주세요.');
+                        return;
+                    }
+
+                    if (returnReason === '기타') {
+                        const returnReasonDetail = document.getElementById('returnReasonDetail').value;
+                        if (!returnReasonDetail) {
+                            alert('상세 사유를 입력해주세요.');
+                            return;
+                        }
+                    }
+
+                    // 선택된 상품 정보 수집
+                    const items = [];
+                    selectedItems.forEach(item => {
+                        const itemId = item.value;
+                        const row = item.closest('tr');
+                        const quantitySelect = row.querySelector('.return-item-quantity');
+                        const quantity = quantitySelect ? quantitySelect.value : 1;
+
+                        items.push({
+                            itemId: itemId,
+                            quantity: quantity
+                        });
+                    });
+
+                    // 실제 구현에서는 서버에 교환/반품 요청
+                    console.log('교환/반품 요청:', {
+                        orderId: 1,
+                        type: returnType,
+                        reason: returnReason,
+                        reasonDetail: returnReason === '기타' ? document.getElementById('returnReasonDetail').value : '',
+                        items: items
+                    });
+
+                    // 임시 알림
+                    alert(`${returnType === 'exchange' ? '교환' : '반품'} 신청이 완료되었습니다.`);
+
+                    // 모달 닫기
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('returnOrderModal'));
+                    modal.hide();
+
+                    // 페이지 새로고침 (실제로는 AJAX로 구현)
+                    // location.reload();
+                });
+            }
+        });
+    </script>
+</th:block>
+</body>
+</html>

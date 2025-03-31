@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main-layout}">
+<head>
+    <title>로그인</title>
+    <th:block layout:fragment="css">
+        <style>
+            .login-container {
+                max-width: 450px;
+                margin: 0 auto;
+            }
+            .login-card {
+                border-radius: 1rem;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+                border: none;
+            }
+            .login-header {
+                background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+                padding: 2rem;
+                color: white;
+                text-align: center;
+            }
+            .login-body {
+                padding: 2rem;
+            }
+            .social-login {
+                margin-top: 1.5rem;
+                display: flex;
+                justify-content: center;
+                gap: 1rem;
+            }
+            .social-login a {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                color: white;
+                transition: all 0.3s ease;
+            }
+            .social-login a:hover {
+                transform: translateY(-3px);
+            }
+            .social-login .google {
+                background-color: #DB4437;
+            }
+            .social-login .facebook {
+                background-color: #4267B2;
+            }
+            .social-login .naver {
+                background-color: #03C75A;
+            }
+            .social-login .kakao {
+                background-color: #FEE500;
+                color: #000;
+            }
+            .divider {
+                display: flex;
+                align-items: center;
+                margin: 1.5rem 0;
+                color: var(--gray-500);
+            }
+            .divider::before, .divider::after {
+                content: "";
+                flex: 1;
+                border-bottom: 1px solid var(--gray-300);
+            }
+            .divider span {
+                padding: 0 1rem;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+<main layout:fragment="content">
+    <section class="py-5">
+        <div class="container">
+            <div class="login-container">
+                <div class="card login-card">
+                    <div class="login-header">
+                        <h3 class="mb-0">로그인</h3>
+                        <p class="mb-0">PeakMeShop에 오신 것을 환영합니다</p>
+                    </div>
+                    <div class="login-body">
+                        <!-- 로그인 실패 메시지 -->
+                        <div th:if="${param.error}" class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            아이디 또는 비밀번호가 일치하지 않습니다.
+                        </div>
+                        <!-- 로그아웃 메시지 -->
+                        <div th:if="${param.logout}" class="alert alert-success" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            성공적으로 로그아웃되었습니다.
+                        </div>
+
+                        <form th:action="@{/auth/login-process}" method="post">
+                            <div class="mb-3">
+                                <label for="userId" class="form-label">아이디</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input type="text" class="form-control" id="userId" name="userId" placeholder="아이디를 입력하세요" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">비밀번호</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                    <input type="password" class="form-control" id="password" name="password" placeholder="비밀번호를 입력하세요" required>
+                                </div>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="rememberMe" name="remember-me">
+                                <label class="form-check-label" for="rememberMe">로그인 상태 유지</label>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">로그인</button>
+                            </div>
+                        </form>
+
+                        <div class="text-center mt-3">
+                            <a th:href="@{/forgot-password}" class="text-decoration-none">비밀번호를 잊으셨나요?</a>
+                        </div>
+
+                        <div class="divider">
+                            <span>또는</span>
+                        </div>
+
+                        <div class="social-login">
+                            <a href="/oauth2/authorize/google" class="google"><i class="fab fa-google"></i></a>
+                            <a href="/oauth2/authorize/facebook" class="facebook"><i class="fab fa-facebook-f"></i></a>
+                            <a href="/oauth2/authorize/naver" class="naver"><i class="fas fa-n"></i></a>
+                            <a href="/oauth2/authorize/kakao" class="kakao"><i class="fas fa-comment"></i></a>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <p>계정이 없으신가요? <a th:href="@{/register}" class="text-decoration-none fw-bold">회원가입</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+</body>
+</html>
+
+```html file="src/main/resources/templates/auth/register.html"
+&lt;!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main-layout}">
+<head>
+    <title>회원가입</title>
+    <th:block layout:fragment="css">
+        <style>
+            .register-container {
+                max-width: 600px;
+                margin: 0 auto;
+            }
+            .register-card {
+                border-radius: 1rem;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+                border: none;
+            }
+            .register-header {
+                background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+                padding: 2rem;
+                color: white;
+                text-align: center;
+            }
+            .register-body {
+                padding: 2rem;
+            }
+            .divider {
+                display: flex;
+                align-items: center;
+                margin: 1.5rem 0;
+                color: var(--gray-500);
+            }
+            .divider::before, .divider::after {
+                content: "";
+                flex: 1;
+                border-bottom: 1px solid var(--gray-300);
+            }
+            .divider span {
+                padding: 0 1rem;
+            }
+            .social-register {
+                margin-top: 1.5rem;
+                display: flex;
+                justify-content: center;
+                gap: 1rem;
+            }
+            .social-register a {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                color: white;
+                transition: all 0.3s ease;
+            }
+            .social-register a:hover {
+                transform: translateY(-3px);
+            }
+            .social-register .google {
+                background-color: #DB4437;
+            }
+            .social-register .facebook {
+                background-color: #4267B2;
+            }
+            .social-register .naver {
+                background-color: #03C75A;
+            }
+            .social-register .kakao {
+                background-color: #FEE500;
+                color: #000;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+<main layout:fragment="content">
+    <section class="py-5">
+        <div class="container">
+            <div class="register-container">
+                <div class="card register-card">
+                    <div class="register-header">
+                        <h3 class="mb-0">회원가입</h3>
+                        <p class="mb-0">PeakMeShop의 회원이 되어 다양한 혜택을 누려보세요</p>
+                    </div>
+                    <div class="register-body">
+                        &lt;!-- 회원가입 실패 메시지 -->
+                        <div th:if="${error}" class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <span th:text="${error}">오류 메시지</span>
+                        </div>
+
+                        <form th:action="@{/auth/register-process}" method="post" th:object="${memberDto != null ? memberDto : new Object()}">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="userId" class="form-label">아이디 <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" class="form-control" id="userId" name="userId" th:value="${memberDto != null ? memberDto.userId : ''}" placeholder="아이디를 입력하세요" required>
+                                    </div>
+                                    <small class="text-muted">영문, 숫자 조합 6-20자</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">이메일 <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                        <input type="email" class="form-control" id="email" name="email" th:value="${memberDto != null ? memberDto.email : ''}" placeholder="이메일을 입력하세요" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="password" class="form-label">비밀번호 <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="password" class="form-control" id="password" name="password" placeholder="비밀번호를 입력하세요" required>
+                                    </div>
+                                    <small class="text-muted">영문, 숫자, 특수문자 조합 8-20자</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="passwordConfirm" class="form-label">비밀번호 확인 <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="password" class="form-control" id="passwordConfirm" name="passwordConfirm" placeholder="비밀번호를 다시 입력하세요" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="name" class="form-label">이름 <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user-tag"></i></span>
+                                        <input type="text" class="form-control" id="name" name="name" th:value="${memberDto != null ? memberDto.name : ''}" placeholder="이름을 입력하세요" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="phone" class="form-label">휴대폰 번호 <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-mobile-alt"></i></span>
+                                        <input type="tel" class="form-control" id="phone" name="phone" th:value="${memberDto != null ? memberDto.phone : ''}" placeholder="휴대폰 번호를 입력하세요" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="termsAgree" name="termsAgree" required>
+                                <label class="form-check-label" for="termsAgree">
+                                    <a th:href="@{/terms}" target="_blank" class="text-decoration-none">이용약관</a>과
+                                    <a th:href="@{/privacy}" target="_blank" class="text-decoration-none">개인정보처리방침</a>에 동의합니다.
+                                </label>
+                            </div>
+
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="marketingAgree" name="marketingAgree">
+                                <label class="form-check-label" for="marketingAgree">
+                                    마케팅 정보 수신에 동의합니다. (선택)
+                                </label>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">회원가입</button>
+                            </div>
+                        </form>
+
+                        <div class="divider">
+                            <span>또는</span>
+                        </div>
+
+                        <div class="social-register">
+                            <a href="/oauth2/authorize/google" class="google"><i class="fab fa-google"></i></a>
+                            <a href="/oauth2/authorize/facebook" class="facebook"><i class="fab fa-facebook-f"></i></a>
+                            <a href="/oauth2/authorize/naver" class="naver"><i class="fas fa-n"></i></a>
+                            <a href="/oauth2/authorize/kakao" class="kakao"><i class="fas fa-comment"></i></a>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <p>이미 계정이 있으신가요? <a th:href="@{/login}" class="text-decoration-none fw-bold">로그인</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<th:block layout:fragment="script">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const password = document.getElementById('password');
+            const passwordConfirm = document.getElementById('passwordConfirm');
+            const form = document.querySelector('form');
+
+            form.addEventListener('submit', function(event) {
+                if (password.value !== passwordConfirm.value) {
+                    event.preventDefault();
+                    alert('비밀번호가 일치하지 않습니다.');
+                    passwordConfirm.focus();
+                }
+            });
+        });
+    </script>
+</th:block>
+</body>
+</html>
+

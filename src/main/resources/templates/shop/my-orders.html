@@ -1,0 +1,180 @@
+&lt;!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main-layout}">
+<head>
+    <title>주문 내역</title>
+    <th:block layout:fragment="css">
+        <style>
+            .order-container {
+                min-height: 60vh;
+            }
+            .order-card {
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+                overflow: hidden;
+                border: none;
+                margin-bottom: 1.5rem;
+                transition: all 0.3s ease;
+            }
+            .order-card:hover {
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+                transform: translateY(-5px);
+            }
+            .order-card-header {
+                background-color: var(--gray-100);
+                padding: 1rem 1.5rem;
+                border-bottom: 1px solid var(--gray-200);
+            }
+            .order-card-body {
+                padding: 1.5rem;
+            }
+            .order-item {
+                border-bottom: 1px solid var(--gray-200);
+                padding-bottom: 1rem;
+                margin-bottom: 1rem;
+            }
+            .order-item:last-child {
+                border-bottom: none;
+                padding-bottom: 0;
+                margin-bottom: 0;
+            }
+            .order-item-img {
+                width: 80px;
+                height: 80px;
+                object-fit: cover;
+                border-radius: 0.5rem;
+            }
+            .order-status {
+                display: inline-block;
+                padding: 0.25rem 0.75rem;
+                border-radius: 50rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+            .status-pending {
+                background-color: var(--warning-color);
+                color: white;
+            }
+            .status-processing {
+                background-color: var(--primary-color);
+                color: white;
+            }
+            .status-shipped {
+                background-color: var(--success-color);
+                color: white;
+            }
+            .status-delivered {
+                background-color: var(--dark-color);
+                color: white;
+            }
+            .status-canceled {
+                background-color: var(--danger-color);
+                color: white;
+            }
+            .empty-orders {
+                text-align: center;
+                padding: 3rem 0;
+            }
+            .empty-orders i {
+                font-size: 5rem;
+                color: var(--gray-300);
+                margin-bottom: 1.5rem;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+<main layout:fragment="content">
+    <section class="py-5">
+        <div class="container">
+            <h2 class="mb-4">주문 내역</h2>
+
+            <div class="order-container">
+                &lt;!-- 주문 내역이 없는 경우 -->
+                <div th:if="${#lists.isEmpty(orders)}" class="empty-orders">
+                    <i class="fas fa-box-open"></i>
+                    <h3>주문 내역이 없습니다</h3>
+                    <p class="text-muted mb-4">아직 주문하신 상품이 없습니다.</p>
+                    <a th:href="@{/products}" class="btn btn-primary">쇼핑 시작하기</a>
+                </div>
+
+                &lt;!-- 주문 내역이 있는 경우 -->
+                <div th:unless="${#lists.isEmpty(orders)}">
+                    &lt;!-- 주문 목록 (실제로는 DB에서 가져올 것) -->
+                    <div th:each="order, stat : ${orders != null ? orders : {
+                                {1, '2023-05-15', 'DELIVERED', 125000, 2},
+                                {2, '2023-06-20', 'SHIPPED', 85000, 1},
+                                {3, '2023-07-10', 'PROCESSING', 210000, 3}
+                            }}"
+                         class="order-card">
+                        <div class="order-card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-0">주문번호: <span th:text="${'ORD-' + order[0]}">ORD-1</span></h5>
+                                <p class="mb-0 text-muted" th:text="${'주문일자: ' + order[1]}">주문일자: 2023-05-15</p>
+                            </div>
+                            <div>
+                                    <span th:class="${'order-status status-' + #strings.toLowerCase(order[2])}"
+                                          th:text="${#strings.equals(order[2], 'PENDING') ? '결제대기' : 
+                                                   #strings.equals(order[2], 'PROCESSING') ? '처리중' : 
+                                                   #strings.equals(order[2], 'SHIPPED') ? '배송중' : 
+                                                   #strings.equals(order[2], 'DELIVERED') ? '배송완료' : 
+                                                   #strings.equals(order[2], 'CANCELED') ? '주문취소' : order[2]}">
+                                        상태
+                                    </span>
+                            </div>
+                        </div>
+                        <div class="order-card-body">
+                            &lt;!-- 주문 상품 목록 (실제로는 DB에서 가져올 것) -->
+                            <div th:each="item, itemStat : ${orderItems != null ? orderItems : {
+                                        {1, 1, '프리미엄 데님 자켓', 52000, 1},
+                                        {2, 1, '캐주얼 티셔츠', 35000, 2},
+                                        {3, 2, '슬림핏 청바지', 85000, 1},
+                                        {4, 3, '클래식 레더 자켓', 120000, 1},
+                                        {5, 3, '프리미엄 백팩', 76000, 1},
+                                        {6, 3, '캐주얼 후드티', 55000, 1}
+                                    }}"
+                                 th:if="${item[1] == order[0]}"
+                                 class="order-item">
+                                <div class="row align-items-center">
+                                    <div class="col-auto">
+                                        <img th:src="@{/placeholder.svg?height=80&width=80}" th:alt="${item[2]}" class="order-item-img">
+                                    </div>
+                                    <div class="col">
+                                        <h5 class="mb-1" th:text="${item[2]}">상품명</h5>
+                                        <p class="mb-0 text-muted" th:text="${'₩' + #numbers.formatInteger(item[3], 0, 'COMMA') + ' × ' + item[4] + '개'}">가격 × 수량</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <p class="fw-bold mb-0" th:text="${'₩' + #numbers.formatInteger(item[3] * item[4], 0, 'COMMA')}">소계</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <p class="mb-0"><strong>총 결제금액:</strong> <span class="text-primary" th:text="${'₩' + #numbers.formatInteger(order[3], 0, 'COMMA')}">₩125,000</span></p>
+                                    <p class="mb-0 text-muted" th:text="${'총 ' + order[4] + '개 상품'}">총 2개 상품</p>
+                                </div>
+                                <div>
+                                    <a th:href="@{'/mypage/orders/' + ${order[0]}}" class="btn btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i> 상세보기
+                                    </a>
+                                    <a th:if="${#strings.equals(order[2], 'DELIVERED')}" th:href="@{'/mypage/orders/' + ${order[0]} + '/review'}" class="btn btn-outline-secondary ms-2">
+                                        <i class="fas fa-star me-1"></i> 리뷰작성
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+</body>
+</html>
+

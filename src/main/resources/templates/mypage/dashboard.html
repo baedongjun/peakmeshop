@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/default}">
+<head>
+    <title>마이페이지 - PeakMeShop</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <section class="mypage-section py-5">
+        <div class="container">
+            <div class="row">
+                <!-- 마이페이지 사이드바 -->
+                <div class="col-lg-3 mb-4 mb-lg-0">
+                    <div th:replace="~{fragments/mypage-sidebar :: sidebar}"></div>
+                </div>
+
+                <!-- 마이페이지 콘텐츠 -->
+                <div class="col-lg-9">
+                    <h1 class="mypage-title mb-4">마이페이지</h1>
+
+                    <!-- 회원 정보 요약 -->
+                    <div class="member-summary p-4 border rounded mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-2 text-center mb-3 mb-md-0">
+                                <div class="member-avatar">
+                                    <img th:if="${member.profileImage}" th:src="${member.profileImage}" alt="프로필 이미지" class="rounded-circle img-fluid">
+                                    <div th:unless="${member.profileImage}" class="default-avatar rounded-circle bg-primary text-white">
+                                        <span th:text="${#strings.substring(member.name, 0, 1)}">홍</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-7 mb-3 mb-md-0">
+                                <div class="member-info">
+                                    <h3 class="member-name" th:text="${member.name + '님'}">홍길동님</h3>
+                                    <p class="member-grade">
+                                        <span class="badge" th:classappend="${'bg-' + member.grade.color}" th:text="${member.grade.name}">일반회원</span>
+                                    </p>
+                                    <p class="member-email" th:text="${member.email}">hong@example.com</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-md-end">
+                                <a th:href="@{/mypage/profile}" class="btn btn-outline-primary">회원정보 수정</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 포인트 및 쿠폰 -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-4 mb-md-0">
+                            <div class="point-summary p-4 border rounded h-100">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h3 class="summary-title">포인트</h3>
+                                    <a th:href="@{/mypage/points}" class="btn btn-sm btn-outline-secondary">자세히</a>
+                                </div>
+                                <div class="point-amount">
+                                    <span class="amount-value" th:text="${#numbers.formatInteger(member.point, 0, 'COMMA')}">10,000</span>
+                                    <span class="amount-unit">P</span>
+                                </div>
+                                <div class="point-expiry mt-2" th:if="${expiringPoints > 0}">
+                                    <span class="text-danger" th:text="${#numbers.formatInteger(expiringPoints, 0, 'COMMA') + 'P가 ' + #temporals.format(expiryDate, 'yyyy년 MM월 dd일') + '에 소멸됩니다.'}">
+                                        1,000P가 2023년 12월 31일에 소멸됩니다.
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="coupon-summary p-4 border rounded h-100">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h3 class="summary-title">쿠폰</h3>
+                                    <a th:href="@{/mypage/coupons}" class="btn btn-sm btn-outline-secondary">자세히</a>
+                                </div>
+                                <div class="coupon-count">
+                                    <span class="count-value" th:text="${availableCoupons}">5</span>
+                                    <span class="count-unit">개</span>
+                                </div>
+                                <div class="coupon-register mt-3">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="couponCode" placeholder="쿠폰 코드 입력">
+                                        <button class="btn btn-primary" type="button" id="registerCoupon">등록</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 최근 주문 내역 -->
+                    <div class="recent-orders mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="section-title">최근 주문 내역</h3>
+                            <a th:href="@{/mypage/orders}" class="btn btn-sm btn-outline-secondary">전체보기</a>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>주문번호</th>
+                                    <th>주문일자</th>
+                                    <th>상품정보</th>
+                                    <th>결제금액</th>
+                                    <th>주문상태</th>
+                                    <th>상세</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="order : ${recentOrders}">
+                                    <td th:text="${order.orderNumber}">ORDER-20230101-123456</td>
+                                    <td th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd')}">2023-01-01</td>
+                                    <td>
+                                        <div class="order-product-info">
+                                            <span th:text="${order.mainProductName}">상품명</span>
+                                            <span th:if="${order.orderItemCount > 1}"
+                                                  th:text="${'외 ' + (order.orderItemCount - 1) + '건'}">외 2건</span>
+                                        </div>
+                                    </td>
+                                    <td th:text="${#numbers.formatCurrency(order.totalAmount)}">30,000원</td>
+                                    <td>
+                                            <span class="badge" th:classappend="${'bg-' + order.status.color}"
+                                                  th:text="${order.status.displayName}">결제완료</span>
+                                    </td>
+                                    <td>
+                                        <a th:href="@{/mypage/orders/{id}(id=${order.id})}" class="btn btn-sm btn-outline-primary">상세보기</a>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(recentOrders)}">
+                                    <td colspan="6" class="text-center py-4">최근 주문 내역이 없습니다.</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 배송 현황 -->
+                    <div class="shipping-status mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="section-title">배송 현황</h3>
+                        </div>
+
+                        <div class="row text-center">
+                            <div class="col">
+                                <div class="status-box p-3 border rounded">
+                                    <div class="status-icon mb-2">
+                                        <i class="fas fa-credit-card fa-2x text-primary"></i>
+                                    </div>
+                                    <div class="status-title">결제완료</div>
+                                    <div class="status-count" th:text="${shippingStatus.paymentCompleted}">2</div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="status-box p-3 border rounded">
+                                    <div class="status-icon mb-2">
+                                        <i class="fas fa-box fa-2x text-primary"></i>
+                                    </div>
+                                    <div class="status-title">상품준비중</div>
+                                    <div class="status-count" th:text="${shippingStatus.preparing}">1</div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="status-box p-3 border rounded">
+                                    <div class="status-icon mb-2">
+                                        <i class="fas fa-truck fa-2x text-primary"></i>
+                                    </div>
+                                    <div class="status-title">배송중</div>
+                                    <div class="status-count" th:text="${shippingStatus.shipping}">3</div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="status-box p-3 border rounded">
+                                    <div class="status-icon mb-2">
+                                        <i class="fas fa-home fa-2x text-primary"></i>
+                                    </div>
+                                    <div class="status-title">배송완료</div>
+                                    <div class="status-count" th:text="${shippingStatus.delivered}">5</div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="status-box p-3 border rounded">
+                                    <div class="status-icon mb-2">
+                                        <i class="fas fa-exchange-alt fa-2x text-primary"></i>
+                                    </div>
+                                    <div class="status-title">교환/반품</div>
+                                    <div class="status-count" th:text="${shippingStatus.refunding}">0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 최근 본 상품 -->
+                    <div class="recent-products mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="section-title">최근 본 상품</h3>
+                            <a th:href="@{/mypage/recent-products}" class="btn btn-sm btn-outline-secondary">전체보기</a>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6 col-md-3 mb-3" th:each="product : ${recentProducts}">
+                                <div class="product-card">
+                                    <a th:href="@{/shop/products/{id}(id=${product.id})}" class="product-image">
+                                        <img th:src="${product.thumbnailUrl}" alt="상품 이미지" class="img-fluid">
+                                    </a>
+                                    <div class="product-info">
+                                        <h3 class="product-name">
+                                            <a th:href="@{/shop/products/{id}(id=${product.id})}" th:text="${product.name}">상품명</a>
+                                        </h3>
+                                        <div class="product-price">
+                                            <span class="current-price" th:text="${#numbers.formatCurrency(product.price)}">10,000원</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 text-center" th:if="${#lists.isEmpty(recentProducts)}">
+                                <p class="py-4">최근 본 상품이 없습니다.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 위시리스트 -->
+                    <div class="wishlist">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="section-title">위시리스트</h3>
+                            <a th:href="@{/mypage/wishlist}" class="btn btn-sm btn-outline-secondary">전체보기</a>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6 col-md-3 mb-3" th:each="product : ${wishlistProducts}">
+                                <div class="product-card">
+                                    <a th:href="@{/shop/products/{id}(id=${product.id})}" class="product-image">
+                                        <img th:src="${product.thumbnailUrl}" alt="상품 이미지" class="img-fluid">
+                                    </a>
+                                    <div class="product-info">
+                                        <h3 class="product-name">
+                                            <a th:href="@{/shop/products/{id}(id=${product.id})}" th:text="${product.name}">상품명</a>
+                                        </h3>
+                                        <div class="product-price">
+                                            <span class="current-price" th:text="${#numbers.formatCurrency(product.price)}">10,000원</span>
+                                            <span class="original-price" th:if="${product.originalPrice > product.price}"
+                                                  th:text="${#numbers.formatCurrency(product.originalPrice)}">12,000원</span>
+                                        </div>
+                                    </div>
+                                    <div class="product-actions">
+                                        <button class="btn btn-sm btn-outline-primary w-100 add-to-cart"
+                                                th:onclick="'addToCart(' + ${product.id} + ', 1)'">
+                                            <i class="fas fa-shopping-cart"></i> 장바구니 담기
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 text-center" th:if="${#lists.isEmpty(wishlistProducts)}">
+                                <p class="py-4">위시리스트에 담긴 상품이 없습니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<th:block layout:fragment="script">
+    <script>
+        $(document).ready(function() {
+            // 쿠폰 등록
+            $('#registerCoupon').click(function() {
+                const couponCode = $('#couponCode').val().trim();
+
+                if (couponCode) {
+                    // CSRF 토큰 가져오기
+                    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+                    fetch('/api/coupon/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            [csrfHeader]: csrfToken
+                        },
+                        body: JSON.stringify({
+                            couponCode: couponCode
+                        })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                showToast('쿠폰이 등록되었습니다.', 'success');
+                                $('#couponCode').val('');
+                                // 쿠폰 수 업데이트
+                                const currentCount = parseInt($('.coupon-count .count-value').text());
+                                $('.coupon-count .count-value').text(currentCount + 1);
+                            } else {
+                                showToast(data.message || '쿠폰 등록에 실패했습니다.', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('쿠폰 등록 오류:', error);
+                            showToast('쿠폰 등록 중 오류가 발생했습니다.', 'error');
+                        });
+                } else {
+                    showToast('쿠폰 코드를 입력해주세요.', 'warning');
+                }
+            });
+        });
+    </script>
+</th:block>
+</body>
+</html>

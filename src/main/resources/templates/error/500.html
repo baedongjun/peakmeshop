@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/default}">
+<head>
+    <title>500 Internal Server Error - PeakMeShop</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <section class="error-page py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6 text-center">
+                    <h1 class="error-code display-1 fw-bold">500</h1>
+                    <h2 class="error-message h3 mb-4">서버에 오류가 발생했습니다.</h2>
+                    <p class="error-description">요청을 처리하는 동안 서버에서 예기치 않은 오류가 발생했습니다.</p>
+                    <div class="error-actions mt-4">
+                        <a th:href="@{/}" class="btn btn-primary me-2">
+                            <i class="fas fa-home me-1"></i> 홈으로 이동
+                        </a>
+                        <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> 이전 페이지로
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+</body>
+</html>

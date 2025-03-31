@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div class="mypage-sidebar p-4 border rounded" th:fragment="sidebar">
+    <h3 class="sidebar-title mb-4">마이페이지</h3>
+
+    <div class="sidebar-menu">
+        <div class="sidebar-menu-group mb-3">
+            <h4 class="menu-group-title">쇼핑 정보</h4>
+            <ul class="list-unstyled">
+                <li class="menu-item">
+                    <a th:href="@{/mypage/orders}" class="menu-link" th:classappend="${#httpServletRequest.requestURI.contains('/mypage/orders') ? 'active' : ''}">
+                        <i class="fas fa-shopping-bag me-2"></i> 주문 내역
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a th:href="@{/mypage/cart}" class="menu-link" th:classappend="${#httpServletRequest.requestURI.contains('/mypage/cart') ? 'active' : ''}">
+                        <i class="fas fa-shopping-cart me-2"></i> 장바구니
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a th:href="@{/mypage/wishlist}" class="menu-link" th:classappend="${#httpServletRequest.requestURI.contains('/mypage/wishlist') ? 'active' : ''}">
+                        <i class="far fa-heart me-2"></i> 위시리스트
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a th:href="@{/mypage/recent-products}" class="menu-link" th:classappend="${#httpServletRequest.requestURI.contains('/mypage/recent-products') ? 'active' : ''}">
+                        <i class="fas fa-history me-2"></i> 최근 본 상품
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="sidebar-menu-group mb-3">
+            <h4 class="menu-group-title">혜택 관리</h4>
+            <ul class="list-unstyled">
+                <li class="menu-item">
+                    <a th:href="@{/mypage/points}" class="menu-link" th:classappend="${#httpServletRequest.requestURI.contains('/mypage/points') ? 'active' : ''}">
+                        <i class="fas fa-coins me-2"></i> 포인트
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a th:href="@{/mypage/coupons}" class="menu-link" th:classappend="${#httpServletRequest.requestURI.contains('/mypage/coupons') ? 'active' : ''}">
+                        <i class="fas fa-ticket-alt me-2"></i> 쿠폰
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="sidebar-menu-group mb-3">
+            <h4 class="menu-group-title">활동 관리</h4>
+            <ul class="list-unstyled">
+                <li class="menu-item">
+                    <a th:href="@{/mypage/reviews}" class="menu-link" th:classappend="${#httpServletRequest.requestURI.contains('/mypage/reviews') ? 'active' : ''}">
+                        <i class="far fa-comment-dots me-2"></i> 상품 리뷰
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a th:href="@{/mypage/qna}" class="menu-link" th:classappend="${#httpServletRequest.requestURI.contains('/mypage/qna') ? 'active' : ''}">
+                        <i class="far fa-question-circle me-2"></i> 상품 문의
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="sidebar-menu-group">
+            <h4 class="menu-group-title">회원 정보</h4>
+            <ul class="list-unstyled">
+                <li class="menu-item">
+                    <a th:href="@{/mypage/profile}" class="menu-link" th:classappend="${#httpServletRequest.requestURI.contains('/mypage/profile') ? 'active' : ''}">
+                        <i class="far fa-user me-2"></i> 회원정보 수정
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a th:href="@{/mypage/address}" class="menu-link" th:classappend="${#httpServletRequest.requestURI.contains('/mypage/address') ? 'active' : ''}">
+                        <i class="fas fa-map-marker-alt me-2"></i> 배송지 관리
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a th:href="@{/mypage/password}" class="menu-link" th:classappend="${#httpServletRequest.requestURI.contains('/mypage/password') ? 'active' : ''}">
+                        <i class="fas fa-lock me-2"></i> 비밀번호 변경
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="sidebar-footer mt-4">
+        <div class="customer-service p-3 bg-light rounded">
+            <h5 class="mb-2">고객센터</h5>
+            <p class="mb-1 fw-bold">1234-5678</p>
+            <p class="mb-1 small">평일 09:00 - 18:00</p>
+            <p class="mb-0 small">주말, 공휴일 휴무</p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

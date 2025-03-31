@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>회원 관리 - PeakMeShop 관리자</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .search-container {
+            margin-bottom: 20px;
+        }
+        .member-table th, .member-table td {
+            vertical-align: middle;
+        }
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .action-buttons .btn {
+            margin-right: 5px;
+        }
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid px-4">
+        <h1 class="mt-4">회원 관리</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/admin/dashboard">대시보드</a></li>
+            <li class="breadcrumb-item active">회원 관리</li>
+        </ol>
+
+        <!-- 검색 및 필터 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-search"></i>
+                회원 검색
+            </div>
+            <div class="card-body">
+                <form id="searchForm" th:action="@{/admin/members}" method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="searchType" class="form-label">검색 유형</label>
+                        <select class="form-select" id="searchType" name="searchType">
+                            <option value="name" th:selected="${param.searchType == 'name'}">이름</option>
+                            <option value="email" th:selected="${param.searchType == 'email'}">이메일</option>
+                            <option value="phone" th:selected="${param.searchType == 'phone'}">전화번호</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="keyword" class="form-label">검색어</label>
+                        <input type="text" class="form-control" id="keyword" name="keyword" th:value="${param.keyword}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">상태</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">전체</option>
+                            <option value="ACTIVE" th:selected="${param.status == 'ACTIVE'}">활성</option>
+                            <option value="INACTIVE" th:selected="${param.status == 'INACTIVE'}">비활성</option>
+                        </select>
+                    </div>
+                    <div class="col-12 mt-3">
+                        <button type="submit" class="btn btn-primary">검색</button>
+                        <button type="button" class="btn btn-secondary" onclick="resetForm()">초기화</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 회원 목록 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-users"></i>
+                회원 목록
+                <span class="badge bg-primary" th:text="${#lists.size(members) > 0 ? members.totalElements : 0} + ' 명'"></span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered member-table">
+                        <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>이름</th>
+                            <th>이메일</th>
+                            <th>전화번호</th>
+                            <th>가입일</th>
+                            <th>최근 로그인</th>
+                            <th>상태</th>
+                            <th>관리</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.size(members) > 0}" th:each="member : ${members}">
+                            <td th:text="${member.id}"></td>
+                            <td th:text="${member.name}"></td>
+                            <td th:text="${member.email}"></td>
+                            <td th:text="${member.phone}"></td>
+                            <td th:text="${#temporals.format(member.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                            <td th:text="${member.lastLoginAt != null ? #temporals.format(member.lastLoginAt, 'yyyy-MM-dd HH:mm') : '-'}"></td>
+                            <td>
+                                        <span class="status-badge"
+                                              th:classappend="${member.status == 'ACTIVE' ? 'status-active' : 'status-inactive'}"
+                                              th:text="${member.status == 'ACTIVE' ? '활성' : '비활성'}"></span>
+                            </td>
+                            <td class="action-buttons">
+                                <button class="btn btn-sm btn-info" th:onclick="'viewMemberDetail(' + ${member.id} + ')'">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-warning" th:onclick="'toggleMemberStatus(' + ${member.id} + ', \'' + ${member.status} + '\')'">
+                                    <i class="fas" th:classappend="${member.status == 'ACTIVE' ? 'fa-ban' : 'fa-check'}"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" th:onclick="'confirmDeleteMember(' + ${member.id} + ')'">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.size(members) == 0 || members.empty}">
+                            <td colspan="8" class="text-center">등록된 회원이 없습니다.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 페이지네이션 -->
+                <div class="pagination-container" th:if="${#lists.size(members) > 0 && !members.empty}">
+                    <nav>
+                        <ul class="pagination">
+                            <li class="page-item" th:classappend="${members.first ? 'disabled' : ''}">
+                                <a class="page-link" th:href="@{/admin/members(page=0, size=${members.size}, searchType=${param.searchType}, keyword=${param.keyword}, status=${param.status})}">&laquo;</a>
+                            </li>
+                            <li class="page-item" th:classappend="${members.first ? 'disabled' : ''}">
+                                <a class="page-link" th:href="@{/admin/members(page=${members.number != null ? members.number - 1 : 0}, size=${members.size}, searchType=${param.searchType}, keyword=${param.keyword}, status=${param.status})}">&lt;</a>
+                            </li>
+
+                            <li class="page-item" th:each="i : ${#numbers.sequence(0, members.totalPages != null ? members.totalPages - 1 : 0)}"
+                                th:if="${i >= (members.number != null ? members.number - 2 : 0) && i <= (members.number != null ? members.number + 2 : 0)}"
+                                th:classappend="${i == members.number ? 'active' : ''}">
+                                <a class="page-link" th:href="@{/admin/members(page=${i}, size=${members.size}, searchType=${param.searchType}, keyword=${param.keyword}, status=${param.status})}" th:text="${i + 1}"></a>
+                            </li>
+
+                            <li class="page-item" th:classappend="${members.last ? 'disabled' : ''}">
+                                <a class="page-link" th:href="@{/admin/members(page=${members.number != null ? members.number + 1 : 1}, size=${members.size}, searchType=${param.searchType}, keyword=${param.keyword}, status=${param.status})}">&gt;</a>
+                            </li>
+                            <li class="page-item" th:classappend="${members.last ? 'disabled' : ''}">
+                                <a class="page-link" th:href="@{/admin/members(page=${members.totalPages - 1}, size=${members.size}, searchType=${param.searchType}, keyword=${param.keyword}, status=${param.status})}">&raquo;</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 회원 상세 정보 모달 -->
+    <div class="modal fade" id="memberDetailModal" tabindex="-1" aria-labelledby="memberDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="memberDetailModalLabel">회원 상세 정보</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="memberDetailContent">
+                        <!-- AJAX로 로드될 내용 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 상태 변경 확인 모달 -->
+    <div class="modal fade" id="statusChangeModal" tabindex="-1" aria-labelledby="statusChangeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusChangeModalLabel">회원 상태 변경</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="statusChangeMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="confirmStatusChange">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 삭제 확인 모달 -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteConfirmModalLabel">회원 삭제 확인</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>정말로 이 회원을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-danger" id="confirmDelete">삭제</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        let currentMemberId = null;
+
+        function resetForm() {
+            document.getElementById('searchType').value = 'name';
+            document.getElementById('keyword').value = '';
+            document.getElementById('status').value = '';
+            document.getElementById('searchForm').submit();
+        }
+
+        function viewMemberDetail(memberId) {
+            fetch(`/api/admin/members/${memberId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('회원 정보를 불러오는데 실패했습니다.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const memberDetail = document.getElementById('memberDetailContent');
+
+                    // 회원 상세 정보 HTML 생성
+                    let html = `
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <p><strong>ID:</strong> ${data.id}</p>
+                                    <p><strong>이름:</strong> ${data.name}</p>
+                                    <p><strong>이메일:</strong> ${data.email}</p>
+                                    <p><strong>전화번호:</strong> ${data.phone || '-'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>가입일:</strong> ${new Date(data.createdAt).toLocaleString()}</p>
+                                    <p><strong>최근 로그인:</strong> ${data.lastLoginAt ? new Date(data.lastLoginAt).toLocaleString() : '-'}</p>
+                                    <p><strong>상태:</strong> <span class="status-badge ${data.status === 'ACTIVE' ? 'status-active' : 'status-inactive'}">${data.status === 'ACTIVE' ? '활성' : '비활성'}</span></p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>배송 주소</h6>
+                                    <p>${data.address ? data.address : '등록된 주소가 없습니다.'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>주문 통계</h6>
+                                    <p><strong>총 주문 수:</strong> ${data.orderCount || 0}건</p>
+                                    <p><strong>총 주문 금액:</strong> ${data.totalOrderAmount ? data.totalOrderAmount.toLocaleString() : 0}원</p>
+                                </div>
+                            </div>
+                        `;
+
+                    memberDetail.innerHTML = html;
+
+                    // 모달 표시
+                    const modal = new bootstrap.Modal(document.getElementById('memberDetailModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+        }
+
+        function toggleMemberStatus(memberId, currentStatus) {
+            currentMemberId = memberId;
+            const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+            const message = currentStatus === 'ACTIVE'
+                ? '이 회원을 비활성화하시겠습니까? 비활성화된 회원은 로그인할 수 없습니다.'
+                : '이 회원을 활성화하시겠습니까?';
+
+            document.getElementById('statusChangeMessage').textContent = message;
+
+            const confirmBtn = document.getElementById('confirmStatusChange');
+            confirmBtn.onclick = function() {
+                updateMemberStatus(memberId, newStatus);
+            };
+
+            const modal = new bootstrap.Modal(document.getElementById('statusChangeModal'));
+            modal.show();
+        }
+
+        function updateMemberStatus(memberId, newStatus) {
+            fetch(`/api/admin/members/${memberId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').getAttribute('content')
+                },
+                body: JSON.stringify({ status: newStatus })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('회원 상태 변경에 실패했습니다.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    bootstrap.Modal.getInstance(document.getElementById('statusChangeModal')).hide();
+                    alert('회원 상태가 변경되었습니다.');
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+        }
+
+        function confirmDeleteMember(memberId) {
+            currentMemberId = memberId;
+
+            const confirmBtn = document.getElementById('confirmDelete');
+            confirmBtn.onclick = function() {
+                deleteMember(memberId);
+            };
+
+            const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+            modal.show();
+        }
+
+        function deleteMember(memberId) {
+            fetch(`/api/admin/members/${memberId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').getAttribute('content')
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('회원 삭제에 실패했습니다.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+                    alert('회원이 삭제되었습니다.');
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+        }
+    </script>
+</div>
+</body>
+</html>
+

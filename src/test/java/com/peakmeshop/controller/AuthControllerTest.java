@@ -19,9 +19,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.peakmeshop.dto.LoginRequest;
-import com.peakmeshop.entity.Member;
-import com.peakmeshop.repository.MemberRepository;
+import com.peakmeshop.api.dto.LoginRequest;
+import com.peakmeshop.domain.entity.Member;
+import com.peakmeshop.domain.repository.MemberRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc

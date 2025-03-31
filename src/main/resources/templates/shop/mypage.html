@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main-layout}">
+<head>
+    <title>마이페이지</title>
+    <th:block layout:fragment="css">
+        <style>
+            .mypage-container {
+                min-height: 60vh;
+            }
+            .profile-card {
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+                overflow: hidden;
+                border: none;
+                margin-bottom: 1.5rem;
+            }
+            .profile-card-header {
+                background-color: var(--gray-100);
+                padding: 1rem 1.5rem;
+                border-bottom: 1px solid var(--gray-200);
+            }
+            .profile-card-body {
+                padding: 1.5rem;
+            }
+            .profile-avatar {
+                width: 100px;
+                height: 100px;
+                border-radius: 50%;
+                object-fit: cover;
+                margin-bottom: 1rem;
+            }
+            .nav-pills .nav-link {
+                border-radius: 0.5rem;
+                padding: 0.75rem 1rem;
+                margin-bottom: 0.5rem;
+                color: var(--gray-700);
+                transition: all 0.3s ease;
+            }
+            .nav-pills .nav-link:hover {
+                background-color: var(--gray-100);
+            }
+            .nav-pills .nav-link.active {
+                background-color: var(--primary-color);
+                color: white;
+            }
+            .nav-pills .nav-link i {
+                margin-right: 0.5rem;
+                width: 20px;
+                text-align: center;
+            }
+            .order-card {
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+                overflow: hidden;
+                border: none;
+                margin-bottom: 1.5rem;
+                transition: all 0.3s ease;
+            }
+            .order-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            }
+            .order-status {
+                display: inline-block;
+                padding: 0.25rem 0.75rem;
+                border-radius: 50rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+            .status-pending {
+                background-color: var(--warning-color);
+                color: white;
+            }
+            .status-processing {
+                background-color: var(--primary-color);
+                color: white;
+            }
+            .status-shipped {
+                background-color: var(--success-color);
+                color: white;
+            }
+            .status-delivered {
+                background-color: var(--dark-color);
+                color: white;
+            }
+            .status-canceled {
+                background-color: var(--danger-color);
+                color: white;
+            }
+            .wishlist-card {
+                border-radius: 1rem;
+                overflow: hidden;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+                transition: all 0.3s ease;
+                border: none;
+                margin-bottom: 1.5rem;
+            }
+            .wishlist-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            }
+            .wishlist-img {
+                height: 200px;
+                object-fit: cover;
+            }
+            .address-card {
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+                overflow: hidden;
+                border: none;
+                margin-bottom: 1.5rem;
+                transition: all 0.3s ease;
+            }
+            .address-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            }
+            .address-card-header {
+                background-color: var(--gray-100);
+                padding: 1rem 1.5rem;
+                border-bottom: 1px solid var(--gray-200);
+            }
+            .address-card-body {
+                padding: 1.5rem;
+            }
+            .default-badge {
+                background-color: var(--primary-color);
+                color: white;
+                font-size: 0.75rem;
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.25rem;
+                margin-left: 0.5rem;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+<main layout:fragment="content">
+    <section class="py-5">
+        <div class="container">
+            <h2 class="mb-4">마이페이지</h2>
+
+            <div class="mypage-container">
+                <div class="row">
+                    <!-- 사이드바 -->
+                    <div class="col-lg-3">
+                        <!-- 프로필 카드 -->
+                        <div class="profile-card text-center">
+                            <div class="profile-card-body">
+                                <img th:src="${member != null && member.profileImage != null ? member.profileImage : '/placeholder.svg?height=100&width=100&text=User'}" class="profile-avatar" alt="프로필 이미지">
+                                <h5 class="mb-1" th:text="${member != null ? member.name : '홍길동'}">홍길동</h5>
+                                <p class="text-muted mb-3" th:text="${member != null ? member.email : 'hong@example.com'}">hong@example.com</p>
+                                <a href="#" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#profileEditModal">
+                                    <i class="fas fa-edit me-1"></i> 프로필 수정
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- 네비게이션 -->
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <nav class="nav nav-pills flex-column">
+                                    <a class="nav-link active" href="#dashboard" data-bs-toggle="tab">
+                                        <i class="fas fa-tachometer-alt"></i> 대시보드
+                                    </a>
+                                    <a class="nav-link" href="#orders" data-bs-toggle="tab">
+                                        <i class="fas fa-shopping-bag"></i> 주문 내역
+                                    </a>
+                                    <a class="nav-link" href="#wishlist" data-bs-toggle="tab">
+                                        <i class="fas fa-heart"></i> 위시리스트
+                                    </a>
+                                    <a class="nav-link" href="#addresses" data-bs-toggle="tab">
+                                        <i class="fas fa-map-marker-alt"></i> 배송지 관리
+                                    </a>
+                                    <a class="nav-link" href="#reviews" data-bs-toggle="tab">
+                                        <i class="fas fa-star"></i> 내 리뷰
+                                    </a>
+                                    <a class="nav-link" href="#account" data-bs-toggle="tab">
+                                        <i class="fas fa-user-cog"></i> 계정 설정
+                                    </a>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 콘텐츠 -->
+                    <div class="col-lg-9">
+                        <div class="tab-content">
+                            <!-- 대시보드 탭 -->
+                            <div class="tab-pane fade show active" id="dashboard">
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h4 class="mb-4">대시보드</h4>
+
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <div class="card bg-light">
+                                                    <div class="card-body text-center">
+                                                        <h1 class="display-4 fw-bold text-primary" th:text="${member != null ? member.orderCount : 5}">5</h1>
+                                                        <p class="mb-0">총 주문</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <div class="card bg-light">
+                                                    <div class="card-body text-center">
+                                                        <h1 class="display-4 fw-bold text-primary" th:text="${member != null ? member.wishlistCount : 3}">3</h1>
+                                                        <p class="mb-0">위시리스트</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <div class="card bg-light">
+                                                    <div class="card-body text-center">
+                                                        <h1 class="display-4 fw-bold text-primary" th:text="${member != null ? member.reviewCount : 2}">2</h1>
+                                                        <p class="mb-0">작성 리뷰</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <h5 class="mt-4 mb-3">최근 주문</h5>
+
+                                        <!-- 최근 주문 목록 (실제로는 DB에서 가져올 것) -->
+                                        <div th:each="order, stat : ${recentOrders != null ? recentOrders : {
+                                                    {1, 'ORD-1001', '2023-07-15', 125000, 'DELIVERED'},
+                                                    {2, 'ORD-1002', '2023-07-20', 85000, 'SHIPPED'}
+                                                }}"
+                                             class="order-card mb-3" th:if="${stat.index < 2}">
+                                            <div class="card-body">
+                                                <div class="row align-items-center">
+                                                    <div class="col-md-3">
+                                                        <p class="mb-1 text-muted">주문번호</p>
+                                                        <p class="mb-0 fw-bold" th:text="${order[1]}">ORD-1001</p>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <p class="mb-1 text-muted">주문일자</p>
+                                                        <p class="mb-0 fw-bold" th:text="${order[2]}">2023-07-15</p>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <p class="mb-1 text-muted">금액</p>
+                                                        <p class="mb-0 fw-bold" th:text="${'₩' + #numbers.formatInteger(order[3], 0, 'COMMA')}">₩125,000</p>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                            <span th:class="${'order-status status-' + #strings.toLowerCase(order[4])}"
+                                                                  th:text="${#strings.equals(order[4], 'PENDING') ? '결제대기' :
+                                                                           #strings.equals(order[4], 'PROCESSING') ? '처리중' :
+                                                                           #strings.equals(order[4], 'SHIPPED') ? '배송중' :
+                                                                           #strings.equals(order[4], 'DELIVERED') ? '배송완료' :
+                                                                           #strings.equals(order[4], 'CANCELED') ? '주문취소' : order[4]}">
+                                                                상태
+                                                            </span>
+                                                    </div>
+                                                    <div class="col-md-2 text-end">
+                                                        <a th:href="@{'/mypage/orders/' + ${order[0]}}" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-eye me-1"></i> 상세
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-center mt-3">
+                                            <a href="#orders" class="btn btn-outline-primary" data-bs-toggle="tab">
+                                                <i class="fas fa-list me-1"></i> 모든 주문 보기
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 주문 내역 탭 -->
+                            <div class="tab-pane fade" id="orders">
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h4 class="mb-4">주문 내역</h4>
+
+                                        <!-- 주문 필터 -->
+                                        <div class="row mb-4">
+                                            <div class="col-md-6 mb-3 mb-md-0">
+                                                <select class="form-select" id="orderStatusFilter">
+                                                    <option value="">모든 상태</option>
+                                                    <option value="PENDING">결제대기</option>
+                                                    <option value="PROCESSING">처리중</option>
+                                                    <option value="SHIPPED">배송중</option>
+                                                    <option value="DELIVERED">배송완료</option>
+                                                    <option value="CANCELED">주문취소</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" placeholder="주문번호 검색" id="orderSearch">
+                                                    <button class="btn btn-outline-secondary" type="button" id="orderSearchBtn">
+                                                        <i class="fas fa-search"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 주문 목록 (실제로는 DB에서 가져올 것) -->
+                                        <div th:each="order, stat : ${orders != null ? orders : {
+                                                    {1, 'ORD-1001', '2023-07-15', 125000, 'DELIVERED'},
+                                                    {2, 'ORD-1002', '2023-07-20', 85000, 'SHIPPED'},
+                                                    {3, 'ORD-1003', '2023-08-05', 210000, 'PROCESSING'},
+                                                    {4, 'ORD-1004', '2023-08-10', 45000, 'PENDING'},
+                                                    {5, 'ORD-1005', '2023-08-15', 95000, 'CANCELED'}
+                                                }}"
+                                             class="order-card mb-3">
+                                            <div class="card-body">
+                                                <div class="row align-items-center">
+                                                    <div class="col-md-3">
+                                                        <p class="mb-1 text-muted">주문번호</p>
+                                                        <p class="mb-0 fw-bold" th:text="${order[1]}">ORD-1001</p>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <p class="mb-1 text-muted">주문일자</p>
+                                                        <p class="mb-0 fw-bold" th:text="${order[2]}">2023-07-15</p>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <p class="mb-1 text-muted">금액</p>
+                                                        <p class="mb-0 fw-bold" th:text="${'₩' + #numbers.formatInteger(order[3], 0, 'COMMA')}">₩125,000</p>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                            <span th:class="${'order-status status-' + #strings.toLowerCase(order[4])}"
+                                                                  th:text="${#strings.equals(order[4], 'PENDING') ? '결제대기' :
+                                                                           #strings.equals(order[4], 'PROCESSING') ? '처리중' :
+                                                                           #strings.equals(order[4], 'SHIPPED') ? '배송중' :
+                                                                           #strings.equals(order[4], 'DELIVERED') ? '배송완료' :
+                                                                           #strings.equals(order[4], 'CANCELED') ? '주문취소' : order[4]}">
+                                                                상태
+                                                            </span>
+                                                    </div>
+                                                    <div class="col-md-2 text-end">
+                                                        <a th:href="@{'/mypage/orders/' + ${order[0]}}" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-eye me-1"></i> 상세
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 페이지네이션 -->
+                                        <nav aria-label="Page navigation" class="mt-4">
+                                            <ul class="pagination justify-content-center">
+                                                <li class="page-item disabled">
+                                                    <a class="page-link" href="#" tabindex="-1" aria-disabled="true">이전</a>
+                                                </li>
+                                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                                <li class="page-item">
+                                                    <a class="page-link" href="#">다음</a>
+                                                </li>
+                                            </ul>
+                                        </nav>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 위시리스트 탭 -->
+                            <div class="tab-pane fade" id="wishlist">
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h4 class="mb-4">위시리스트</h4>
+
+                                        <div class="row">
+                                            <!-- 위시리스트 상품 목록 (실제로는 DB에서 가져올 것) -->
+                                            <div th:each="product, stat : ${wishlistProducts != null ? wishlistProducts : {
+                                                        {1, '프리미엄 데님 자켓', 52000, 65000, '/placeholder.svg?height=200&width=200'},
+                                                        {2, '캐주얼 티셔츠', 35000, 35000, '/placeholder.svg?height=200&width=200'},
+                                                        {3, '슬림핏 청바지', 60000, 75000, '/placeholder.svg?height=200&width=200'}
+                                                    }}"
+                                                 class="col-md-4 mb-4">
+                                                <div class="wishlist-card">
+                                                    <img th:src="${product[4]}" class="card-img-top wishlist-img" th:alt="${product[1]}">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title" th:text="${product[1]}">상품명</h5>
+                                                        <div class="mb-2">
+                                                            <span th:if="${product[2] < product[3]}" class="text-decoration-line-through text-muted" th:text="${'₩' + #numbers.formatInteger(product[3], 0, 'COMMA')}">₩65,000</span>
+                                                            <span class="fw-bold" th:text="${'₩' + #numbers.formatInteger(product[2], 0, 'COMMA')}">₩52,000</span>
+                                                        </div>
+                                                        <div class="d-flex justify-content-between">
+                                                            <a th:href="@{'/products/' + ${product[0]}}" class="btn btn-sm btn-outline-primary">상세 보기</a>
+                                                            <button class="btn btn-sm btn-outline-danger" th:onclick="'removeFromWishlist(' + ${product[0]} + ')'">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 위시리스트가 비어있는 경우 -->
+                                        <div th:if="${#lists.isEmpty(wishlistProducts)}" class="text-center py-5" style="display: none;">
+                                            <i class="fas fa-heart text-muted" style="font-size: 4rem;"></i>
+                                            <h5 class="mt-3">위시리스트가 비어있습니다</h5>
+                                            <p class="text-muted">마음에 드는 상품을 위시리스트에 추가해보세요!</p>
+                                            <a th:href="@{/products}" class="btn btn-primary mt-2">쇼핑하러 가기</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 배송지 관리 탭 -->
+                            <div class="tab-pane fade" id="addresses">
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-4">
+                                            <h4 class="mb-0">배송지 관리</h4>
+                                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addressModal">
+                                                <i class="fas fa-plus me-1"></i> 배송지 추가
+                                            </button>
+                                        </div>
+
+                                        <!-- 배송지 목록 (실제로는 DB에서 가져올 것) -->
+                                        <div th:each="address, stat : ${addresses != null ? addresses : {
+                                                    {1, '홍길동', '010-1234-5678', '12345', '서울시 강남구 테헤란로 123', '456동 789호', true},
+                                                    {2, '홍길동', '010-1234-5678', '54321', '서울시 서초구 서초대로 456', '10층 1001호', false},
+                                                    {3, '홍부모', '010-9876-5432', '67890', '경기도 성남시 분당구 판교로 789', '101동 202호', false}
+                                                }}"
+                                             class="address-card">
+                                            <div class="address-card-header d-flex justify-content-between align-items-center">
+                                                <h5 class="mb-0">
+                                                    <span th:text="${address[1]}">홍길동</span>
+                                                    <span th:if="${address[6]}" class="default-badge">기본 배송지</span>
+                                                </h5>
+                                                <div>
+                                                    <button class="btn btn-sm btn-outline-primary me-1" th:onclick="'editAddress(' + ${address[0]} + ')'" data-bs-toggle="modal" data-bs-target="#addressModal">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger" th:onclick="'deleteAddress(' + ${address[0]} + ')'" th:disabled="${address[6]}">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="address-card-body">
+                                                <p class="mb-1"><i class="fas fa-phone me-2 text-primary"></i> <span th:text="${address[2]}">010-1234-5678</span></p>
+                                                <p class="mb-0"><i class="fas fa-map-marker-alt me-2 text-primary"></i> <span th:text="${'(' + address[3] + ') ' + address[4] + ', ' + address[5]}">서울시 강남구 테헤란로 123, 456동 789호</span></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 내 리뷰 탭 -->
+                            <div class="tab-pane fade" id="reviews">
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h4 class="mb-4">내 리뷰</h4>
+
+                                        <!-- 리뷰 목록 (실제로는 DB에서 가져올 것) -->
+                                        <div th:each="review, stat : ${reviews != null ? reviews : {
+                                                    {1, '프리미엄 데님 자켓', 5, '2023-06-15', '정말 만족스러운 구매였습니다. 소재도 좋고 핏도 완벽해요. 배송도 빨랐고 포장도 꼼꼼하게 잘 되어 있었습니다.', '/placeholder.svg?height=80&width=80'},
+                                                    {2, '캐주얼 티셔츠', 4, '2023-06-10', '전체적으로 만족합니다. 사이즈는 정사이즈에요. 다만 생각보다 두께가 얇은 편이라 초가을까지만 입을 수 있을 것 같아요.', '/placeholder.svg?height=80&width=80'}
+                                                }}"
+                                             class="card mb-3">
+                                            <div class="card-body">
+                                                <div class="d-flex">
+                                                    <div class="flex-shrink-0">
+                                                        <img th:src="${review[5]}" alt="상품 이미지" class="rounded" style="width: 80px; height: 80px; object-fit: cover;">
+                                                    </div>
+                                                    <div class="flex-grow-1 ms-3">
+                                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                                            <h5 class="mb-0" th:text="${review[1]}">상품명</h5>
+                                                            <span class="text-muted" th:text="${review[3]}">2023-06-15</span>
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <i th:each="i : ${#numbers.sequence(1, review[2])}" class="fas fa-star text-warning"></i>
+                                                            <i th:each="i : ${#numbers.sequence(1, 5 - review[2])}" class="far fa-star text-warning"></i>
+                                                        </div>
+                                                        <p class="mb-0" th:text="${review[4]}">리뷰 내용</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer bg-white d-flex justify-content-end">
+                                                <button class="btn btn-sm btn-outline-primary me-2" th:onclick="'editReview(' + ${review[0]} + ')'" data-bs-toggle="modal" data-bs-target="#reviewModal">
+                                                    <i class="fas fa-edit me-1"></i> 수정
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" th:onclick="'deleteReview(' + ${review[0]} + ')'">
+                                                    <i class="fas fa-trash-alt me-1"></i> 삭제
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- 리뷰가 없는 경우 -->
+                                        <div th:if="${#lists.isEmpty(reviews)}" class="text-center py-5" style="display: none;">
+                                            <i class="fas fa-star text-muted" style="font-size: 4rem;"></i>
+                                            <h5 class="mt-3">작성한 리뷰가 없습니다</h5>
+                                            <p class="text-muted">구매한 상품에 대한 리뷰를 작성해보세요!</p>
+                                            <a th:href="@{/mypage/orders}" class="btn btn-primary mt-2">주문 내역 보기</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 계정 설정 탭 -->
+                            <div class="tab-pane fade" id="account">
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h4 class="mb-4">계정 설정</h4>
+
+                                        <form id="accountForm">
+                                            <div class="mb-3">
+                                                <label for="accountEmail" class="form-label">이메일</label>
+                                                <input type="email" class="form-control" id="accountEmail" th:value="${member != null ? member.email : 'hong@example.com'}" readonly>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="accountName" class="form-label">이름</label>
+                                                <input type="text" class="form-control" id="accountName" th:value="${member != null ? member.name : '홍길동'}" required>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="accountPhone" class="form-label">휴대폰 번호</label>
+                                                <input type="tel" class="form-control" id="accountPhone" th:value="${member != null ? member.phone : '010-1234-5678'}" required>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="marketingAgree" th:checked="${member != null ? member.marketingAgree : true}">
+                                                    <label class="form-check-label" for="marketingAgree">마케팅 정보 수신 동의</label>
+                                                </div>
+                                            </div>
+
+                                            <button type="submit" class="btn btn-primary">정보 수정</button>
+                                        </form>
+
+                                        <hr class="my-4">
+
+                                        <h5 class="mb-3">비밀번호 변경</h5>
+                                        <form id="passwordForm">
+                                            <div class="mb-3">
+                                                <label for="currentPassword" class="form-label">현재 비밀번호</label>
+                                                <input type="password" class="form-control" id="currentPassword" required>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="newPassword" class="form-label">새 비밀번호</label>
+                                                <input type="password" class="form-control" id="newPassword" required>
+                                                <div class="form-text">영문, 숫자, 특수문자 조합 8-20자</div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="confirmPassword" class="form-label">비밀번호 확인</label>
+                                                <input type="password" class="form-control" id="confirmPassword" required>
+                                            </div>
+
+                                            <button type="submit" class="btn btn-primary">비밀번호 변경</button>
+                                        </form>
+
+                                        <hr class="my-4">
+
+                                        <h5 class="mb-3">계정 탈퇴</h5>
+                                        <p class="text-muted">계정을 탈퇴하면 모든 개인 정보와 주문 내역이 삭제됩니다. 이 작업은 되돌릴 수 없습니다.</p>
+                                        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">계정 탈퇴</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 프로필 수정 모달 -->
+    <div class="modal fade" id="profileEditModal" tabindex="-1" aria-labelledby="profileEditModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="profileEditModalLabel">프로필 수정</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="profileForm">
+                        <div class="text-center mb-3">
+                            <img th:src="${member != null && member.profileImage != null ? member.profileImage : '/placeholder.svg?height=100&width=100&text=User'}" class="profile-avatar" alt="프로필 이미지" id="profilePreview">
+                            <div class="mt-2">
+                                <label for="profileImage" class="btn btn-sm btn-outline-primary">이미지 변경</label>
+                                <input type="file" id="profileImage" name="profileImage" accept="image/*" style="display: none;">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="profileName" class="form-label">이름</label>
+                            <input type="text" class="form-control" id="profileName" name="name" th:value="${member != null ? member.name : '홍길동'}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="profileBio" class="form-label">자기소개</label>
+                            <textarea class="form-control" id="profileBio" name="bio" rows="3" th:text="${member != null ? member.bio : ''}"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="saveProfileBtn">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 배송지 추가/수정 모달 -->
+    <div class="modal fade" id="addressModal" tabindex="-1" aria-labelledby="addressModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addressModalLabel">배송지 추가</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addressForm">
+                        <input type="hidden" id="addressId" name="id">
+
+                        <div class="mb-3">
+                            <label for="addressName" class="form-label">받는 사람</label>
+                            <input type="text" class="form-control" id="addressName" name="name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="addressPhone" class="form-label">연락처</label>
+                            <input type="tel" class="form-control" id="addressPhone" name="phone" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="addressZipcode" class="form-label">우편번호</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="addressZipcode" name="zipcode" readonly required>
+                                <button class="btn btn-outline-secondary" type="button" id="searchZipcodeBtn">
+                                    <i class="fas fa-search me-1"></i> 주소 찾기
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="addressLine1" class="form-label">기본 주소</label>
+                            <input type="text" class="form-control" id="addressLine1" name="addressLine1" readonly required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="addressLine2" class="form-label">상세 주소</label>
+                            <input type="text" class="form-control" id="addressLine2" name="addressLine2" required>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="defaultAddress" name="defaultAddress">
+                            <label class="form-check-label" for="defaultAddress">기본 배송지로 설정</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="saveAddressBtn">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 리뷰 수정 모달 -->
+    <div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reviewModalLabel">리뷰 수정</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="reviewForm">
+                        <input type="hidden" id="reviewId" name="id">
+
+                        <div class="mb-3">
+                            <label class="form-label">평점</label>
+                            <div class="rating-stars">
+                                <div class="d-flex">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="rating" id="rating1" value="1">
+                                        <label class="form-check-label" for="rating1"><i class="fas fa-star"></i></label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="rating" id="rating2" value="2">
+                                        <label class="form-check-label" for="rating2"><i class="fas fa-star"></i></label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="rating" id="rating3" value="3">
+                                        <label class="form-check-label" for="rating3"><i class="fas fa-star"></i></label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="rating" id="rating4" value="4">
+                                        <label class="form-check-label" for="rating4"><i class="fas fa-star"></i></label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="rating" id="rating5" value="5" checked>
+                                        <label class="form-check-label" for="rating5"><i class="fas fa-star"></i></label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="reviewContent" class="form-label">내용</label>
+                            <textarea class="form-control" id="reviewContent" name="content" rows="5" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="reviewImage" class="form-label">이미지 첨부 (선택)</label>
+                            <input type="file" class="form-control" id="reviewImage" name="image">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="saveReviewBtn">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 계정 탈퇴 확인 모달 -->
+    <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteAccountModalLabel">계정 탈퇴</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>정말로 계정을 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없으며, 모든 개인 정보와 주문 내역이 삭제됩니다.</p>
+                    <div class="mb-3">
+                        <label for="deleteAccountPassword" class="form-label">비밀번호 확인</label>
+                        <input type="password" class="form-control" id="deleteAccountPassword" required>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="deleteAccountConfirm" required>
+                        <label class="form-check-label" for="deleteAccountConfirm">
+                            계정 탈퇴에 따른 개인정보 삭제에 동의합니다.
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteAccountBtn">탈퇴하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<th:block layout:fragment="script">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 프로필 이미지 미리보기
+            const profileImage = document.getElementById('profileImage');
+            const profilePreview = document.getElementById('profilePreview');
+
+            if (profileImage) {
+                profileImage.addEventListener('change', function() {
+                    const file = this.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            profilePreview.src = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+
+            // 프로필 저장 버튼
+            const saveProfileBtn = document.getElementById('saveProfileBtn');
+            if (saveProfileBtn) {
+                saveProfileBtn.addEventListener('click', function() {
+                    // 실제 구현에서는 서버에 프로필 정보 저장 요청
+                    alert('프로필이 저장되었습니다.');
+
+                    // 모달 닫기
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('profileEditModal'));
+                    modal.hide();
+                });
+            }
+
+            // 주소 찾기 버튼
+            const searchZipcodeBtn = document.getElementById('searchZipcodeBtn');
+            if (searchZipcodeBtn) {
+                searchZipcodeBtn.addEventListener('click', function() {
+                    // 실제 구현에서는 다음 우편번호 API 등을 사용하여 주소 검색
+                    alert('주소 검색 기능은 실제 구현 시 다음 우편번호 API 등을 사용하세요.');
+
+                    // 임시 데이터
+                    document.getElementById('addressZipcode').value = '12345';
+                    document.getElementById('addressLine1').value = '서울시 강남구 테헤란로 123';
+                });
+            }
+
+            // 배송지 저장 버튼
+            const saveAddressBtn = document.getElementById('saveAddressBtn');
+            if (saveAddressBtn) {
+                saveAddressBtn.addEventListener('click', function() {
+                    const form = document.getElementById('addressForm');
+
+                    // 필수 입력 확인
+                    if (!form.checkValidity()) {
+                        form.reportValidity();
+                        return;
+                    }
+
+                    // 실제 구현에서는 서버에 배송지 정보 저장 요청
+                    alert('배송지가 저장되었습니다.');
+
+                    // 모달 닫기
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addressModal'));
+                    modal.hide();
+
+                    // 페이지 새로고침 (실제로는 AJAX로 구현)
+                    // location.reload();
+                });
+            }
+
+            // 리뷰 저장 버튼
+            const saveReviewBtn = document.getElementById('saveReviewBtn');
+            if (saveReviewBtn) {
+                saveReviewBtn.addEventListener('click', function() {
+                    const form = document.getElementById('reviewForm');
+
+                    // 필수 입력 확인
+                    if (!form.checkValidity()) {
+                        form.reportValidity();
+                        return;
+                    }
+
+                    // 실제 구현에서는 서버에 리뷰 정보 저장 요청
+                    alert('리뷰가 저장되었습니다.');
+
+                    // 모달 닫기
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
+                    modal.hide();
+
+                    // 페이지 새로고침 (실제로는 AJAX로 구현)
+                    // location.reload();
+                });
+            }
+
+            // 계정 정보 수정 폼 제출
+            const accountForm = document.getElementById('accountForm');
+            if (accountForm) {
+                accountForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    // 실제 구현에서는 서버에 계정 정보 저장 요청
+                    alert('계정 정보가 수정되었습니다.');
+                });
+            }
+
+            // 비밀번호 변경 폼 제출
+            const passwordForm = document.getElementById('passwordForm');
+            if (passwordForm) {
+                passwordForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    const currentPassword = document.getElementById('currentPassword').value;
+                    const newPassword = document.getElementById('newPassword').value;
+                    const confirmPassword = document.getElementById('confirmPassword').value;
+
+                    if (!currentPassword || !newPassword || !confirmPassword) {
+                        alert('모든 필드를 입력해주세요.');
+                        return;
+                    }
+
+                    if (newPassword !== confirmPassword) {
+                        alert('새 비밀번호와 비밀번호 확인이 일치하지 않습니다.');
+                        return;
+                    }
+
+                    // 실제 구현에서는 서버에 비밀번호 변경 요청
+                    alert('비밀번호가 변경되었습니다.');
+
+                    // 폼 초기화
+                    this.reset();
+                });
+            }
+
+            // 계정 탈퇴 확인 버튼
+            const confirmDeleteAccountBtn = document.getElementById('confirmDeleteAccountBtn');
+            if (confirmDeleteAccountBtn) {
+                confirmDeleteAccountBtn.addEventListener('click', function() {
+                    const password = document.getElementById('deleteAccountPassword').value;
+                    const confirmCheckbox = document.getElementById('deleteAccountConfirm');
+
+                    if (!password) {
+                        alert('비밀번호를 입력해주세요.');
+                        return;
+                    }
+
+                    if (!confirmCheckbox.checked) {
+                        alert('개인정보 삭제에 동의해주세요.');
+                        return;
+                    }
+
+                    // 실제 구현에서는 서버에 계정 탈퇴 요청
+                    alert('계정이 탈퇴되었습니다.');
+
+                    // 모달 닫기
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteAccountModal'));
+                    modal.hide();
+
+                    // 로그아웃 처리 및 메인 페이지로 이동
+                    window.location.href = '/';
+                });
+            }
+
+            // 주문 상태 필터 변경 이벤트
+            const orderStatusFilter = document.getElementById('orderStatusFilter');
+            if (orderStatusFilter) {
+                orderStatusFilter.addEventListener('change', function() {
+                    // 실제 구현에서는 서버에 필터링된 주문 목록 요청
+                    console.log('주문 상태 필터:', this.value);
+                });
+            }
+
+            // 주문 검색 버튼 클릭 이벤트
+            const orderSearchBtn = document.getElementById('orderSearchBtn');
+            if (orderSearchBtn) {
+                orderSearchBtn.addEventListener('click', function() {
+                    const searchTerm = document.getElementById('orderSearch').value;
+
+                    // 실제 구현에서는 서버에 검색 결과 요청
+                    console.log('주문 검색어:', searchTerm);
+                });
+            }
+        });
+
+        // 위시리스트에서 상품 제거 함수
+        function removeFromWishlist(productId) {
+            if (confirm('정말로 이 상품을 위시리스트에서 삭제하시겠습니까?')) {
+                // 실제 구현에서는 서버에 위시리스트 삭제 요청
+                console.log(`상품 ID: ${productId} 위시리스트에서 삭제`);
+
+                // 임시 알림
+                alert('상품이 위시리스트에서 삭제되었습니다.');
+
+                // 페이지 새로고침 (실제로는 AJAX로 구현)
+                // location.reload();
+            }
+        }
+
+        // 배송지 수정 함수
+        function editAddress(addressId) {
+            // 실제 구현에서는 서버에서 배송지 정보를 가져와야 함
+            console.log(`배송지 ID: ${addressId} 수정`);
+
+            // 모달 제목 변경
+            document.getElementById('addressModalLabel').textContent = '배송지 수정';
+
+            // 임시 데이터로 폼 채우기
+            document.getElementById('addressId').value = addressId;
+
+            if (addressId === 1) {
+                document.getElementById('addressName').value = '홍길동';
+                document.getElementById('addressPhone').value = '010-1234-5678';
+                document.getElementById('addressZipcode').value = '12345';
+                document.getElementById('addressLine1').value = '서울시 강남구 테헤란로 123';
+                document.getElementById('addressLine2').value = '456동 789호';
+                document.getElementById('defaultAddress').checked = true;
+            } else if (addressId === 2) {
+                document.getElementById('addressName').value = '홍길동';
+                document.getElementById('addressPhone').value = '010-1234-5678';
+                document.getElementById('addressZipcode').value = '54321';
+                document.getElementById('addressLine1').value = '서울시 서초구 서초대로 456';
+                document.getElementById('addressLine2').value = '10층 1001호';
+                document.getElementById('defaultAddress').checked = false;
+            } else if (addressId === 3) {
+                document.getElementById('addressName').value = '홍부모';
+                document.getElementById('addressPhone').value = '010-9876-5432';
+                document.getElementById('addressZipcode').value = '67890';
+                document.getElementById('addressLine1').value = '경기도 성남시 분당구 판교로 789';
+                document.getElementById('addressLine2').value = '101동 202호';
+                document.getElementById('defaultAddress').checked = false;
+            }
+        }
+
+        // 배송지 삭제 함수
+        function deleteAddress(addressId) {
+            if (confirm('정말로 이 배송지를 삭제하시겠습니까?')) {
+                // 실제 구현에서는 서버에 배송지 삭제 요청
+                console.log(`배송지 ID: ${addressId} 삭제`);
+
+                // 임시 알림
+                alert('배송지가 삭제되었습니다.');
+
+                // 페이지 새로고침 (실제로는 AJAX로 구현)
+                // location.reload();
+            }
+        }
+
+        // 리뷰 수정 함수
+        function editReview(reviewId) {
+            // 실제 구현에서는 서버에서 리뷰 정보를 가져와야 함
+            console.log(`리뷰 ID: ${reviewId} 수정`);
+
+            // 임시 데이터로 폼 채우기
+            document.getElementById('reviewId').value = reviewId;
+
+            if (reviewId === 1) {
+                document.getElementById('rating5').checked = true;
+                document.getElementById('reviewContent').value = '정말 만족스러운 구매였습니다. 소재도 좋고 핏도 완벽해요. 배송도 빨랐고 포장도 꼼꼼하게 잘 되어 있었습니다.';
+            } else if (reviewId === 2) {
+                document.getElementById('rating4').checked = true;
+                document.getElementById('reviewContent').value = '전체적으로 만족합니다. 사이즈는 정사이즈에요. 다만 생각보다 두께가 얇은 편이라 초가을까지만 입을 수 있을 것 같아요.';
+            }
+        }
+
+        // 리뷰 삭제 함수
+        function deleteReview(reviewId) {
+            if (confirm('정말로 이 리뷰를 삭제하시겠습니까?')) {
+                // 실제 구현에서는 서버에 리뷰 삭제 요청
+                console.log(`리뷰 ID: ${reviewId} 삭제`);
+
+                // 임시 알림
+                alert('리뷰가 삭제되었습니다.');
+
+                // 페이지 새로고침 (실제로는 AJAX로 구현)
+                // location.reload();
+            }
+        }
+    </script>
+</th:block>
+</body>
+</html>

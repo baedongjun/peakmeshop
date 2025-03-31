@@ -1,6 +1,5 @@
 package com.peakmeshop.payment;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.http.HttpHeaders;
