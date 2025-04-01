@@ -155,6 +155,7 @@ function addToWishlist(productId) {
     alert("상품이 위시리스트에 추가되었습니다.")
 }
 
+
 // 스크롤 시 네비게이션 바 스타일 변경
 window.addEventListener("scroll", () => {
     const navbar = document.querySelector(".navbar")

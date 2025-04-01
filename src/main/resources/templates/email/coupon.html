@@ -1,10 +1,78 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>쿠폰 발급 안내</title>
 </head>
-<body>
+<body style="margin: 0; padding: 0; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background-color: #f4f4f4;">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <tr>
+        <td style="padding: 40px 30px; text-align: center; background-color: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+            <h1 style="margin: 0; color: #343a40; font-size: 24px;">PeakMeShop</h1>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding: 40px 30px;">
+            <h2 style="margin-top: 0; color: #343a40; font-size: 20px;">쿠폰이 발급되었습니다!</h2>
+            <p style="margin-bottom: 20px; color: #495057; line-height: 1.6;">
+                안녕하세요, <span th:text="${name}">고객</span>님!<br>
+                <span th:text="${couponName}">신규 가입 할인</span> 쿠폰이 발급되었습니다.
+            </p>
 
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px; border: 2px dashed #dee2e6; border-radius: 8px; padding: 20px;">
+                <tr>
+                    <td align="center" style="padding-bottom: 15px;">
+                        <h3 style="margin: 0; color: #dc3545; font-size: 24px;" th:text="${couponName}">신규 가입 할인</h3>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="center" style="padding-bottom: 15px;">
+                        <p style="margin: 0; font-size: 32px; font-weight: bold; color: #343a40;" th:text="${discountAmount}">10,000원</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="center" style="padding-bottom: 15px;">
+                        <p style="margin: 0; color: #6c757d;">쿠폰 코드: <span style="font-weight: bold; color: #343a40;" th:text="${couponCode}">WELCOME2023</span></p>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="center">
+                        <p style="margin: 0; color: #6c757d; font-size: 14px;">
+                            유효기간: <span th:text="${expiryDate}">2023년 12월 31일</span>까지
+                        </p>
+                        <p style="margin: 5px 0 0 0; color: #6c757d; font-size: 14px;" th:if="${minimumOrderAmount}">
+                            최소 주문금액: <span th:text="${minimumOrderAmount}">30,000원</span> 이상
+                        </p>
+                    </td>
+                </tr>
+            </table>
+
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">
+                <tr>
+                    <td align="center">
+                        <a th:href="${shopUrl}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #ffffff; text-decoration: none; font-weight: bold; border-radius: 4px;">쇼핑하러 가기</a>
+                    </td>
+                </tr>
+            </table>
+
+            <p style="margin-bottom: 0; color: #6c757d; font-size: 14px;">
+                * 쿠폰 사용 시 주문서 작성 페이지에서 쿠폰 코드를 입력해주세요.<br>
+                * 일부 상품에는 쿠폰 적용이 제한될 수 있습니다.
+            </p>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding: 20px 30px; text-align: center; background-color: #f8f9fa; color: #6c757d; font-size: 12px; border-top: 1px solid #dee2e6;">
+            <p style="margin: 0 0 10px 0;">
+                본 메일은 발신 전용이므로 회신하실 수 없습니다.
+            </p>
+            <p style="margin: 0;">
+                &copy; 2023 PeakMeShop. All rights reserved.
+            </p>
+        </td>
+    </tr>
+</table>
 </body>
 </html>
+

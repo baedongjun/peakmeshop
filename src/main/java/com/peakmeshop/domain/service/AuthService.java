@@ -8,15 +8,15 @@ import jakarta.validation.Valid;
 
 public interface AuthService {
 
-    AuthResponseDTO login(LoginRequest loginRequest);
+    AuthResponseDTO login(@Valid LoginRequest loginRequest);
 
-    AuthResponseDTO signup(SignupRequest signupRequest);
+    AuthResponseDTO signup(@Valid SignupRequest signupRequest);
 
     Map<String, Object> getUserInfo();
 
     void requestPasswordReset(String email);
 
-    void resetPassword(PasswordResetDTO resetDTO);
+    void resetPassword(@Valid PasswordResetDTO resetDTO);
 
     boolean verifyEmail(String token);
 
