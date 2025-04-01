@@ -119,20 +119,26 @@
                     </div>
 
                     <!-- 로그인 폼 -->
-                    <form th:action="@{/api/auth/login}" method="post">
+                    <form th:action="@{/api/auth/login}" method="post" th:object="${loginRequest}">
                         <div class="form-group">
-                            <label for="username" class="form-label">이메일</label>
-                            <input type="email" class="form-control" id="username" name="username" required autofocus>
+                            <label for="userId" class="form-label">아이디</label>
+                            <input type="text" class="form-control" th:classappend="${#fields.hasErrors('userId')} ? 'is-invalid'" id="userId" th:field="*{userId}" required autofocus>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('userId')}" th:errors="*{userId}">
+                                아이디 오류 메시지
+                            </div>
                         </div>
 
                         <div class="form-group">
                             <label for="password" class="form-label">비밀번호</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
+                            <input type="password" class="form-control" th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'" id="password" th:field="*{password}" required>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">
+                                비밀번호 오류 메시지
+                            </div>
                         </div>
 
                         <div class="form-group form-check">
-                            <input type="checkbox" class="form-check-input" id="remember-me" name="remember-me">
-                            <label class="form-check-label" for="remember-me">로그인 상태 유지</label>
+                            <input type="checkbox" class="form-check-input" id="rememberMe" th:field="*{rememberMe}">
+                            <label class="form-check-label" for="rememberMe">로그인 상태 유지</label>
                         </div>
 
                         <button type="submit" class="btn btn-primary btn-login mt-4">로그인</button>

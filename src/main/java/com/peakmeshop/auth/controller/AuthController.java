@@ -1,7 +1,7 @@
 package com.peakmeshop.auth.controller;
 
-import com.peakmeshop.api.dto.LoginDTO;
-import com.peakmeshop.api.dto.MemberDTO;
+import com.peakmeshop.api.dto.LoginRequest;
+import com.peakmeshop.api.dto.SignupRequest;
 import com.peakmeshop.domain.service.AuthService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,13 +18,13 @@ public class AuthController {
 
     @GetMapping("/login")
     public String loginForm(Model model) {
-        model.addAttribute("loginDTO", new LoginDTO());
+        model.addAttribute("loginRequest", new LoginRequest());
         return "auth/login";
     }
 
     @GetMapping("/register")
     public String registerForm(Model model) {
-        model.addAttribute("memberDTO", new MemberDTO());
+        model.addAttribute("signupRequest", new SignupRequest());
         return "auth/register";
     }
 

@@ -1,7 +1,5 @@
 package com.peakmeshop.api.dto;
 
-import com.peakmeshop.api.dto.LoginRequest;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -23,6 +21,7 @@ public class LoginDTO {
     private String password;
 
     private boolean rememberMe;
+
     public LoginRequest toLoginRequestDTO() {
         return LoginRequest.builder()
                 .userId(this.userId)
