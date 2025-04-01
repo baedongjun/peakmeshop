@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title th:text="${shipment != null ? '배송 정보 수정' : '배송 등록'}">배송 등록/수정</title>
+</head>
+<body>
+<!-- 페이지 제목 -->
+<h1 layout:fragment="page-title" th:text="${shipment != null ? '배송 정보 수정' : '배송 등록'}">배송 등록/수정</h1>
+
+<!-- 페이지 내용 -->
+<div layout:fragment="content">
+    <div class="admin-card mb-4">
+        <form id="shipmentForm" th:action="${shipment != null ? '/admin/shipments/update' : '/admin/shipments/save'}" method="post">
+            <input type="hidden" name="id" th:if="${shipment != null}" th:value="${shipment.id}">
+
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <!-- 주문 정보 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">주문 정보</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="orderNumber" class="form-label">주문번호 <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="orderNumber" name="orderNumber" required th:value="${shipment != null ? shipment.orderNumber : ''}">
+                                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#orderSearchModal">주문 검색</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="orderDate" class="form-label">주문일자</label>
+                                    <input type="date" class="form-control" id="orderDate" name="orderDate" readonly th:value="${shipment != null ? shipment.orderDate : ''}">
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="customerName" class="form-label">주문자명</label>
+                                    <input type="text" class="form-control" id="customerName" name="customerName" readonly th:value="${shipment != null ? shipment.customerName : ''}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="customerPhone" class="form-label">주문자 연락처</label>
+                                    <input type="text" class="form-control" id="customerPhone" name="customerPhone" readonly th:value="${shipment != null ? shipment.customerPhone : ''}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 배송 정보 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">배송 정보</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="recipientName" class="form-label">수령인 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="recipientName" name="recipientName" required th:value="${shipment != null ? shipment.recipientName : ''}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="recipientPhone" class="form-label">수령인 연락처 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="recipientPhone" name="recipientPhone" required th:value="${shipment != null ? shipment.recipientPhone : ''}">
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="zipCode" class="form-label">우편번호 <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="zipCode" name="zipCode" required th:value="${shipment != null ? shipment.zipCode : ''}">
+                                        <button class="btn btn-outline-secondary" type="button">우편번호 찾기</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="address1" class="form-label">주소 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="address1" name="address1" required th:value="${shipment != null ? shipment.address1 : ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="address2" class="form-label">상세주소</label>
+                                <input type="text" class="form-control" id="address2" name="address2" th:value="${shipment != null ? shipment.address2 : ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="deliveryRequest" class="form-label">배송 요청사항</label>
+                                <textarea class="form-control" id="deliveryRequest" name="deliveryRequest" rows="2" th:text="${shipment != null ? shipment.deliveryRequest : ''}"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 배송 상품 정보 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">배송 상품</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="shipmentItemsTable">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>상품코드</th>
+                                        <th>상품명</th>
+                                        <th>옵션</th>
+                                        <th>수량</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:if="${shipment == null || shipment.items == null || shipment.items.isEmpty()}">
+                                        <td colspan="4" class="text-center">주문번호를 입력하면 상품 정보가 표시됩니다.</td>
+                                    </tr>
+                                    <tr th:each="item : ${shipment != null ? shipment.items : {}}" th:if="${shipment != null && shipment.items != null && !shipment.items.isEmpty()}">
+                                        <td th:text="${item.productCode}">PRD-001</td>
+                                        <td th:text="${item.productName}">프리미엄 티셔츠</td>
+                                        <td th:text="${item.options}">색상: 블랙, 사이즈: L</td>
+                                        <td th:text="${item.quantity}">2</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <!-- 배송 상세 정보 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">배송 상세 정보</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="courierCompany" class="form-label">택배사 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="courierCompany" name="courierCompany" required>
+                                    <option value="" selected disabled>택배사 선택</option>
+                                    <option value="CJ대한통운" th:selected="${shipment != null && shipment.courierCompany == 'CJ대한통운'}">CJ대한통운</option>
+                                    <option value="우체국택배" th:selected="${shipment != null && shipment.courierCompany == '우체국택배'}">우체국택배</option>
+                                    <option value="한진택배" th:selected="${shipment != null && shipment.courierCompany == '한진택배'}">한진택배</option>
+                                    <option value="롯데택배" th:selected="${shipment != null && shipment.courierCompany == '롯데택배'}">롯데택배</option>
+                                    <option value="로젠택배" th:selected="${shipment != null && shipment.courierCompany == '로젠택배'}">로젠택배</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="trackingNumber" class="form-label">운송장번호 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="trackingNumber" name="trackingNumber" required th:value="${shipment != null ? shipment.trackingNumber : ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="shippingDate" class="form-label">발송일 <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="shippingDate" name="shippingDate" required th:value="${shipment != null ? shipment.shippingDate : ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="estimatedDeliveryDate" class="form-label">예상 도착일</label>
+                                <input type="date" class="form-control" id="estimatedDeliveryDate" name="estimatedDeliveryDate" th:value="${shipment != null ? shipment.estimatedDeliveryDate : ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="shippingFee" class="form-label">배송비</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₩</span>
+                                    <input type="number" class="form-control" id="shippingFee" name="shippingFee" th:value="${shipment != null ? shipment.shippingFee : '3000'}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 배송 상태 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">배송 상태</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">상태 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="status" name="status" required>
+                                    <option value="PREPARING" th:selected="${shipment == null || (shipment != null && shipment.status == 'PREPARING')}">배송준비중</option>
+                                    <option value="SHIPPING" th:selected="${shipment != null && shipment.status == 'SHIPPING'}">배송중</option>
+                                    <option value="DELIVERED" th:selected="${shipment != null && shipment.status == 'DELIVERED'}">배송완료</option>
+                                    <option value="DELAYED" th:selected="${shipment != null && shipment.status == 'DELAYED'}">배송지연</option>
+                                    <option value="CANCELED" th:selected="${shipment != null && shipment.status == 'CANCELED'}">배송취소</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">메모</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3" th:text="${shipment != null ? shipment.notes : ''}"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 저장 버튼 -->
+            <div class="d-flex justify-content-end">
+                <a th:href="@{/admin/shipments}" class="btn btn-secondary me-2">취소</a>
+                <button type="submit" class="btn btn-primary">저장</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 주문 검색 모달 -->
+    <div class="modal fade" id="orderSearchModal" tabindex="-1" aria-labelledby="orderSearchModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="orderSearchModalLabel">주문 검색</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="주문번호 또는 주문자명 검색">
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                            <tr>
+                                <th>주문번호</th>
+                                <th>주문일자</th>
+                                <th>주문자</th>
+                                <th>상품정보</th>
+                                <th>결제금액</th>
+                                <th>상태</th>
+                                <th>선택</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>#ORD-1234</td>
+                                <td>2023-11-15</td>
+                                <td>홍길동</td>
+                                <td>프리미엄 티셔츠 외
+

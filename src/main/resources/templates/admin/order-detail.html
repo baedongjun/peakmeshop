@@ -1,61 +1,27 @@
-&lt;!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layouts/main-layout}">
+      layout:decorate="~{layouts/admin-layout}">
 <head>
     <title>주문 상세</title>
     <th:block layout:fragment="css">
         <style>
-            .order-detail-container {
-                min-height: 60vh;
-            }
-            .order-detail-card {
-                border-radius: 1rem;
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-                overflow: hidden;
-                border: none;
-                margin-bottom: 1.5rem;
-            }
-            .order-detail-card-header {
-                background-color: var(--gray-100);
-                padding: 1rem 1.5rem;
-                border-bottom: 1px solid var(--gray-200);
-            }
-            .order-detail-card-body {
-                padding: 1.5rem;
-            }
-            .order-status {
-                display: inline-block;
-                padding: 0.25rem 0.75rem;
-                border-radius: 50rem;
-                font-size: 0.75rem;
+            .order-info-label {
                 font-weight: 600;
-                text-transform: uppercase;
-            }
-            .status-pending {
-                background-color: var(--warning-color);
-                color: white;
-            }
-            .status-processing {
-                background-color: var(--primary-color);
-                color: white;
-            }
-            .status-shipped {
-                background-color: var(--success-color);
-                color: white;
-            }
-            .status-delivered {
-                background-color: var(--dark-color);
-                color: white;
-            }
-            .status-canceled {
-                background-color: var(--danger-color);
-                color: white;
+                color: #495057;
             }
             .order-timeline {
                 position: relative;
-                padding-left: 30px;
+                padding-left: 45px;
+            }
+            .order-timeline::before {
+                content: '';
+                position: absolute;
+                left: 15px;
+                top: 0;
+                height: 100%;
+                width: 2px;
+                background-color: #dee2e6;
             }
             .timeline-item {
                 position: relative;
@@ -64,331 +30,292 @@
             .timeline-item:last-child {
                 padding-bottom: 0;
             }
-            .timeline-item::before {
-                content: "";
+            .timeline-marker {
                 position: absolute;
                 left: -30px;
                 top: 0;
                 width: 20px;
                 height: 20px;
                 border-radius: 50%;
-                background-color: var(--primary-color);
+                background-color: #fff;
+                border: 2px solid #007bff;
                 z-index: 1;
             }
-            .timeline-item::after {
-                content: "";
-                position: absolute;
-                left: -20px;
-                top: 20px;
-                width: 2px;
-                height: calc(100% - 20px);
-                background-color: var(--gray-300);
+            .timeline-active .timeline-marker {
+                background-color: #007bff;
             }
-            .timeline-item:last-child::after {
-                display: none;
+            .timeline-content {
+                padding-bottom: 10px;
             }
-            .timeline-date {
-                font-size: 0.85rem;
-                color: var(--gray-600);
-            }
-            .timeline-title {
-                font-weight: 600;
-                margin-bottom: 0.25rem;
-            }
-            .timeline-text {
-                color: var(--gray-700);
-            }
-            .order-item-img {
-                width: 80px;
-                height: 80px;
+            .product-image {
+                width: 60px;
+                height: 60px;
                 object-fit: cover;
-                border-radius: 0.5rem;
+                border-radius: 5px;
             }
         </style>
     </th:block>
 </head>
 <body>
-<main layout:fragment="content">
-    <section class="py-5">
-        <div class="container">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2 class="mb-0">주문 상세</h2>
-                    <p class="text-muted mb-0" th:text="${'주문번호: ' + (order != null ? order.orderNumber : 'ORD-1001')}">주문번호: ORD-1001</p>
-                </div>
-                <div>
-                    <a th:href="@{/admin/orders}" class="btn btn-outline-secondary me-2">
-                        <i class="fas fa-arrow-left me-1"></i> 목록으로
-                    </a>
-                    <button class="btn btn-primary" onclick="window.print()">
-                        <i class="fas fa-print me-1"></i> 인쇄
-                    </button>
-                </div>
+<!-- 페이지 제목 -->
+<h1 layout:fragment="page-title">주문 상세</h1>
+
+<!-- 페이지 내용 -->
+<div layout:fragment="content">
+    <!-- 주문 기본 정보 -->
+    <div class="admin-card mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h5 class="mb-0">주문 정보</h5>
+                <p class="text-muted mb-0">주문번호: #ORD-1234</p>
             </div>
-
-            <div class="order-detail-container">
-                <div class="row">
-                    <div class="col-lg-8">
-                        &lt;!-- 주문 정보 -->
-                        <div class="order-detail-card">
-                            <div class="order-detail-card-header d-flex justify-content-between align-items-center">
-                                <h4 class="mb-0">
-                                    <i class="fas fa-info-circle me-2"></i> 주문 정보
-                                </h4>
-                                <span th:class="${'order-status status-' + #strings.toLowerCase(order != null ? order.status : 'PROCESSING')}"
-                                      th:text="${#strings.equals(order != null ? order.status : 'PROCESSING', 'PENDING') ? '결제대기' :
-                                                   #strings.equals(order != null ? order.status : 'PROCESSING', 'PROCESSING') ? '처리중' : 
-                                                   #strings.equals(order != null ? order.status : 'PROCESSING', 'SHIPPED') ? '배송중' : 
-                                                   #strings.equals(order != null ? order.status : 'PROCESSING', 'DELIVERED') ? '배송완료' : 
-                                                   #strings.equals(order != null ? order.status : 'PROCESSING', 'CANCELED') ? '주문취소' : (order != null ? order.status : 'PROCESSING')}">
-                                        처리중
-                                    </span>
-                            </div>
-                            <div class="order-detail-card-body">
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <p class="mb-1 text-muted">주문일자</p>
-                                        <p class="mb-0 fw-bold" th:text="${order != null ? order.orderDate : '2023-07-15'}">2023-07-15</p>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <p class="mb-1 text-muted">결제방법</p>
-                                        <p class="mb-0 fw-bold" th:text="${order != null ? order.paymentMethod : '신용카드'}">신용카드</p>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <p class="mb-1 text-muted">고객명</p>
-                                        <p class="mb-0 fw-bold" th:text="${order != null ? order.customerName : '홍길동'}">홍길동</p>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <p class="mb-1 text-muted">연락처</p>
-                                        <p class="mb-0 fw-bold" th:text="${order != null ? order.customerPhone : '010-1234-5678'}">010-1234-5678</p>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <p class="mb-1 text-muted">이메일</p>
-                                        <p class="mb-0 fw-bold" th:text="${order != null ? order.customerEmail : 'hong@example.com'}">hong@example.com</p>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <p class="mb-1 text-muted">총 결제금액</p>
-                                        <p class="mb-0 fw-bold text-primary" th:text="${'₩' + #numbers.formatInteger(order != null ? order.totalAmount : 125000, 0, 'COMMA')}">₩125,000</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        &lt;!-- 배송 정보 -->
-                        <div class="order-detail-card">
-                            <div class="order-detail-card-header">
-                                <h4 class="mb-0">
-                                    <i class="fas fa-shipping-fast me-2"></i> 배송 정보
-                                </h4>
-                            </div>
-                            <div class="order-detail-card-body">
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <p class="mb-1 text-muted">받는 사람</p>
-                                        <p class="mb-0 fw-bold" th:text="${order != null ? order.receiverName : '홍길동'}">홍길동</p>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <p class="mb-1 text-muted">연락처</p>
-                                        <p class="mb-0 fw-bold" th:text="${order != null ? order.receiverPhone : '010-1234-5678'}">010-1234-5678</p>
-                                    </div>
-                                    <div class="col-12 mb-3">
-                                        <p class="mb-1 text-muted">배송지 주소</p>
-                                        <p class="mb-0 fw-bold" th:text="${order != null ? order.address : '서울시 강남구 테헤란로 123, 456동 789호'}">서울시 강남구 테헤란로 123, 456동 789호</p>
-                                    </div>
-                                    <div class="col-12 mb-3">
-                                        <p class="mb-1 text-muted">배송 요청사항</p>
-                                        <p class="mb-0 fw-bold" th:text="${order != null ? order.deliveryRequest : '문 앞에 놓아주세요.'}">문 앞에 놓아주세요.</p>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <p class="mb-1 text-muted">택배사</p>
-                                        <p class="mb-0 fw-bold" th:text="${order != null ? order.courierCompany : 'CJ대한통운'}">CJ대한통운</p>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <p class="mb-1 text-muted">운송장번호</p>
-                                        <p class="mb-0">
-                                            <span th:if="${order != null && order.trackingNumber != null}" th:text="${order.trackingNumber}" class="fw-bold">123456789012</span>
-                                            <span th:if="${order == null || order.trackingNumber == null}" class="badge bg-warning">미등록</span>
-                                            <a href="#" class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#trackingModal">
-                                                <i class="fas fa-edit me-1"></i> 등록/수정
-                                            </a>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        &lt;!-- 주문 상품 정보 -->
-                        <div class="order-detail-card">
-                            <div class="order-detail-card-header">
-                                <h4 class="mb-0">
-                                    <i class="fas fa-shopping-bag me-2"></i> 주문 상품 정보
-                                </h4>
-                            </div>
-                            <div class="order-detail-card-body">
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                        <tr>
-                                            <th>상품</th>
-                                            <th>가격</th>
-                                            <th>수량</th>
-                                            <th class="text-end">소계</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        &lt;!-- 주문 상품 목록 (실제로는 DB에서 가져올 것) -->
-                                        <tr th:each="item, stat : ${orderItems != null ? orderItems : {
-                                                        {1, '프리미엄 데님 자켓', 52000, 1},
-                                                        {2, '캐주얼 티셔츠', 35000, 2}
-                                                    }}">
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <img th:src="@{/placeholder.svg?height=80&width=80}" th:alt="${item[1]}" class="order-item-img me-3">
-                                                    <span th:text="${item[1]}">상품명</span>
-                                                </div>
-                                            </td>
-                                            <td th:text="${'₩' + #numbers.formatInteger(item[2], 0, 'COMMA')}">가격</td>
-                                            <td th:text="${item[3]}">수량</td>
-                                            <td class="text-end" th:text="${'₩' + #numbers.formatInteger(item[2] * item[3], 0, 'COMMA')}">소계</td>
-                                        </tr>
-                                        </tbody>
-                                        <tfoot>
-                                        <tr>
-                                            <td colspan="3" class="text-end fw-bold">상품 금액</td>
-                                            <td class="text-end fw-bold" th:text="${'₩' + #numbers.formatInteger(order != null ? order.subtotal : 122000, 0, 'COMMA')}">₩122,000</td>
-                                        </tr>
-                                        <tr>
-                                            <td colspan="3" class="text-end fw-bold">배송비</td>
-                                            <td class="text-end fw-bold" th:text="${'₩' + #numbers.formatInteger(order != null ? order.shippingFee : 3000, 0, 'COMMA')}">₩3,000</td>
-                                        </tr>
-                                        <tr>
-                                            <td colspan="3" class="text-end fw-bold">할인 금액</td>
-                                            <td class="text-end fw-bold text-danger" th:text="${'-₩' + #numbers.formatInteger(order != null ? order.discount : 0, 0, 'COMMA')}">-₩0</td>
-                                        </tr>
-                                        <tr>
-                                            <td colspan="3" class="text-end fw-bold">총 결제금액</td>
-                                            <td class="text-end fw-bold text-primary" th:text="${'₩' + #numbers.formatInteger(order != null ? order.totalAmount : 125000, 0, 'COMMA')}">₩125,000</td>
-                                        </tr>
-                                        </tfoot>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-4">
-                        &lt;!-- 주문 상태 변경 -->
-                        <div class="order-detail-card">
-                            <div class="order-detail-card-header">
-                                <h4 class="mb-0">
-                                    <i class="fas fa-tasks me-2"></i> 주문 상태 관리
-                                </h4>
-                            </div>
-                            <div class="order-detail-card-body">
-                                <form th:action="@{'/admin/orders/' + ${order != null ? order.id : '1'} + '/status'}" method="post">
-                                    <div class="mb-3">
-                                        <label for="orderStatus" class="form-label">주문 상태 변경</label>
-                                        <select class="form-select" id="orderStatus" name="status">
-                                            <option value="PENDING" th:selected="${order != null && #strings.equals(order.status, 'PENDING')}">결제대기</option>
-                                            <option value="PROCESSING" th:selected="${order == null || (order != null && #strings.equals(order.status, 'PROCESSING'))}">처리중</option>
-                                            <option value="SHIPPED" th:selected="${order != null && #strings.equals(order.status, 'SHIPPED')}">배송중</option>
-                                            <option value="DELIVERED" th:selected="${order != null && #strings.equals(order.status, 'DELIVERED')}">배송완료</option>
-                                            <option value="CANCELED" th:selected="${order != null && #strings.equals(order.status, 'CANCELED')}">주문취소</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="statusNote" class="form-label">상태 변경 메모</label>
-                                        <textarea class="form-control" id="statusNote" name="statusNote" rows="3" placeholder="상태 변경에 대한 메모를 입력하세요"></textarea>
-                                    </div>
-                                    <div class="d-grid">
-                                        <button type="submit" class="btn btn-primary">상태 변경</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-
-                        &lt;!-- 주문 타임라인 -->
-                        <div class="order-detail-card">
-                            <div class="order-detail-card-header">
-                                <h4 class="mb-0">
-                                    <i class="fas fa-history me-2"></i> 주문 타임라인
-                                </h4>
-                            </div>
-                            <div class="order-detail-card-body">
-                                <div class="order-timeline">
-                                    &lt;!-- 타임라인 아이템 (실제로는 DB에서 가져올 것) -->
-                                    <div th:each="timeline, stat : ${orderTimeline != null ? orderTimeline : {
-                                                {1, '2023-07-15 14:30', '주문 접수', '고객이 주문을 완료했습니다.'},
-                                                {2, '2023-07-15 15:45', '결제 완료', '신용카드 결제가 완료되었습니다.'},
-                                                {3, '2023-07-16 09:20', '상품 준비중', '주문하신 상품을 준비 중입니다.'},
-                                                {4, '2023-07-17 11:10', '배송 시작', 'CJ대한통운(123456789012)으로 배송이 시작되었습니다.'}
-                                            }}"
-                                         class="timeline-item">
-                                        <div class="timeline-date" th:text="${timeline[1]}">2023-07-15 14:30</div>
-                                        <div class="timeline-title" th:text="${timeline[2]}">주문 접수</div>
-                                        <div class="timeline-text" th:text="${timeline[3]}">고객이 주문을 완료했습니다.</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        &lt;!-- 고객 메모 -->
-                        <div class="order-detail-card">
-                            <div class="order-detail-card-header">
-                                <h4 class="mb-0">
-                                    <i class="fas fa-sticky-note me-2"></i> 고객 메모
-                                </h4>
-                            </div>
-                            <div class="order-detail-card-body">
-                                <form th:action="@{'/admin/orders/' + ${order != null ? order.id : '1'} + '/note'}" method="post">
-                                    <div class="mb-3">
-                                        <textarea class="form-control" id="customerNote" name="customerNote" rows="4" th:text="${order != null ? order.customerNote : ''}"></textarea>
-                                    </div>
-                                    <div class="d-grid">
-                                        <button type="submit" class="btn btn-primary">메모 저장</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div>
+                <a th:href="@{/admin/orders}" class="btn btn-outline-secondary me-2">목록으로</a>
+                <button type="button" class="btn btn-outline-primary">주문서 인쇄</button>
             </div>
         </div>
-    </section>
 
-    &lt;!-- 운송장 등록 모달 -->
-    <div class="modal fade" id="trackingModal" tabindex="-1" aria-labelledby="trackingModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="trackingModalLabel">운송장 정보 등록/수정</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="row mb-3">
+                    <div class="col-md-3 order-info-label">주문 상태</div>
+                    <div class="col-md-9">
+                        <span class="badge bg-success">배송완료</span>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <form th:action="@{'/admin/orders/' + ${order != null ? order.id : '1'} + '/tracking'}" method="post">
+                <div class="row mb-3">
+                    <div class="col-md-3 order-info-label">주문일시</div>
+                    <div class="col-md-9">2023-11-15 14:30:25</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3 order-info-label">결제일시</div>
+                    <div class="col-md-9">2023-11-15 14:31:10</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3 order-info-label">결제 방법</div>
+                    <div class="col-md-9">신용카드 (KB국민카드)</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3 order-info-label">결제 금액</div>
+                    <div class="col-md-9">₩123,000</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">주문 처리</h6>
+                    </div>
+                    <div class="card-body">
                         <div class="mb-3">
-                            <label for="courierCompany" class="form-label">택배사</label>
-                            <select class="form-select" id="courierCompany" name="courierCompany">
-                                <option value="CJ대한통운" selected>CJ대한통운</option>
-                                <option value="우체국택배">우체국택배</option>
-                                <option value="로젠택배">로젠택배</option>
-                                <option value="한진택배">한진택배</option>
-                                <option value="롯데택배">롯데택배</option>
+                            <label for="orderStatus" class="form-label">주문 상태 변경</label>
+                            <select class="form-select mb-2" id="orderStatus">
+                                <option>결제완료</option>
+                                <option>상품준비중</option>
+                                <option>배송중</option>
+                                <option selected>배송완료</option>
+                                <option>취소</option>
+                                <option>환불</option>
                             </select>
+                            <button type="button" class="btn btn-primary w-100">상태 변경</button>
                         </div>
-                        <div class="mb-3">
-                            <label for="trackingNumber" class="form-label">운송장번호</label>
-                            <input type="text" class="form-control" id="trackingNumber" name="trackingNumber" placeholder="운송장번호를 입력하세요" th:value="${order != null ? order.trackingNumber : ''}">
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">저장</button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</main>
+
+    <!-- 주문 타임라인 -->
+    <div class="admin-card mb-4">
+        <h5 class="mb-3">주문 처리 내역</h5>
+        <div class="order-timeline">
+            <div class="timeline-item timeline-active">
+                <div class="timeline-marker"></div>
+                <div class="timeline-content">
+                    <h6>배송완료</h6>
+                    <p class="text-muted mb-0">2023-11-17 14:20:15</p>
+                    <p>배송이 완료되었습니다.</p>
+                </div>
+            </div>
+            <div class="timeline-item timeline-active">
+                <div class="timeline-marker"></div>
+                <div class="timeline-content">
+                    <h6>배송중</h6>
+                    <p class="text-muted mb-0">2023-11-16 09:15:30</p>
+                    <p>상품이 배송 중입니다. (송장번호: 1234567890)</p>
+                </div>
+            </div>
+            <div class="timeline-item timeline-active">
+                <div class="timeline-marker"></div>
+                <div class="timeline-content">
+                    <h6>상품준비중</h6>
+                    <p class="text-muted mb-0">2023-11-15 16:45:22</p>
+                    <p>상품 포장이 완료되었습니다.</p>
+                </div>
+            </div>
+            <div class="timeline-item timeline-active">
+                <div class="timeline-marker"></div>
+                <div class="timeline-content">
+                    <h6>결제완료</h6>
+                    <p class="text-muted mb-0">2023-11-15 14:31:10</p>
+                    <p>결제가 완료되었습니다. (결제수단: 신용카드)</p>
+                </div>
+            </div>
+            <div class="timeline-item timeline-active">
+                <div class="timeline-marker"></div>
+                <div class="timeline-content">
+                    <h6>주문접수</h6>
+                    <p class="text-muted mb-0">2023-11-15 14:30:25</p>
+                    <p>주문이 접수되었습니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 주문 상품 정보 -->
+    <div class="admin-card mb-4">
+        <h5 class="mb-3">주문 상품 정보</h5>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>상품정보</th>
+                    <th>옵션</th>
+                    <th>수량</th>
+                    <th>판매가</th>
+                    <th>상품구매금액</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <img src="https://via.placeholder.com/60" alt="상품 이미지" class="product-image me-3">
+                            <div>
+                                <div>프리미엄 티셔츠</div>
+                                <small class="text-muted">PRD-001</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div>색상: 블랙</div>
+                        <div>사이즈: L</div>
+                    </td>
+                    <td>2</td>
+                    <td>₩39,000</td>
+                    <td>₩78,000</td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <img src="https://via.placeholder.com/60" alt="상품 이미지" class="product-image me-3">
+                            <div>
+                                <div>스포츠 양말</div>
+                                <small class="text-muted">PRD-004</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div>색상: 화이트</div>
+                        <div>사이즈: 25-27cm</div>
+                    </td>
+                    <td>3</td>
+                    <td>₩12,000</td>
+                    <td>₩36,000</td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <img src="https://via.placeholder.com/60" alt="상품 이미지" class="product-image me-3">
+                            <div>
+                                <div>스포츠 물병</div>
+                                <small class="text-muted">PRD-006</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div>색상: 블루</div>
+                    </td>
+                    <td>1</td>
+                    <td>₩15,000</td>
+                    <td>₩15,000</td>
+                </tr>
+                </tbody>
+                <tfoot>
+                <tr class="table-light">
+                    <td colspan="4" class="text-end fw-bold">상품구매금액</td>
+                    <td>₩129,000</td>
+                </tr>
+                <tr class="table-light">
+                    <td colspan="4" class="text-end fw-bold">배송비</td>
+                    <td>₩0</td>
+                </tr>
+                <tr class="table-light">
+                    <td colspan="4" class="text-end fw-bold">할인금액</td>
+                    <td>-₩6,000</td>
+                </tr>
+                <tr class="table-light">
+                    <td colspan="4" class="text-end fw-bold">총 결제금액</td>
+                    <td class="fw-bold">₩123,000</td>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- 주문자 정보 -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="admin-card h-100">
+                <h5 class="mb-3">주문자 정보</h5>
+                <div class="row mb-3">
+                    <div class="col-md-4 order-info-label">주문자명</div>
+                    <div class="col-md-8">홍길동</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 order-info-label">이메일</div>
+                    <div class="col-md-8">hong@example.com</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 order-info-label">연락처</div>
+                    <div class="col-md-8">010-1234-5678</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 배송지 정보 -->
+        <div class="col-md-6 mb-4">
+            <div class="admin-card h-100">
+                <h5 class="mb-3">배송지 정보</h5>
+                <div class="row mb-3">
+                    <div class="col-md-4 order-info-label">받는사람</div>
+                    <div class="col-md-8">홍길동</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 order-info-label">연락처</div>
+                    <div class="col-md-8">010-1234-5678</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 order-info-label">주소</div>
+                    <div class="col-md-8">(12345) 서울특별시 강남구 테헤란로 123, 456호</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 order-info-label">배송 요청사항</div>
+                    <div class="col-md-8">부재시 경비실에 맡겨주세요.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메모 및 관리자 노트 -->
+    <div class="admin-card">
+        <h5 class="mb-3">관리자 메모</h5>
+        <div class="mb-3">
+            <textarea class="form-control" rows="3" placeholder="이 주문에 대한 메모를 입력하세요..."></textarea>
+        </div>
+        <div class="d-flex justify-content-end">
+            <button type="button" class="btn btn-primary">메모 저장</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
-

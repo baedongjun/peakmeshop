@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title layout:title-pattern="$CONTENT_TITLE - PeakMeShop 관리자">PeakMeShop 관리자</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .admin-sidebar {
+            min-height: 100vh;
+            background-color: #343a40;
+            color: #fff;
+            position: fixed;
+            width: 250px;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .admin-sidebar .sidebar-header {
+            padding: 20px;
+            background-color: #212529;
+        }
+
+        .admin-sidebar .sidebar-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .admin-sidebar ul.components {
+            padding: 20px 0;
+            border-bottom: 1px solid #4b545c;
+        }
+
+        .admin-sidebar ul li a {
+            padding: 10px 20px;
+            font-size: 1.1em;
+            display: block;
+            color: #fff;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .admin-sidebar ul li a:hover {
+            background-color: #495057;
+        }
+
+        .admin-sidebar ul li a.active {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .admin-sidebar ul li a i {
+            margin-right: 10px;
+        }
+
+        .admin-content {
+            margin-left: 250px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .admin-header {
+            background-color: #fff;
+            padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .admin-header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .admin-card {
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .admin-footer {
+            margin-top: 30px;
+            padding: 15px 0;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+        }
+
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                margin-left: -250px;
+            }
+
+            .admin-sidebar.active {
+                margin-left: 0;
+            }
+
+            .admin-content {
+                margin-left: 0;
+            }
+
+            .admin-content.active {
+                margin-left: 250px;
+            }
+
+            #sidebarCollapse {
+                display: block;
+            }
+        }
+
+        #sidebarCollapse {
+            display: none;
+        }
+    </style>
+
+    <!-- 추가 스타일 및 스크립트 -->
+    <th:block layout:fragment="css"></th:block>
+    <th:block layout:fragment="script"></th:block>
+</head>
+<body>
+<div class="d-flex">
+    <!-- 사이드바 -->
+    <nav id="sidebar" class="admin-sidebar">
+        <div class="sidebar-header">
+            <h3>PeakMeShop 관리자</h3>
+        </div>
+
+        <ul class="list-unstyled components">
+            <li>
+                <a th:href="@{/admin/dashboard}" th:classappend="${#httpServletRequest.getRequestURI() == '/admin/dashboard' ? 'active' : ''}">
+                    <i class="fas fa-tachometer-alt"></i> 대시보드
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/admin/products}" th:classappend="${#httpServletRequest.getRequestURI().startsWith('/admin/products') ? 'active' : ''}">
+                    <i class="fas fa-box"></i> 상품 관리
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/admin/orders}" th:classappend="${#httpServletRequest.getRequestURI().startsWith('/admin/orders') ? 'active' : ''}">
+                    <i class="fas fa-shopping-cart"></i> 주문 관리
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/admin/members}" th:classappend="${#httpServletRequest.getRequestURI() == '/admin/members' ? 'active' : ''}">
+                    <i class="fas fa-users"></i> 회원 관리
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/admin/suppliers}" th:classappend="${#httpServletRequest.getRequestURI() == '/admin/suppliers' ? 'active' : ''}">
+                    <i class="fas fa-truck"></i> 공급업체 관리
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/admin/shipments}" th:classappend="${#httpServletRequest.getRequestURI() == '/admin/shipments' ? 'active' : ''}">
+                    <i class="fas fa-shipping-fast"></i> 배송 관리
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/}" target="_blank">
+                    <i class="fas fa-external-link-alt"></i> 쇼핑몰 보기
+                </a>
+            </li>
+        </ul>
+
+        <div class="p-3">
+            <form th:action="@{/api/auth/logout}" method="post">
+                <button type="submit" class="btn btn-danger w-100">
+                    <i class="fas fa-sign-out-alt"></i> 로그아웃
+                </button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- 메인 콘텐츠 -->
+    <div class="admin-content">
+        <!-- 헤더 -->
+        <div class="admin-header d-flex justify-content-between align-items-center">
+            <div>
+                <button id="sidebarCollapse" class="btn btn-dark d-md-none">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 layout:fragment="page-title">관리자 페이지</h1>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <span sec:authentication="name">관리자</span>님 환영합니다
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="adminDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-cog"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
+                        <li><a class="dropdown-item" th:href="@{/admin/profile}">내 프로필</a></li>
+                        <li><a class="dropdown-item" th:href="@{/admin/settings}">설정</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form th:action="@{/api/auth/logout}" method="post">
+                                <button class="dropdown-item" type="submit">로그아웃</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 페이지 내용 -->
+        <div layout:fragment="content">
+            <!-- 각 페이지의 내용이 여기에 들어갑니다 -->
+        </div>
+
+        <!-- 푸터 -->
+        <footer class="admin-footer">
+            <div class="container">
+                <p>&copy; 2023 PeakMeShop. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- 사이드바 토글 스크립트 -->
+<script>
+    $(document).ready(function () {
+        $('#sidebarCollapse').on('click', function () {
+            $('#sidebar').toggleClass('active');
+            $('.admin-content').toggleClass('active');
+        });
+    });
+</script>
+
+<!-- 페이지별 스크립트 -->
+<th:block layout:fragment="page-script"></th:block>
+</body>
+</html>
+

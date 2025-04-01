@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title th:text="${supplier != null ? '공급업체 수정' : '공급업체 등록'}">공급업체 등록/수정</title>
+</head>
+<body>
+<!-- 페이지 제목 -->
+<h1 layout:fragment="page-title" th:text="${supplier != null ? '공급업체 수정' : '공급업체 등록'}">공급업체 등록/수정</h1>
+
+<!-- 페이지 내용 -->
+<div layout:fragment="content">
+    <div class="admin-card mb-4">
+        <form id="supplierForm" th:action="${supplier != null ? '/admin/suppliers/update' : '/admin/suppliers/save'}" method="post">
+            <input type="hidden" name="id" th:if="${supplier != null}" th:value="${supplier.id}">
+
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <!-- 기본 정보 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">기본 정보</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="supplierCode" class="form-label">업체코드 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="supplierCode" name="code" required th:value="${supplier != null ? supplier.code : ''}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="supplierName" class="form-label">업체명 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="supplierName" name="name" required th:value="${supplier != null ? supplier.name : ''}">
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="businessNumber" class="form-label">사업자등록번호 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="businessNumber" name="businessNumber" required th:value="${supplier != null ? supplier.businessNumber : ''}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="supplierType" class="form-label">업체 유형</label>
+                                    <select class="form-select" id="supplierType" name="type">
+                                        <option value="" selected disabled>업체 유형 선택</option>
+                                        <option value="MANUFACTURER" th:selected="${supplier != null && supplier.type == 'MANUFACTURER'}">제조업체</option>
+                                        <option value="WHOLESALER" th:selected="${supplier != null && supplier.type == 'WHOLESALER'}">도매업체</option>
+                                        <option value="DISTRIBUTOR" th:selected="${supplier != null && supplier.type == 'DISTRIBUTOR'}">유통업체</option>
+                                        <option value="DIRECT_IMPORT" th:selected="${supplier != null && supplier.type == 'DIRECT_IMPORT'}">직수입</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="supplierDescription" class="form-label">업체 설명</label>
+                                <textarea class="form-control" id="supplierDescription" name="description" rows="3" th:text="${supplier != null ? supplier.description : ''}"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 담당자 정보 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">담당자 정보</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="contactName" class="form-label">담당자명 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="contactName" name="contactName" required th:value="${supplier != null ? supplier.contactName : ''}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="contactPosition" class="form-label">직책</label>
+                                    <input type="text" class="form-control" id="contactPosition" name="contactPosition" th:value="${supplier != null ? supplier.contactPosition : ''}">
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="contactPhone" class="form-label">연락처 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="contactPhone" name="contactPhone" required th:value="${supplier != null ? supplier.contactPhone : ''}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="contactEmail" class="form-label">이메일 <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" id="contactEmail" name="contactEmail" required th:value="${supplier != null ? supplier.contactEmail : ''}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 주소 정보 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">주소 정보</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="zipCode" class="form-label">우편번호</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="zipCode" name="zipCode" th:value="${supplier != null ? supplier.zipCode : ''}">
+                                        <button class="btn btn-outline-secondary" type="button">우편번호 찾기</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="address1" class="form-label">주소</label>
+                                <input type="text" class="form-control" id="address1" name="address1" th:value="${supplier != null ? supplier.address1 : ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="address2" class="form-label">상세주소</label>
+                                <input type="text" class="form-control" id="address2" name="address2" th:value="${supplier != null ? supplier.address2 : ''}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <!-- 계약 정보 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">계약 정보</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="contractStartDate" class="form-label">계약 시작일</label>
+                                <input type="date" class="form-control" id="contractStartDate" name="contractStartDate" th:value="${supplier != null ? supplier.contractStartDate : ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="contractEndDate" class="form-label">계약 종료일</label>
+                                <input type="date" class="form-control" id="contractEndDate" name="contractEndDate" th:value="${supplier != null ? supplier.contractEndDate : ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="paymentTerms" class="form-label">결제 조건</label>
+                                <select class="form-select" id="paymentTerms" name="paymentTerms">
+                                    <option value="" selected disabled>결제 조건 선택</option>
+                                    <option value="IMMEDIATE" th:selected="${supplier != null && supplier.paymentTerms == 'IMMEDIATE'}">즉시결제</option>
+                                    <option value="NET_30" th:selected="${supplier != null && supplier.paymentTerms == 'NET_30'}">30일 이내</option>
+                                    <option value="NET_60" th:selected="${supplier != null && supplier.paymentTerms == 'NET_60'}">60일 이내</option>
+                                    <option value="NET_90" th:selected="${supplier != null && supplier.paymentTerms == 'NET_90'}">90일 이내</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="discountRate" class="form-label">할인율 (%)</label>
+                                <input type="number" class="form-control" id="discountRate" name="discountRate" min="0" max="100" step="0.1" th:value="${supplier != null ? supplier.discountRate : '0'}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 은행 정보 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">은행 정보</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="bankName" class="form-label">은행명</label>
+                                <input type="text" class="form-control" id="bankName" name="bankName" th:value="${supplier != null ? supplier.bankName : ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="accountNumber" class="form-label">계좌번호</label>
+                                <input type="text" class="form-control" id="accountNumber" name="accountNumber" th:value="${supplier != null ? supplier.accountNumber : ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="accountHolder" class="form-label">예금주</label>
+                                <input type="text" class="form-control" id="accountHolder" name="accountHolder" th:value="${supplier != null ? supplier.accountHolder : ''}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 상태 설정 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">상태 설정</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">상태</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="ACTIVE" th:selected="${supplier == null || (supplier != null && supplier.status == 'ACTIVE')}">활성</option>
+                                    <option value="INACTIVE" th:selected="${supplier != null && supplier.status == 'INACTIVE'}">비활성</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">메모</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3" th:text="${supplier != null ? supplier.notes : ''}"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 저장 버튼 -->
+            <div class="d-flex justify-content-end">
+                <a th:href="@{/admin/suppliers}" class="btn btn-secondary me-2">취소</a>
+                <button type="submit" class="btn btn-primary">저장</button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>
+

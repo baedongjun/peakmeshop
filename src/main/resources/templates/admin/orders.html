@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>주문 관리</title>
+    <th:block layout:fragment="css">
+        <style>
+            .order-status {
+                width: 100px;
+            }
+            .table-actions .btn {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.8rem;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+<!-- 페이지 제목 -->
+<h1 layout:fragment="page-title">주문 관리</h1>
+
+<!-- 페이지 내용 -->
+<div layout:fragment="content">
+    <div class="admin-card mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h5 class="mb-0">주문 목록</h5>
+                <p class="text-muted mb-0">총 254개의 주문이 있습니다.</p>
+            </div>
+        </div>
+
+        <!-- 검색 및 필터 -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <select class="form-select" style="max-width: 150px;">
+                        <option selected>검색 조건</option>
+                        <option>주문번호</option>
+                        <option>주문자명</option>
+                        <option>주문자 연락처</option>
+                        <option>주문자 이메일</option>
+                    </select>
+                    <input type="text" class="form-control" placeholder="검색어 입력">
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-4 d-flex justify-content-end">
+                <select class="form-select" style="width: auto;">
+                    <option selected>주문상태 전체</option>
+                    <option>결제완료</option>
+                    <option>상품준비중</option>
+                    <option>배송중</option>
+                    <option>배송완료</option>
+                    <option>취소</option>
+                    <option>환불</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 날짜 필터 -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                    <span class="me-2">주문일자</span>
+                    <input type="date" class="form-control me-2" style="width: auto;">
+                    <span class="me-2">~</span>
+                    <input type="date" class="form-control me-2" style="width: auto;">
+                    <button class="btn btn-outline-secondary" type="button">적용</button>
+                </div>
+            </div>
+            <div class="col-md-6 d-flex justify-content-end">
+                <button class="btn btn-outline-secondary me-2">오늘</button>
+                <button class="btn btn-outline-secondary me-2">1주일</button>
+                <button class="btn btn-outline-secondary me-2">1개월</button>
+                <button class="btn btn-outline-secondary">3개월</button>
+            </div>
+        </div>
+
+        <!-- 주문 테이블 -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="selectAll">
+                            <label class="form-check-label" for="selectAll"></label>
+                        </div>
+                    </th>
+                    <th>주문번호</th>
+                    <th>주문일시</th>
+                    <th>주문자</th>
+                    <th>상품정보</th>
+                    <th>결제금액</th>
+                    <th>주문상태</th>
+                    <th>관리</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox">
+                        </div>
+                    </td>
+                    <td>#ORD-1234</td>
+                    <td>2023-11-15 14:30</td>
+                    <td>
+                        <div>홍길동</div>
+                        <small class="text-muted">010-1234-5678</small>
+                    </td>
+                    <td>
+                        <div>프리미엄 티셔츠 외 2건</div>
+                        <small class="text-muted">총 3개 상품</small>
+                    </td>
+                    <td>₩123,000</td>
+                    <td>
+                        <span class="badge bg-success">배송완료</span>
+                    </td>
+                    <td class="table-actions">
+                        <a th:href="@{/admin/orders/1}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox">
+                        </div>
+                    </td>
+                    <td>#ORD-1233</td>
+                    <td>2023-11-14 11:20</td>
+                    <td>
+                        <div>김철수</div>
+                        <small class="text-muted">010-2345-6789</small>
+                    </td>
+                    <td>
+                        <div>런닝화</div>
+                        <small class="text-muted">총 1개 상품</small>
+                    </td>
+                    <td>₩45,000</td>
+                    <td>
+                        <span class="badge bg-warning">배송중</span>
+                    </td>
+                    <td class="table-actions">
+                        <a th:href="@{/admin/orders/2}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox">
+                        </div>
+                    </td>
+                    <td>#ORD-1232</td>
+                    <td>2023-11-14 09:15</td>
+                    <td>
+                        <div>이영희</div>
+                        <small class="text-muted">010-3456-7890</small>
+                    </td>
+                    <td>
+                        <div>프리미엄 후드티</div>
+                        <small class="text-muted">총 1개 상품</small>
+                    </td>
+                    <td>₩78,500</td>
+                    <td>
+                        <span class="badge bg-info">결제완료</span>
+                    </td>
+                    <td class="table-actions">
+                        <a th:href="@{/admin/orders/3}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox">
+                        </div>
+                    </td>
+                    <td>#ORD-1231</td>
+                    <td>2023-11-13 16:45</td>
+                    <td>
+                        <div>박지민</div>
+                        <small class="text-muted">010-4567-8901</small>
+                    </td>
+                    <td>
+                        <div>등산 배낭 외 3건</div>
+                        <small class="text-muted">총 4개 상품</small>
+                    </td>
+                    <td>₩235,000</td>
+                    <td>
+                        <span class="badge bg-primary">상품준비중</span>
+                    </td>
+                    <td class="table-actions">
+                        <a th:href="@{/admin/orders/4}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox">
+                        </div>
+                    </td>
+                    <td>#ORD-1230</td>
+                    <td>2023-11-12 10:30</td>
+                    <td>
+                        <div>최유진</div>
+                        <small class="text-muted">010-5678-9012</small>
+                    </td>
+                    <td>
+                        <div>스포츠 양말 외 1건</div>
+                        <small class="text-muted">총 2개 상품</small>
+                    </td>
+                    <td>₩56,000</td>
+                    <td>
+                        <span class="badge bg-success">배송완료</span>
+                    </td>
+                    <td class="table-actions">
+                        <a th:href="@{/admin/orders/5}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox">
+                        </div>
+                    </td>
+                    <td>#ORD-1229</td>
+                    <td>2023-11-11 14:20</td>
+                    <td>
+                        <div>정민수</div>
+                        <small class="text-muted">010-6789-0123</small>
+                    </td>
+                    <td>
+                        <div>스포츠 선글라스</div>
+                        <small class="text-muted">총 1개 상품</small>
+                    </td>
+                    <td>₩45,000</td>
+                    <td>
+                        <span class="badge bg-danger">취소</span>
+                    </td>
+                    <td class="table-actions">
+                        <a th:href="@{/admin/orders/6}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox">
+                        </div>
+                    </td>
+                    <td>#ORD-1228</td>
+                    <td>2023-11-10 09:10</td>
+                    <td>
+                        <div>강지원</div>
+                        <small class="text-muted">010-7890-1234</small>
+                    </td>
+                    <td>
+                        <div>스포츠 물병</div>
+                        <small class="text-muted">총 1개 상품</small>
+                    </td>
+                    <td>₩15,000</td>
+                    <td>
+                        <span class="badge bg-secondary">환불</span>
+                    </td>
+                    <td class="table-actions">
+                        <a th:href="@{/admin/orders/7}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 선택 작업 버튼 -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                <select class="form-select me-2" style="width: auto; display: inline-block;">
+                    <option selected>선택 작업</option>
+                    <option>상품준비중으로 변경</option>
+                    <option>배송중으로 변경</option>
+                    <option>배송완료로 변경</option>
+                    <option>취소로 변경</option>
+                </select>
+                <button type="button" class="btn btn-outline-secondary">적용</button>
+            </div>
+
+            <!-- 페이지네이션 -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- 페이지별 스크립트 -->
+<th:block layout:fragment="page-script">
+    <script>
+        // 전체 선택 체크박스
+        document.getElementById('selectAll').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('tbody .form-check-input');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+
+        // 개별 체크박스 변경 시 전체 선택 체크박스 상태 업데이트
+        document.querySelectorAll('tbody .form-check-input').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const allChecked = [...document.querySelectorAll('tbody .form-check-input')].every(c => c.checked);
+                document.getElementById('selectAll').checked = allChecked;
+            });
+        });
+    </script>
+</th:block>
+</body>
+</html>

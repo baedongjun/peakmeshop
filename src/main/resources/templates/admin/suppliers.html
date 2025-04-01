@@ -3,15 +3,9 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/admin-layout}">
 <head>
-    <title>상품 관리</title>
+    <title>공급업체 관리</title>
     <th:block layout:fragment="css">
         <style>
-            .product-image {
-                width: 60px;
-                height: 60px;
-                object-fit: cover;
-                border-radius: 5px;
-            }
             .table-actions .btn {
                 padding: 0.25rem 0.5rem;
                 font-size: 0.8rem;
@@ -21,54 +15,50 @@
 </head>
 <body>
 <!-- 페이지 제목 -->
-<h1 layout:fragment="page-title">상품 관리</h1>
+<h1 layout:fragment="page-title">공급업체 관리</h1>
 
 <!-- 페이지 내용 -->
 <div layout:fragment="content">
     <div class="admin-card mb-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h5 class="mb-0">상품 목록</h5>
-                <p class="text-muted mb-0">총 567개의 상품이 등록되어 있습니다.</p>
+                <h5 class="mb-0">공급업체 목록</h5>
+                <p class="text-muted mb-0">총 24개의 공급업체가 등록되어 있습니다.</p>
             </div>
             <div>
-                <a th:href="@{/admin/products/new}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> 상품 등록
+                <a th:href="@{/admin/suppliers/new}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> 공급업체 등록
                 </a>
             </div>
         </div>
 
         <!-- 검색 및 필터 -->
         <div class="row mb-4">
-            <div class="col-md-6">
+            <div class="col-md-8">
                 <div class="input-group">
-                    <input type="text" class="form-control" placeholder="상품명 또는 코드 검색">
+                    <select class="form-select" style="max-width: 150px;">
+                        <option selected>검색 조건</option>
+                        <option>업체명</option>
+                        <option>담당자명</option>
+                        <option>연락처</option>
+                        <option>이메일</option>
+                    </select>
+                    <input type="text" class="form-control" placeholder="검색어 입력">
                     <button class="btn btn-outline-secondary" type="button">
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
             </div>
-            <div class="col-md-6 d-flex justify-content-end">
-                <select class="form-select me-2" style="width: auto;">
-                    <option selected>카테고리 전체</option>
-                    <option>의류</option>
-                    <option>신발</option>
-                    <option>액세서리</option>
-                    <option>스포츠용품</option>
-                    <option>아웃도어</option>
-                </select>
+            <div class="col-md-4 d-flex justify-content-end">
                 <select class="form-select" style="width: auto;">
-                    <option selected>정렬 기준</option>
-                    <option>최신순</option>
-                    <option>가격 높은순</option>
-                    <option>가격 낮은순</option>
-                    <option>판매량순</option>
-                    <option>재고 적은순</option>
+                    <option selected>상태 전체</option>
+                    <option>활성</option>
+                    <option>비활성</option>
                 </select>
             </div>
         </div>
 
-        <!-- 상품 테이블 -->
+        <!-- 공급업체 테이블 -->
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
@@ -79,14 +69,14 @@
                             <label class="form-check-label" for="selectAll"></label>
                         </div>
                     </th>
-                    <th>이미지</th>
-                    <th>상품코드</th>
-                    <th>상품명</th>
-                    <th>카테고리</th>
-                    <th>가격</th>
-                    <th>재고</th>
-                    <th>상태</th>
+                    <th>업체코드</th>
+                    <th>업체명</th>
+                    <th>담당자</th>
+                    <th>연락처</th>
+                    <th>이메일</th>
+                    <th>공급 상품 수</th>
                     <th>등록일</th>
+                    <th>상태</th>
                     <th>관리</th>
                 </tr>
                 </thead>
@@ -97,18 +87,16 @@
                             <input class="form-check-input" type="checkbox">
                         </div>
                     </td>
-                    <td>
-                        <img src="https://via.placeholder.com/60" alt="상품 이미지" class="product-image">
-                    </td>
-                    <td>PRD-001</td>
-                    <td>프리미엄 티셔츠</td>
-                    <td>의류</td>
-                    <td>₩39,000</td>
-                    <td>120</td>
-                    <td><span class="badge bg-success">판매중</span></td>
-                    <td>2023-11-01</td>
+                    <td>SUP-001</td>
+                    <td>스포츠 브랜드 코리아</td>
+                    <td>김영수</td>
+                    <td>02-1234-5678</td>
+                    <td>contact@sportsbrand.co.kr</td>
+                    <td>45</td>
+                    <td>2023-01-15</td>
+                    <td><span class="badge bg-success">활성</span></td>
                     <td class="table-actions">
-                        <a th:href="@{/admin/products/edit/1}" class="btn btn-sm btn-outline-primary">
+                        <a th:href="@{/admin/suppliers/edit/1}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-edit"></i>
                         </a>
                         <button type="button" class="btn btn-sm btn-outline-danger">
@@ -122,18 +110,16 @@
                             <input class="form-check-input" type="checkbox">
                         </div>
                     </td>
-                    <td>
-                        <img src="https://via.placeholder.com/60" alt="상품 이미지" class="product-image">
-                    </td>
-                    <td>PRD-002</td>
-                    <td>프리미엄 후드티</td>
-                    <td>의류</td>
-                    <td>₩59,000</td>
-                    <td>85</td>
-                    <td><span class="badge bg-success">판매중</span></td>
-                    <td>2023-11-02</td>
+                    <td>SUP-002</td>
+                    <td>아웃도어 라이프</td>
+                    <td>박지성</td>
+                    <td>02-2345-6789</td>
+                    <td>info@outdoorlife.co.kr</td>
+                    <td>32</td>
+                    <td>2023-02-20</td>
+                    <td><span class="badge bg-success">활성</span></td>
                     <td class="table-actions">
-                        <a th:href="@{/admin/products/edit/2}" class="btn btn-sm btn-outline-primary">
+                        <a th:href="@{/admin/suppliers/edit/2}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-edit"></i>
                         </a>
                         <button type="button" class="btn btn-sm btn-outline-danger">
@@ -147,118 +133,85 @@
                             <input class="form-check-input" type="checkbox">
                         </div>
                     </td>
-                    <td>
-                        <img src="https://via.placeholder.com/60" alt="상품 이미지" class="product-image">
-                    </td>
-                    <td>PRD-003</td>
-                    <td>런닝화</td>
-                    <td>신발</td>
-                    <td>₩89,000</td>
-                    <td>42</td>
-                    <td><span class="badge bg-success">판매중</span></td>
-                    <td>2023-11-03</td>
-                    <td class="table-actions">
-                        <a th:href="@{/admin/products/edit/3}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <button type="button" class="btn btn-sm btn-outline-danger">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>
-                        <img src="https://via.placeholder.com/60" alt="상품 이미지" class="product-image">
-                    </td>
-                    <td>PRD-004</td>
-                    <td>스포츠 양말</td>
-                    <td>액세서리</td>
-                    <td>₩12,000</td>
-                    <td>200</td>
-                    <td><span class="badge bg-success">판매중</span></td>
-                    <td>2023-11-04</td>
-                    <td class="table-actions">
-                        <a th:href="@{/admin/products/edit/4}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <button type="button" class="btn btn-sm btn-outline-danger">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>
-                        <img src="https://via.placeholder.com/60" alt="상품 이미지" class="product-image">
-                    </td>
-                    <td>PRD-005</td>
-                    <td>등산 배낭</td>
-                    <td>아웃도어</td>
-                    <td>₩129,000</td>
-                    <td>35</td>
-                    <td><span class="badge bg-warning">재고부족</span></td>
-                    <td>2023-11-05</td>
-                    <td class="table-actions">
-                        <a th:href="@{/admin/products/edit/5}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <button type="button" class="btn btn-sm btn-outline-danger">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>
-                        <img src="https://via.placeholder.com/60" alt="상품 이미지" class="product-image">
-                    </td>
-                    <td>PRD-006</td>
-                    <td>스포츠 물병</td>
-                    <td>스포츠용품</td>
-                    <td>₩15,000</td>
-                    <td>0</td>
-                    <td><span class="badge bg-danger">품절</span></td>
-                    <td>2023-11-06</td>
-                    <td class="table-actions">
-                        <a th:href="@{/admin/products/edit/6}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <button type="button" class="btn btn-sm btn-outline-danger">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>
-                        <img src="https://via.placeholder.com/60" alt="상품 이미지" class="product-image">
-                    </td>
-                    <td>PRD-007</td>
-                    <td>스포츠 선글라스</td>
-                    <td>액세서리</td>
-                    <td>₩45,000</td>
+                    <td>SUP-003</td>
+                    <td>패션 트렌드</td>
+                    <td>이미나</td>
+                    <td>02-3456-7890</td>
+                    <td>fashion@trend.co.kr</td>
                     <td>28</td>
-                    <td><span class="badge bg-secondary">판매중지</span></td>
-                    <td>2023-11-07</td>
+                    <td>2023-03-10</td>
+                    <td><span class="badge bg-success">활성</span></td>
                     <td class="table-actions">
-                        <a th:href="@{/admin/products/edit/7}" class="btn btn-sm btn-outline-primary">
+                        <a th:href="@{/admin/suppliers/edit/3}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox">
+                        </div>
+                    </td>
+                    <td>SUP-004</td>
+                    <td>스포츠 액세서리</td>
+                    <td>최준호</td>
+                    <td>02-4567-8901</td>
+                    <td>sales@sportsacc.co.kr</td>
+                    <td>15</td>
+                    <td>2023-04-05</td>
+                    <td><span class="badge bg-secondary">비활성</span></td>
+                    <td class="table-actions">
+                        <a th:href="@{/admin/suppliers/edit/4}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox">
+                        </div>
+                    </td>
+                    <td>SUP-005</td>
+                    <td>슈즈 마스터</td>
+                    <td>정다운</td>
+                    <td>02-5678-9012</td>
+                    <td>master@shoes.co.kr</td>
+                    <td>22</td>
+                    <td>2023-05-12</td>
+                    <td><span class="badge bg-success">활성</span></td>
+                    <td class="table-actions">
+                        <a th:href="@{/admin/suppliers/edit/5}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox">
+                        </div>
+                    </td>
+                    <td>SUP-006</td>
+                    <td>피트니스 기어</td>
+                    <td>강민석</td>
+                    <td>02-6789-0123</td>
+                    <td>info@fitnessgear.co.kr</td>
+                    <td>18</td>
+                    <td>2023-06-18</td>
+                    <td><span class="badge bg-success">활성</span></td>
+                    <td class="table-actions">
+                        <a th:href="@{/admin/suppliers/edit/6}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-edit"></i>
                         </a>
                         <button type="button" class="btn btn-sm btn-outline-danger">
@@ -273,9 +226,13 @@
         <!-- 선택 작업 버튼 -->
         <div class="d-flex justify-content-between align-items-center mt-3">
             <div>
-                <button type="button" class="btn btn-outline-secondary me-2">선택 삭제</button>
-                <button type="button" class="btn btn-outline-primary me-2">선택 판매중</button>
-                <button type="button" class="btn btn-outline-secondary">선택 판매중지</button>
+                <select class="form-select me-2" style="width: auto; display: inline-block;">
+                    <option selected>선택 작업</option>
+                    <option>활성으로 변경</option>
+                    <option>비활성으로 변경</option>
+                    <option>선택 삭제</option>
+                </select>
+                <button type="button" class="btn btn-outline-secondary">적용</button>
             </div>
 
             <!-- 페이지네이션 -->
@@ -322,3 +279,4 @@
 </th:block>
 </body>
 </html>
+

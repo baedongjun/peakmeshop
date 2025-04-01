@@ -1,392 +1,277 @@
-&lt;!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layouts/main-layout}">
+      layout:decorate="~{layouts/admin-layout}">
 <head>
-    <title>관리자 대시보드</title>
+    <title>대시보드</title>
     <th:block layout:fragment="css">
         <style>
-            .dashboard-container {
-                min-height: 60vh;
-            }
             .stat-card {
-                border-radius: 1rem;
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-                overflow: hidden;
-                border: none;
-                margin-bottom: 1.5rem;
-                transition: all 0.3s ease;
+                border-radius: 10px;
+                transition: transform 0.3s;
             }
             .stat-card:hover {
-                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
                 transform: translateY(-5px);
             }
-            .stat-card-body {
-                padding: 1.5rem;
-            }
-            .stat-icon {
-                width: 60px;
-                height: 60px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 1.5rem;
-                color: white;
-                margin-bottom: 1rem;
-            }
-            .stat-icon.sales {
-                background-color: var(--primary-color);
-            }
-            .stat-icon.orders {
-                background-color: var(--success-color);
-            }
-            .stat-icon.customers {
-                background-color: var(--warning-color);
-            }
-            .stat-icon.products {
-                background-color: var(--secondary-color);
-            }
-            .stat-value {
-                font-size: 2rem;
-                font-weight: 700;
-                margin-bottom: 0.5rem;
-            }
-            .stat-label {
-                color: var(--gray-600);
-                font-weight: 500;
-            }
-            .chart-card {
-                border-radius: 1rem;
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-                overflow: hidden;
-                border: none;
-                margin-bottom: 1.5rem;
-            }
-            .chart-card-header {
-                background-color: var(--gray-100);
-                padding: 1rem 1.5rem;
-                border-bottom: 1px solid var(--gray-200);
-            }
-            .chart-card-body {
-                padding: 1.5rem;
+            .chart-container {
                 height: 300px;
-            }
-            .recent-order-card {
-                border-radius: 1rem;
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-                overflow: hidden;
-                border: none;
-                margin-bottom: 1.5rem;
-            }
-            .recent-order-card-header {
-                background-color: var(--gray-100);
-                padding: 1rem 1.5rem;
-                border-bottom: 1px solid var(--gray-200);
-            }
-            .recent-order-card-body {
-                padding: 1.5rem;
-            }
-            .order-status {
-                display: inline-block;
-                padding: 0.25rem 0.75rem;
-                border-radius: 50rem;
-                font-size: 0.75rem;
-                font-weight: 600;
-                text-transform: uppercase;
-            }
-            .status-pending {
-                background-color: var(--warning-color);
-                color: white;
-            }
-            .status-processing {
-                background-color: var(--primary-color);
-                color: white;
-            }
-            .status-shipped {
-                background-color: var(--success-color);
-                color: white;
-            }
-            .status-delivered {
-                background-color: var(--dark-color);
-                color: white;
-            }
-            .status-canceled {
-                background-color: var(--danger-color);
-                color: white;
             }
         </style>
     </th:block>
 </head>
 <body>
-<main layout:fragment="content">
-    <section class="py-5">
-        <div class="container">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="mb-0">관리자 대시보드</h2>
-                <div>
-                    <button class="btn btn-outline-primary me-2">
-                        <i class="fas fa-download me-1"></i> 보고서 다운로드
-                    </button>
-                    <button class="btn btn-primary">
-                        <i class="fas fa-sync-alt me-1"></i> 새로고침
-                    </button>
-                </div>
-            </div>
+<!-- 페이지 제목 -->
+<h1 layout:fragment="page-title">대시보드</h1>
 
-            <div class="dashboard-container">
-                &lt;!-- 통계 카드 -->
-                <div class="row">
-                    &lt;!-- 매출 통계 -->
-                    <div class="col-md-6 col-lg-3">
-                        <div class="stat-card">
-                            <div class="stat-card-body">
-                                <div class="stat-icon sales">
-                                    <i class="fas fa-won-sign"></i>
-                                </div>
-                                <div class="stat-value" th:text="${#numbers.formatInteger(totalSales != null ? totalSales : 1500000, 0, 'COMMA') + '원'}">1,500,000원</div>
-                                <div class="stat-label">총 매출</div>
-                                <div class="mt-2 text-success">
-                                    <i class="fas fa-arrow-up me-1"></i> 15% 증가
-                                </div>
-                            </div>
-                        </div>
+<!-- 페이지 내용 -->
+<div layout:fragment="content">
+    <!-- 통계 카드 -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="admin-card stat-card border-start border-5 border-primary">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">총 주문</h6>
+                        <h3 class="mb-0">254</h3>
+                        <p class="text-success mb-0"><i class="fas fa-arrow-up"></i> 12% 증가</p>
                     </div>
-
-                    &lt;!-- 주문 통계 -->
-                    <div class="col-md-6 col-lg-3">
-                        <div class="stat-card">
-                            <div class="stat-card-body">
-                                <div class="stat-icon orders">
-                                    <i class="fas fa-shopping-bag"></i>
-                                </div>
-                                <div class="stat-value" th:text="${totalOrders != null ? totalOrders : 120}">120</div>
-                                <div class="stat-label">총 주문</div>
-                                <div class="mt-2 text-success">
-                                    <i class="fas fa-arrow-up me-1"></i> 8% 증가
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    &lt;!-- 고객 통계 -->
-                    <div class="col-md-6 col-lg-3">
-                        <div class="stat-card">
-                            <div class="stat-card-body">
-                                <div class="stat-icon customers">
-                                    <i class="fas fa-users"></i>
-                                </div>
-                                <div class="stat-value" th:text="${newCustomers != null ? newCustomers : 45}">45</div>
-                                <div class="stat-label">신규 고객</div>
-                                <div class="mt-2 text-success">
-                                    <i class="fas fa-arrow-up me-1"></i> 12% 증가
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    &lt;!-- 상품 통계 -->
-                    <div class="col-md-6 col-lg-3">
-                        <div class="stat-card">
-                            <div class="stat-card-body">
-                                <div class="stat-icon products">
-                                    <i class="fas fa-box"></i>
-                                </div>
-                                <div class="stat-value" th:text="${pendingShipments != null ? pendingShipments : 15}">15</div>
-                                <div class="stat-label">배송 대기</div>
-                                <div class="mt-2 text-danger">
-                                    <i class="fas fa-arrow-down me-1"></i> 5% 감소
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                &lt;!-- 차트 -->
-                <div class="row">
-                    &lt;!-- 매출 차트 -->
-                    <div class="col-lg-8">
-                        <div class="chart-card">
-                            <div class="chart-card-header d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0">월별 매출 추이</h5>
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary active">일주일</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary">한달</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary">일년</button>
-                                </div>
-                            </div>
-                            <div class="chart-card-body">
-                                <canvas id="salesChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    &lt;!-- 주문 상태 차트 -->
-                    <div class="col-lg-4">
-                        <div class="chart-card">
-                            <div class="chart-card-header">
-                                <h5 class="mb-0">주문 상태</h5>
-                            </div>
-                            <div class="chart-card-body">
-                                <canvas id="orderStatusChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                &lt;!-- 최근 주문 -->
-                <div class="recent-order-card">
-                    <div class="recent-order-card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">최근 주문</h5>
-                        <a th:href="@{/admin/orders}" class="btn btn-sm btn-outline-primary">모든 주문 보기</a>
-                    </div>
-                    <div class="recent-order-card-body">
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                <tr>
-                                    <th>주문번호</th>
-                                    <th>고객명</th>
-                                    <th>주문일자</th>
-                                    <th>금액</th>
-                                    <th>상태</th>
-                                    <th>액션</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                &lt;!-- 최근 주문 목록 (실제로는 DB에서 가져올 것) -->
-                                <tr th:each="order, stat : ${recentOrders != null ? recentOrders : {
-                                                {1, 'ORD-1001', '홍길동', '2023-07-15', 125000, 'PROCESSING'},
-                                                {2, 'ORD-1002', '김철수', '2023-07-14', 85000, 'PENDING'},
-                                                {3, 'ORD-1003', '이영희', '2023-07-13', 210000, 'SHIPPED'},
-                                                {4, 'ORD-1004', '박민수', '2023-07-12', 45000, 'DELIVERED'},
-                                                {5, 'ORD-1005', '정지훈', '2023-07-11', 95000, 'CANCELED'}
-                                            }}">
-                                    <td th:text="${order[1]}">ORD-1001</td>
-                                    <td th:text="${order[2]}">홍길동</td>
-                                    <td th:text="${order[3]}">2023-07-15</td>
-                                    <td th:text="${'₩' + #numbers.formatInteger(order[4], 0, 'COMMA')}">₩125,000</td>
-                                    <td>
-                                                <span th:class="${'order-status status-' + #strings.toLowerCase(order[5])}"
-                                                      th:text="${#strings.equals(order[5], 'PENDING') ? '결제대기' :
-                                                               #strings.equals(order[5], 'PROCESSING') ? '처리중' :
-                                                               #strings.equals(order[5], 'SHIPPED') ? '배송중' :
-                                                               #strings.equals(order[5], 'DELIVERED') ? '배송완료' :
-                                                               #strings.equals(order[5], 'CANCELED') ? '주문취소' : order[5]}">
-                                                    상태
-                                                </span>
-                                    </td>
-                                    <td>
-                                        <a th:href="@{'/admin/orders/' + ${order[0]}}" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="bg-light p-3 rounded">
+                        <i class="fas fa-shopping-cart fa-2x text-primary"></i>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
-</main>
+        <div class="col-md-3 mb-3">
+            <div class="admin-card stat-card border-start border-5 border-success">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">총 매출</h6>
+                        <h3 class="mb-0">₩12,345,678</h3>
+                        <p class="text-success mb-0"><i class="fas fa-arrow-up"></i> 8% 증가</p>
+                    </div>
+                    <div class="bg-light p-3 rounded">
+                        <i class="fas fa-won-sign fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="admin-card stat-card border-start border-5 border-info">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">총 회원</h6>
+                        <h3 class="mb-0">1,234</h3>
+                        <p class="text-success mb-0"><i class="fas fa-arrow-up"></i> 5% 증가</p>
+                    </div>
+                    <div class="bg-light p-3 rounded">
+                        <i class="fas fa-users fa-2x text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="admin-card stat-card border-start border-5 border-warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">총 상품</h6>
+                        <h3 class="mb-0">567</h3>
+                        <p class="text-success mb-0"><i class="fas fa-arrow-up"></i> 3% 증가</p>
+                    </div>
+                    <div class="bg-light p-3 rounded">
+                        <i class="fas fa-box fa-2x text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<th:block layout:fragment="script">
+    <!-- 차트 -->
+    <div class="row mb-4">
+        <div class="col-md-8 mb-3">
+            <div class="admin-card">
+                <h5 class="mb-3">월별 매출 추이</h5>
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="admin-card">
+                <h5 class="mb-3">카테고리별 판매 비율</h5>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 최근 주문 및 활동 -->
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <div class="admin-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">최근 주문</h5>
+                    <a th:href="@{/admin/orders}" class="btn btn-sm btn-outline-primary">모두 보기</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>주문번호</th>
+                            <th>고객</th>
+                            <th>금액</th>
+                            <th>상태</th>
+                            <th>날짜</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>#ORD-1234</td>
+                            <td>홍길동</td>
+                            <td>₩123,000</td>
+                            <td><span class="badge bg-success">배송완료</span></td>
+                            <td>2023-11-15</td>
+                        </tr>
+                        <tr>
+                            <td>#ORD-1233</td>
+                            <td>김철수</td>
+                            <td>₩45,000</td>
+                            <td><span class="badge bg-warning">배송중</span></td>
+                            <td>2023-11-14</td>
+                        </tr>
+                        <tr>
+                            <td>#ORD-1232</td>
+                            <td>이영희</td>
+                            <td>₩78,500</td>
+                            <td><span class="badge bg-info">결제완료</span></td>
+                            <td>2023-11-14</td>
+                        </tr>
+                        <tr>
+                            <td>#ORD-1231</td>
+                            <td>박지민</td>
+                            <td>₩235,000</td>
+                            <td><span class="badge bg-primary">상품준비중</span></td>
+                            <td>2023-11-13</td>
+                        </tr>
+                        <tr>
+                            <td>#ORD-1230</td>
+                            <td>최유진</td>
+                            <td>₩56,000</td>
+                            <td><span class="badge bg-success">배송완료</span></td>
+                            <td>2023-11-12</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="admin-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">최근 활동</h5>
+                    <a href="#" class="btn btn-sm btn-outline-primary">모두 보기</a>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-user-plus text-success me-2"></i>
+                            <span>새 회원 가입: <strong>김민지</strong></span>
+                        </div>
+                        <span class="text-muted small">10분 전</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-shopping-cart text-primary me-2"></i>
+                            <span>새 주문: <strong>#ORD-1235</strong></span>
+                        </div>
+                        <span class="text-muted small">25분 전</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-box text-warning me-2"></i>
+                            <span>상품 재고 부족: <strong>프리미엄 티셔츠</strong></span>
+                        </div>
+                        <span class="text-muted small">1시간 전</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-truck text-info me-2"></i>
+                            <span>배송 시작: <strong>#ORD-1233</strong></span>
+                        </div>
+                        <span class="text-muted small">2시간 전</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-star text-warning me-2"></i>
+                            <span>새 리뷰: <strong>프리미엄 후드티</strong> (★★★★★)</span>
+                        </div>
+                        <span class="text-muted small">3시간 전</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 페이지별 스크립트 -->
+<th:block layout:fragment="page-script">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 매출 차트
-            const salesChartCtx = document.getElementById('salesChart').getContext('2d');
-            const salesChart = new Chart(salesChartCtx, {
-                type: 'line',
-                data: {
-                    labels: ['1월', '2월', '3월', '4월', '5월', '6월', '7월'],
-                    datasets: [{
-                        label: '매출',
-                        data: [650000, 590000, 800000, 810000, 960000, 1050000, 1500000],
-                        backgroundColor: 'rgba(58, 134, 255, 0.2)',
-                        borderColor: 'rgba(58, 134, 255, 1)',
-                        borderWidth: 2,
-                        tension: 0.3,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return '₩' + value.toLocaleString();
-                                }
-                            }
-                        }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return '매출: ₩' + context.raw.toLocaleString();
-                                }
-                            }
-                        }
+        // 월별 매출 차트
+        const salesCtx = document.getElementById('salesChart').getContext('2d');
+        const salesChart = new Chart(salesCtx, {
+            type: 'line',
+            data: {
+                labels: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
+                datasets: [{
+                    label: '월별 매출 (만원)',
+                    data: [1200, 1900, 1500, 2000, 2200, 2700, 2400, 2800, 3100, 3300, 3500, 3800],
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
                     }
                 }
-            });
+            }
+        });
 
-            // 주문 상태 차트
-            const orderStatusChartCtx = document.getElementById('orderStatusChart').getContext('2d');
-            const orderStatusChart = new Chart(orderStatusChartCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['결제대기', '처리중', '배송중', '배송완료', '주문취소'],
-                    datasets: [{
-                        data: [15, 25, 20, 30, 10],
-                        backgroundColor: [
-                            'rgba(255, 190, 11, 0.8)',
-                            'rgba(58, 134, 255, 0.8)',
-                            'rgba(76, 201, 164, 0.8)',
-                            'rgba(33, 37, 41, 0.8)',
-                            'rgba(255, 90, 95, 0.8)'
-                        ],
-                        borderColor: [
-                            'rgba(255, 190, 11, 1)',
-                            'rgba(58, 134, 255, 1)',
-                            'rgba(76, 201, 164, 1)',
-                            'rgba(33, 37, 41, 1)',
-                            'rgba(255, 90, 95, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.raw || 0;
-                                    const total = context.dataset.data.reduce((acc, data) => acc + data, 0);
-                                    const percentage = Math.round((value / total) * 100);
-                                    return `${label}: ${value}건 (${percentage}%)`;
-                                }
-                            }
-                        }
+        // 카테고리별 판매 비율 차트
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        const categoryChart = new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['의류', '신발', '액세서리', '스포츠용품', '아웃도어'],
+                datasets: [{
+                    data: [35, 25, 15, 15, 10],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
                     }
                 }
-            });
+            }
         });
     </script>
 </th:block>
 </body>
 </html>
-
