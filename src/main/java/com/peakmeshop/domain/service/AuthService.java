@@ -10,8 +10,6 @@ public interface AuthService {
 
     AuthResponseDTO login(LoginRequest loginRequest);
 
-    public Member register(MemberDTO memberDTO);
-
     AuthResponseDTO signup(SignupRequest signupRequest);
 
     Map<String, Object> getUserInfo();

@@ -105,52 +105,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public Member register(@Valid MemberDTO memberDTO) {
-        // 아이디 중복 확인
-        if (memberRepository.existsByUserId(memberDTO.getUserId())) {
-            throw new RuntimeException("이미 사용 중인 아이디입니다.");
-        }
-
-        // 이메일 중복 확인
-        if (memberRepository.existsByEmail(memberDTO.getEmail())) {
-            throw new RuntimeException("이미 사용 중인 이메일입니다.");
-        }
-
-        // 비밀번호 일치 확인
-        if (!memberDTO.getPassword().equals(memberDTO.getPasswordConfirm())) {
-            throw new RuntimeException("비밀번호가 일치하지 않습니다.");
-        }
-
-        // 회원 엔티티 생성
-        Member member = new Member();
-        member.setUserId(memberDTO.getUserId());
-        member.setEmail(memberDTO.getEmail());
-        member.setPassword(passwordEncoder.encode(memberDTO.getPassword()));
-        member.setName(memberDTO.getName());
-        member.setPhone(memberDTO.getPhone());
-        member.setUserRole("ROLE_USER");
-        member.setStatus("INACTIVE"); // 이메일 인증 전까지는 비활성 상태
-        member.setCreatedAt(LocalDateTime.now());
-
-        Member savedMember = memberRepository.save(member);
-
-        // 이메일 인증 토큰 생성
-        String token = UUID.randomUUID().toString();
-        VerificationToken verificationToken = new VerificationToken();
-        verificationToken.setToken(token);
-        verificationToken.setMember(savedMember);
-        verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24)); // 24시간 유효
-        verificationTokenRepository.save(verificationToken);
-
-        // 인증 이메일 발송
-        String verificationUrl = "http://localhost/api/auth/verify-email?token=" + token;
-        emailService.sendVerificationEmail(savedMember.getEmail(), savedMember.getName(), verificationUrl);
-
-        return savedMember;
-    }
-
-    @Override
-    @Transactional
     public AuthResponseDTO signup(@Valid SignupRequest signupRequest) {
         // 아이디 중복 확인
         if (memberRepository.existsByUserId(signupRequest.getUserId())) {
@@ -160,6 +114,11 @@ public class AuthServiceImpl implements AuthService {
         // 이메일 중복 확인
         if (memberRepository.existsByEmail(signupRequest.getEmail())) {
             throw new RuntimeException("이미 사용 중인 이메일입니다.");
+        }
+
+        // 비밀번호 일치 확인
+        if (!signupRequest.getPassword().equals(signupRequest.getPasswordConfirm())) {
+            throw new RuntimeException("비밀번호가 일치하지 않습니다.");
         }
 
         // 회원 엔티티 생성
