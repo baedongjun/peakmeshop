@@ -42,14 +42,16 @@ public class RefreshToken {
     private Member member;
 
     @NotNull(message = "만료일은 필수 입력값입니다.")
-    @Column(nullable = false)
+    @Column(name = "expiry_date", nullable = false)
     private LocalDateTime expiryDate;
 
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "revoked_at")
     private LocalDateTime revokedAt;
 
+    @Column(name = "revoked_reason")
     private String revokedReason;
 
     // 토큰 만료 확인 메서드

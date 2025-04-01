@@ -1,138 +1,69 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layouts/default}">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>이메일 인증</title>
-    <style>
-        .verification-container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 40px;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-        .verification-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-        }
-        .verification-success {
-            color: #28a745;
-        }
-        .verification-error {
-            color: #dc3545;
-        }
-        .verification-pending {
-            color: #ffc107;
-        }
-        .verification-title {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-        .verification-message {
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 30px;
-            line-height: 1.6;
-        }
-        .btn-action {
-            padding: 12px 30px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin: 10px;
-        }
-        .countdown {
-            font-size: 18px;
-            font-weight: 600;
-            margin: 20px 0;
-        }
-    </style>
 </head>
-<body>
-<div layout:fragment="content">
-    <div class="container py-5">
-        <div class="verification-container">
-            <!-- 인증 성공 -->
-            <div th:if="${verified == true}" class="verification-success-container">
-                <div class="verification-icon verification-success">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <h2 class="verification-title">이메일 인증 완료</h2>
-                <p class="verification-message">
-                    이메일 인증이 성공적으로 완료되었습니다.<br>
-                    이제 PeakMeShop의 모든 서비스를 이용하실 수 있습니다.
-                </p>
-                <div class="countdown" id="countdown">
-                    <span id="seconds">5</span>초 후 로그인 페이지로 이동합니다.
-                </div>
-                <a th:href="@{/login}" class="btn btn-primary btn-action">로그인 페이지로 이동</a>
-            </div>
+<body style="margin: 0; padding: 0; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background-color: #f4f4f4;">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <tr>
+        <td style="padding: 40px 30px; text-align: center; background-color: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+            <h1 style="margin: 0; color: #343a40; font-size: 24px;">PeakMeShop</h1>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding: 40px 30px;">
+            <h2 style="margin-top: 0; color: #343a40; font-size: 20px;">이메일 인증 안내</h2>
+            <p style="margin-bottom: 20px; color: #495057; line-height: 1.6;">
+                안녕하세요, <span th:text="${username}">사용자</span>님!<br>
+                PeakMeShop 가입을 환영합니다. 아래 버튼을 클릭하여 이메일 인증을 완료해 주세요.
+            </p>
 
-            <!-- 인증 실패 -->
-            <div th:if="${verified == false}" class="verification-error-container">
-                <div class="verification-icon verification-error">
-                    <i class="fas fa-times-circle"></i>
-                </div>
-                <h2 class="verification-title">이메일 인증 실패</h2>
-                <p class="verification-message" th:text="${errorMessage ?: '인증 링크가 만료되었거나 유효하지 않습니다.'}">
-                    인증 링크가 만료되었거나 유효하지 않습니다.
-                </p>
-                <div class="d-flex justify-content-center">
-                    <a th:href="@{/auth/resend-verification(email=${email})}" class="btn btn-outline-primary btn-action">인증 메일 재발송</a>
-                    <a th:href="@{/login}" class="btn btn-primary btn-action">로그인 페이지로 이동</a>
-                </div>
-            </div>
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">
+                <tr>
+                    <td align="center">
+                        <a th:href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #ffffff; text-decoration: none; font-weight: bold; border-radius: 4px;">이메일 인증하기</a>
+                    </td>
+                </tr>
+            </table>
 
-            <!-- 인증 진행 중 (토큰 확인 중) -->
-            <div th:if="${verified == null}" class="verification-pending-container">
-                <div class="verification-icon verification-pending">
-                    <i class="fas fa-spinner fa-spin"></i>
-                </div>
-                <h2 class="verification-title">이메일 인증 진행 중</h2>
-                <p class="verification-message">
-                    이메일 인증을 진행 중입니다.<br>
-                    잠시만 기다려 주세요.
-                </p>
-            </div>
-        </div>
-    </div>
-</div>
+            <p style="margin-bottom: 20px; color: #495057; line-height: 1.6;">
+                버튼이 작동하지 않는 경우, 아래 링크를 복사하여 브라우저에 붙여넣기 해주세요:
+            </p>
+            <p style="margin-bottom: 30px; word-break: break-all; color: #007bff;">
+                <span th:text="${verificationUrl}">https://localhost/api/auth/verify-email?token=abcdef123456</span>
+            </p>
 
-<!-- 자동 리다이렉트 스크립트 -->
-<th:block layout:fragment="script">
-    <script th:inline="javascript">
-        document.addEventListener('DOMContentLoaded', function() {
-            // 인증 성공 시 자동 리다이렉트
-            const verified = /*[[${verified}]]*/ false;
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px; background-color: #e9ecef; border-radius: 4px; padding: 20px;">
+                <tr>
+                    <td>
+                        <p style="margin: 0; color: #495057; line-height: 1.6;">
+                            <strong>안내사항:</strong><br>
+                            • 본 인증 링크는 24시간 동안 유효합니다.<br>
+                            • 이메일 인증을 완료하면 PeakMeShop의 모든 서비스를 이용하실 수 있습니다.<br>
+                            • 본인이 요청하지 않은 경우 이 메일을 무시하셔도 됩니다.
+                        </p>
+                    </td>
+                </tr>
+            </table>
 
-            if (verified === true) {
-                let seconds = 5;
-                const countdownElement = document.getElementById('seconds');
-
-                const countdown = setInterval(function() {
-                    seconds--;
-                    countdownElement.textContent = seconds;
-
-                    if (seconds <= 0) {
-                        clearInterval(countdown);
-                        window.location.href = /*[[@{/login}]]*/ '/login';
-                    }
-                }, 1000);
-            }
-
-            // 인증 진행 중일 때 자동 새로고침
-            if (verified === null) {
-                setTimeout(function() {
-                    window.location.reload();
-                }, 3000);
-            }
-        });
-    </script>
-</th:block>
+            <p style="margin-bottom: 0; color: #6c757d; font-size: 14px;">
+                * 문의사항은 고객센터(1234-5678)로 연락해 주세요.
+            </p>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding: 20px 30px; text-align: center; background-color: #f8f9fa; color: #6c757d; font-size: 12px; border-top: 1px solid #dee2e6;">
+            <p style="margin: 0 0 10px 0;">
+                본 메일은 발신 전용이므로 회신하실 수 없습니다.
+            </p>
+            <p style="margin: 0;">
+                &copy; 2023 PeakMeShop. All rights reserved.
+            </p>
+        </td>
+    </tr>
+</table>
 </body>
 </html>
 

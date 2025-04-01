@@ -1,7 +1,6 @@
 // auth.js
 document.addEventListener("DOMContentLoaded", () => {
     initSignupForm();
-    initLoginForm();
 });
 
 function initSignupForm() {
@@ -68,59 +67,6 @@ function initSignupForm() {
                         // 일반 오류 메시지 표시
                         showGeneralError('회원가입 처리 중 오류가 발생했습니다.');
                     }
-                });
-        });
-    }
-}
-
-function initLoginForm() {
-    const loginForm = document.getElementById('loginForm');
-
-    if (loginForm) {
-        loginForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-
-            // 폼 데이터 수집
-            const formData = {
-                userId: document.getElementById('userId').value,
-                password: document.getElementById('password').value,
-                rememberMe: document.getElementById('rememberMe') ? document.getElementById('rememberMe').checked : false
-            };
-
-            // 폼 필드 초기화 (오류 표시 제거)
-            clearFormErrors();
-
-            // AJAX 요청 전송
-            fetch('/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': getCSRFToken()
-                },
-                body: JSON.stringify(formData)
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // 성공 처리
-                    console.log('로그인 성공:', data);
-
-                    // JWT 토큰 저장 (필요한 경우)
-                    if (data.accessToken) {
-                        localStorage.setItem('accessToken', data.accessToken);
-                    }
-
-                    // 리다이렉트
-                    window.location.href = data.redirectUrl || '/';
-                })
-                .catch(error => {
-                    // 오류 처리
-                    console.error('로그인 오류:', error);
-                    showGeneralError(error.message || '로그인 처리 중 오류가 발생했습니다.');
                 });
         });
     }

@@ -112,7 +112,7 @@ public class EmailServiceImpl implements EmailService {
         Context context = new Context();
         context.setVariable("username", username);
         context.setVariable("verificationToken", verificationToken);
-        context.setVariable("verificationUrl", "https://localhost/verify-email?token=" + verificationToken);
+        context.setVariable("verificationUrl", "http://localhost/api/auth/verify-email?token=" + verificationToken);
 
         String subject = "PeakMeShop 이메일 인증";
         String content = templateEngine.process("email/email-verification", context);

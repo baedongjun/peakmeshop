@@ -42,6 +42,10 @@ public class SecurityConfig {
                         .passwordParameter("password")
                         .permitAll()
                 )
+                .rememberMe(remember -> remember  // 로그인 상태 유지 기능 설정
+                        .rememberMeParameter("remember-me")
+                        .tokenValiditySeconds(86400)  // 24시간
+                )
                 .logout(logout -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/api/auth/logout"))
                         .logoutSuccessUrl("/")

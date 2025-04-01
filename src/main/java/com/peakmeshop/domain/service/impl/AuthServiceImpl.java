@@ -143,8 +143,7 @@ public class AuthServiceImpl implements AuthService {
         verificationTokenRepository.save(verificationToken);
 
         // 인증 이메일 발송
-        String verificationUrl = "http://localhost/api/auth/verify-email?token=" + token;
-        emailService.sendVerificationEmail(savedMember.getEmail(), savedMember.getName(), verificationUrl);
+        emailService.sendVerificationEmail(savedMember.getEmail(), savedMember.getName(), token);
 
         // 자동 로그인 처리
         Authentication authentication = authenticationManager.authenticate(
@@ -322,6 +321,7 @@ public class AuthServiceImpl implements AuthService {
         refreshToken.setMember(memberRepository.findById(memberId).orElseThrow());
         refreshToken.setToken(token);
         refreshToken.setExpiryDate(LocalDateTime.now().plusDays(7)); // 7일 유효
+        refreshToken.setCreatedAt(LocalDateTime.now());
         refreshTokenRepository.save(refreshToken);
     }
 }

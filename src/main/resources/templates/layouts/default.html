@@ -79,7 +79,7 @@
                                 <li sec:authorize="hasRole('ROLE_ADMIN')"><a class="dropdown-item" th:href="@{/admin}">관리자 페이지</a></li>
                                 <li><hr class="dropdown-divider" sec:authorize="hasRole('ROLE_ADMIN')"></li>
                                 <li>
-                                    <form th:action="@{/auth/logout}" method="post">
+                                    <form th:action="@{/api/auth/logout}" method="post">
                                         <!-- CSRF 토큰 추가 (Thymeleaf가 자동으로 처리) -->
                                         <button type="submit" class="dropdown-item">로그아웃</button>
                                     </form>
