@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  */
 @Controller
 @RequestMapping("/admin")
-public class StatisticsViewController {
+public class AdminStatisticsViewController {
 
     /**
      * 통계 메인 페이지

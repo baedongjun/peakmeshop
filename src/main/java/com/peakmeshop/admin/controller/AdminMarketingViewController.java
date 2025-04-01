@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  */
 @Controller
 @RequestMapping("/admin")
-public class MarketingViewController {
+public class AdminMarketingViewController {
 
     /**
      * 쿠폰 관리 페이지

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  */
 @Controller
 @RequestMapping("/admin")
-public class ContentViewController {
+public class AdminContentViewController {
 
     /**
      * 공지사항 관리 페이지

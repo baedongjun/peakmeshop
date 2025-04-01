@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  */
 @Controller
 @RequestMapping("/admin")
-public class DashboardViewController {
+public class AdminDashboardViewController {
 
     /**
      * 관리자 대시보드 페이지

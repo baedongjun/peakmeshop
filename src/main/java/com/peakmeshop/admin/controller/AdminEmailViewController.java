@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  */
 @Controller
 @RequestMapping("/admin")
-public class EmailViewController {
+public class AdminEmailViewController {
 
     /**
      * 이메일 발송 관리 페이지
