@@ -3,7 +3,7 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/admin-layout}">
 <head>
-    <title>상품 등록/수정</title>
+    <title th:text="${product != null ? '상품 수정' : '상품 등록'}">상품 등록/수정</title>
     <th:block layout:fragment="css">
         <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
         <style>
@@ -43,6 +43,18 @@
             .note-editor {
                 margin-bottom: 20px;
             }
+            .option-row {
+                margin-bottom: 10px;
+            }
+            .attribute-row {
+                margin-bottom: 10px;
+            }
+            .main-image-preview {
+                max-width: 100%;
+                max-height: 200px;
+                margin-top: 10px;
+                border-radius: 5px;
+            }
         </style>
     </th:block>
 </head>
@@ -53,8 +65,8 @@
 <!-- 페이지 내용 -->
 <div layout:fragment="content">
     <div class="admin-card mb-4">
-        <form id="productForm" th:action="${product != null ? '/admin/products/update' : '/admin/products/save'}" method="post" enctype="multipart/form-data">
-            <input type="hidden" name="id" th:if="${product != null}" th:value="${product.id}">
+        <form id="productForm" enctype="multipart/form-data">
+            <input type="hidden" id="productId" th:value="${product != null ? product.id : ''}">
 
             <div class="row mb-4">
                 <div class="col-md-8">
@@ -66,22 +78,18 @@
                         <div class="card-body">
                             <div class="mb-3">
                                 <label for="productName" class="form-label">상품명 <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="productName" name="name" required th:value="${product != null ? product.name : ''}">
+                                <input type="text" class="form-control" id="productName" name="name" required>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="productCode" class="form-label">상품코드 <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="productCode" name="code" required th:value="${product != null ? product.code : ''}">
+                                    <input type="text" class="form-control" id="productCode" name="code" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="productCategory" class="form-label">카테고리 <span class="text-danger">*</span></label>
                                     <select class="form-select" id="productCategory" name="categoryId" required>
                                         <option value="" selected disabled>카테고리 선택</option>
-                                        <option value="1" th:selected="${product != null && product.categoryId == 1}">의류</option>
-                                        <option value="2" th:selected="${product != null && product.categoryId == 2}">신발</option>
-                                        <option value="3" th:selected="${product != null && product.categoryId == 3}">액세서리</option>
-                                        <option value="4" th:selected="${product != null && product.categoryId == 4}">스포츠용품</option>
-                                        <option value="5" th:selected="${product != null && product.categoryId == 5}">아웃도어</option>
+                                        <!-- 카테고리 옵션들은 JavaScript로 동적 로드 -->
                                     </select>
                                 </div>
                             </div>
@@ -90,146 +98,124 @@
                                     <label for="productPrice" class="form-label">판매가격 <span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <span class="input-group-text">₩</span>
-                                        <input type="number" class="form-control" id="productPrice" name="price" required th:value="${product != null ? product.price : ''}">
+                                        <input type="number" class="form-control" id="productPrice" name="price" required>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="productCostPrice" class="form-label">원가</label>
+                                    <label for="productSalePrice" class="form-label">할인가격</label>
                                     <div class="input-group">
                                         <span class="input-group-text">₩</span>
-                                        <input type="number" class="form-control" id="productCostPrice" name="costPrice" th:value="${product != null ? product.costPrice : ''}">
+                                        <input type="number" class="form-control" id="productSalePrice" name="salePrice">
                                     </div>
                                 </div>
                             </div>
                             <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="productBrand" class="form-label">브랜드</label>
+                                    <select class="form-select" id="productBrand" name="brand.id">
+                                        <option value="" selected>브랜드 선택</option>
+                                        <!-- 브랜드 옵션들은 JavaScript로 동적 로드 -->
+                                    </select>
+                                </div>
                                 <div class="col-md-6">
                                     <label for="productStock" class="form-label">재고수량 <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control" id="productStock" name="stock" required th:value="${product != null ? product.stock : ''}">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="productStatus" class="form-label">판매상태 <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="productStatus" name="status" required>
-                                        <option value="ACTIVE" th:selected="${product != null && product.status == 'ACTIVE'}">판매중</option>
-                                        <option value="OUT_OF_STOCK" th:selected="${product != null && product.status == 'OUT_OF_STOCK'}">품절</option>
-                                        <option value="INACTIVE" th:selected="${product != null && product.status == 'INACTIVE'}">판매중지</option>
-                                    </select>
+                                    <input type="number" class="form-control" id="productStock" name="stock" required min="0">
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <label for="productSummary" class="form-label">상품 요약</label>
-                                <textarea class="form-control" id="productSummary" name="summary" rows="2" th:text="${product != null ? product.summary : ''}"></textarea>
+                                <label for="productDescription" class="form-label">상품 설명</label>
+                                <textarea id="productDescription" name="description"></textarea>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 상세 정보 -->
+                    <!-- 상품 옵션 -->
                     <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">상세 정보</h5>
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">상품 옵션</h5>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="addOptionBtn">
+                                <i class="fas fa-plus"></i> 옵션 추가
+                            </button>
                         </div>
                         <div class="card-body">
-                            <div class="mb-3">
-                                <label for="productDescription" class="form-label">상품 상세설명</label>
-                                <textarea id="productDescription" name="description" th:text="${product != null ? product.description : ''}"></textarea>
+                            <div id="optionsContainer">
+                                <!-- 옵션 행들은 JavaScript로 동적 생성 -->
                             </div>
+                            <div class="form-text">옵션이 없는 경우 비워두세요.</div>
                         </div>
                     </div>
 
-                    <!-- 배송 정보 -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">배송 정보</h5>
+                    <!-- 상품 속성 -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">상품 속성</h5>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="addAttributeBtn">
+                                <i class="fas fa-plus"></i> 속성 추가
+                            </button>
                         </div>
                         <div class="card-body">
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="shippingMethod" class="form-label">배송방법</label>
-                                    <select class="form-select" id="shippingMethod" name="shippingMethod">
-                                        <option value="STANDARD" th:selected="${product != null && product.shippingMethod == 'STANDARD'}">일반배송</option>
-                                        <option value="EXPRESS" th:selected="${product != null && product.shippingMethod == 'EXPRESS'}">특급배송</option>
-                                        <option value="FREE" th:selected="${product != null && product.shippingMethod == 'FREE'}">무료배송</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="shippingFee" class="form-label">배송비</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">₩</span>
-                                        <input type="number" class="form-control" id="shippingFee" name="shippingFee" th:value="${product != null ? product.shippingFee : '3000'}">
-                                    </div>
-                                </div>
+                            <div id="attributesContainer">
+                                <!-- 속성 행들은 JavaScript로 동적 생성 -->
                             </div>
+                            <div class="form-text">속성이 없는 경우 비워두세요.</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-md-4">
-                    <!-- 이미지 업로드 -->
+                    <!-- 상태 설정 -->
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h5 class="mb-0">상품 이미지</h5>
+                            <h5 class="mb-0">상태 설정</h5>
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
-                                <label for="productImages" class="form-label">이미지 업로드 (최대 5개)</label>
-                                <input type="file" class="form-control" id="productImages" name="images" multiple accept="image/*">
+                                <label for="productStatus" class="form-label">판매상태 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="productStatus" name="status" required>
+                                    <option value="ACTIVE" selected>판매중</option>
+                                    <option value="INACTIVE">판매중지</option>
+                                    <option value="OUT_OF_STOCK">품절</option>
+                                </select>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="productActive" name="active" checked>
+                                <label class="form-check-label" for="productActive">활성화</label>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="productFeatured" name="featured">
+                                <label class="form-check-label" for="productFeatured">추천상품으로 설정</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 메인 이미지 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">메인 이미지</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="mainImage" class="form-label">메인 이미지 <span class="text-danger">*</span></label>
+                                <input type="file" class="form-control" id="mainImage" name="mainImage" accept="image/*">
+                                <div class="form-text">권장 크기: 800x800px, 최대 5MB</div>
+                                <img id="mainImagePreview" class="main-image-preview d-none" alt="메인 이미지 미리보기">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 추가 이미지 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">추가 이미지</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="additionalImages" class="form-label">추가 이미지 (최대 5개)</label>
+                                <input type="file" class="form-control" id="additionalImages" name="additionalImages" multiple accept="image/*">
                                 <div class="form-text">권장 크기: 800x800px, 최대 5MB</div>
                             </div>
                             <div class="image-preview-container" id="imagePreviewContainer">
-                                <!-- 기존 이미지가 있는 경우 표시 -->
-                                <div th:if="${product != null && product.images != null}" th:each="image : ${product.images}" class="image-preview-item">
-                                    <img th:src="${image.url}" class="preview-image">
-                                    <button type="button" class="remove-image-btn" th:data-id="${image.id}">&times;</button>
-                                    <input type="hidden" name="existingImageIds" th:value="${image.id}">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 옵션 설정 -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">옵션 설정</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="hasOptions" name="hasOptions" th:checked="${product != null && product.hasOptions}">
-                                    <label class="form-check-label" for="hasOptions">옵션 사용</label>
-                                </div>
-                            </div>
-                            <div id="optionsContainer" style="display: none;">
-                                <div class="mb-3">
-                                    <label class="form-label">옵션 유형</label>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="optionSize" name="optionTypes" value="SIZE" th:checked="${product != null && product.optionTypes != null && product.optionTypes.contains('SIZE')}">
-                                        <label class="form-check-label" for="optionSize">사이즈</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="optionColor" name="optionTypes" value="COLOR" th:checked="${product != null && product.optionTypes != null && product.optionTypes.contains('COLOR')}">
-                                        <label class="form-check-label" for="optionColor">색상</label>
-                                    </div>
-                                </div>
-                                <div class="mb-3" id="sizeOptionsContainer" style="display: none;">
-                                    <label for="sizeOptions" class="form-label">사이즈 옵션 (쉼표로 구분)</label>
-                                    <input type="text" class="form-control" id="sizeOptions" name="sizeOptions" placeholder="S, M, L, XL" th:value="${product != null ? product.sizeOptions : ''}">
-                                </div>
-                                <div class="mb-3" id="colorOptionsContainer" style="display: none;">
-                                    <label for="colorOptions" class="form-label">색상 옵션 (쉼표로 구분)</label>
-                                    <input type="text" class="form-control" id="colorOptions" name="colorOptions" placeholder="빨강, 파랑, 검정" th:value="${product != null ? product.colorOptions : ''}">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 태그 설정 -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">태그 설정</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <label for="productTags" class="form-label">태그 (쉼표로 구분)</label>
-                                <input type="text" class="form-control" id="productTags" name="tags" placeholder="스포츠, 여름, 신상품" th:value="${product != null ? product.tags : ''}">
+                                <!-- 이미지 미리보기는 JavaScript로 동적 생성 -->
                             </div>
                         </div>
                     </div>
@@ -250,8 +236,11 @@
     <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/lang/summernote-ko-KR.min.js"></script>
     <script>
-        $(document).ready(function() {
-            // 상세 설명 에디터 초기화
+        let productId = document.getElementById('productId').value;
+        const isEditMode = !!productId;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 에디터 초기화
             $('#productDescription').summernote({
                 height: 300,
                 lang: 'ko-KR',
@@ -266,80 +255,433 @@
                 ]
             });
 
-            // 옵션 사용 체크박스 이벤트
-            $('#hasOptions').change(function() {
-                if(this.checked) {
-                    $('#optionsContainer').show();
-                } else {
-                    $('#optionsContainer').hide();
+            // 카테고리 로드
+            loadCategories();
+
+            // 브랜드 로드
+            loadBrands();
+
+            // 수정 모드인 경우 상품 정보 로드
+            if (isEditMode) {
+                loadProductData();
+            }
+
+            // 폼 제출 이벤트
+            document.getElementById('productForm').addEventListener('submit', saveProduct);
+
+            // 메인 이미지 미리보기
+            document.getElementById('mainImage').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const preview = document.getElementById('mainImagePreview');
+                        preview.src = e.target.result;
+                        preview.classList.remove('d-none');
+                    }
+                    reader.readAsDataURL(file);
                 }
             });
 
-            // 초기 옵션 상태 설정
-            if($('#hasOptions').is(':checked')) {
-                $('#optionsContainer').show();
-            }
+            // 추가 이미지 미리보기
+            document.getElementById('additionalImages').addEventListener('change', function(e) {
+                const files = e.target.files;
+                const container = document.getElementById('imagePreviewContainer');
+                container.innerHTML = '';
 
-            // 사이즈 옵션 체크박스 이벤트
-            $('#optionSize').change(function() {
-                if(this.checked) {
-                    $('#sizeOptionsContainer').show();
-                } else {
-                    $('#sizeOptionsContainer').hide();
-                }
-            });
-
-            // 색상 옵션 체크박스 이벤트
-            $('#optionColor').change(function() {
-                if(this.checked) {
-                    $('#colorOptionsContainer').show();
-                } else {
-                    $('#colorOptionsContainer').hide();
-                }
-            });
-
-            // 초기 옵션 유형 상태 설정
-            if($('#optionSize').is(':checked')) {
-                $('#sizeOptionsContainer').show();
-            }
-
-            if($('#optionColor').is(':checked')) {
-                $('#colorOptionsContainer').show();
-            }
-
-            // 이미지 미리보기
-            $('#productImages').change(function() {
-                const files = this.files;
-                $('#imagePreviewContainer').empty();
-
-                for(let i = 0; i < files.length; i++) {
+                for (let i = 0; i < files.length; i++) {
                     const file = files[i];
                     const reader = new FileReader();
 
                     reader.onload = function(e) {
-                        const previewItem = $('<div class="image-preview-item"></div>');
-                        const img = $('<img class="preview-image">').attr('src', e.target.result);
-                        const removeBtn = $('<button type="button" class="remove-image-btn">&times;</button>');
+                        const previewItem = document.createElement('div');
+                        previewItem.className = 'image-preview-item';
 
-                        removeBtn.click(function() {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'preview-image';
+
+                        const removeBtn = document.createElement('button');
+                        removeBtn.type = 'button';
+                        removeBtn.className = 'remove-image-btn';
+                        removeBtn.innerHTML = '&times;';
+                        removeBtn.onclick = function() {
                             previewItem.remove();
-                        });
+                        };
 
-                        previewItem.append(img);
-                        previewItem.append(removeBtn);
-                        $('#imagePreviewContainer').append(previewItem);
+                        previewItem.appendChild(img);
+                        previewItem.appendChild(removeBtn);
+                        container.appendChild(previewItem);
                     }
 
                     reader.readAsDataURL(file);
                 }
             });
 
-            // 기존 이미지 삭제 버튼 이벤트
-            $('.remove-image-btn').click(function() {
-                $(this).parent().remove();
-            });
+            // 옵션 추가 버튼
+            document.getElementById('addOptionBtn').addEventListener('click', addOptionRow);
+
+            // 속성 추가 버튼
+            document.getElementById('addAttributeBtn').addEventListener('click', addAttributeRow);
         });
+
+        // 카테고리 로드
+        function loadCategories() {
+            fetch('/api/categories')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('카테고리 목록을 불러오는데 실패했습니다.');
+                    }
+                    return response.json();
+                })
+                .then(categories => {
+                    const select = document.getElementById('productCategory');
+                    categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category.id;
+                        option.textContent = category.name;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('카테고리 목록을 불러오는데 실패했습니다.');
+                });
+        }
+
+        // 브랜드 로드
+        function loadBrands() {
+            fetch('/api/brands')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('브랜드 목록을 불러오는데 실패했습니다.');
+                    }
+                    return response.json();
+                })
+                .then(brands => {
+                    const select = document.getElementById('productBrand');
+                    brands.forEach(brand => {
+                        const option = document.createElement('option');
+                        option.value = brand.id;
+                        option.textContent = brand.name;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('브랜드 목록을 불러오는데 실패했습니다.');
+                });
+        }
+
+        // 상품 정��� 로드 (수정 모드)
+        function loadProductData() {
+            fetch(`/api/products/${productId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('상품 정보를 불러오는데 실패했습니다.');
+                    }
+                    return response.json();
+                })
+                .then(product => {
+                    // 기본 정보 설정
+                    document.getElementById('productName').value = product.name || '';
+                    document.getElementById('productCode').value = product.code || '';
+                    document.getElementById('productPrice').value = product.price || '';
+                    document.getElementById('productSalePrice').value = product.salePrice || '';
+                    document.getElementById('productStock').value = product.stock || 0;
+                    document.getElementById('productStatus').value = product.status || 'ACTIVE';
+                    document.getElementById('productActive').checked = product.active !== false;
+                    document.getElementById('productFeatured').checked = product.featured === true;
+
+                    // 카테고리 설정
+                    if (product.categoryId) {
+                        document.getElementById('productCategory').value = product.categoryId;
+                    }
+
+                    // 브랜드 설정
+                    if (product.brand && product.brand.id) {
+                        document.getElementById('productBrand').value = product.brand.id;
+                    }
+
+                    // 상품 설명 설정
+                    $('#productDescription').summernote('code', product.description || '');
+
+                    // 메인 이미지 미리보기
+                    if (product.mainImage) {
+                        const preview = document.getElementById('mainImagePreview');
+                        preview.src = product.mainImage;
+                        preview.classList.remove('d-none');
+                    }
+
+                    // 추가 이미지 미리보기
+                    if (product.images && product.images.length > 0) {
+                        const container = document.getElementById('imagePreviewContainer');
+                        container.innerHTML = '';
+
+                        product.images.forEach((imageUrl, index) => {
+                            const previewItem = document.createElement('div');
+                            previewItem.className = 'image-preview-item';
+
+                            const img = document.createElement('img');
+                            img.src = imageUrl;
+                            img.className = 'preview-image';
+
+                            const removeBtn = document.createElement('button');
+                            removeBtn.type = 'button';
+                            removeBtn.className = 'remove-image-btn';
+                            removeBtn.innerHTML = '&times;';
+                            removeBtn.onclick = function() {
+                                previewItem.remove();
+                            };
+
+                            const hiddenInput = document.createElement('input');
+                            hiddenInput.type = 'hidden';
+                            hiddenInput.name = 'existingImages';
+                            hiddenInput.value = imageUrl;
+
+                            previewItem.appendChild(img);
+                            previewItem.appendChild(removeBtn);
+                            previewItem.appendChild(hiddenInput);
+                            container.appendChild(previewItem);
+                        });
+                    }
+
+                    // 옵션 로드
+                    if (product.options && product.options.length > 0) {
+                        const container = document.getElementById('optionsContainer');
+                        container.innerHTML = '';
+
+                        product.options.forEach(option => {
+                            addOptionRow(option);
+                        });
+                    }
+
+                    // 속성 로드
+                    if (product.attributes && Object.keys(product.attributes).length > 0) {
+                        const container = document.getElementById('attributesContainer');
+                        container.innerHTML = '';
+
+                        for (const [key, value] of Object.entries(product.attributes)) {
+                            addAttributeRow(key, value);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('상품 정보를 불러오는데 실패했습니다.');
+                });
+        }
+
+        // 옵션 행 추가
+        function addOptionRow(option = null) {
+            const container = document.getElementById('optionsContainer');
+            const index = container.children.length;
+
+            const row = document.createElement('div');
+            row.className = 'row option-row align-items-center';
+
+            row.innerHTML = `
+                   <div class="col-md-4 mb-2">
+                       <input type="text" class="form-control" name="options[${index}].name" placeholder="옵션명" value="${option ? option.name : ''}">
+                   </div>
+                   <div class="col-md-4 mb-2">
+                       <input type="text" class="form-control" name="options[${index}].value" placeholder="옵션값" value="${option ? option.value : ''}">
+                   </div>
+                   <div class="col-md-3 mb-2">
+                       <input type="number" class="form-control" name="options[${index}].priceAdjustment" placeholder="가격 조정" value="${option ? option.priceAdjustment || 0 : 0}">
+                   </div>
+                   <div class="col-md-1 mb-2">
+                       <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeOptionRow(this)">
+                           <i class="fas fa-times"></i>
+                       </button>
+                   </div>
+               `;
+
+            container.appendChild(row);
+        }
+
+        // 옵션 행 제거
+        function removeOptionRow(button) {
+            const row = button.closest('.option-row');
+            row.remove();
+
+            // 인덱스 재정렬
+            const container = document.getElementById('optionsContainer');
+            const rows = container.querySelectorAll('.option-row');
+
+            rows.forEach((row, index) => {
+                const nameInput = row.querySelector('input[name^="options"][name$=".name"]');
+                const valueInput = row.querySelector('input[name^="options"][name$=".value"]');
+                const priceInput = row.querySelector('input[name^="options"][name$=".priceAdjustment"]');
+
+                nameInput.name = `options[${index}].name`;
+                valueInput.name = `options[${index}].value`;
+                priceInput.name = `options[${index}].priceAdjustment`;
+            });
+        }
+
+        // 속성 행 추가
+        function addAttributeRow(key = '', value = '') {
+            const container = document.getElementById('attributesContainer');
+            const index = container.children.length;
+
+            const row = document.createElement('div');
+            row.className = 'row attribute-row align-items-center';
+
+            row.innerHTML = `
+                   <div class="col-md-5 mb-2">
+                       <input type="text" class="form-control" name="attributeKeys[${index}]" placeholder="속성명" value="${key}">
+                   </div>
+                   <div class="col-md-6 mb-2">
+                       <input type="text" class="form-control" name="attributeValues[${index}]" placeholder="속성값" value="${value}">
+                   </div>
+                   <div class="col-md-1 mb-2">
+                       <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeAttributeRow(this)">
+                           <i class="fas fa-times"></i>
+                       </button>
+                   </div>
+               `;
+
+            container.appendChild(row);
+        }
+
+        // 속성 행 제거
+        function removeAttributeRow(button) {
+            const row = button.closest('.attribute-row');
+            row.remove();
+
+            // 인덱스 재정렬
+            const container = document.getElementById('attributesContainer');
+            const rows = container.querySelectorAll('.attribute-row');
+
+            rows.forEach((row, index) => {
+                const keyInput = row.querySelector('input[name^="attributeKeys"]');
+                const valueInput = row.querySelector('input[name^="attributeValues"]');
+
+                keyInput.name = `attributeKeys[${index}]`;
+                valueInput.name = `attributeValues[${index}]`;
+            });
+        }
+
+        // 상품 저장
+        function saveProduct(e) {
+            e.preventDefault();
+
+            const form = document.getElementById('productForm');
+            const formData = new FormData(form);
+
+            // 상품 데이터 객체 생성
+            const productData = {
+                name: formData.get('name'),
+                code: formData.get('code'),
+                price: parseFloat(formData.get('price')),
+                salePrice: formData.get('salePrice') ? parseFloat(formData.get('salePrice')) : null,
+                stock: parseInt(formData.get('stock')),
+                status: formData.get('status'),
+                active: formData.get('active') === 'on',
+                featured: formData.get('featured') === 'on',
+                description: $('#productDescription').summernote('code'),
+                categoryId: parseInt(formData.get('categoryId')),
+                options: [],
+                attributes: {}
+            };
+
+            // 브랜드 설정
+            const brandId = formData.get('brand.id');
+            if (brandId) {
+                productData.brand = { id: parseInt(brandId) };
+            }
+
+            // 옵션 데이터 수집
+            const optionRows = document.querySelectorAll('.option-row');
+            optionRows.forEach((row, index) => {
+                const name = formData.get(`options[${index}].name`);
+                const value = formData.get(`options[${index}].value`);
+                const priceAdjustment = formData.get(`options[${index}].priceAdjustment`);
+
+                if (name && value) {
+                    productData.options.push({
+                        name: name,
+                        value: value,
+                        priceAdjustment: priceAdjustment ? parseFloat(priceAdjustment) : 0
+                    });
+                }
+            });
+
+            // 속성 데이터 수집
+            const attributeRows = document.querySelectorAll('.attribute-row');
+            attributeRows.forEach((row, index) => {
+                const key = formData.get(`attributeKeys[${index}]`);
+                const value = formData.get(`attributeValues[${index}]`);
+
+                if (key && value) {
+                    productData.attributes[key] = value;
+                }
+            });
+
+            // 수정 모드인 경우 ID 추가
+            if (isEditMode) {
+                productData.id = parseInt(productId);
+            }
+
+            // API 호출
+            const url = isEditMode ? `/api/products/${productId}` : '/api/products';
+            const method = isEditMode ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(productData)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('상품 저장에 실패했습니다.');
+                    }
+                    return response.json();
+                })
+                .then(savedProduct => {
+                    // 이미지 업로드 처리
+                    const mainImageFile = document.getElementById('mainImage').files[0];
+                    const additionalImageFiles = document.getElementById('additionalImages').files;
+
+                    if (mainImageFile || additionalImageFiles.length > 0) {
+                        const imageFormData = new FormData();
+
+                        if (mainImageFile) {
+                            imageFormData.append('mainImage', mainImageFile);
+                        }
+
+                        for (let i = 0; i < additionalImageFiles.length; i++) {
+                            imageFormData.append('additionalImages', additionalImageFiles[i]);
+                        }
+
+                        // 기존 이미지 정보 추가
+                        const existingImages = document.querySelectorAll('input[name="existingImages"]');
+                        existingImages.forEach(input => {
+                            imageFormData.append('existingImages', input.value);
+                        });
+
+                        return fetch(`/api/products/${savedProduct.id}/images`, {
+                            method: 'POST',
+                            body: imageFormData
+                        });
+                    }
+
+                    return Promise.resolve();
+                })
+                .then(() => {
+                    alert('상품이 저장되었습니다.');
+                    window.location.href = '/admin/products';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('상품 저장에 실패했습니다.');
+                });
+        }
     </script>
 </th:block>
 </body>
 </html>
+

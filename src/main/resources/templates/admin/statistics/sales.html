@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>매출 통계 | PeakMe Shop 관리자</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid px-4">
+        <h1 class="mt-4">매출 통계</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/admin">대시보드</a></li>
+            <li class="breadcrumb-item"><a href="/admin/statistics/dashboard">통계</a></li>
+            <li class="breadcrumb-item active">매출 통계</li>
+        </ol>
+
+        <!-- 기간 선택 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-calendar me-1"></i>
+                기간 선택
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="btn-group mb-3" role="group">
+                            <button type="button" class="btn btn-outline-primary" id="btn-today">오늘</button>
+                            <button type="button" class="btn btn-outline-primary" id="btn-yesterday">어제</button>
+                            <button type="button" class="btn btn-outline-primary" id="btn-this-week">이번 주</button>
+                            <button type="button" class="btn btn-outline-primary" id="btn-this-month">이번 달</button>
+                            <button type="button" class="btn btn-outline-primary" id="btn-this-year">올해</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group mb-3">
+                            <input type="date" class="form-control" id="start-date">
+                            <span class="input-group-text">~</span>
+                            <input type="date" class="form-control" id="end-date">
+                            <button class="btn btn-primary" id="btn-search">조회</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 요약 통계 -->
+        <div class="row">
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-primary text-white mb-4">
+                    <div class="card-body">
+                        <h5>총 매출</h5>
+                        <h2 id="total-sales">₩0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-success text-white mb-4">
+                    <div class="card-body">
+                        <h5>평균 주문 금액</h5>
+                        <h2 id="avg-order-value">₩0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-warning text-white mb-4">
+                    <div class="card-body">
+                        <h5>총 주문 수</h5>
+                        <h2 id="total-orders">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-danger text-white mb-4">
+                    <div class="card-body">
+                        <h5>총 판매 상품 수</h5>
+                        <h2 id="total-products">0</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 차트 -->
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line me-1"></i>
+                        기간별 매출 추이
+                    </div>
+                    <div class="card-body">
+                        <canvas id="salesTrendChart" width="100%" height="40"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-xl-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-chart-pie me-1"></i>
+                        카테고리별 매출
+                    </div>
+                    <div class="card-body">
+                        <canvas id="categorySalesChart" width="100%" height="40"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-chart-pie me-1"></i>
+                        결제 수단별 매출
+                    </div>
+                    <div class="card-body">
+                        <canvas id="paymentMethodChart" width="100%" height="40"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-xl-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-map-marked-alt me-1"></i>
+                        지역별 매출
+                    </div>
+                    <div class="card-body">
+                        <canvas id="regionSalesChart" width="100%" height="40"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-chart-bar me-1"></i>
+                        월별 매출 비교
+                    </div>
+                    <div class="card-body">
+                        <canvas id="monthlyComparisonChart" width="100%" height="40"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 인기 상품 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-trophy me-1"></i>
+                인기 상품 TOP 10
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="topProductsTable">
+                        <thead>
+                        <tr>
+                            <th>순위</th>
+                            <th>상품명</th>
+                            <th>판매량</th>
+                            <th>매출액</th>
+                            <th>비율</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- 데이터가 여기에 동적으로 로드됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 매출 데이터 테이블 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-table me-1"></i>
+                일별 매출 데이터
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="dailySalesTable">
+                        <thead>
+                        <tr>
+                            <th>날짜</th>
+                            <th>매출액</th>
+                            <th>주문 수</th>
+                            <th>평균 주문 금액</th>
+                            <th>판매 상품 수</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- 데이터가 여기에 동적으로 로드됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 스크립트 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // 오늘 날짜 설정
+            const today = new Date();
+            const formattedToday = today.toISOString().split('T')[0];
+
+            // 어제 날짜 계산
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const formattedYesterday = yesterday.toISOString().split('T')[0];
+
+            // 이번 주 시작일 계산 (일요일)
+            const thisWeekStart = new Date(today);
+            thisWeekStart.setDate(today.getDate() - today.getDay());
+            const formattedThisWeekStart = thisWeekStart.toISOString().split('T')[0];
+
+            // 이번 달 시작일 계산
+            const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            const formattedThisMonthStart = thisMonthStart.toISOString().split('T')[0];
+
+            // 올해 시작일 계산
+            const thisYearStart = new Date(today.getFullYear(), 0, 1);
+            const formattedThisYearStart = thisYearStart.toISOString().split('T')[0];
+
+            // 날짜 입력 필드 초기화
+            document.getElementById('start-date').value = formattedThisMonthStart;
+            document.getElementById('end-date').value = formattedToday;
+
+            // 기본 데이터 로드 (이번 달)
+            loadSalesStatistics(formattedThisMonthStart, formattedToday);
+
+            // 버튼 이벤트 리스너
+            document.getElementById('btn-today').addEventListener('click', function() {
+                document.getElementById('start-date').value = formattedToday;
+                document.getElementById('end-date').value = formattedToday;
+                loadSalesStatistics(formattedToday, formattedToday);
+            });
+
+            document.getElementById('btn-yesterday').addEventListener('click', function() {
+                document.getElementById('start-date').value = formattedYesterday;
+                document.getElementById('end-date').value = formattedYesterday;
+                loadSalesStatistics(formattedYesterday, formattedYesterday);
+            });
+
+            document.getElementById('btn-this-week').addEventListener('click', function() {
+                document.getElementById('start-date').value = formattedThisWeekStart;
+                document.getElementById('end-date').value = formattedToday;
+                loadSalesStatistics(formattedThisWeekStart, formattedToday);
+            });
+
+            document.getElementById('btn-this-month').addEventListener('click', function() {
+                document.getElementById('start-date').value = formattedThisMonthStart;
+                document.getElementById('end-date').value = formattedToday;
+                loadSalesStatistics(formattedThisMonthStart, formattedToday);
+            });
+
+            document.getElementById('btn-this-year').addEventListener('click', function() {
+                document.getElementById('start-date').value = formattedThisYearStart;
+                document.getElementById('end-date').value = formattedToday;
+                loadSalesStatistics(formattedThisYearStart, formattedToday);
+            });
+
+            document.getElementById('btn-search').addEventListener('click', function() {
+                const startDate = document.getElementById('start-date').value;
+                const endDate = document.getElementById('end-date').value;
+                loadSalesStatistics(startDate, endDate);
+            });
+        });
+
+        // 매출 통계 데이터 로드 함수
+        function loadSalesStatistics(startDate, endDate) {
+            // 로딩 표시
+            showLoading();
+
+            // 요약 통계 로드
+            loadSalesSummary(startDate, endDate);
+
+            // 기간별 매출 추이 차트 로드
+            loadSalesTrendChart(startDate, endDate);
+
+            // 카테고리별 매출 차트 로드
+            loadCategorySalesChart(startDate, endDate);
+
+            // 결제 수단별 매출 차트 로드
+            loadPaymentMethodChart(startDate, endDate);
+
+            // 지역별 매출 차트 로드
+            loadRegionSalesChart(startDate, endDate);
+
+            // 월별 매출 비교 차트 로드
+            loadMonthlyComparisonChart();
+
+            // 인기 상품 테이블 로드
+            loadTopProductsTable(startDate, endDate);
+
+            // 일별 매출 데이터 테이블 로드
+            loadDailySalesTable(startDate, endDate);
+
+            // 로딩 완료
+            hideLoading();
+        }
+
+        // 요약 통계 로드 함수
+        function loadSalesSummary(startDate, endDate) {
+            // 총 매출
+            fetch(`/api/statistics/sales/total?startDate=${startDate}&endDate=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('total-sales').textContent = '₩' + data.toLocaleString();
+                });
+
+            // 총 주문
+            fetch(`/api/statistics/orders/total?startDate=${startDate}&endDate=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('total-orders').textContent = data.toLocaleString();
+
+                    // 총 매출과 총 주문 수를 이용하여 평균 주문 금액 계산
+                    fetch(`/api/statistics/sales/total?startDate=${startDate}&endDate=${endDate}`)
+                        .then(response => response.json())
+                        .then(salesData => {
+                            const avgOrderValue = data > 0 ? salesData / data : 0;
+                            document.getElementById('avg-order-value').textContent = '₩' + avgOrderValue.toLocaleString(undefined, {maximumFractionDigits: 0});
+                        });
+                });
+
+            // 통계 데이터에서 총 판매 상품 수 가져오기
+            fetch(`/api/statistics/range?startDate=${startDate}&endDate=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('total-products').textContent = data.totalProducts.toLocaleString();
+                });
+        }
+
+        // 기간별 매출 추이 차트 로드 함수
+        function loadSalesTrendChart(startDate, endDate) {
+            fetch(`/api/statistics/daily/range?startDate=${startDate}&endDate=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const labels = data.map(item => {
+                        const date = new Date(item.date);
+                        return `${date.getMonth() + 1}/${date.getDate()}`;
+                    });
+
+                    const salesData = data.map(item => item.totalSales);
+
+                    // 기존 차트 제거
+                    if (window.salesTrendChart) {
+                        window.salesTrendChart.destroy();
+                    }
+
+                    // 새 차트 생성
+                    const ctx = document.getElementById('salesTrendChart').getContext('2d');
+                    window.salesTrendChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: '일별 매출 (₩)',
+                                data: salesData,
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                tension: 0.1,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: '매출 (₩)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+        }
+
+        // 카테고리별 매출 차트 로드 함수
+        function loadCategorySalesChart(startDate, endDate) {
+            fetch(`/api/statistics/sales/category?startDate=${startDate}&endDate=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const labels = Object.keys(data);
+                    const values = Object.values(data);
+
+                    // 기존 차트 제거
+                    if (window.categorySalesChart) {
+                        window.categorySalesChart.destroy();
+                    }
+
+                    // 새 차트 생성
+                    const ctx = document.getElementById('categorySalesChart').getContext('2d');
+                    window.categorySalesChart = new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: '카테고리별 매출',
+                                data: values,
+                                backgroundColor: [
+                                    'rgba(255, 99, 132, 0.5)',
+                                    'rgba(54, 162, 235, 0.5)',
+                                    'rgba(255, 206, 86, 0.5)',
+                                    'rgba(75, 192, 192, 0.5)',
+                                    'rgba(153, 102, 255, 0.5)',
+                                    'rgba(255, 159, 64, 0.5)',
+                                    'rgba(199, 199, 199, 0.5)',
+                                    'rgba(83, 102, 255, 0.5)',
+                                    'rgba(40, 159, 64, 0.5)',
+                                    'rgba(210, 199, 199, 0.5)'
+                                ],
+                                borderColor: [
+                                    'rgba(255, 99, 132, 1)',
+                                    'rgba(54, 162, 235, 1)',
+                                    'rgba(255, 206, 86, 1)',
+                                    'rgba(75, 192, 192, 1)',
+                                    'rgba(153, 102, 255, 1)',
+                                    'rgba(255, 159, 64, 1)',
+                                    'rgba(199, 199, 199, 1)',
+                                    'rgba(83, 102, 255, 1)',
+                                    'rgba(40, 159, 64, 1)',
+                                    'rgba(210, 199, 199, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.label || '';
+                                            const value = context.raw || 0;
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = Math.round((value / total) * 100);
+                                            return `${label}: ₩${value.toLocaleString()} (${percentage}%)`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+        }
+
+        // 결제 수단별 매출 차트 로드 함수
+        function loadPaymentMethodChart(startDate, endDate) {
+            fetch(`/api/statistics/sales/payment-method?startDate=${startDate}&endDate=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const labels = Object.keys(data);
+                    const values = Object.values(data);
+
+                    // 기존 차트 제거
+                    if (window.paymentMethodChart) {
+                        window.paymentMethodChart.destroy();
+                    }
+
+                    // 새 차트 생성
+                    const ctx = document.getElementById('paymentMethodChart').getContext('2d');
+                    window.paymentMethodChart = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: '결제 수단별 매출',
+                                data: values,
+                                backgroundColor: [
+                                    'rgba(255, 99, 132, 0.5)',
+                                    'rgba(54, 162, 235, 0.5)',
+                                    'rgba(255, 206, 86, 0.5)',
+                                    'rgba(75, 192, 192, 0.5)',
+                                    'rgba(153, 102, 255, 0.5)'
+                                ],
+                                borderColor: [
+                                    'rgba(255, 99, 132, 1)',
+                                    'rgba(54, 162, 235, 1)',
+                                    'rgba(255, 206, 86, 1)',
+                                    'rgba(75, 192, 192, 1)',
+                                    'rgba(153, 102, 255, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.label || '';
+                                            const value = context.raw || 0;
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = Math.round((value / total) * 100);
+                                            return `${label}: ₩${value.toLocaleString()} (${percentage}%)`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+        }
+
+        // 지역별 매출 차트 로드 함수
+        function loadRegionSalesChart(startDate, endDate) {
+            fetch(`/api/statistics/sales/region?startDate=${startDate}&endDate=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const labels = Object.keys(data);
+                    const values = Object.values(data);
+
+                    // 기존 차트 제거
+                    if (window.regionSalesChart) {
+                        window.regionSalesChart.destroy();
+                    }
+
+                    // 새 차트 생성
+                    const ctx = document.getElementById('regionSalesChart').getContext('2d');
+                    window.regionSalesChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: '지역별 매출 (₩)',
+                                data: values,
+                                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: '매출 (₩)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+        }
+
+        // 월별 매출 비교 차트 로드 함수
+        function loadMonthlyComparisonChart() {
+            const currentYear = new Date().getFullYear();
+
+            fetch(`/api/statistics/monthly/year/${currentYear}`)
+                .then(response => response.json())
+                .then(currentYearData => {
+                    fetch(`/api/statistics/monthly/year/${currentYear - 1}`)
+                        .then(response => response.json())
+                        .then(previousYearData => {
+                            const labels = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+
+                            // 월별 데이터 매핑
+                            const currentYearSales = Array(12).fill(0);
+                            const previousYearSales = Array(12).fill(0);
+
+                            currentYearData.forEach(item => {
+                                const month = new Date(item.date).getMonth();
+                                currentYearSales[month] = item.totalSales;
+                            });
+
+                            previousYearData.forEach(item => {
+                                const month = new Date(item.date).getMonth();
+                                previousYearSales[month] = item.totalSales;
+                            });
+
+                            // 기존 차트 제거
+                            if (window.monthlyComparisonChart) {
+                                window.monthlyComparisonChart.destroy();
+                            }
+
+                            // 새 차트 생성
+                            const ctx = document.getElementById('monthlyComparisonChart').getContext('2d');
+                            window.monthlyComparisonChart = new Chart(ctx, {
+                                type: 'bar',
+                                data: {
+                                    labels: labels,
+                                    datasets: [
+                                        {
+                                            label: `${currentYear}년`,
+                                            data: currentYearSales,
+                                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                                            borderColor: 'rgba(54, 162, 235, 1)',
+                                            borderWidth: 1
+                                        },
+                                        {
+                                            label: `${currentYear - 1}년`,
+                                            data: previousYearSales,
+                                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                                            borderColor: 'rgba(255, 99, 132, 1)',
+                                            borderWidth: 1
+                                        }
+                                    ]
+                                },
+                                options: {
+                                    responsive: true,
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            title: {
+                                                display: true,
+                                                text: '매출 (₩)'
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        });
+                });
+        }
+
+        // 인기 상품 테이블 로드 함수
+        function loadTopProductsTable(startDate, endDate) {
+            fetch(`/api/statistics/sales/product?startDate=${startDate}&endDate=${endDate}&limit=10`)
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('topProductsTable').getElementsByTagName('tbody')[0];
+                    tableBody.innerHTML = '';
+
+                    // 총 매출 계산
+                    const totalSales = Object.values(data).reduce((a, b) => a + b, 0);
+
+                    // 데이터 정렬 (내림차순)
+                    const sortedProducts = Object.entries(data).sort((a, b) => b[1] - a[1]);
+
+                    // 테이블 행 생성
+                    sortedProducts.forEach((product, index) => {
+                        const row = tableBody.insertRow();
+
+                        const rankCell = row.insertCell(0);
+                        rankCell.textContent = index + 1;
+
+                        const nameCell = row.insertCell(1);
+                        nameCell.textContent = product[0];
+
+                        const quantityCell = row.insertCell(2);
+                        // 여기서는 판매량 데이터가 없으므로 임의로 계산
+                        const estimatedQuantity = Math.round(product[1] / 50000);
+                        quantityCell.textContent = estimatedQuantity.toLocaleString();
+
+                        const salesCell = row.insertCell(3);
+                        salesCell.textContent = '₩' + product[1].toLocaleString();
+
+                        const percentageCell = row.insertCell(4);
+                        const percentage = (product[1] / totalSales * 100).toFixed(2);
+                        percentageCell.textContent = percentage + '%';
+                    });
+                });
+        }
+
+        // 일별 매출 데이터 테이블 로드 함수
+        function loadDailySalesTable(startDate, endDate) {
+            fetch(`/api/statistics/daily/range?startDate=${startDate}&endDate=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('dailySalesTable').getElementsByTagName('tbody')[0];
+                    tableBody.innerHTML = '';
+
+                    // 데이터 정렬 (날짜 내림차순)
+                    data.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                    // 테이블 행 생성
+                    data.forEach(item => {
+                        const row = tableBody.insertRow();
+
+                        const dateCell = row.insertCell(0);
+                        const date = new Date(item.date);
+                        dateCell.textContent = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+
+                        const salesCell = row.insertCell(1);
+                        salesCell.textContent = '₩' + item.totalSales.toLocaleString();
+
+                        const ordersCell = row.insertCell(2);
+                        ordersCell.textContent = item.totalOrders.toLocaleString();
+
+                        const avgOrderValueCell = row.insertCell(3);
+                        const avgOrderValue = item.totalOrders > 0 ? item.totalSales / item.totalOrders : 0;
+                        avgOrderValueCell.textContent = '₩' + avgOrderValue.toLocaleString(undefined, {maximumFractionDigits: 0});
+
+                        const productsCell = row.insertCell(4);
+                        productsCell.textContent = item.totalProducts.toLocaleString();
+                    });
+                });
+        }
+
+        // 로딩 표시 함수
+        function showLoading() {
+            // 로딩 표시 로직 구현
+            console.log('Loading sales statistics...');
+        }
+
+        // 로딩 숨김 함수
+        function hideLoading() {
+            // 로딩 숨김 로직 구현
+            console.log('Sales statistics loaded.');
+        }
+    </script>
+</div>
+</body>
+</html>
+

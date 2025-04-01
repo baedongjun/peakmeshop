@@ -82,7 +82,7 @@
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                             <li><a class="dropdown-item" th:href="@{/mypage}"><i class="fas fa-user me-2"></i>마이페이지</a></li>
                             <li><a class="dropdown-item" th:href="@{/mypage/orders}"><i class="fas fa-box me-2"></i>주문 내역</a></li>
-                            <li sec:authorize="hasRole('ROLE_ADMIN')"><a class="dropdown-item" th:href="@{/admin}"><i class="fas fa-cog me-2"></i>관리자</a></li>
+                            <li sec:authorize="hasRole('ROLE_ADMIN')"><a class="dropdown-item" th:href="@{/admin/dashboard}"><i class="fas fa-cog me-2"></i>관리자</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form th:action="@{/api/auth/logout}" method="post">

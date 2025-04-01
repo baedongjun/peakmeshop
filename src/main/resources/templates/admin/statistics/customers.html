@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>고객 통계 | PeakMe Shop 관리자</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid px-4">
+        <h1 class="mt-4">고객 통계</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/admin">대시보드</a></li>
+            <li class="breadcrumb-item"><a href="/admin/statistics/dashboard">통계</a></li>
+            <li class="breadcrumb-item active">고객 통계</li>
+        </ol>
+
+        <!-- 기간 선택 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-calendar me-1"></i>
+                기간 선택
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="btn-group mb-3" role="group">
+                            <button type="button" class="btn btn-outline-primary" id="btn-today">오늘</button>
+                            <button type="button" class="btn btn-outline-primary" id="btn-yesterday">어제</button>
+                            <button type="button" class="btn btn-outline-primary" id="btn-this-week">이번 주</button>
+                            <button type="button" class="btn btn-outline-primary" id="btn-this-month">이번 달</button>
+                            <button type="button" class="btn btn-outline-primary" id="btn-this-year">올해</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group mb-3">
+                            <input type="date" class="form-control" id="start-date">
+                            <span class="input-group-text">~</span>
+                            <input type="date" class="form-control" id="end-date">
+                            <button class="btn btn-primary" id="btn-search">조회</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 요약 통계 -->
+        <div class="row">
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-primary text-white mb-4">
+                    <div class="card-body">
+                        <h5>신규 고객</h5>
+                        <h2 id="new-customers">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-success text-white mb-4">
+                    <div class="card-body">
+                        <h5>재방문 고객</h5>
+                        <h2 id="returning-customers">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-warning text-white mb-4">
+                    <div class="card-body">
+                        <h5>전환율</h5>
+                        <h2 id="conversion-rate">0%</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-danger text-white mb-4">
+                    <div class="card-body">
+                        <h5>고객당 평균 주문액</h5>
+                        <h2 id="avg-customer-value">₩0</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 차트 -->
+        <div class="row">
+            <div class="col-xl-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line me-1"></i>
+                        일별 신규 고객 추이
+                    </div>
+                    <div class="card-body">
+                        <canvas id="newCustomersChart" width="100%" height="40"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-chart-pie me-1"></i>
+                        고객 연령대 분포
+                    </div>
+                    <div class="card-body">
+                        <canvas id="ageDistributionChart" width="100%" height="40"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-xl-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-chart-pie me-1"></i>
+                        고객 성별 분포
+                    </div>
+                    <div class="card-body">
+                        <canvas id="genderDistributionChart" width="100%" height="40"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-map-marked-alt me-1"></i>
+                        지역별 고객 분포
+                    </div>
+                    <div class="card-body">
+                        <canvas id="regionDistributionChart" width="100%" height="40"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 고객 활동 분석 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-users me-1"></i>
+                고객 활동 분석
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <i class="fas fa-shopping-cart me-1"></i>
+                                구매 빈도 분포
+                            </div>
+                            <div class="card-body">
+                                <canvas id="purchaseFrequencyChart" width="100%" height="40"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <i class="fas fa-dollar-sign me-1"></i>
+                                고객 지출 분포
+                            </div>
+                            <div class="card-body">
+                                <canvas id="customerSpendingChart" width="100%" height="40"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 고객 데이터 테이블 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-table me-1"></i>
+                일별 고객 데이터
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="dailyCustomersTable">
+                        <thead>
+                        <tr>
+                            <th>날짜</th>
+                            <th>신규 고객</th>
+                            <th>재방문 고객</th>
+                            <th>총 방문자</th>
+                            <th>전환율</th>
+                            <th>평균 체류 시간</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- 데이터가 여기에 동적으로 로드됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 스크립트 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // 오늘 날짜 설정
+            const today = new Date();
+            const formattedToday = today.toISOString().split('T')[0];
+
+            // 어제 날짜 계산
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const formattedYesterday = yesterday.toISOString().split('T')[0];
+
+            // 이번 주 시작일 계산 (일요일)
+            const thisWeekStart = new Date(today);
+            thisWeekStart.setDate(today.getDate() - today.getDay());
+            const formattedThisWeekStart = thisWeekStart.toISOString().split('T')[0];
+
+            // 이번 달 시작일 계산
+            const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            const formattedThisMonthStart = thisMonthStart.toISOString().split('T')[0];
+
+            // 올해 시작일 계산
+            const thisYearStart = new Date(today.getFullYear(), 0, 1);
+            const formattedThisYearStart = thisYearStart.toISOString().split('T')[0];
+
+            // 날짜 입력 필드 초기화
+            document.getElementById('start-date').value = formattedThisMonthStart;
+            document.getElementById('end-date').value = formattedToday;
+
+            // 기본 데이터 로드 (이번 달)
+            loadCustomerStatistics(formattedThisMonthStart, formattedToday);
+
+            // 버튼 이벤트 리스너
+            document.getElementById('btn-today').addEventListener('click', function() {
+                document.getElementById('start-date').value = formattedToday;
+                document.getElementById('end-date').value = formattedToday;
+                loadCustomerStatistics(formattedToday, formattedToday);
+            });
+
+            document.getElementById('btn-yesterday').addEventListener('click', function() {
+                document.getElementById('start-date').value = formattedYesterday;
+                document.getElementById('end-date').value = formattedYesterday;
+                loadCustomerStatistics(formattedYesterday, formattedYesterday);
+            });
+
+            document.getElementById('btn-this-week').addEventListener('click', function() {
+                document.getElementById('start-date').value = formattedThisWeekStart;
+                document.getElementById('end-date').value = formattedToday;
+                loadCustomerStatistics(formattedThisWeekStart, formattedToday);
+            });
+
+            document.getElementById('btn-this-month').addEventListener('click', function() {
+                document.getElementById('start-date').value = formattedThisMonthStart;
+                document.getElementById('end-date').value = formattedToday;
+                loadCustomerStatistics(formattedThisMonthStart, formattedToday);
+            });
+
+            document.getElementById('btn-this-year').addEventListener('click', function() {
+                document.getElementById('start-date').value = formattedThisYearStart;
+                document.getElementById('end-date').value = formattedToday;
+                loadCustomerStatistics(formattedThisYearStart, formattedToday);
+            });
+
+            document.getElementById('btn-search').addEventListener('click', function() {
+                const startDate = document.getElementById('start-date').value;
+                const endDate = document.getElementById('end-date').value;
+                loadCustomerStatistics(startDate, endDate);
+            });
+        });
+
+        // 고객 통계 데이터 로드 함수
+        function loadCustomerStatistics(startDate, endDate) {
+            // 로딩 표시
+            showLoading();
+
+            // 요약 통계 로드
+            loadCustomerSummary(startDate, endDate);
+
+            // 일별 신규 고객 추이 차트 로드
+            loadNewCustomersChart(startDate, endDate);
+
+            // 고객 연령대 분포 차트 로드
+            loadAgeDistributionChart();
+
+            // 고객 성별 분포 차트 로드
+            loadGenderDistributionChart();
+
+            // 지역별 고객 분포 차트 로드
+            loadRegionDistributionChart();
+
+            // 구매 빈도 분포 차트 로드
+            loadPurchaseFrequencyChart();
+
+            // 고객 지출 분포 차트 로드
+            loadCustomerSpendingChart();
+
+            // 일별 고객 데이터 테이블 로드
+            loadDailyCustomersTable(startDate, endDate);
+
+            // 로딩 완료
+            hideLoading();
+        }
+
+        // 요약 통계 로드 함수
+        function loadCustomerSummary(startDate, endDate) {
+            // 신규 고객
+            fetch(`/api/statistics/customers/new?startDate=${startDate}&endDate=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('new-customers').textContent = data.toLocaleString();
+                });
+
+            // 통계 데이터에서 재방문 고객 수 가져오기
+            fetch(`/api/statistics/range?startDate=${startDate}&endDate=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('returning-customers').textContent = data.returningCustomers.toLocaleString();
+                });
+
+            // 전환율
+            fetch(`/api/statistics/conversion-rate?startDate=${startDate}&endDate=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('conversion-rate').textContent = (data * 100).toFixed(2) + '%';
+                });
+
+            // 고객당 평균 주문액 계산
+            fetch(`/api/statistics/sales/total?startDate=${startDate}&endDate=${endDate}`)
+                .then(response => response.json())
+                .then(salesData => {
+                    // 신규 고객 + 재방문 고객 수 가져오기
+                    fetch(`/api/statistics/range?startDate=${startDate}&endDate=${endDate}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const totalCustomers = data.newCustomers + data.returningCustomers;
+                            const avgCustomerValue = totalCustomers > 0 ? salesData / totalCustomers : 0;
+                            document.getElementById('avg-customer-value').textContent = '₩' + avgCustomerValue.toLocaleString(undefined, {maximumFractionDigits: 0});
+                        });
+                });
+        }
+
+        // 일별 신규 고객 추이 차트 로드 함수
+        function loadNewCustomersChart(startDate, endDate) {
+            fetch(`/api/statistics/daily/range?startDate=${startDate}&endDate=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const labels = data.map(item => {
+                        const date = new Date(item.date);
+                        return `${date.getMonth() + 1}/${date.getDate()}`;
+                    });
+
+                    const newCustomersData = data.map(item => item.newCustomers);
+
+                    // 기존 차트 제거
+                    if (window.newCustomersChart) {
+                        window.newCustomersChart.destroy();
+                    }
+
+                    // 새 차트 생성
+                    const ctx = document.getElementById('newCustomersChart').getContext('2d');
+                    window.newCustomersChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: '일별 신규 고객',
+                                data: newCustomersData,
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                tension: 0.1,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: '신규 고객 수'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+        }
+
+        // 고객 연령대 분포 차트 로드 함수
+        function loadAgeDistributionChart() {
+            // 연령대 분포 데이터는 API에서 제공하지 않으므로 임의의 데이터 사용
+            const ageData = {
+                '10대 이하': 5,
+                '20대': 30,
+                '30대': 35,
+                '40대': 20,
+                '50대': 8,
+                '60대 이상': 2
+            };
+
+            const labels = Object.keys(ageData);
+            const values = Object.values(ageData);
+
+            // 기존 차트 제거
+            if (window.ageDistributionChart) {
+                window.ageDistributionChart.destroy();
+            }
+
+            // 새 차트 생성
+            const ctx = document.getElementById('ageDistributionChart').getContext('2d');
+            window.ageDistributionChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '연령대별 고객 분포',
+                        data: values,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.5)',
+                            'rgba(54, 162, 235, 0.5)',
+                            'rgba(255, 206, 86, 0.5)',
+                            'rgba(75, 192, 192, 0.5)',
+                            'rgba(153, 102, 255, 0.5)',
+                            'rgba(255, 159, 64, 0.5)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value}% (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 고객 성별 분포 차트 로드 함수
+        function loadGenderDistributionChart() {
+            // 성별 분포 데이터는 API에서 제공하지 않으므로 임의의 데이터 사용
+            const genderData = {
+                '여성': 65,
+                '남성': 35
+            };
+
+            const labels = Object.keys(genderData);
+            const values = Object.values(genderData);
+
+            // 기존 차트 제거
+            if (window.genderDistributionChart) {
+                window.genderDistributionChart.destroy();
+            }
+
+            // 새 차트 생성
+            const ctx = document.getElementById('genderDistributionChart').getContext('2d');
+            window.genderDistributionChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '성별 고객 분포',
+                        data: values,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.5)',
+                            'rgba(54, 162, 235, 0.5)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value}% (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 지역별 고객 분포 차트 로드 함수
+        function loadRegionDistributionChart() {
+            // 지역별 고객 분포 데이터는 API에서 제공하지 않으므로 임의의 데이터 사용
+            const regionData = {
+                '서울': 45,
+                '경기': 20,
+                '인천': 8,
+                '부산': 7,
+                '대구': 5,
+                '광주': 3,
+                '대전': 4,
+                '울산': 2,
+                '기타': 6
+            };
+
+            const labels = Object.keys(regionData);
+            const values = Object.values(regionData);
+
+            // 기존 차트 제거
+            if (window.regionDistributionChart) {
+                window.regionDistributionChart.destroy();
+            }
+
+            // 새 차트 생성
+            const ctx = document.getElementById('regionDistributionChart').getContext('2d');
+            window.regionDistributionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '지역별 고객 분포 (%)',
+                        data: values,
+                        backgroundColor: 'rgba(153, 102, 255, 0.5)',
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '고객 비율 (%)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 구매 빈도 분포 차트 로드 함수
+        function loadPurchaseFrequencyChart() {
+            // 구매 빈도 분포 데이터는 API에서 제공하지 않으므로 임의의 데이터 사용
+            const frequencyData = {
+                '1회': 60,
+                '2회': 20,
+                '3회': 10,
+                '4회': 5,
+                '5회 이상': 5
+            };
+
+            const labels = Object.keys(frequencyData);
+            const values = Object.values(frequencyData);
+
+            // 기존 차트 제거
+            if (window.purchaseFrequencyChart) {
+                window.purchaseFrequencyChart.destroy();
+            }
+
+            // 새 차트 생성
+            const ctx = document.getElementById('purchaseFrequencyChart').getContext('2d');
+            window.purchaseFrequencyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '구매 빈도별 고객 비율 (%)',
+                        data: values,
+                        backgroundColor: 'rgba(255, 159, 64, 0.5)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '고객 비율 (%)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 고객 지출 분포 차트 로드 함수
+        function loadCustomerSpendingChart() {
+            // 고객 지출 분포 데이터는 API에서 제공하지 않으므로 임의의 데이터 사용
+            const spendingData = {
+                '5만원 미만': 30,
+                '5만원~10만원': 25,
+                '10만원~20만원': 20,
+                '20만원~50만원': 15,
+                '50만원 이상': 10
+            };
+
+            const labels = Object.keys(spendingData);
+            const values = Object.values(spendingData);
+
+            // 기존 차트 제거
+            if (window.customerSpendingChart) {
+                window.customerSpendingChart.destroy();
+            }
+
+            // 새 차트 생성
+            const ctx = document.getElementById('customerSpendingChart').getContext('2d');
+            window.customerSpendingChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '지출 금액별 고객 비율 (%)',
+                        data: values,
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '고객 비율 (%)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 일별 고객 데이터 테이블 로드 함수
+        function loadDailyCustomersTable(startDate, endDate) {
+            fetch(`/api/statistics/daily/range?startDate=${startDate}&endDate=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('dailyCustomersTable').getElementsByTagName('tbody')[0];
+                    tableBody.innerHTML = '';
+
+                    // 데이터 정렬 (날짜 내림차순)
+                    data.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                    // 테이블 행 생성
+                    data.forEach(item => {
+                        const row = tableBody.insertRow();
+
+                        const dateCell = row.insertCell(0);
+                        const date = new Date(item.date);
+                        dateCell.textContent = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+
+                        const newCustomersCell = row.insertCell(1);
+                        newCustomersCell.textContent = item.newCustomers.toLocaleString();
+
+                        const returningCustomersCell = row.insertCell(2);
+                        returningCustomersCell.textContent = item.returningCustomers.toLocaleString();
+
+                        // 총 방문자 수는 API에서 제공하지 않으므로 임의로 계산
+                        const totalVisitors = item.newCustomers + item.returningCustomers + Math.round((item.newCustomers + item.returningCustomers) * 0.5);
+
+                        const totalVisitorsCell = row.insertCell(3);
+                        totalVisitorsCell.textContent = totalVisitors.toLocaleString();
+
+                        const conversionRateCell = row.insertCell(4);
+                        const conversionRate = totalVisitors > 0 ? ((item.newCustomers + item.returningCustomers) / totalVisitors * 100) : 0;
+                        conversionRateCell.textContent = conversionRate.toFixed(2) + '%';
+
+                        // 평균 체류 시간은 API에서 제공하지 않으므로 임의의 데이터 사용
+                        const avgStayTime = Math.floor(Math.random() * 10) + 2; // 2~12분
+
+                        const avgStayTimeCell = row.insertCell(5);
+                        avgStayTimeCell.textContent = avgStayTime + '분';
+                    });
+                });
+        }
+
+        // 로딩 표시 함수
+        function showLoading() {
+            // 로딩 표시 로직 구현
+            console.log('Loading customer statistics...');
+        }
+
+        // 로딩 숨김 함수
+        function hideLoading() {
+            // 로딩 숨김 로직 구현
+            console.log('Customer statistics loaded.');
+        }
+    </script>
+</div>
+</body>
+</html>
+

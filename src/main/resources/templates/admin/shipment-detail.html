@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+  <title>배송 상세 정보 - PeakMe Shop 관리자</title>
+  <meta name="description" content="배송 상세 정보 페이지입니다.">
+  <style>
+    .timeline {
+      position: relative;
+      padding-left: 30px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 10px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background-color: #dee2e6;
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -30px;
+      top: 0;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: #fff;
+      border: 2px solid #6c757d;
+    }
+    .timeline-item.active::before {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+    }
+    .timeline-item.success::before {
+      background-color: #198754;
+      border-color: #198754;
+    }
+    .timeline-item.warning::before {
+      background-color: #ffc107;
+      border-color: #ffc107;
+    }
+    .timeline-item.danger::before {
+      background-color: #dc3545;
+      border-color: #dc3545;
+    }
+    .timeline-date {
+      font-size: 0.8rem;
+      color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+<div layout:fragment="content">
+  <div class="container-fluid px-4">
+    <h1 class="mt-4">배송 상세 정보</h1>
+    <ol class="breadcrumb mb-4">
+      <li class="breadcrumb-item"><a href="/admin">대시보드</a></li>
+      <li class="breadcrumb-item"><a href="/admin/shipments">배송 관리</a></li>
+      <li class="breadcrumb-item active">배송 상세 정보</li>
+    </ol>
+
+    <div class="row">
+      <!-- 배송 기본 정보 -->
+      <div class="col-xl-8">
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+              <i class="fas fa-truck me-1"></i>
+              배송 기본 정보
+            </div>
+            <div>
+              <button type="button" class="btn btn-sm btn-outline-primary me-2" id="printBtn">
+                <i class="fas fa-print me-1"></i> 인쇄
+              </button>
+              <a href="/admin/shipments" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> 목록으로
+              </a>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <h5 class="card-title">배송 정보</h5>
+                <table class="table table-bordered">
+                  <tr>
+                    <th class="table-light" style="width: 35%">배송 ID</th>
+                    <td id="shipmentId"></td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">주문 번호</th>
+                    <td><a href="#" id="orderLink" class="text-primary"></a></td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">배송 상태</th>
+                    <td><span id="shipmentStatus" class="badge"></span></td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">택배사</th>
+                    <td id="carrier"></td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">운송장 번호</th>
+                    <td>
+                      <span id="trackingNumber"></span>
+                      <a href="#" id="trackingLink" class="btn btn-sm btn-outline-info ms-2" style="display: none;">
+                        <i class="fas fa-search me-1"></i> 배송 조회
+                      </a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">배송 방법</th>
+                    <td id="shippingMethod"></td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">예상 배송일</th>
+                    <td id="estimatedDeliveryDate"></td>
+                  </tr>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <h5 class="card-title">배송 일정</h5>
+                <table class="table table-bordered">
+                  <tr>
+                    <th class="table-light" style="width: 35%">생성일</th>
+                    <td id="createdAt"></td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">최종 수정일</th>
+                    <td id="updatedAt"></td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">발송일</th>
+                    <td id="shippedAt"></td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">배송 완료일</th>
+                    <td id="deliveredAt"></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12">
+                <h5 class="card-title">배송지 정보</h5>
+                <table class="table table-bordered">
+                  <tr>
+                    <th class="table-light" style="width: 20%">수령인</th>
+                    <td id="recipientName"></td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">연락처</th>
+                    <td id="recipientPhone"></td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">주소</th>
+                    <td>
+                      <span id="shippingZipCode"></span><br>
+                      <span id="shippingAddress"></span><br>
+                      <span id="shippingCity"></span>, <span id="shippingState"></span>, <span id="shippingCountry"></span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 배송 관리 카드 -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <i class="fas fa-cogs me-1"></i>
+            배송 관리
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <h5 class="card-title">배송 상태 변경</h5>
+                <form id="updateStatusForm" class="row g-3">
+                  <div class="col-md-8">
+                    <select class="form-select" id="newStatus" name="newStatus" required>
+                      <option value="">상태 선택</option>
+                      <option value="PENDING">배송 준비중</option>
+                      <option value="SHIPPED">배송중</option>
+                      <option value="DELIVERED">배송 완료</option>
+                      <option value="RETURNED">반품</option>
+                      <option value="FAILED">배송 실패</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <button type="button" class="btn btn-primary" id="updateStatusBtn">상태 변경</button>
+                  </div>
+                </form>
+              </div>
+              <div class="col-md-6 mb-3">
+                <h5 class="card-title">배송 정보 업데이트</h5>
+                <form id="updateShipmentForm" class="row g-3">
+                  <div class="col-md-6">
+                    <label for="updateCarrier" class="form-label">택배사</label>
+                    <select class="form-select" id="updateCarrier" name="carrier">
+                      <option value="">택배사 선택</option>
+                      <option value="CJ대한통운">CJ대한통운</option>
+                      <option value="우체국택배">우체국택배</option>
+                      <option value="한진택배">한진택배</option>
+                      <option value="롯데택배">롯데택배</option>
+                      <option value="로젠택배">로젠택배</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="updateTrackingNumber" class="form-label">운송장 번호</label>
+                    <input type="text" class="form-control" id="updateTrackingNumber" name="trackingNumber">
+                  </div>
+                  <div class="col-md-6">
+                    <label for="updateEstimatedDeliveryDate" class="form-label">예상 배송일</label>
+                    <input type="date" class="form-control" id="updateEstimatedDeliveryDate" name="estimatedDeliveryDate">
+                  </div>
+                  <div class="col-md-6">
+                    <label for="updateShippingMethod" class="form-label">배송 방법</label>
+                    <input type="text" class="form-control" id="updateShippingMethod" name="shippingMethod">
+                  </div>
+                  <div class="col-12 mt-3">
+                    <button type="button" class="btn btn-primary" id="updateShipmentBtn">정보 업데이트</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <hr>
+            <div class="row mt-3">
+              <div class="col-md-6">
+                <h5 class="card-title">배송 추적 정보 동기화</h5>
+                <p>택배사 API를 통해 최신 배송 추적 정보를 가져옵니다.</p>
+                <button type="button" class="btn btn-success" id="syncTrackingBtn">
+                  <i class="fas fa-sync me-1"></i> 배송 추적 정보 동기화
+                </button>
+              </div>
+              <div class="col-md-6">
+                <h5 class="card-title">배송 삭제</h5>
+                <p class="text-danger">주의: 이 작업은 되돌릴 수 없습니다.</p>
+                <button type="button" class="btn btn-danger" id="deleteShipmentBtn">
+                  <i class="fas fa-trash me-1"></i> 배송 삭제
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 배송 추적 정보 -->
+      <div class="col-xl-4">
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+              <i class="fas fa-map-marker-alt me-1"></i>
+              배송 추적 정보
+            </div>
+            <button type="button" class="btn btn-sm btn-primary" id="addTrackingBtn">
+              <i class="fas fa-plus me-1"></i> 추적 정보 추가
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="timeline" id="trackingTimeline">
+              <!-- 배송 추적 정보가 여기에 동적으로 로드됩니다 -->
+              <div class="text-center py-4" id="noTrackingInfo">
+                <p class="text-muted">배송 추적 정보가 없습니다.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 배송 추적 이벤트 추가 모달 -->
+  <div class="modal fade" id="addTrackingModal" tabindex="-1" aria-labelledby="addTrackingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addTrackingModalLabel">배송 추적 이벤트 추가</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="addTrackingForm">
+            <div class="mb-3">
+              <label for="trackingStatus" class="form-label">상태</label>
+              <input type="text" class="form-control" id="trackingStatus" name="trackingStatus" required>
+            </div>
+            <div class="mb-3">
+              <label for="trackingLocation" class="form-label">위치</label>
+              <input type="text" class="form-control" id="trackingLocation" name="trackingLocation" required>
+            </div>
+            <div class="mb-3">
+              <label for="trackingDescription" class="form-label">설명</label>
+              <textarea class="form-control" id="trackingDescription" name="trackingDescription" rows="3" required></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+          <button type="button" class="btn btn-primary" id="submitTrackingBtn">추가</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 배송 삭제 확인 모달 -->
+  <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteConfirmModalLabel">배송 삭제 확인</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>정말로 이 배송 정보를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">삭제</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+      // URL에서 배송 ID 가져오기
+      const pathParts = window.location.pathname.split('/');
+      const shipmentId = pathParts[pathParts.length - 1];
+
+      // 배송 정보 로드
+      loadShipmentDetails(shipmentId);
+
+      // 배송 추적 정보 로드
+      loadTrackingHistory(shipmentId);
+
+      // 인쇄 버튼 클릭 이벤트
+      document.getElementById('printBtn').addEventListener('click', function() {
+        window.print();
+      });
+
+      // 배송 상태 변경 버튼 클릭 이벤트
+      document.getElementById('updateStatusBtn').addEventListener('click', function() {
+        updateShipmentStatus(shipmentId);
+      });
+
+      // 배송 정보 업데이트 버튼 클릭 이벤트
+      document.getElementById('updateShipmentBtn').addEventListener('click', function() {
+        updateShipmentInfo(shipmentId);
+      });
+
+      // 배송 추적 정보 동기화 버튼 클릭 이벤트
+      document.getElementById('syncTrackingBtn').addEventListener('click', function() {
+        syncTrackingInformation(shipmentId);
+      });
+
+      // 배송 삭제 버튼 클릭 이벤트
+      document.getElementById('deleteShipmentBtn').addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+        modal.show();
+      });
+
+      // 배송 삭제 확인 버튼 클릭 이벤트
+      document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        deleteShipment(shipmentId);
+      });
+
+      // 배송 추적 정보 추가 버튼 클릭 이벤트
+      document.getElementById('addTrackingBtn').addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('addTrackingModal'));
+        modal.show();
+      });
+
+      // 배송 추적 정보 추가 제출 버튼 클릭 이벤트
+      document.getElementById('submitTrackingBtn').addEventListener('click', function() {
+        addTrackingEvent(shipmentId);
+      });
+    });
+
+    // 배송 정보 로드 함수
+    function loadShipmentDetails(shipmentId) {
+      fetch(`/api/shipments/${shipmentId}`)
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('배송 정보를 불러오는데 실패했습니다.');
+                }
+                return response.json();
+              })
+              .then(shipment => {
+                // 배송 기본 정보 표시
+                document.getElementById('shipmentId').textContent = shipment.id;
+
+                const orderLink = document.getElementById('orderLink');
+                orderLink.textContent = shipment.orderNumber;
+                orderLink.href = `/admin/orders/${shipment.orderId}`;
+
+                // 배송 상태 배지 설정
+                const statusElement = document.getElementById('shipmentStatus');
+                let statusText = '알 수 없음';
+                let statusClass = 'bg-secondary';
+
+                if (shipment.status === 'PENDING') {
+                  statusText = '배송 준비중';
+                  statusClass = 'bg-warning text-dark';
+                } else if (shipment.status === 'SHIPPED') {
+                  statusText = '배송중';
+                  statusClass = 'bg-primary';
+                } else if (shipment.status === 'DELIVERED') {
+                  statusText = '배송 완료';
+                  statusClass = 'bg-success';
+                } else if (shipment.status === 'RETURNED') {
+                  statusText = '반품';
+                  statusClass = 'bg-danger';
+                } else if (shipment.status === 'FAILED') {
+                  statusText = '배송 실패';
+                  statusClass = 'bg-dark';
+                }
+
+                statusElement.textContent = statusText;
+                statusElement.className = `badge ${statusClass}`;
+
+                // 택배사 및 운송장 정보
+                document.getElementById('carrier').textContent = shipment.carrier || '-';
+                document.getElementById('trackingNumber').textContent = shipment.trackingNumber || '-';
+
+                // 운송장 번호가 있으면 배송 조회 링크 표시
+                const trackingLink = document.getElementById('trackingLink');
+                if (shipment.trackingNumber && shipment.carrier) {
+                  trackingLink.style.display = 'inline-block';
+                  trackingLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    openTrackingPopup(shipment.carrier, shipment.trackingNumber);
+                  });
+                } else {
+                  trackingLink.style.display = 'none';
+                }
+
+                document.getElementById('shippingMethod').textContent = shipment.shippingMethod || '-';
+                document.getElementById('estimatedDeliveryDate').textContent = shipment.estimatedDeliveryDate || '-';
+
+                // 배송 일정 정보
+                document.getElementById('createdAt').textContent = shipment.createdAt ? new Date(shipment.createdAt).toLocaleString() : '-';
+                document.getElementById('updatedAt').textContent = shipment.updatedAt ? new Date(shipment.updatedAt).toLocaleString() : '-';
+                document.getElementById('shippedAt').textContent = shipment.shippedAt ? new Date(shipment.shippedAt).toLocaleString() : '-';
+                document.getElementById('deliveredAt').textContent = shipment.deliveredAt ? new Date(shipment.deliveredAt).toLocaleString() : '-';
+
+                // 배송지 정보
+                document.getElementById('recipientName').textContent = shipment.recipientName || '-';
+                document.getElementById('recipientPhone').textContent = shipment.recipientPhone || '-';
+                document.getElementById('shippingZipCode').textContent = shipment.shippingZipCode || '';
+                document.getElementById('shippingAddress').textContent = shipment.shippingAddress || '';
+                document.getElementById('shippingCity').textContent = shipment.shippingCity || '';
+                document.getElementById('shippingState').textContent = shipment.shippingState || '';
+                document.getElementById('shippingCountry').textContent = shipment.shippingCountry || '';
+
+                // 배송 정보 업데이트 폼 초기값 설정
+                document.getElementById('updateCarrier').value = shipment.carrier || '';
+                document.getElementById('updateTrackingNumber').value = shipment.trackingNumber || '';
+                document.getElementById('updateEstimatedDeliveryDate').value = shipment.estimatedDeliveryDate || '';
+                document.getElementById('updateShippingMethod').value = shipment.shippingMethod || '';
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                alert('배송 정보를 불러오는데 실패했습니다.');
+              });
+    }
+
+    // 배송 추적 정보 로드 함수
+    function loadTrackingHistory(shipmentId) {
+      fetch(`/api/shipments/${shipmentId}/tracking`)
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('배송 추적 정보를 불러오는데 실패했습니다.');
+                }
+                return response.json();
+              })
+              .then(trackingHistory => {
+                const timelineContainer = document.getElementById('trackingTimeline');
+                const noTrackingInfo = document.getElementById('noTrackingInfo');
+
+                if (trackingHistory.length === 0) {
+                  noTrackingInfo.style.display = 'block';
+                  return;
+                }
+
+                noTrackingInfo.style.display = 'none';
+                timelineContainer.innerHTML = '';
+
+                // 최신 순으로 정렬
+                trackingHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                trackingHistory.forEach((tracking, index) => {
+                  const timelineItem = document.createElement('div');
+                  timelineItem.className = 'timeline-item';
+
+                  // 첫 번째 항목은 active로 표시
+                  if (index === 0) {
+                    timelineItem.classList.add('active');
+                  }
+
+                  // 상태에 따른 클래스 추가
+                  if (tracking.status.includes('배송 완료') || tracking.status.includes('DELIVERED')) {
+                    timelineItem.classList.add('success');
+                  } else if (tracking.status.includes('실패') || tracking.status.includes('FAILED')) {
+                    timelineItem.classList.add('danger');
+                  } else if (tracking.status.includes('준비') || tracking.status.includes('PENDING')) {
+                    timelineItem.classList.add('warning');
+                  }
+
+                  const timestamp = new Date(tracking.timestamp).toLocaleString();
+
+                  timelineItem.innerHTML = `
+                            <div class="timeline-date">${timestamp}</div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">${tracking.status}</h6>
+                                <p class="mb-0">${tracking.location || ''}</p>
+                                <p class="text-muted small">${tracking.description || ''}</p>
+                            </div>
+                        `;
+
+                  timelineContainer.appendChild(timelineItem);
+                });
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                alert('배송 추적 정보를 불러오는데 실패했습니다.');
+              });
+    }
+
+    // 배송 상태 업데이트 함수
+    function updateShipmentStatus(shipmentId) {
+      const newStatus = document.getElementById('newStatus').value;
+
+      if (!newStatus) {
+        alert('새 배송 상태를 선택해주세요.');
+        return;
+      }
+
+      fetch(`/api/shipments/${shipmentId}/status?status=${encodeURIComponent(newStatus)}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('배송 상태 업데이트에 실패했습니다.');
+                }
+                return response.json();
+              })
+              .then(data => {
+                alert('배송 상태가 성공적으로 업데이트되었습니다.');
+                loadShipmentDetails(shipmentId);
+                loadTrackingHistory(shipmentId);
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                alert('배송 상태 업데이트에 실패했습니다.');
+              });
+    }
+
+    // 배송 정보 업데이트 함수
+    function updateShipmentInfo(shipmentId) {
+      const carrier = document.getElementById('updateCarrier').value;
+      const trackingNumber = document.getElementById('updateTrackingNumber').value;
+      const estimatedDeliveryDate = document.getElementById('updateEstimatedDeliveryDate').value;
+      const shippingMethod = document.getElementById('updateShippingMethod').value;
+
+      const shipmentData = {
+        carrier: carrier,
+        trackingNumber: trackingNumber,
+        estimatedDeliveryDate: estimatedDeliveryDate,
+        shippingMethod: shippingMethod
+      };
+
+      fetch(`/api/shipments/${shipmentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(shipmentData)
+      })
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('배송 정보 업데이트에 실패했습니다.');
+                }
+                return response.json();
+              })
+              .then(data => {
+                alert('배송 정보가 성공적으로 업데이트되었습니다.');
+                loadShipmentDetails(shipmentId);
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                alert('배송 정보 업데이트에 실패했습니다.');
+              });
+    }
+
+    // 배송 추적 정보 동기화 함수
+    function syncTrackingInformation(shipmentId) {
+      fetch(`/api/shipments/${shipmentId}/sync`, {
+        method: 'POST'
+      })
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('배송 추적 정보 동기화에 실패했습니다.');
+                }
+                return response;
+              })
+              .then(() => {
+                alert('배송 추적 정보가 성공적으로 동기화되었습니다.');
+                loadShipmentDetails(shipmentId);
+                loadTrackingHistory(shipmentId);
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                alert('배송 추적 정보 동기화에 실패했습니다.');
+              });
+    }
+
+    // 배송 삭제 함수
+    function deleteShipment(shipmentId) {
+      fetch(`/api/shipments/${shipmentId}`, {
+        method: 'DELETE'
+      })
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('배송 삭제에 실패했습니다.');
+                }
+                return response;
+              })
+              .then(() => {
+                alert('배송이 성공적으로 삭제되었습니다.');
+                window.location.href = '/admin/shipments';
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                alert('배송 삭제에 실패했습니다.');
+              });
+    }
+
+    // 배송 추적 이벤트 추가 함수
+    function addTrackingEvent(shipmentId) {
+      const status = document.getElementById('trackingStatus').value;
+      const location = document.getElementById('trackingLocation').value;
+      const description = document.getElementById('trackingDescription').value;
+
+      if (!status || !location || !description) {
+        alert('모든 필드를 입력해주세요.');
+        return;
+      }
+
+      const trackingData = {
+        status: status,
+        location: location,
+        description: description
+      };
+
+      fetch(`/api/shipments/${shipmentId}/tracking`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(trackingData)
+      })
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('배송 추적 이벤트 추가에 실패했습니다.');
+                }
+                return response.json();
+              })
+              .then(data => {
+                alert('배송 추적 이벤트가 성공적으로 추가되었습니다.');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addTrackingModal'));
+                modal.hide();
+                document.getElementById('addTrackingForm').reset();
+                loadTrackingHistory(shipmentId);
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                alert('배송 추적 이벤트 추가에 실패했습니다.');
+              });
+    }
+
+    // 운송장 조회 팝업 열기 함수
+    function openTrackingPopup(carrier, trackingNumber) {
+      // 각 택배사별 배송조회 URL (실제 구현 시 정확한 URL로 대체 필요)
+      let trackingUrl = '';
+
+      if (carrier === 'CJ대한통운') {
+        trackingUrl = `https://www.cjlogistics.com/ko/tool/parcel/tracking?gnbInvcNo=${trackingNumber}`;
+      } else if (carrier === '우체국택배') {
+        trackingUrl = `https://service.epost.go.kr/trace.RetrieveDomRigiTraceList.comm?sid1=${trackingNumber}`;
+      } else if (carrier === '한진택배') {
+        trackingUrl = `https://www.hanjin.co.kr/kor/CMS/DeliveryMgr/WaybillResult.do?mCode=MN038&schLang=KR&wblnumText=${trackingNumber}`;
+      } else if (carrier === '롯데택배') {
+        trackingUrl = `https://www.lotteglogis.com/home/reservation/tracking/index?InvNo=${trackingNumber}`;
+      } else if (carrier === '로젠택배') {
+        trackingUrl = `https://www.ilogen.com/m/personal/trace/${trackingNumber}`;
+      } else {
+        alert('지원하지 않는 택배사입니다.');
+        return;
+      }
+
+      window.open(trackingUrl, 'trackingPopup', 'width=800,height=600');
+    }
+  </script>
+</div>
+</body>
+</html>
+

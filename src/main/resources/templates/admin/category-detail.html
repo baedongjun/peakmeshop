@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>카테고리 상세 - PeakMeShop 관리자</title>
+    <meta name="description" content="PeakMeShop 관리자 카테고리 상세 페이지">
+    <style>
+        .product-item {
+            transition: all 0.2s ease;
+        }
+
+        .product-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .category-image {
+            width: 100%;
+            max-height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .attribute-badge {
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        .subcategory-card {
+            transition: all 0.2s ease;
+        }
+
+        .subcategory-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .subcategory-image {
+            height: 120px;
+            object-fit: cover;
+        }
+    </style>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid px-4">
+        <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+            <div>
+                <h1 class="mt-0" id="categoryName">카테고리 상세</h1>
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="/admin">대시보드</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/categories">카테고리 관리</a></li>
+                    <li class="breadcrumb-item active" id="categoryBreadcrumb">카테고리 상세</li>
+                </ol>
+            </div>
+            <div>
+                <a href="/admin/categories" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-arrow-left"></i> 목록으로
+                </a>
+                <button type="button" class="btn btn-primary" id="editCategoryBtn">
+                    <i class="fas fa-edit"></i> 수정
+                </button>
+            </div>
+        </div>
+
+        <div id="categoryLoading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">로딩 중...</span>
+            </div>
+            <p class="mt-2">카테고리 정보 로딩 중...</p>
+        </div>
+
+        <div id="categoryContent" class="d-none">
+            <div class="row">
+                <!-- 카테고리 정보 -->
+                <div class="col-lg-4">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="fas fa-info-circle me-1"></i>
+                            카테고리 정보
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center mb-4">
+                                <img id="categoryImage" src="/placeholder.svg?height=300&width=400" alt="카테고리 이미지" class="category-image mb-3">
+                                <h4 id="categoryNameDisplay"></h4>
+                                <div>
+                                    <span id="categoryStatusBadge" class="badge bg-success me-1">활성</span>
+                                    <span id="categoryFeaturedBadge" class="badge bg-warning d-none">추천</span>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6 class="fw-bold">설명</h6>
+                                <p id="categoryDescription" class="mb-0">-</p>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6 class="fw-bold">슬러그</h6>
+                                <p id="categorySlug" class="mb-0">-</p>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6 class="fw-bold">상위 카테고리</h6>
+                                <p id="categoryParent" class="mb-0">-</p>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6 class="fw-bold">정렬 순서</h6>
+                                <p id="categorySortOrder" class="mb-0">-</p>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6 class="fw-bold">필터링 가능한 속성</h6>
+                                <div id="categoryAttributes">
+                                    <span class="text-muted">설정된 속성이 없습니다.</span>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="fw-bold">생성일</h6>
+                                    <p id="categoryCreatedAt" class="mb-0">-</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="fw-bold">최종 수정일</h6>
+                                    <p id="categoryUpdatedAt" class="mb-0">-</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-primary" id="toggleStatusBtn">
+                                <i class="fas fa-toggle-on"></i> 상태 변경
+                            </button>
+                            <button type="button" class="btn btn-outline-warning" id="toggleFeaturedBtn">
+                                <i class="fas fa-star"></i> 추천 설정
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 하위 카테고리 및 상품 -->
+                <div class="col-lg-8">
+                    <!-- 하위 카테고리 -->
+                    <div class="card mb-4" id="subcategoriesCard">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-sitemap me-1"></i>
+                                하위 카테고리
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary" id="addSubcategoryBtn">
+                                <i class="fas fa-plus"></i> 하위 카테고리 추가
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="subcategoriesLoading" class="text-center py-3">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">로딩 중...</span>
+                                </div>
+                                <p class="mb-0">하위 카테고리 로딩 중...</p>
+                            </div>
+                            <div id="subcategoriesContent" class="row d-none">
+                                <!-- 하위 카테고리 내용이 여기에 동적으로 로드됩니다 -->
+                            </div>
+                            <div id="noSubcategoriesMessage" class="text-center py-4 d-none">
+                                <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                                <p>하위 카테고리가 없습니다.</p>
+                                <button type="button" class="btn btn-primary" id="addFirstSubcategoryBtn">
+                                    <i class="fas fa-plus"></i> 첫 하위 카테고리 추가하기
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 카테고리 상품 -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-box me-1"></i>
+                                카테고리 상품
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="refreshProductsBtn">
+                                    <i class="fas fa-sync-alt"></i> 새로고침
+                                </button>
+                                <button type="button" class="btn btn-sm btn-primary" id="addProductBtn">
+                                    <i class="fas fa-plus"></i> 상품 추가
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="productSearch" placeholder="상품 검색...">
+                                    <button class="btn btn-outline-secondary" type="button" id="searchProductBtn">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="productsLoading" class="text-center py-3">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">로딩 중...</span>
+                                </div>
+                                <p class="mb-0">상품 로딩 중...</p>
+                            </div>
+
+                            <div id="productsContent" class="d-none">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                        <tr>
+                                            <th style="width: 80px">이미지</th>
+                                            <th>상품명</th>
+                                            <th>SKU</th>
+                                            <th>가격</th>
+                                            <th>재고</th>
+                                            <th>상태</th>
+                                            <th style="width: 100px">관리</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="productsList">
+                                        <!-- 상품 목록이 여기에 동적으로 로드됩니다 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <div>
+                                        <select class="form-select form-select-sm" id="productsPerPage">
+                                            <option value="10">10개씩 보기</option>
+                                            <option value="20">20개씩 보기</option>
+                                            <option value="50">50개씩 보기</option>
+                                            <option value="100">100개씩 보기</option>
+                                        </select>
+                                    </div>
+                                    <nav>
+                                        <ul class="pagination pagination-sm" id="productsPagination">
+                                            <!-- 페이지네이션이 여기에 동적으로 로드됩니다 -->
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+
+                            <div id="noProductsMessage" class="text-center py-4 d-none">
+                                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                                <p>이 카테고리에 등록된 상품이 없습니다.</p>
+                                <button type="button" class="btn btn-primary" id="addFirstProductBtn">
+                                    <i class="fas fa-plus"></i> 첫 상품 추가하기
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 카테고리 수정 모달 -->
+    <div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editCategoryModalLabel">카테고리 수정</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editCategoryForm">
+                        <input type="hidden" id="editCategoryId">
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="editCategoryName" class="form-label">카테고리명 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editCategoryName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editCategorySlug" class="form-label">슬러그 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editCategorySlug" required>
+                                <small class="form-text text-muted">URL에 사용될 고유 식별자입니다. 영문, 숫자, 하이픈만 사용 가능합니다.</small>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="editCategoryParent" class="form-label">상위 카테고리</label>
+                                <select class="form-select" id="editCategoryParent">
+                                    <option value="">없음 (최상위 카테고리)</option>
+                                    <!-- 상위 카테고리 옵션이 여기에 동적으로 로드됩니다 -->
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editCategorySortOrder" class="form-label">정렬 순서</label>
+                                <input type="number" class="form-control" id="editCategorySortOrder" min="0" value="0">
+                                <small class="form-text text-muted">낮은 숫자가 먼저 표시됩니다.</small>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="editCategoryActive" checked>
+                                    <label class="form-check-label" for="editCategoryActive">활성화</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="editCategoryFeatured">
+                                    <label class="form-check-label" for="editCategoryFeatured">추천 카테고리</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editCategoryDescription" class="form-label">설명</label>
+                            <textarea class="form-control" id="editCategoryDescription" rows="3"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editCategoryImage" class="form-label">카테고리 이미지</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="editCategoryImageUrl" placeholder="이미지 URL">
+                                <button class="btn btn-outline-secondary" type="button" id="editUploadImageBtn">
+                                    <i class="fas fa-upload"></i> 업로드
+                                </button>
+                            </div>
+                            <div class="mt-2" id="editCategoryImagePreviewContainer">
+                                <img src="/placeholder.svg?height=100&width=100" id="editCategoryImagePreview" class="img-thumbnail" style="max-height: 100px;" alt="카테고리 이미지 미리보기">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editFilterableAttributes" class="form-label">필터링 가능한 속성</label>
+                            <select class="form-select" id="editFilterableAttributes" multiple>
+                                <option value="color">색상</option>
+                                <option value="size">사이즈</option>
+                                <option value="material">소재</option>
+                                <option value="brand">브랜드</option>
+                                <option value="price">가격</option>
+                                <!-- 추가 속성들이 여기에 동적으로 로드될 수 있습니다 -->
+                            </select>
+                            <small class="form-text text-muted">이 카테고리에서 필터링 가능한 상품 속성을 선택하세요. (Ctrl 키를 누른 상태에서 여러 항목 선택 가능)</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="saveCategoryChangesBtn">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 하위 카테고리 추가 모달 -->
+    <div class="modal fade" id="addSubcategoryModal" tabindex="-1" aria-labelledby="addSubcategoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addSubcategoryModalLabel">하위 카테고리 추가</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addSubcategoryForm">
+                        <div class="mb-3">
+                            <label for="newSubcategoryName" class="form-label">카테고리명 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="newSubcategoryName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newSubcategorySlug" class="form-label">슬러그 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="newSubcategorySlug" required>
+                            <small class="form-text text-muted">URL에 사용될 고유 식별자입니다. 영문, 숫자, 하이픈만 사용 가능합니다.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newSubcategoryDescription" class="form-label">설명</label>
+                            <textarea class="form-control" id="newSubcategoryDescription" rows="3"></textarea>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="newSubcategoryActive" checked>
+                            <label class="form-check-label" for="newSubcategoryActive">활성화</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="addSubcategoryBtn">추가</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 이미지 업로드 모달 -->
+    <div class="modal fade" id="uploadImageModal" tabindex="-1" aria-labelledby="uploadImageModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadImageModalLabel">카테고리 이미지 업로드</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="uploadImageForm">
+                        <div class="mb-3">
+                            <label for="categoryImageFile" class="form-label">이미지 파일 선택</label>
+                            <input class="form-control" type="file" id="categoryImageFile" accept="image/*">
+                            <small class="form-text text-muted">권장 크기: 500x500px, 최대 파일 크기: 2MB</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">미리보기</label>
+                            <div class="text-center p-3 bg-light rounded">
+                                <img id="uploadImagePreview" src="/placeholder.svg?height=200&width=200" class="img-fluid" style="max-height: 200px;" alt="이미지 미리보기">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="confirmUploadImageBtn">업로드</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript 코드 -->
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            // 전역 변수
+            let categoryId = null;
+            let categoryData = null;
+            let subcategories = [];
+            let products = [];
+            let allCategories = [];
+
+            // URL에서 카테고리 ID 가져오기
+            const urlParams = new URLSearchParams(window.location.search);
+            categoryId = urlParams.get('id');
+
+            if (!categoryId) {
+                showToast('오류', '카테고리 ID가 필요합니다.', 'error');
+                window.location.href = '/admin/categories';
+                return;
+            }
+
+            // 초기 데이터 로드
+            loadCategoryData();
+            loadAllCategories();
+
+            // 카테고리 데이터 로드
+            function loadCategoryData() {
+                fetch(`/api/categories/${categoryId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('카테고리 정보를 불러오는데 실패했습니다.');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        categoryData = data;
+                        renderCategoryData();
+                        loadSubcategories();
+                        loadCategoryProducts();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('오류', '카테고리 정보를 불러오는데 실패했습니다.', 'error');
+                        window.location.href = '/admin/categories';
+                    })
+                    .finally(() => {
+                        document.getElementById('categoryLoading').classList.add('d-none');
+                        document.getElementById('categoryContent').classList.remove('d-none');
+                    });
+            }
+
+            // 모든 카테고리 로드 (상위 카테고리 선택용)
+            function loadAllCategories() {
+                fetch('/api/categories/all')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('카테고리 목록을 불러오는데 실패했습니다.');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        allCategories = data;
+                        populateParentCategoryOptions();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('오류', '카테고리 목록을 불러오는데 실패했습니다.', 'error');
+                    });
+            }
+
+            // 하위 카테고리 로드
+            function loadSubcategories() {
+                document.getElementById('subcategoriesLoading').classList.remove('d-none');
+                document.getElementById('subcategoriesContent').classList.add('d-none');
+                document.getElementById('noSubcategoriesMessage').classList.add('d-none');
+
+                fetch(`/api/categories/parent/${categoryId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('하위 카테고리를 불러오는데 실패했습니다.');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        subcategories = data;
+                        renderSubcategories();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('오류', '하위 카테고리를 불러오는데 실패했습니다.', 'error');
+                    })
+                    .finally(() => {
+                        document.getElementById('subcategoriesLoading').classList.add('d-none');
+                    });
+            }
+
+            // 카테고리 상품 로드
+            function loadCategoryProducts(page = 0, size = 10, search = '') {
+                document.getElementById('productsLoading').classList.remove('d-none');
+                document.getElementById('productsContent').classList.add('d-none');
+                document.getElementById('noProductsMessage').classList.add('d-none');
+
+                // 실제 API 엔드포인트는 구현에 따라 다를 수 있습니다
+                fetch(`/api/products/category/${categoryId}?page=${page}&size=${size}&search=${search}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('상품 목록을 불러오는데 실패했습니다.');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        products = data.content;
+                        renderProducts(data);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('오류', '상품 목록을 불러오는데 실패했습니다.', 'error');
+                    })
+                    .finally(() => {
+                        document.getElementById('productsLoading').classList.add('d-none');
+                    });
+            }
+
+            // 카테고리 데이터 렌더링
+            function renderCategoryData() {
+                // 페이지 제목 및 브레드크럼 업데이트
+                document.title = `${categoryData.name} - PeakMeShop 관리자`;
+                document.getElementById('categoryName').textContent = categoryData.name;
+                document.getElementById('categoryBreadcrumb').textContent = categoryData.name;
+
+                // 카테고리 정보 업데이트
+                document.getElementById('categoryNameDisplay').textContent = categoryData.name;
+                document.getElementById('categoryDescription').textContent = categoryData.description || '-';
+                document.getElementById('categorySlug').textContent = categoryData.slug;
+                document.getElementById('categorySortOrder').textContent = categoryData.sortOrder || '0';
+                document.getElementById('categoryCreatedAt').textContent = formatDate(categoryData.createdAt);
+                document.getElementById('categoryUpdatedAt').textContent = formatDate(categoryData.updatedAt);
+
+                // 상위 카테고리 표시
+                if (categoryData.parentId) {
+                    document.getElementById('categoryParent').textContent = categoryData.parentName || '알 수 없음';
+                } else {
+                    document.getElementById('categoryParent').textContent = '없음 (최상위 카테고리)';
+                }
+
+                // 상태 배지 업데이트
+                const statusBadge = document.getElementById('categoryStatusBadge');
+                if (categoryData.active) {
+                    statusBadge.textContent = '활성';
+                    statusBadge.className = 'badge bg-success me-1';
+                } else {
+                    statusBadge.textContent = '비활성';
+                    statusBadge.className = 'badge bg-danger me-1';
+                }
+
+                // 추천 배지 업데이트
+                const featuredBadge = document.getElementById('categoryFeaturedBadge');
+                if (categoryData.featured) {
+                    featuredBadge.classList.remove('d-none');
+                } else {
+                    featuredBadge.classList.add('d-none');
+                }
+
+                // 이미지 업데이트
+                const imageElement = document.getElementById('categoryImage');
+                if (categoryData.imageUrl) {
+                    imageElement.src = categoryData.imageUrl;
+                } else {
+                    imageElement.src = '/placeholder.svg?height=300&width=400';
+                }
+
+                // 필터링 가능한 속성 업데이트
+                const attributesContainer = document.getElementById('categoryAttributes');
+                if (categoryData.filterableAttributes && categoryData.filterableAttributes.length > 0) {
+                    attributesContainer.innerHTML = '';
+                    categoryData.filterableAttributes.forEach(attr => {
+                        const badge = document.createElement('span');
+                        badge.className = 'badge bg-secondary attribute-badge';
+                        badge.textContent = attr;
+                        attributesContainer.appendChild(badge);
+                    });
+                } else {
+                    attributesContainer.innerHTML = '<span class="text-muted">설정된 속성이 없습니다.</span>';
+                }
+
+                // 상태 변경 버튼 텍스트 업데이트
+                const toggleStatusBtn = document.getElementById('toggleStatusBtn');
+                if (categoryData.active) {
+                    toggleStatusBtn.innerHTML = '<i class="fas fa-toggle-off"></i> 비활성화';
+                } else {
+                    toggleStatusBtn.innerHTML = '<i class="fas fa-toggle-on"></i> 활성화';
+                }
+
+                // 추천 설정 버튼 텍스트 업데이트
+                const toggleFeaturedBtn = document.getElementById('toggleFeaturedBtn');
+                if (categoryData.featured) {
+                    toggleFeaturedBtn.innerHTML = '<i class="fas fa-star"></i> 추천 해제';
+                } else {
+                    toggleFeaturedBtn.innerHTML = '<i class="far fa-star"></i> 추천으로 설정';
+                }
+            }
+
+            // 하위 카테고리 렌더링
+            function renderSubcategories() {
+                const container = document.getElementById('subcategoriesContent');
+                container.innerHTML = '';
+
+                if (subcategories.length === 0) {
+                    document.getElementById('noSubcategoriesMessage').classList.remove('d-none');
+                    return;
+                }
+
+                container.classList.remove('d-none');
+
+                subcategories.forEach(subcategory => {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-4 col-sm-6 mb-4';
+
+                    const imageUrl = subcategory.imageUrl || '/placeholder.svg?height=120&width=200';
+                    const statusBadge = subcategory.active ?
+                        '<span class="badge bg-success">활성</span>' :
+                        '<span class="badge bg-danger">비활성</span>';
+                    const featuredBadge = subcategory.featured ?
+                        '<span class="badge bg-warning ms-1"><i class="fas fa-star"></i> 추천</span>' : '';
+
+                    col.innerHTML = `
+                            <div class="card h-100 subcategory-card">
+                                <img src="${imageUrl}" class="card-img-top subcategory-image" alt="${subcategory.name}">
+                                <div class="card-body">
+                                    <h5 class="card-title">${subcategory.name}</h5>
+                                    <p class="card-text small">${subcategory.description || '설명 없음'}</p>
+                                    <div class="mb-2">
+                                        ${statusBadge}
+                                        ${featuredBadge}
+                                    </div>
+                                </div>
+                                <div class="card-footer d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">정렬 순서: ${subcategory.sortOrder || 0}</small>
+                                    <div>
+                                        <a href="/admin/category-detail?id=${subcategory.id}" class="btn btn-sm btn-outline-primary me-1">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-danger delete-subcategory-btn" data-id="${subcategory.id}" data-name="${subcategory.name}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                    container.appendChild(col);
+
+                    // 삭제 버튼 이벤트 리스너
+                    col.querySelector('.delete-subcategory-btn').addEventListener('click', function() {
+                        const id = this.dataset.id;
+                        const name = this.dataset.name;
+                        if (confirm(`정말로 "${name}" 카테고리를 삭제하시겠습니까?`)) {
+                            deleteCategory(id);
+                        }
+                    });
+                });
+            }
+
+            // 상품 목록 렌더링
+            function renderProducts(data) {
+                const container = document.getElementById('productsList');
+                container.innerHTML = '';
+
+                if (data.content.length === 0) {
+                    document.getElementById('noProductsMessage').classList.remove('d-none');
+                    return;
+                }
+
+                document.getElementById('productsContent').classList.remove('d-none');
+
+                data.content.forEach(product => {
+                    const row = document.createElement('tr');
+                    row.className = 'product-item';
+
+                    const imageUrl = product.mainImageUrl || '/placeholder.svg?height=50&width=50';
+                    const statusBadge = product.active ?
+                        '<span class="badge bg-success">활성</span>' :
+                        '<span class="badge bg-danger">비활성</span>';
+
+                    row.innerHTML = `
+                            <td>
+                                <img src="${imageUrl}" alt="${product.name}" width="50" height="50" class="img-thumbnail">
+                            </td>
+                            <td>${product.name}</td>
+                            <td>${product.sku || '-'}</td>
+                            <td>${formatPrice(product.price)}</td>
+                            <td>${product.stockQuantity !== undefined ? product.stockQuantity : '-'}</td>
+                            <td>${statusBadge}</td>
+                            <td>
+                                <a href="/admin/product-detail?id=${product.id}" class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger remove-product-btn" data-id="${product.id}" data-name="${product.name}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        `;
+
+                    container.appendChild(row);
+
+                    // 카테고리에서 상품 제거 버튼 이벤트 리스너
+                    row.querySelector('.remove-product-btn').addEventListener('click', function() {
+                        const id = this.dataset.id;
+                        const name = this.dataset.name;
+                        if (confirm(`정말로 "${name}" 상품을 이 카테고리에서 제거하시겠습니까?`)) {
+                            removeProductFromCategory(id);
+                        }
+                    });
+                });
+
+                // 페이지네이션 렌더링
+                renderPagination(data);
+            }
+
+            // 페이지네이션 렌더링
+            function renderPagination(data) {
+                const pagination = document.getElementById('productsPagination');
+                pagination.innerHTML = '';
+
+                // 이전 페이지 버튼
+                const prevLi = document.createElement('li');
+                prevLi.className = `page-item ${data.first ? 'disabled' : ''}`;
+                prevLi.innerHTML = `<a class="page-link" href="#" data-page="${data.number - 1}">이전</a>`;
+                pagination.appendChild(prevLi);
+
+                // 페이지 번호
+                const totalPages = data.totalPages;
+                const currentPage = data.number;
+
+                let startPage = Math.max(0, currentPage - 2);
+                let endPage = Math.min(totalPages - 1, currentPage + 2);
+
+                // 시작 페이지가 0보다 크면 첫 페이지 버튼 추가
+                if (startPage > 0) {
+                    const firstLi = document.createElement('li');
+                    firstLi.className = 'page-item';
+                    firstLi.innerHTML = `<a class="page-link" href="#" data-page="0">1</a>`;
+                    pagination.appendChild(firstLi);
+
+                    // 건너뛰는 표시
+                    if (startPage > 1) {
+                        const ellipsisLi = document.createElement('li');
+                        ellipsisLi.className = 'page-item disabled';
+                        ellipsisLi.innerHTML = `<a class="page-link" href="#">...</a>`;
+                        pagination.appendChild(ellipsisLi);
+                    }
+                }
+
+                // 페이지 번호 버튼
+                for (let i = startPage; i <= endPage; i++) {
+                    const pageLi = document.createElement('li');
+                    pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                    pageLi.innerHTML = `<a class="page-link" href="#" data-page="${i}">${i + 1}</a>`;
+                    pagination.appendChild(pageLi);
+                }
+
+                // 마지막 페이지가 totalPages-1보다 작으면 마지막 페이지 버튼 추가
+                if (endPage < totalPages - 1) {
+                    // 건너뛰는 표시
+                    if (endPage < totalPages - 2) {
+                        const ellipsisLi = document.createElement('li');
+                        ellipsisLi.className = 'page-item disabled';
+                        ellipsisLi.innerHTML = `<a class="page-link" href="#">...</a>`;
+                        pagination.appendChild(ellipsisLi);
+                    }
+
+                    const lastLi = document.createElement('li');
+                    lastLi.className = 'page-item';
+                    lastLi.innerHTML = `<a class="page-link" href="#" data-page="${totalPages - 1}">${totalPages}</a>`;
+                    pagination.appendChild(lastLi);
+                }
+
+                // 다음 페이지 버튼
+                const nextLi = document.createElement('li');
+                nextLi.className = `page-item ${data.last ? 'disabled' : ''}`;
+                nextLi.innerHTML = `<a class="page-link" href="#" data-page="${data.number + 1}">다음</a>`;
+                pagination.appendChild(nextLi);
+
+                // 페이지 클릭 이벤트 리스너
+                pagination.querySelectorAll('.page-link').forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const page = parseInt(this.dataset.page);
+                        const size = parseInt(document.getElementById('productsPerPage').value);
+                        const search = document.getElementById('productSearch').value;
+                        loadCategoryProducts(page, size, search);
+                    });
+                });
+            }
+
+            // 상위 카테고리 옵션 채우기
+            function populateParentCategoryOptions() {
+                const parentSelects = [
+                    document.getElementById('editCategoryParent')
+                ];
+
+                parentSelects.forEach(select => {
+                    // 기존 옵션 제거 (첫 번째 옵션 제외)
+                    while (select.options.length > 1) {
+                        select.remove(1);
+                    }
+
+                    // 카테고리 옵션 추가
+                    allCategories.forEach(category => {
+                        // 자기 자신과 하위 카테고리는 제외
+                        if (category.id == categoryId || isDescendant(category.id, categoryId)) {
+                            return;
+                        }
+
+                        const option = new Option(category.name, category.id);
+                        select.add(option);
+                    });
+                });
+            }
+
+            // 하위 카테고리인지 확인
+            function isDescendant(categoryId, parentId) {
+                const category = allCategories.find(c => c.id == categoryId);
+                if (!category || !category.parentId) {
+                    return false;
+                }
+
+                if (category.parentId == parentId) {
+                    return true;
+                }
+
+                return isDescendant(category.parentId, parentId);
+            }
+
+            // 카테고리 수정 버튼 클릭
+            document.getElementById('editCategoryBtn').addEventListener('click', function() {
+                // 폼 채우기
+                document.getElementById('editCategoryId').value = categoryData.id;
+                document.getElementById('editCategoryName').value = categoryData.name;
+                document.getElementById('editCategorySlug').value = categoryData.slug;
+                document.getElementById('editCategoryDescription').value = categoryData.description || '';
+                document.getElementById('editCategoryActive').checked = categoryData.active;
+                document.getElementById('editCategoryFeatured').checked = categoryData.featured;
+                document.getElementById('editCategorySortOrder').value = categoryData.sortOrder || 0;
+                document.getElementById('editCategoryImageUrl').value = categoryData.imageUrl || '';
+
+                // 이미지 미리보기
+                const imagePreview = document.getElementById('editCategoryImagePreview');
+                if (categoryData.imageUrl) {
+                    imagePreview.src = categoryData.imageUrl;
+                } else {
+                    imagePreview.src = '/placeholder.svg?height=100&width=100';
+                }
+
+                // 상위 카테고리 선택
+                const parentSelect = document.getElementById('editCategoryParent');
+                parentSelect.value = categoryData.parentId || '';
+
+                // 필터링 가능한 속성 선택
+                const attributesSelect = document.getElementById('editFilterableAttributes');
+                for (let i = 0; i < attributesSelect.options.length; i++) {
+                    attributesSelect.options[i].selected = categoryData.filterableAttributes &&
+                        categoryData.filterableAttributes.includes(attributesSelect.options[i].value);
+                }
+
+                // 모달 표시
+                const modal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+                modal.show();
+            });
+
+            // 카테고리 변경사항 저장
+            document.getElementById('saveCategoryChangesBtn').addEventListener('click', function() {
+                const categoryId = document.getElementById('editCategoryId').value;
+                const categoryData = {
+                    id: categoryId,
+                    name: document.getElementById('editCategoryName').value,
+                    slug: document.getElementById('editCategorySlug').value,
+                    description: document.getElementById('editCategoryDescription').value,
+                    parentId: document.getElementById('editCategoryParent').value || null,
+                    imageUrl: document.getElementById('editCategoryImageUrl').value || null,
+                    active: document.getElementById('editCategoryActive').checked,
+                    featured: document.getElementById('editCategoryFeatured').checked,
+                    sortOrder: parseInt(document.getElementById('editCategorySortOrder').value) || 0,
+                    filterableAttributes: Array.from(document.getElementById('editFilterableAttributes').selectedOptions).map(option => option.value)
+                };
+
+                fetch(`/api/categories/${categoryId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(categoryData)
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('카테고리 저장에 실패했습니다.');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        showToast('성공', '카테고리가 성공적으로 저장되었습니다.', 'success');
+
+                        // 모달 닫기
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editCategoryModal'));
+                        modal.hide();
+
+                        // 카테고리 정보 새로고침
+                        loadCategoryData();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('오류', '카테고리 저장에 실패했습니다.', 'error');
+                    });
+            });
+
+            // 상태 변경 버튼 클릭
+            document.getElementById('toggleStatusBtn').addEventListener('click', function() {
+                const newStatus = !categoryData.active;
+
+                fetch(`/api/categories/${categoryId}/status?active=${newStatus}`, {
+                    method: 'PUT'
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('카테고리 상태 변경에 실패했습니다.');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        showToast('성공', `카테고리가 ${newStatus ? '활성화' : '비활성화'}되었습니다.`, 'success');
+
+                        // 카테고리 정보 새로고침
+                        loadCategoryData();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('오류', '카테고리 상태 변경에 실패했습니다.', 'error');
+                    });
+            });
+
+            // 추천 설정 버튼 클릭
+            document.getElementById('toggleFeaturedBtn').addEventListener('click', function() {
+                const newFeatured = !categoryData.featured;
+
+                fetch(`/api/categories/${categoryId}/featured?featured=${newFeatured}`, {
+                    method: 'PUT'
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('카테고리 추천 설정 변경에 실패했습니다.');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        showToast('성공', `카테고리가 추천 ${newFeatured ? '설정' : '해제'}되었습니다.`, 'success');
+
+                        // 카테고리 정보 새로고침
+                        loadCategoryData();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('오류', '카테고리 추천 설정 변경에 실패했습니다.', 'error');
+                    });
+            });
+
+            // 하위 카테고리 추가 버튼 클릭
+            document.getElementById('addSubcategoryBtn').addEventListener('click', function() {
+                // 모달 표시
+                const modal = new bootstrap.Modal(document.getElementById('addSubcategoryModal'));
+                modal.show();
+            });
+
+            document.getElementById('addFirstSubcategoryBtn').addEventListener('click', function() {
+                // 모달 표시
+                const modal = new bootstrap.Modal(document.getElementById('addSubcategoryModal'));
+                modal.show();
+            });
+
+            // 하위 카테고리 추가 확인
+            document.getElementById('addSubcategoryBtn').addEventListener('click', function() {
+                const subcategoryData = {
+                    name: document.getElementById('newSubcategoryName').value,
+                    slug: document.getElementById('newSubcategorySlug').value,
+                    description: document.getElementById('newSubcategoryDescription').value,
+                    parentId: categoryId,
+                    active: document.getElementById('newSubcategoryActive').checked
+                };
+
+                fetch('/api/categories', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(subcategoryData)
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('하위 카테고리 추가에 실패했습니다.');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        showToast('성공', '하위 카테고리가 성공적으로 추가되었습니다.', 'success');
+
+                        // 모달 닫기
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('addSubcategoryModal'));
+                        modal.hide();
+
+                        // 폼 초기화
+                        document.getElementById('addSubcategoryForm').reset();
+
+                        // 하위 카테고리 목록 새로고침
+                        loadSubcategories();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('오류', '하위 카테고리 추가에 실패했습니다.', 'error');
+                    });
+            });
+
+            // 카테고리 삭제
+            function deleteCategory(categoryId) {
+                fetch(`/api/categories/${categoryId}`, {
+                    method: 'DELETE'
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('카테고리 삭제에 실패했습니다.');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        showToast('성공', '카테고리가 성공적으로 삭제되었습니다.', 'success');
+
+                        // 하위 카테고리 목록 새로고침
+                        loadSubcategories();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('오류', '카테고리 삭제에 실패했습니다.', 'error');
+                    });
+            }
+
+            // 카테고리에서 상품 제거
+            function removeProductFromCategory(productId) {
+                // 실제 API 엔드포인트는 구현에 따라 다를 수 있습니다
+                fetch(`/api/products/${productId}/categories/${categoryId}`, {
+                    method: 'DELETE'
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('상품 제거에 실패했습니다.');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        showToast('성공', '상품이 카테고리에서 제거되었습니다.', 'success');
+
+                        // 상품 목록 새로고침
+                        const page = 0;
+                        const size = parseInt(document.getElementById('productsPerPage').value);
+                        const search = document.getElementById('productSearch').value;
+                        loadCategoryProducts(page, size, search);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('오류', '상품 제거에 실패했습니다.', 'error');
+                    });
+            }
+
+            // 상품 검색 버튼 클릭
+            document.getElementById('searchProductBtn').addEventListener('click', function() {
+                const page = 0;
+                const size = parseInt(document.getElementById('productsPerPage').value);
+                const search = document.getElementById('productSearch').value;
+                loadCategoryProducts(page, size, search);
+            });
+
+            // 검색어 입력 후 엔터 키 이벤트
+            document.getElementById('productSearch').addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    const page = 0;
+                    const size = parseInt(document.getElementById('productsPerPage').value);
+                    const search = this.value;
+                    loadCategoryProducts(page, size, search);
+                }
+            });
+
+            // 페이지당 표시 개수 변경 이벤트
+            document.getElementById('productsPerPage').addEventListener('change', function() {
+                const page = 0;
+                const size = parseInt(this.value);
+                const search = document.getElementById('productSearch').value;
+                loadCategoryProducts(page, size, search);
+            });
+
+            // 상품 새로고침 버튼 클릭
+            document.getElementById('refreshProductsBtn').addEventListener('click', function() {
+                const page = 0;
+                const size = parseInt(document.getElementById('productsPerPage').value);
+                const search = document.getElementById('productSearch').value;
+                loadCategoryProducts(page, size, search);
+            });
+
+            // 슬러그 자동 생성 (하위 카테고리명 입력 시)
+            document.getElementById('newSubcategoryName').addEventListener('input', function() {
+                const name = this.value;
+                const slug = name.toLowerCase()
+                    .replace(/[^a-z0-9가-힣]/g, '-')
+                    .replace(/-+/g, '-')
+                    .replace(/^-|-$/g, '');
+                document.getElementById('newSubcategorySlug').value = slug;
+            });
+
+            // 유틸리티 함수: 날짜 포맷팅
+            function formatDate(dateString) {
+                if (!dateString) return '-';
+                const date = new Date(dateString);
+                return date.toLocaleString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            // 유틸리티 함수: 가격 포맷팅
+            function formatPrice(price) {
+                if (price === undefined || price === null) return '-';
+                return new Intl.NumberFormat('ko-KR', {
+                    style: 'currency',
+                    currency: 'KRW'
+                }).format(price);
+            }
+
+            // 유틸리티 함수: 토스트 메시지 표시
+            function showToast(title, message, type) {
+                // 토스트 구현 (Bootstrap 토스트 또는 다른 라이브러리 사용)
+                console.log(`[${type}] ${title}: ${message}`);
+            }
+        });
+    </script>
+</div>
+</body>
+</html>
+

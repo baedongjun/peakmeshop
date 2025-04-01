@@ -4,616 +4,423 @@
       layout:decorate="~{layouts/admin-layout}">
 <head>
     <title>회원 관리</title>
-    <th:block layout:fragment="css">
-        <style>
-            .table-actions .btn {
-                padding: 0.25rem 0.5rem;
-                font-size: 0.8rem;
-            }
-        </style>
-    </th:block>
+    <meta name="description" content="회원 목록 및 관리 페이지입니다.">
 </head>
 <body>
-<!-- 페이지 제목 -->
-<h1 layout:fragment="page-title">회원 관리</h1>
-
-<!-- 페이지 내용 -->
 <div layout:fragment="content">
-    <div class="admin-card mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h5 class="mb-0">회원 목록</h5>
-                <p class="text-muted mb-0">총 1,234명의 회원이 등록되어 있습니다.</p>
-            </div>
-            <div>
-                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#exportModal">
-                    <i class="fas fa-file-export"></i> 회원 데이터 내보내기
-                </button>
-            </div>
-        </div>
+    <div class="container-fluid">
+        <h1 class="h3 mb-2 text-gray-800">회원 관리</h1>
+        <p class="mb-4">회원 정보를 조회하고 관리할 수 있습니다.</p>
 
         <!-- 검색 및 필터 -->
-        <div class="row mb-4">
-            <div class="col-md-8">
-                <div class="input-group">
-                    <select class="form-select" style="max-width: 150px;">
-                        <option selected>검색 조건</option>
-                        <option>회원 ID</option>
-                        <option>이름</option>
-                        <option>이메일</option>
-                        <option>연락처</option>
-                    </select>
-                    <input type="text" class="form-control" placeholder="검색어 입력">
-                    <button class="btn btn-outline-secondary" type="button">
-                        <i class="fas fa-search"></i>
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">회원 검색</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" id="searchKeyword" class="form-control" placeholder="이름, 이메일, 아이디로 검색">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="button" id="searchButton">
+                                    <i class="fas fa-search fa-sm"></i> 검색
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-control" id="statusFilter">
+                            <option value="">모든 상태</option>
+                            <option value="ACTIVE">활성</option>
+                            <option value="INACTIVE">비활성</option>
+                            <option value="SUSPENDED">정지</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-control" id="roleFilter">
+                            <option value="">모든 역할</option>
+                            <option value="ROLE_USER">일반 회원</option>
+                            <option value="ROLE_ADMIN">관리자</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 회원 목록 테이블 -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">회원 목록</h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                         aria-labelledby="dropdownMenuLink">
+                        <div class="dropdown-header">회원 관리:</div>
+                        <a class="dropdown-item" href="#" id="exportExcel">엑셀 내보내기</a>
+                        <a class="dropdown-item" href="#" id="exportCsv">CSV 내보내기</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" th:href="@{/admin/members/new}">회원 추가</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="membersTable" width="100%" cellspacing="0">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>프로필</th>
+                            <th>아이디</th>
+                            <th>이름</th>
+                            <th>이메일</th>
+                            <th>전화번호</th>
+                            <th>가입일</th>
+                            <th>상태</th>
+                            <th>이메일 인증</th>
+                            <th>역할</th>
+                            <th>관리</th>
+                        </tr>
+                        </thead>
+                        <tbody id="membersList">
+                        <!-- 회원 목록이 여기에 동적으로 로드됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 페이지네이션 -->
+                <div class="d-flex justify-content-center mt-4">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination" id="pagination">
+                            <!-- 페이지네이션이 여기에 동적으로 로드됩니다 -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 회원 상태 변경 모달 -->
+    <div class="modal fade" id="statusModal" tabindex="-1" role="dialog" aria-labelledby="statusModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusModalLabel">회원 상태 변경</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-            </div>
-            <div class="col-md-4 d-flex justify-content-end">
-                <select class="form-select me-2" style="width: auto;">
-                    <option selected>회원 등급 전체</option>
-                    <option>일반회원</option>
-                    <option>VIP</option>
-                    <option>VVIP</option>
-                </select>
-                <select class="form-select" style="width: auto;">
-                    <option selected>상태 전체</option>
-                    <option>활성</option>
-                    <option>휴면</option>
-                    <option>정지</option>
-                    <option>탈퇴</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- 회원 테이블 -->
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                <tr>
-                    <th>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="selectAll">
-                            <label class="form-check-label" for="selectAll"></label>
-                        </div>
-                    </th>
-                    <th>회원 ID</th>
-                    <th>이름</th>
-                    <th>이메일</th>
-                    <th>연락처</th>
-                    <th>등급</th>
-                    <th>가입일</th>
-                    <th>상태</th>
-                    <th>관리</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>user001</td>
-                    <td>홍길동</td>
-                    <td>hong@example.com</td>
-                    <td>010-1234-5678</td>
-                    <td>VIP</td>
-                    <td>2023-01-15</td>
-                    <td><span class="badge bg-success">활성</span></td>
-                    <td class="table-actions">
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#memberDetailModal">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-warning">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>user002</td>
-                    <td>김철수</td>
-                    <td>kim@example.com</td>
-                    <td>010-2345-6789</td>
-                    <td>일반회원</td>
-                    <td>2023-02-20</td>
-                    <td><span class="badge bg-success">활성</span></td>
-                    <td class="table-actions">
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#memberDetailModal">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-warning">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>user003</td>
-                    <td>이영희</td>
-                    <td>lee@example.com</td>
-                    <td>010-3456-7890</td>
-                    <td>VVIP</td>
-                    <td>2023-03-10</td>
-                    <td><span class="badge bg-success">활성</span></td>
-                    <td class="table-actions">
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#memberDetailModal">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-warning">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>user004</td>
-                    <td>박지민</td>
-                    <td>park@example.com</td>
-                    <td>010-4567-8901</td>
-                    <td>일반회원</td>
-                    <td>2023-04-05</td>
-                    <td><span class="badge bg-warning">휴면</span></td>
-                    <td class="table-actions">
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#memberDetailModal">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-warning">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>user005</td>
-                    <td>최유진</td>
-                    <td>choi@example.com</td>
-                    <td>010-5678-9012</td>
-                    <td>일반회원</td>
-                    <td>2023-05-12</td>
-                    <td><span class="badge bg-danger">정지</span></td>
-                    <td class="table-actions">
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#memberDetailModal">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-warning">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>user006</td>
-                    <td>정민수</td>
-                    <td>jung@example.com</td>
-                    <td>010-6789-0123</td>
-                    <td>VIP</td>
-                    <td>2023-06-18</td>
-                    <td><span class="badge bg-secondary">탈퇴</span></td>
-                    <td class="table-actions">
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#memberDetailModal">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-warning">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>user007</td>
-                    <td>강지원</td>
-                    <td>kang@example.com</td>
-                    <td>010-7890-1234</td>
-                    <td>일반회원</td>
-                    <td>2023-07-22</td>
-                    <td><span class="badge bg-success">활성</span></td>
-                    <td class="table-actions">
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#memberDetailModal">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-warning">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- 선택 작업 버튼 -->
-        <div class="d-flex justify-content-between align-items-center mt-3">
-            <div>
-                <select class="form-select me-2" style="width: auto; display: inline-block;">
-                    <option selected>선택 작업</option>
-                    <option>활성으로 변경</option>
-                    <option>휴면으로 변경</option>
-                    <option>정지로 변경</option>
-                    <option>등급 변경</option>
-                    <option>이메일 발송</option>
-                </select>
-                <button type="button" class="btn btn-outline-secondary">적용</button>
-            </div>
-
-            <!-- 페이지네이션 -->
-            <nav aria-label="Page navigation">
-                <ul class="pagination mb-0">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" aria-label="Previous">
-                            <span aria-hidden="true">&laquo;</span>
-                        </a>
-                    </li>
-                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item">
-                        <a class="page-link" href="#" aria-label="Next">
-                            <span aria-hidden="true">&raquo;</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-    </div>
-
-    <!-- 회원 상세 정보 모달 -->
-    <div class="modal fade" id="memberDetailModal" tabindex="-1" aria-labelledby="memberDetailModalLabel" aria-hidden="true">
-        tabindex="-1" aria-labelledby="memberDetailModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="memberDetailModalLabel">회원 상세 정보</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
                 <div class="modal-body">
-                    <ul class="nav nav-tabs" id="memberTab" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab" aria-controls="info" aria-selected="true">기본 정보</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab" aria-controls="orders" aria-selected="false">주문 내역</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="points-tab" data-bs-toggle="tab" data-bs-target="#points" type="button" role="tab" aria-controls="points" aria-selected="false">포인트/쿠폰</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button" role="tab" aria-controls="activity" aria-selected="false">활동 내역</button>
-                        </li>
-                    </ul>
-                    <div class="tab-content p-3" id="memberTabContent">
-                        <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab">
-                            <div class="row mb-3">
-                                <div class="col-md-3 fw-bold">회원 ID</div>
-                                <div class="col-md-9">user001</div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-3 fw-bold">이름</div>
-                                <div class="col-md-9">홍길동</div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-3 fw-bold">이메일</div>
-                                <div class="col-md-9">hong@example.com</div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-3 fw-bold">연락처</div>
-                                <div class="col-md-9">010-1234-5678</div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-3 fw-bold">주소</div>
-                                <div class="col-md-9">(12345) 서울특별시 강남구 테헤란로 123, 456호</div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-3 fw-bold">등급</div>
-                                <div class="col-md-9">VIP</div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-3 fw-bold">가입일</div>
-                                <div class="col-md-9">2023-01-15</div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-3 fw-bold">최근 로그인</div>
-                                <div class="col-md-9">2023-11-15 10:30:45</div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-3 fw-bold">상태</div>
-                                <div class="col-md-9"><span class="badge bg-success">활성</span></div>
-                            </div>
-                        </div>
-                        <div class="tab-pane fade" id="orders" role="tabpanel" aria-labelledby="orders-tab">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                    <tr>
-                                        <th>주문번호</th>
-                                        <th>주문일시</th>
-                                        <th>상품정보</th>
-                                        <th>결제금액</th>
-                                        <th>상태</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <tr>
-                                        <td>#ORD-1234</td>
-                                        <td>2023-11-15 14:30</td>
-                                        <td>프리미엄 티셔츠 외 2건</td>
-                                        <td>₩123,000</td>
-                                        <td><span class="badge bg-success">배송완료</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>#ORD-1180</td>
-                                        <td>2023-10-22 11:15</td>
-                                        <td>스포츠 양말 외 1건</td>
-                                        <td>₩45,000</td>
-                                        <td><span class="badge bg-success">배송완료</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>#ORD-1120</td>
-                                        <td>2023-09-10 09:45</td>
-                                        <td>런닝화</td>
-                                        <td>₩89,000</td>
-                                        <td><span class="badge bg-success">배송완료</span></td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="tab-pane fade" id="points" role="tabpanel" aria-labelledby="points-tab">
-                            <div class="row">
-                                <div class="col-md-6 mb-4">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h6 class="mb-0">포인트 정보</h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <h3 class="mb-3">5,200 P</h3>
-                                            <div class="table-responsive">
-                                                <table class="table table-sm">
-                                                    <thead>
-                                                    <tr>
-                                                        <th>날짜</th>
-                                                        <th>내용</th>
-                                                        <th>포인트</th>
-                                                    </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                    <tr>
-                                                        <td>2023-11-15</td>
-                                                        <td>상품 구매</td>
-                                                        <td>+1,230</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>2023-10-22</td>
-                                                        <td>상품 구매</td>
-                                                        <td>+450</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>2023-10-05</td>
-                                                        <td>포인트 사용</td>
-                                                        <td>-2,000</td>
-                                                    </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-4">
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <h6 class="mb-0">쿠폰 정보</h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <h3 class="mb-3">3장</h3>
-                                            <div class="table-responsive">
-                                                <table class="table table-sm">
-                                                    <thead>
-                                                    <tr>
-                                                        <th>쿠폰명</th>
-                                                        <th>할인</th>
-                                                        <th>유효기간</th>
-                                                    </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                    <tr>
-                                                        <td>신규 가입 할인</td>
-                                                        <td>10,000원</td>
-                                                        <td>2023-12-31</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>VIP 전용 할인</td>
-                                                        <td>15%</td>
-                                                        <td>2023-12-31</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>생일 축하 쿠폰</td>
-                                                        <td>5,000원</td>
-                                                        <td>2024-01-15</td>
-                                                    </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="tab-pane fade" id="activity" role="tabpanel" aria-labelledby="activity-tab">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                    <tr>
-                                        <th>날짜</th>
-                                        <th>활동</th>
-                                        <th>IP 주소</th>
-                                        <th>기기</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <tr>
-                                        <td>2023-11-15 10:30:45</td>
-                                        <td>로그인</td>
-                                        <td>123.456.789.012</td>
-                                        <td>Chrome / Windows</td>
-                                    </tr>
-                                    <tr>
-                                        <td>2023-11-15 14:30:25</td>
-                                        <td>주문 완료</td>
-                                        <td>123.456.789.012</td>
-                                        <td>Chrome / Windows</td>
-                                    </tr>
-                                    <tr>
-                                        <td>2023-11-14 18:45:12</td>
-                                        <td>장바구니 추가</td>
-                                        <td>123.456.789.012</td>
-                                        <td>Chrome / Windows</td>
-                                    </tr>
-                                    <tr>
-                                        <td>2023-11-13 09:20:33</td>
-                                        <td>로그인</td>
-                                        <td>123.456.789.012</td>
-                                        <td>Safari / iOS</td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                    <input type="hidden" id="memberId">
+                    <div class="form-group">
+                        <label for="memberStatus">상태 선택</label>
+                        <select class="form-control" id="memberStatus">
+                            <option value="ACTIVE">활성</option>
+                            <option value="INACTIVE">비활성</option>
+                            <option value="SUSPENDED">정지</option>
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-                    <button type="button" class="btn btn-primary">회원 정보 수정</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="saveStatus">저장</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 데이터 내보내기 모달 -->
-    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+    <!-- 회원 삭제 확인 모달 -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exportModalLabel">회원 데이터 내보내기</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="deleteModalLabel">회원 삭제 확인</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">내보내기 형식</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="exportFormat" id="formatCSV" checked>
-                            <label class="form-check-label" for="formatCSV">CSV</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="exportFormat" id="formatExcel">
-                            <label class="form-check-label" for="formatExcel">Excel</label>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">내보낼 데이터</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="exportAll" checked>
-                            <label class="form-check-label" for="exportAll">모든 회원</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="exportSelected">
-                            <label class="form-check-label" for="exportSelected">선택한 회원만</label>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">포함할 필드</label>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="fieldId" checked>
-                                    <label class="form-check-label" for="fieldId">회원 ID</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="fieldName" checked>
-                                    <label class="form-check-label" for="fieldName">이름</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="fieldEmail" checked>
-                                    <label class="form-check-label" for="fieldEmail">이메일</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="fieldPhone" checked>
-                                    <label class="form-check-label" for="fieldPhone">연락처</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="fieldGrade" checked>
-                                    <label class="form-check-label" for="fieldGrade">등급</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="fieldJoinDate" checked>
-                                    <label class="form-check-label" for="fieldJoinDate">가입일</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="fieldStatus" checked>
-                                    <label class="form-check-label" for="fieldStatus">상태</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="fieldAddress">
-                                    <label class="form-check-label" for="fieldAddress">주소</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <p>정말로 이 회원을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
+                    <input type="hidden" id="deleteId">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                    <button type="button" class="btn btn-primary">내보내기</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-danger" id="confirmDelete">삭제</button>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- 페이지별 스크립트 -->
-<th:block layout:fragment="page-script">
-    <script>
-        // 전체 선택 체크박스
-        document.getElementById('selectAll').addEventListener('change', function() {
-            const checkboxes = document.querySelectorAll('tbody .form-check-input');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
+    <script th:inline="javascript">
+        $(document).ready(function() {
+            let currentPage = 0;
+            let totalPages = 0;
+            let searchKeyword = '';
+            let statusFilter = '';
+            let roleFilter = '';
+
+            // 초기 데이터 로드
+            loadMembers();
+
+            // 검색 버튼 클릭 이벤트
+            $('#searchButton').click(function() {
+                searchKeyword = $('#searchKeyword').val();
+                currentPage = 0;
+                loadMembers();
             });
-        });
 
-        // 개별 체크박스 변경 시 전체 선택 체크박스 상태 업데이트
-        document.querySelectorAll('tbody .form-check-input').forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                const allChecked = [...document.querySelectorAll('tbody .form-check-input')].every(c => c.checked);
-                document.getElementById('selectAll').checked = allChecked;
+            // 엔터키 검색
+            $('#searchKeyword').keypress(function(e) {
+                if (e.which === 13) {
+                    searchKeyword = $('#searchKeyword').val();
+                    currentPage = 0;
+                    loadMembers();
+                }
+            });
+
+            // 상태 필터 변경 이벤트
+            $('#statusFilter').change(function() {
+                statusFilter = $(this).val();
+                currentPage = 0;
+                loadMembers();
+            });
+
+            // 역할 필터 변경 이벤트
+            $('#roleFilter').change(function() {
+                roleFilter = $(this).val();
+                currentPage = 0;
+                loadMembers();
+            });
+
+            // 회원 목록 로드 함수
+            function loadMembers() {
+                let url = '/api/members?page=' + currentPage + '&size=10';
+
+                if (searchKeyword) {
+                    url = '/api/members/search?keyword=' + encodeURIComponent(searchKeyword) + '&page=' + currentPage + '&size=10';
+                }
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function(response) {
+                        renderMembers(response);
+                        renderPagination(response);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('회원 목록을 불러오는 중 오류가 발생했습니다:', error);
+                        alert('회원 목록을 불러오는 중 오류가 발생했습니다.');
+                    }
+                });
+            }
+
+            // 회원 목록 렌더링 함수
+            function renderMembers(response) {
+                const members = response.content;
+                let html = '';
+
+                if (members.length === 0) {
+                    html = '<tr><td colspan="11" class="text-center">회원이 없습니다.</td></tr>';
+                } else {
+                    members.forEach(function(member) {
+                        // 상태 필터링
+                        if (statusFilter && member.status !== statusFilter) return;
+                        // 역할 필터링
+                        if (roleFilter && member.userRole !== roleFilter) return;
+
+                        let statusBadge = '';
+                        if (member.status === 'ACTIVE') {
+                            statusBadge = '<span class="badge badge-success">활성</span>';
+                        } else if (member.status === 'INACTIVE') {
+                            statusBadge = '<span class="badge badge-secondary">비활성</span>';
+                        } else if (member.status === 'SUSPENDED') {
+                            statusBadge = '<span class="badge badge-danger">정지</span>';
+                        }
+
+                        let emailVerifiedBadge = member.emailVerified ?
+                            '<span class="badge badge-success">인증됨</span>' :
+                            '<span class="badge badge-warning">미인증</span>';
+
+                        let roleBadge = '';
+                        if (member.userRole === 'ROLE_ADMIN') {
+                            roleBadge = '<span class="badge badge-primary">관리자</span>';
+                        } else if (member.userRole === 'ROLE_USER') {
+                            roleBadge = '<span class="badge badge-info">일반 회원</span>';
+                        }
+
+                        html += `
+                                <tr>
+                                    <td>${member.id}</td>
+                                    <td>
+                                        <img src="${member.imageUrl || '/img/default-profile.png'}" alt="프로필" class="img-profile rounded-circle" style="width: 40px; height: 40px;">
+                                    </td>
+                                    <td>${member.userId}</td>
+                                    <td>${member.name}</td>
+                                    <td>${member.email}</td>
+                                    <td>${member.phone || '-'}</td>
+                                    <td>${formatDate(member.createdAt)}</td>
+                                    <td>${statusBadge}</td>
+                                    <td>${emailVerifiedBadge}</td>
+                                    <td>${roleBadge}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="/admin/members/${member.id}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="/admin/members/${member.id}/edit" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-warning changeStatus" data-id="${member.id}" data-status="${member.status}">
+                                                <i class="fas fa-exchange-alt"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-danger deleteMember" data-id="${member.id}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                    });
+                }
+
+                $('#membersList').html(html);
+
+                // 상태 변경 버튼 이벤트
+                $('.changeStatus').click(function() {
+                    const id = $(this).data('id');
+                    const status = $(this).data('status');
+                    $('#memberId').val(id);
+                    $('#memberStatus').val(status);
+                    $('#statusModal').modal('show');
+                });
+
+                // 삭제 버튼 이벤트
+                $('.deleteMember').click(function() {
+                    const id = $(this).data('id');
+                    $('#deleteId').val(id);
+                    $('#deleteModal').modal('show');
+                });
+            }
+
+            // 페이지네이션 렌더링 함수
+            function renderPagination(response) {
+                totalPages = response.totalPages;
+                let html = '';
+
+                // 이전 페이지 버튼
+                html += `
+                        <li class="page-item ${currentPage === 0 ? 'disabled' : ''}">
+                            <a class="page-link" href="#" data-page="${currentPage - 1}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    `;
+
+                // 페이지 번호
+                for (let i = 0; i < totalPages; i++) {
+                    if (i === currentPage) {
+                        html += `<li class="page-item active"><a class="page-link" href="#" data-page="${i}">${i + 1}</a></li>`;
+                    } else {
+                        html += `<li class="page-item"><a class="page-link" href="#" data-page="${i}">${i + 1}</a></li>`;
+                    }
+                }
+
+                // 다음 페이지 버튼
+                html += `
+                        <li class="page-item ${currentPage === totalPages - 1 ? 'disabled' : ''}">
+                            <a class="page-link" href="#" data-page="${currentPage + 1}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    `;
+
+                $('#pagination').html(html);
+
+                // 페이지 클릭 이벤트
+                $('.page-link').click(function(e) {
+                    e.preventDefault();
+                    const page = $(this).data('page');
+                    if (page >= 0 && page < totalPages) {
+                        currentPage = page;
+                        loadMembers();
+                    }
+                });
+            }
+
+            // 상태 변경 저장 버튼 이벤트
+            $('#saveStatus').click(function() {
+                const id = $('#memberId').val();
+                const status = $('#memberStatus').val();
+
+                $.ajax({
+                    url: `/api/members/${id}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        status: status
+                    }),
+                    success: function(response) {
+                        $('#statusModal').modal('hide');
+                        loadMembers();
+                        alert('회원 상태가 변경되었습니다.');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('회원 상태 변경 중 오류가 발생했습니다:', error);
+                        alert('회원 상태 변경 중 오류가 발생했습니다.');
+                    }
+                });
+            });
+
+            // 회원 삭제 확인 버튼 이벤트
+            $('#confirmDelete').click(function() {
+                const id = $('#deleteId').val();
+
+                $.ajax({
+                    url: `/api/members/${id}`,
+                    type: 'DELETE',
+                    success: function(response) {
+                        $('#deleteModal').modal('hide');
+                        loadMembers();
+                        alert('회원이 삭제되었습니다.');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('회원 삭제 중 오류가 발생했습니다:', error);
+                        alert('회원 삭제 중 오류가 발생했습니다.');
+                    }
+                });
+            });
+
+            // 날짜 포맷 함수
+            function formatDate(dateString) {
+                if (!dateString) return '-';
+                const date = new Date(dateString);
+                return date.getFullYear() + '-' +
+                    padZero(date.getMonth() + 1) + '-' +
+                    padZero(date.getDate()) + ' ' +
+                    padZero(date.getHours()) + ':' +
+                    padZero(date.getMinutes());
+            }
+
+            function padZero(num) {
+                return num < 10 ? '0' + num : num;
+            }
+
+            // 엑셀 내보내기
+            $('#exportExcel').click(function(e) {
+                e.preventDefault();
+                alert('엑셀 내보내기 기능은 준비 중입니다.');
+            });
+
+            // CSV 내보내기
+            $('#exportCsv').click(function(e) {
+                e.preventDefault();
+                alert('CSV 내보내기 기능은 준비 중입니다.');
             });
         });
     </script>
-</th:block>
+</div>
 </body>
 </html>
 

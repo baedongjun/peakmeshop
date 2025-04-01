@@ -4,342 +4,860 @@
       layout:decorate="~{layouts/admin-layout}">
 <head>
     <title>주문 관리</title>
-    <th:block layout:fragment="css">
-        <style>
-            .order-status {
-                width: 100px;
-            }
-            .table-actions .btn {
-                padding: 0.25rem 0.5rem;
-                font-size: 0.8rem;
-            }
-        </style>
-    </th:block>
+    <meta name="description" content="주문 목록 및 관리 페이지입니다.">
+    <style>
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+        }
+        .table-actions .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+        }
+        .filter-section {
+            background-color: #f8f9fc;
+            padding: 1rem;
+            border-radius: 0.35rem;
+            margin-bottom: 1rem;
+        }
+    </style>
 </head>
 <body>
-<!-- 페이지 제목 -->
-<h1 layout:fragment="page-title">주문 관리</h1>
-
-<!-- 페이지 내용 -->
 <div layout:fragment="content">
-    <div class="admin-card mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h5 class="mb-0">주문 목록</h5>
-                <p class="text-muted mb-0">총 254개의 주문이 있습니다.</p>
-            </div>
-        </div>
+    <div class="container-fluid">
+        <h1 class="h3 mb-2 text-gray-800">주문 관리</h1>
+        <p class="mb-4">주문 정보를 조회하고 관리할 수 있습니다.</p>
 
         <!-- 검색 및 필터 -->
-        <div class="row mb-4">
-            <div class="col-md-8">
-                <div class="input-group">
-                    <select class="form-select" style="max-width: 150px;">
-                        <option selected>검색 조건</option>
-                        <option>주문번호</option>
-                        <option>주문자명</option>
-                        <option>주문자 연락처</option>
-                        <option>주문자 이메일</option>
-                    </select>
-                    <input type="text" class="form-control" placeholder="검색어 입력">
-                    <button class="btn btn-outline-secondary" type="button">
-                        <i class="fas fa-search"></i>
-                    </button>
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">주문 검색 및 필터</h6>
+            </div>
+            <div class="card-body">
+                <div class="filter-section">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <select class="form-control" id="searchType">
+                                        <option value="orderNumber">주문번호</option>
+                                        <option value="memberName">주문자명</option>
+                                        <option value="memberEmail">이메일</option>
+                                    </select>
+                                </div>
+                                <input type="text" class="form-control" id="searchKeyword" placeholder="검색어 입력">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="button" id="searchButton">
+                                        <i class="fas fa-search fa-sm"></i> 검색
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <select class="form-control" id="statusFilter">
+                                        <option value="">주문상태 전체</option>
+                                        <option value="PENDING">결제대기</option>
+                                        <option value="PAID">결제완료</option>
+                                        <option value="PROCESSING">처리중</option>
+                                        <option value="SHIPPED">배송중</option>
+                                        <option value="DELIVERED">배송완료</option>
+                                        <option value="CANCELLED">취소됨</option>
+                                        <option value="REFUNDED">환불됨</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-control" id="paymentMethodFilter">
+                                        <option value="">결제방법 전체</option>
+                                        <option value="CARD">신용카드</option>
+                                        <option value="BANK_TRANSFER">계좌이체</option>
+                                        <option value="VIRTUAL_ACCOUNT">가상계좌</option>
+                                        <option value="MOBILE_PAYMENT">모바일결제</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-control" id="shippingMethodFilter">
+                                        <option value="">배송방법 전체</option>
+                                        <option value="STANDARD">일반배송</option>
+                                        <option value="EXPRESS">특급배송</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">주문일자</span>
+                                </div>
+                                <input type="date" class="form-control" id="startDate">
+                                <div class="input-group-prepend input-group-append">
+                                    <span class="input-group-text">~</span>
+                                </div>
+                                <input type="date" class="form-control" id="endDate">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" id="dateFilterButton">
+                                        적용
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <button class="btn btn-outline-secondary mr-1" id="todayFilter">오늘</button>
+                            <button class="btn btn-outline-secondary mr-1" id="weekFilter">1주일</button>
+                            <button class="btn btn-outline-secondary mr-1" id="monthFilter">1개월</button>
+                            <button class="btn btn-outline-secondary" id="resetFilter">필터 초기화</button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-4 d-flex justify-content-end">
-                <select class="form-select" style="width: auto;">
-                    <option selected>주문상태 전체</option>
-                    <option>결제완료</option>
-                    <option>상품준비중</option>
-                    <option>배송중</option>
-                    <option>배송완료</option>
-                    <option>취소</option>
-                    <option>환불</option>
-                </select>
-            </div>
         </div>
 
-        <!-- 날짜 필터 -->
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="d-flex align-items-center">
-                    <span class="me-2">주문일자</span>
-                    <input type="date" class="form-control me-2" style="width: auto;">
-                    <span class="me-2">~</span>
-                    <input type="date" class="form-control me-2" style="width: auto;">
-                    <button class="btn btn-outline-secondary" type="button">적용</button>
+        <!-- 주문 목록 테이블 -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">주문 목록</h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                         aria-labelledby="dropdownMenuLink">
+                        <div class="dropdown-header">주문 관리:</div>
+                        <a class="dropdown-item" href="#" id="exportExcel">엑셀 내보내기</a>
+                        <a class="dropdown-item" href="#" id="printOrders">주문 인쇄</a>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-6 d-flex justify-content-end">
-                <button class="btn btn-outline-secondary me-2">오늘</button>
-                <button class="btn btn-outline-secondary me-2">1주일</button>
-                <button class="btn btn-outline-secondary me-2">1개월</button>
-                <button class="btn btn-outline-secondary">3개월</button>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="ordersTable" width="100%" cellspacing="0">
+                        <thead>
+                        <tr>
+                            <th>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="selectAll">
+                                    <label class="custom-control-label" for="selectAll"></label>
+                                </div>
+                            </th>
+                            <th>주문번호</th>
+                            <th>주문일시</th>
+                            <th>주문자</th>
+                            <th>결제방법</th>
+                            <th>주문금액</th>
+                            <th>주문상태</th>
+                            <th>배송정보</th>
+                            <th>관리</th>
+                        </tr>
+                        </thead>
+                        <tbody id="ordersList">
+                        <!-- 주문 목록이 여기에 동적으로 로드됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 페이지네이션 -->
+                <div class="d-flex justify-content-center mt-4">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination" id="pagination">
+                            <!-- 페이지네이션이 여기에 동적으로 로드됩니다 -->
+                        </ul>
+                    </nav>
+                </div>
             </div>
         </div>
 
-        <!-- 주문 테이블 -->
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                <tr>
-                    <th>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="selectAll">
-                            <label class="form-check-label" for="selectAll"></label>
-                        </div>
-                    </th>
-                    <th>주문번호</th>
-                    <th>주문일시</th>
-                    <th>주문자</th>
-                    <th>상품정보</th>
-                    <th>결제금액</th>
-                    <th>주문상태</th>
-                    <th>관리</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>#ORD-1234</td>
-                    <td>2023-11-15 14:30</td>
-                    <td>
-                        <div>홍길동</div>
-                        <small class="text-muted">010-1234-5678</small>
-                    </td>
-                    <td>
-                        <div>프리미엄 티셔츠 외 2건</div>
-                        <small class="text-muted">총 3개 상품</small>
-                    </td>
-                    <td>₩123,000</td>
-                    <td>
-                        <span class="badge bg-success">배송완료</span>
-                    </td>
-                    <td class="table-actions">
-                        <a th:href="@{/admin/orders/1}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>#ORD-1233</td>
-                    <td>2023-11-14 11:20</td>
-                    <td>
-                        <div>김철수</div>
-                        <small class="text-muted">010-2345-6789</small>
-                    </td>
-                    <td>
-                        <div>런닝화</div>
-                        <small class="text-muted">총 1개 상품</small>
-                    </td>
-                    <td>₩45,000</td>
-                    <td>
-                        <span class="badge bg-warning">배송중</span>
-                    </td>
-                    <td class="table-actions">
-                        <a th:href="@{/admin/orders/2}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>#ORD-1232</td>
-                    <td>2023-11-14 09:15</td>
-                    <td>
-                        <div>이영희</div>
-                        <small class="text-muted">010-3456-7890</small>
-                    </td>
-                    <td>
-                        <div>프리미엄 후드티</div>
-                        <small class="text-muted">총 1개 상품</small>
-                    </td>
-                    <td>₩78,500</td>
-                    <td>
-                        <span class="badge bg-info">결제완료</span>
-                    </td>
-                    <td class="table-actions">
-                        <a th:href="@{/admin/orders/3}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>#ORD-1231</td>
-                    <td>2023-11-13 16:45</td>
-                    <td>
-                        <div>박지민</div>
-                        <small class="text-muted">010-4567-8901</small>
-                    </td>
-                    <td>
-                        <div>등산 배낭 외 3건</div>
-                        <small class="text-muted">총 4개 상품</small>
-                    </td>
-                    <td>₩235,000</td>
-                    <td>
-                        <span class="badge bg-primary">상품준비중</span>
-                    </td>
-                    <td class="table-actions">
-                        <a th:href="@{/admin/orders/4}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>#ORD-1230</td>
-                    <td>2023-11-12 10:30</td>
-                    <td>
-                        <div>최유진</div>
-                        <small class="text-muted">010-5678-9012</small>
-                    </td>
-                    <td>
-                        <div>스포츠 양말 외 1건</div>
-                        <small class="text-muted">총 2개 상품</small>
-                    </td>
-                    <td>₩56,000</td>
-                    <td>
-                        <span class="badge bg-success">배송완료</span>
-                    </td>
-                    <td class="table-actions">
-                        <a th:href="@{/admin/orders/5}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>#ORD-1229</td>
-                    <td>2023-11-11 14:20</td>
-                    <td>
-                        <div>정민수</div>
-                        <small class="text-muted">010-6789-0123</small>
-                    </td>
-                    <td>
-                        <div>스포츠 선글라스</div>
-                        <small class="text-muted">총 1개 상품</small>
-                    </td>
-                    <td>₩45,000</td>
-                    <td>
-                        <span class="badge bg-danger">취소</span>
-                    </td>
-                    <td class="table-actions">
-                        <a th:href="@{/admin/orders/6}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox">
-                        </div>
-                    </td>
-                    <td>#ORD-1228</td>
-                    <td>2023-11-10 09:10</td>
-                    <td>
-                        <div>강지원</div>
-                        <small class="text-muted">010-7890-1234</small>
-                    </td>
-                    <td>
-                        <div>스포츠 물병</div>
-                        <small class="text-muted">총 1개 상품</small>
-                    </td>
-                    <td>₩15,000</td>
-                    <td>
-                        <span class="badge bg-secondary">환불</span>
-                    </td>
-                    <td class="table-actions">
-                        <a th:href="@{/admin/orders/7}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- 선택 작업 버튼 -->
-        <div class="d-flex justify-content-between align-items-center mt-3">
-            <div>
-                <select class="form-select me-2" style="width: auto; display: inline-block;">
-                    <option selected>선택 작업</option>
-                    <option>상품준비중으로 변경</option>
-                    <option>배송중으로 변경</option>
-                    <option>배송완료로 변경</option>
-                    <option>취소로 변경</option>
-                </select>
-                <button type="button" class="btn btn-outline-secondary">적용</button>
+        <!-- 일괄 처리 섹션 -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">일괄 처리</h6>
             </div>
-
-            <!-- 페이지네이션 -->
-            <nav aria-label="Page navigation">
-                <ul class="pagination mb-0">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" aria-label="Previous">
-                            <span aria-hidden="true">&laquo;</span>
-                        </a>
-                    </li>
-                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item">
-                        <a class="page-link" href="#" aria-label="Next">
-                            <span aria-hidden="true">&raquo;</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <select class="form-control" id="bulkAction">
+                                <option value="">선택된 주문 일괄 처리</option>
+                                <option value="PROCESSING">처리중으로 변경</option>
+                                <option value="SHIPPED">배송중으로 변경</option>
+                                <option value="DELIVERED">배송완료로 변경</option>
+                                <option value="CANCELLED">취소로 변경</option>
+                                <option value="REFUNDED">환불로 변경</option>
+                                <option value="PRINT">주문서 인쇄</option>
+                            </select>
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="button" id="applyBulkAction">
+                                    적용
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <span class="text-muted">선택된 주문: <span id="selectedCount">0</span>개</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- 페이지별 스크립트 -->
-<th:block layout:fragment="page-script">
-    <script>
-        // 전체 선택 체크박스
-        document.getElementById('selectAll').addEventListener('change', function() {
-            const checkboxes = document.querySelectorAll('tbody .form-check-input');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
+    <!-- 주문 상태 변경 모달 -->
+    <div class="modal fade" id="statusModal" tabindex="-1" role="dialog" aria-labelledby="statusModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusModalLabel">주문 상태 변경</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="orderId">
+                    <div class="form-group">
+                        <label for="orderStatus">상태 선택</label>
+                        <select class="form-control" id="orderStatus">
+                            <option value="PENDING">결제대기</option>
+                            <option value="PAID">결제완료</option>
+                            <option value="PROCESSING">처리중</option>
+                            <option value="SHIPPED">배송중</option>
+                            <option value="DELIVERED">배송완료</option>
+                            <option value="CANCELLED">취소됨</option>
+                            <option value="REFUNDED">환불됨</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="saveStatus">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 배송 정보 입력 모달 -->
+    <div class="modal fade" id="trackingModal" tabindex="-1" role="dialog" aria-labelledby="trackingModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="trackingModalLabel">배송 정보 입력</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="trackingOrderId">
+                    <div class="form-group">
+                        <label for="shippingCompany">택배사</label>
+                        <select class="form-control" id="shippingCompany">
+                            <option value="">택배사 선택</option>
+                            <option value="CJ대한통운">CJ대한통운</option>
+                            <option value="우체국택배">우체국택배</option>
+                            <option value="한진택배">한진택배</option>
+                            <option value="롯데택배">롯데택배</option>
+                            <option value="로젠택배">로젠택배</option>
+                            <option value="기타">기타</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="trackingNumber">운송장번호</label>
+                        <input type="text" class="form-control" id="trackingNumber" placeholder="운송장번호 입력">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="saveTracking">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        $(document).ready(function() {
+            let currentPage = 0;
+            let totalPages = 0;
+            let searchType = '';
+            let searchKeyword = '';
+            let statusFilter = '';
+            let paymentMethodFilter = '';
+            let shippingMethodFilter = '';
+            let startDate = '';
+            let endDate = '';
+
+            // 초기 데이터 로드
+            loadOrders();
+
+            // 검색 버튼 클릭 이벤트
+            $('#searchButton').click(function() {
+                searchType = $('#searchType').val();
+                searchKeyword = $('#searchKeyword').val();
+                currentPage = 0;
+                loadOrders();
             });
-        });
 
-        // 개별 체크박스 변경 시 전체 선택 체크박스 상태 업데이트
-        document.querySelectorAll('tbody .form-check-input').forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                const allChecked = [...document.querySelectorAll('tbody .form-check-input')].every(c => c.checked);
-                document.getElementById('selectAll').checked = allChecked;
+            // 엔터키 검색
+            $('#searchKeyword').keypress(function(e) {
+                if (e.which === 13) {
+                    searchType = $('#searchType').val();
+                    searchKeyword = $('#searchKeyword').val();
+                    currentPage = 0;
+                    loadOrders();
+                }
+            });
+
+            // 상태 필터 변경 이벤트
+            $('#statusFilter').change(function() {
+                statusFilter = $(this).val();
+                currentPage = 0;
+                loadOrders();
+            });
+
+            // 결제방법 필터 변경 이벤트
+            $('#paymentMethodFilter').change(function() {
+                paymentMethodFilter = $(this).val();
+                currentPage = 0;
+                loadOrders();
+            });
+
+            // 배송방법 필터 변경 이벤트
+            $('#shippingMethodFilter').change(function() {
+                shippingMethodFilter = $(this).val();
+                currentPage = 0;
+                loadOrders();
+            });
+
+            // 날짜 필터 적용 버튼 클릭 이벤트
+            $('#dateFilterButton').click(function() {
+                startDate = $('#startDate').val();
+                endDate = $('#endDate').val();
+                currentPage = 0;
+                loadOrders();
+            });
+
+            // 오늘 필터 버튼 클릭 이벤트
+            $('#todayFilter').click(function() {
+                const today = new Date().toISOString().split('T')[0];
+                $('#startDate').val(today);
+                $('#endDate').val(today);
+                startDate = today;
+                endDate = today;
+                currentPage = 0;
+                loadOrders();
+            });
+
+            // 1주일 필터 버튼 클릭 이벤트
+            $('#weekFilter').click(function() {
+                const today = new Date();
+                const weekAgo = new Date();
+                weekAgo.setDate(today.getDate() - 7);
+
+                $('#startDate').val(weekAgo.toISOString().split('T')[0]);
+                $('#endDate').val(today.toISOString().split('T')[0]);
+                startDate = weekAgo.toISOString().split('T')[0];
+                endDate = today.toISOString().split('T')[0];
+                currentPage = 0;
+                loadOrders();
+            });
+
+            // 1개월 필터 버튼 클릭 이벤트
+            $('#monthFilter').click(function() {
+                const today = new Date();
+                const monthAgo = new Date();
+                monthAgo.setMonth(today.getMonth() - 1);
+
+                $('#startDate').val(monthAgo.toISOString().split('T')[0]);
+                $('#endDate').val(today.toISOString().split('T')[0]);
+                startDate = monthAgo.toISOString().split('T')[0];
+                endDate = today.toISOString().split('T')[0];
+                currentPage = 0;
+                loadOrders();
+            });
+
+            // 필터 초기화 버튼 클릭 이벤트
+            $('#resetFilter').click(function() {
+                $('#searchType').val('orderNumber');
+                $('#searchKeyword').val('');
+                $('#statusFilter').val('');
+                $('#paymentMethodFilter').val('');
+                $('#shippingMethodFilter').val('');
+                $('#startDate').val('');
+                $('#endDate').val('');
+
+                searchType = '';
+                searchKeyword = '';
+                statusFilter = '';
+                paymentMethodFilter = '';
+                shippingMethodFilter = '';
+                startDate = '';
+                endDate = '';
+                currentPage = 0;
+                loadOrders();
+            });
+
+            // 전체 선택 체크박스 이벤트
+            $('#selectAll').change(function() {
+                const isChecked = $(this).prop('checked');
+                $('.order-checkbox').prop('checked', isChecked);
+                updateSelectedCount();
+            });
+
+            // 주문 목록 로드 함수
+            function loadOrders() {
+                let url = '/api/orders?page=' + currentPage + '&size=10';
+
+                // 검색 조건 추가
+                if (searchKeyword) {
+                    url += '&' + searchType + '=' + encodeURIComponent(searchKeyword);
+                }
+
+                // 필터 조건 추가
+                if (statusFilter) {
+                    url += '&status=' + statusFilter;
+                }
+
+                if (paymentMethodFilter) {
+                    url += '&paymentMethod=' + paymentMethodFilter;
+                }
+
+                if (shippingMethodFilter) {
+                    url += '&shippingMethod=' + shippingMethodFilter;
+                }
+
+                // 날짜 필터 추가
+                if (startDate) {
+                    url += '&startDate=' + startDate;
+                }
+
+                if (endDate) {
+                    url += '&endDate=' + endDate;
+                }
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function(response) {
+                        renderOrders(response);
+                        renderPagination(response);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('주문 목록을 불러오는 중 오류가 발생했습니다:', error);
+                        alert('주문 목록을 불러오는 중 오류가 발생했습니다.');
+                    }
+                });
+            }
+
+            // 주문 목록 렌더링 함수
+            function renderOrders(response) {
+                const orders = response.content;
+                let html = '';
+
+                if (orders.length === 0) {
+                    html = '<tr><td colspan="9" class="text-center">주문이 없습니다.</td></tr>';
+                } else {
+                    orders.forEach(function(order) {
+                        // 주문 상태 배지 스타일 설정
+                        let statusBadgeClass = '';
+                        switch (order.status) {
+                            case 'PENDING':
+                                statusBadgeClass = 'badge-warning';
+                                break;
+                            case 'PAID':
+                                statusBadgeClass = 'badge-info';
+                                break;
+                            case 'PROCESSING':
+                                statusBadgeClass = 'badge-primary';
+                                break;
+                            case 'SHIPPED':
+                                statusBadgeClass = 'badge-primary';
+                                break;
+                            case 'DELIVERED':
+                                statusBadgeClass = 'badge-success';
+                                break;
+                            case 'CANCELLED':
+                                statusBadgeClass = 'badge-danger';
+                                break;
+                            case 'REFUNDED':
+                                statusBadgeClass = 'badge-secondary';
+                                break;
+                            default:
+                                statusBadgeClass = 'badge-secondary';
+                        }
+
+                        // 주문 상태 텍스트
+                        let statusText = '';
+                        switch (order.status) {
+                            case 'PENDING':
+                                statusText = '결제대기';
+                                break;
+                            case 'PAID':
+                                statusText = '결제완료';
+                                break;
+                            case 'PROCESSING':
+                                statusText = '처리중';
+                                break;
+                            case 'SHIPPED':
+                                statusText = '배송중';
+                                break;
+                            case 'DELIVERED':
+                                statusText = '배송완료';
+                                break;
+                            case 'CANCELLED':
+                                statusText = '취소됨';
+                                break;
+                            case 'REFUNDED':
+                                statusText = '환불됨';
+                                break;
+                            default:
+                                statusText = '알 수 없음';
+                        }
+
+                        // 배송 정보 표시
+                        let trackingInfo = '';
+                        if (order.trackingNumber && order.shippingCompany) {
+                            trackingInfo = `
+                                    <div>${order.shippingCompany}</div>
+                                    <div>${order.trackingNumber}</div>
+                                    <a href="#" class="small text-primary tracking-link"
+                                       data-company="${order.shippingCompany}"
+                                       data-number="${order.trackingNumber}">배송조회</a>
+                                `;
+                        } else {
+                            trackingInfo = '<span class="text-muted">정보 없음</span>';
+                        }
+
+                        html += `
+                                <tr>
+                                    <td>
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input order-checkbox"
+                                                   id="order${order.id}" value="${order.id}">
+                                            <label class="custom-control-label" for="order${order.id}"></label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="/admin/orders/${order.id}" class="font-weight-bold">
+                                            ${order.orderNumber}
+                                        </a>
+                                    </td>
+                                    <td>${formatDate(order.createdAt)}</td>
+                                    <td>
+                                        <div>${order.memberName}</div>
+                                        <div class="small text-muted">${order.memberEmail}</div>
+                                    </td>
+                                    <td>${order.paymentMethod || '-'}</td>
+                                    <td>${formatCurrency(order.totalAmount)}</td>
+                                    <td>
+                                        <span class="badge ${statusBadgeClass} status-badge">${statusText}</span>
+                                    </td>
+                                    <td>${trackingInfo}</td>
+                                    <td class="table-actions">
+                                        <div class="btn-group">
+                                            <a href="/admin/orders/${order.id}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-primary changeStatus"
+                                                    data-id="${order.id}" data-status="${order.status}">
+                                                <i class="fas fa-exchange-alt"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-warning inputTracking"
+                                                    data-id="${order.id}" data-company="${order.shippingCompany || ''}"
+                                                    data-number="${order.trackingNumber || ''}">
+                                                <i class="fas fa-truck"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                    });
+                }
+
+                $('#ordersList').html(html);
+
+                // 상태 변경 버튼 이벤트
+                $('.changeStatus').click(function() {
+                    const id = $(this).data('id');
+                    const status = $(this).data('status');
+                    $('#orderId').val(id);
+                    $('#orderStatus').val(status);
+                    $('#statusModal').modal('show');
+                });
+
+                // 배송 정보 입력 버튼 이벤트
+                $('.inputTracking').click(function() {
+                    const id = $(this).data('id');
+                    const company = $(this).data('company');
+                    const number = $(this).data('number');
+                    $('#trackingOrderId').val(id);
+                    $('#shippingCompany').val(company);
+                    $('#trackingNumber').val(number);
+                    $('#trackingModal').modal('show');
+                });
+
+                // 배송 조회 링크 이벤트
+                $('.tracking-link').click(function(e) {
+                    e.preventDefault();
+                    const company = $(this).data('company');
+                    const number = $(this).data('number');
+                    openTrackingPage(company, number);
+                });
+
+                // 체크박스 변경 이벤트
+                $('.order-checkbox').change(function() {
+                    updateSelectedCount();
+                });
+            }
+
+            // 페이지네이션 렌더링 함수
+            function renderPagination(response) {
+                totalPages = response.totalPages;
+                let html = '';
+
+                // 이전 페이지 버튼
+                html += `
+                        <li class="page-item ${currentPage === 0 ? 'disabled' : ''}">
+                            <a class="page-link" href="#" data-page="${currentPage - 1}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    `;
+
+                // 페이지 번호
+                for (let i = 0; i < totalPages; i++) {
+                    if (i === currentPage) {
+                        html += `<li class="page-item active"><a class="page-link" href="#" data-page="${i}">${i + 1}</a></li>`;
+                    } else {
+                        html += `<li class="page-item"><a class="page-link" href="#" data-page="${i}">${i + 1}</a></li>`;
+                    }
+                }
+
+                // 다음 페이지 버튼
+                html += `
+                        <li class="page-item ${currentPage === totalPages - 1 ? 'disabled' : ''}">
+                            <a class="page-link" href="#" data-page="${currentPage + 1}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    `;
+
+                $('#pagination').html(html);
+
+                // 페이지 클릭 이벤트
+                $('.page-link').click(function(e) {
+                    e.preventDefault();
+                    const page = $(this).data('page');
+                    if (page >= 0 && page < totalPages) {
+                        currentPage = page;
+                        loadOrders();
+                    }
+                });
+            }
+
+            // 선택된 주문 수 업데이트 함수
+            function updateSelectedCount() {
+                const count = $('.order-checkbox:checked').length;
+                $('#selectedCount').text(count);
+
+                // 전체 선택 체크박스 상태 업데이트
+                const totalCount = $('.order-checkbox').length;
+                $('#selectAll').prop('checked', count > 0 && count === totalCount);
+            }
+
+            // 주문 상태 변경 저장 버튼 이벤트
+            $('#saveStatus').click(function() {
+                const id = $('#orderId').val();
+                const status = $('#orderStatus').val();
+
+                $.ajax({
+                    url: `/api/orders/${id}/status`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        status: status
+                    }),
+                    success: function(response) {
+                        $('#statusModal').modal('hide');
+                        loadOrders();
+                        alert('주문 상태가 변경되었습니다.');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('주문 상태 변경 중 오류가 발생했습니다:', error);
+                        alert('주문 상태 변경 중 오류가 발생했습니다.');
+                    }
+                });
+            });
+
+            // 배송 정보 저장 버튼 이벤트
+            $('#saveTracking').click(function() {
+                const id = $('#trackingOrderId').val();
+                const company = $('#shippingCompany').val();
+                const number = $('#trackingNumber').val();
+
+                if (!company) {
+                    alert('택배사를 선택해주세요.');
+                    return;
+                }
+
+                if (!number) {
+                    alert('운송장번호를 입력해주세요.');
+                    return;
+                }
+
+                $.ajax({
+                    url: `/api/orders/${id}/tracking`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        shippingCompany: company,
+                        trackingNumber: number
+                    }),
+                    success: function(response) {
+                        $('#trackingModal').modal('hide');
+                        loadOrders();
+                        alert('배송 정보가 저장되었습니다.');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('배송 정보 저장 중 오류가 발생했습니다:', error);
+                        alert('배송 정보 저장 중 오류가 발생했습니다.');
+                    }
+                });
+            });
+
+            // 일괄 처리 적용 버튼 이벤트
+            $('#applyBulkAction').click(function() {
+                const action = $('#bulkAction').val();
+                const selectedOrders = $('.order-checkbox:checked').map(function() {
+                    return $(this).val();
+                }).get();
+
+                if (!action) {
+                    alert('적용할 작업을 선택해주세요.');
+                    return;
+                }
+
+                if (selectedOrders.length === 0) {
+                    alert('선택된 주문이 없습니다.');
+                    return;
+                }
+
+                if (action === 'PRINT') {
+                    // 주문서 인쇄 처리
+                    printSelectedOrders(selectedOrders);
+                } else {
+                    // 상태 변경 처리
+                    updateOrdersStatus(selectedOrders, action);
+                }
+            });
+
+            // 선택된 주문 상태 일괄 변경 함수
+            function updateOrdersStatus(orderIds, status) {
+                if (!confirm(`선택한 ${orderIds.length}개의 주문을 ${getStatusText(status)}(으)로 변경하시겠습니까?`)) {
+                    return;
+                }
+
+                const promises = orderIds.map(id => {
+                    return $.ajax({
+                        url: `/api/orders/${id}/status`,
+                        type: 'PUT',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            status: status
+                        })
+                    });
+                });
+
+                Promise.all(promises)
+                    .then(function() {
+                        loadOrders();
+                        alert(`${orderIds.length}개의 주문 상태가 변경되었습니다.`);
+                    })
+                    .catch(function(error) {
+                        console.error('주문 상태 일괄 변경 중 오류가 발생했습니다:', error);
+                        alert('주문 상태 일괄 변경 중 오류가 발생했습니다.');
+                    });
+            }
+
+            // 선택된 주문서 인쇄 함수
+            function printSelectedOrders(orderIds) {
+                alert('주문서 인쇄 기능은 준비 중입니다.');
+            }
+
+            // 배송 조회 페이지 열기 함수
+            function openTrackingPage(company, number) {
+                let trackingUrl = '';
+
+                switch (company) {
+                    case 'CJ대한통운':
+                        trackingUrl = `https://www.cjlogistics.com/ko/tool/parcel/tracking?gnbInvcNo=${number}`;
+                        break;
+                    case '우체국택배':
+                        trackingUrl = `https://service.epost.go.kr/trace.RetrieveDomRigiTraceList.comm?sid1=${number}`;
+                        break;
+                    case '한진택배':
+                        trackingUrl = `https://www.hanjin.co.kr/kor/CMS/DeliveryMgr/WaybillResult.do?mCode=MN038&schLang=KR&wblnumText=${number}`;
+                        break;
+                    case '롯데택배':
+                        trackingUrl = `https://www.lotteglogis.com/home/reservation/tracking/index?InvNo=${number}`;
+                        break;
+                    case '로젠택배':
+                        trackingUrl = `https://www.ilogen.com/m/personal/trace/${number}`;
+                        break;
+                    default:
+                        alert('지원하지 않는 택배사입니다.');
+                        return;
+                }
+
+                window.open(trackingUrl, '_blank');
+            }
+
+            // 상태 텍스트 반환 함수
+            function getStatusText(status) {
+                switch (status) {
+                    case 'PENDING': return '결제대기';
+                    case 'PAID': return '결제완료';
+                    case 'PROCESSING': return '처리중';
+                    case 'SHIPPED': return '배송중';
+                    case 'DELIVERED': return '배송완료';
+                    case 'CANCELLED': return '취소';
+                    case 'REFUNDED': return '환불';
+                    default: return '알 수 없음';
+                }
+            }
+
+            // 날짜 포맷 함수
+            function formatDate(dateString) {
+                if (!dateString) return '-';
+                const date = new Date(dateString);
+                return date.getFullYear() + '-' +
+                    padZero(date.getMonth() + 1) + '-' +
+                    padZero(date.getDate()) + ' ' +
+                    padZero(date.getHours()) + ':' +
+                    padZero(date.getMinutes());
+            }
+
+            function padZero(num) {
+                return num < 10 ? '0' + num : num;
+            }
+
+            // 금액 포맷 함수
+            function formatCurrency(amount) {
+                if (!amount) return '₩0';
+                return '₩' + amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+
+            // 엑셀 내보내기
+            $('#exportExcel').click(function(e) {
+                e.preventDefault();
+                alert('엑셀 내보내기 기능은 준비 중입니다.');
+            });
+
+            // 주문 인쇄
+            $('#printOrders').click(function(e) {
+                e.preventDefault();
+                alert('주문 인쇄 기능은 준비 중입니다.');
             });
         });
     </script>
-</th:block>
+</div>
 </body>
 </html>
+
