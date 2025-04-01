@@ -142,32 +142,32 @@
 
         <ul class="list-unstyled components">
             <li>
-                <a th:href="@{/admin/dashboard}" th:classappend="${#httpServletRequest.getRequestURI() == '/admin/dashboard' ? 'active' : ''}">
+                <a th:href="@{/admin/dashboard}" th:classappend="${#req.isPath('/admin/dashboard') ? 'active' : ''}">
                     <i class="fas fa-tachometer-alt"></i> 대시보드
                 </a>
             </li>
             <li>
-                <a th:href="@{/admin/products}" th:classappend="${#httpServletRequest.getRequestURI().startsWith('/admin/products') ? 'active' : ''}">
+                <a th:href="@{/admin/products}" th:classappend="${#req.startsWith('/admin/products') ? 'active' : ''}">
                     <i class="fas fa-box"></i> 상품 관리
                 </a>
             </li>
             <li>
-                <a th:href="@{/admin/orders}" th:classappend="${#httpServletRequest.getRequestURI().startsWith('/admin/orders') ? 'active' : ''}">
+                <a th:href="@{/admin/orders}" th:classappend="${#req.startsWith('/admin/orders') ? 'active' : ''}">
                     <i class="fas fa-shopping-cart"></i> 주문 관리
                 </a>
             </li>
             <li>
-                <a th:href="@{/admin/members}" th:classappend="${#httpServletRequest.getRequestURI() == '/admin/members' ? 'active' : ''}">
+                <a th:href="@{/admin/members}" th:classappend="${#req.isPath('/admin/members') ? 'active' : ''}">
                     <i class="fas fa-users"></i> 회원 관리
                 </a>
             </li>
             <li>
-                <a th:href="@{/admin/suppliers}" th:classappend="${#httpServletRequest.getRequestURI() == '/admin/suppliers' ? 'active' : ''}">
+                <a th:href="@{/admin/suppliers}" th:classappend="${#req.isPath('/admin/suppliers') ? 'active' : ''}">
                     <i class="fas fa-truck"></i> 공급업체 관리
                 </a>
             </li>
             <li>
-                <a th:href="@{/admin/shipments}" th:classappend="${#httpServletRequest.getRequestURI() == '/admin/shipments' ? 'active' : ''}">
+                <a th:href="@{/admin/shipments}" th:classappend="${#req.isPath('/admin/shipments') ? 'active' : ''}">
                     <i class="fas fa-shipping-fast"></i> 배송 관리
                 </a>
             </li>

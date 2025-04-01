@@ -246,15 +246,15 @@
                                         <nav aria-label="Page navigation" class="mt-5" th:if="${!products.isEmpty()}">
                                             <ul class="pagination justify-content-center">
                                                 <li class="page-item" th:classappend="${currentPage == 1 ? 'disabled' : ''}">
-                                                    <a class="page-link" th:href="@{${#httpServletRequest.requestURI}(page=${currentPage - 1})}" aria-label="Previous">
+                                                    <a class="page-link" th:href="@{${#req.requestURI}(page=${currentPage - 1})}" aria-label="Previous">
                                                         <span aria-hidden="true">&laquo;</span>
                                                     </a>
                                                 </li>
                                                 <li class="page-item" th:each="i : ${#numbers.sequence(1, totalPages)}" th:classappend="${i == currentPage ? 'active' : ''}">
-                                                    <a class="page-link" th:href="@{${#httpServletRequest.requestURI}(page=${i})}" th:text="${i}">1</a>
+                                                    <a class="page-link" th:href="@{${#req.requestURI}(page=${i})}" th:text="${i}">1</a>
                                                 </li>
                                                 <li class="page-item" th:classappend="${currentPage == totalPages ? 'disabled' : ''}">
-                                                    <a class="page-link" th:href="@{${#httpServletRequest.requestURI}(page=${currentPage + 1})}" aria-label="Next">
+                                                    <a class="page-link" th:href="@{${#req.requestURI}(page=${currentPage + 1})}" aria-label="Next">
                                                         <span aria-hidden="true">&raquo;</span>
                                                     </a>
                                                 </li>

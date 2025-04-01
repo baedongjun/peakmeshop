@@ -37,42 +37,42 @@
 
         <ul class="list-unstyled components">
             <li>
-                <a th:href="@{/admin/dashboard}" th:classappend="${#httpServletRequest.requestURI.contains('/admin/dashboard') ? 'active' : ''}">
+                <a th:href="@{/admin/dashboard}" th:classappend="${#req.contains('/admin/dashboard') ? 'active' : ''}">
                     <i class="fas fa-tachometer-alt me-2"></i> 대시보드
                 </a>
             </li>
             <li>
-                <a th:href="@{/admin/orders}" th:classappend="${#httpServletRequest.requestURI.contains('/admin/orders') ? 'active' : ''}">
+                <a th:href="@{/admin/orders}" th:classappend="${#req.contains('/admin/orders') ? 'active' : ''}">
                     <i class="fas fa-shopping-cart me-2"></i> 주문 관리
                 </a>
             </li>
             <li>
-                <a th:href="@{/admin/products}" th:classappend="${#httpServletRequest.requestURI.contains('/admin/products') ? 'active' : ''}">
+                <a th:href="@{/admin/products}" th:classappend="${#req.contains('/admin/products') ? 'active' : ''}">
                     <i class="fas fa-box-open me-2"></i> 상품 관리
                 </a>
             </li>
             <li>
-                <a th:href="@{/admin/categories}" th:classappend="${#httpServletRequest.requestURI.contains('/admin/categories') ? 'active' : ''}">
+                <a th:href="@{/admin/categories}" th:classappend="${#req.contains('/admin/categories') ? 'active' : ''}">
                     <i class="fas fa-list me-2"></i> 카테고리 관리
                 </a>
             </li>
             <li>
-                <a th:href="@{/admin/members}" th:classappend="${#httpServletRequest.requestURI.contains('/admin/members') ? 'active' : ''}">
+                <a th:href="@{/admin/members}" th:classappend="${#req.contains('/admin/members') ? 'active' : ''}">
                     <i class="fas fa-users me-2"></i> 회원 관리
                 </a>
             </li>
             <li>
-                <a th:href="@{/admin/coupons}" th:classappend="${#httpServletRequest.requestURI.contains('/admin/coupons') ? 'active' : ''}">
+                <a th:href="@{/admin/coupons}" th:classappend="${#req.contains('/admin/coupons') ? 'active' : ''}">
                     <i class="fas fa-ticket-alt me-2"></i> 쿠폰 관리
                 </a>
             </li>
             <li>
-                <a th:href="@{/admin/reviews}" th:classappend="${#httpServletRequest.requestURI.contains('/admin/reviews') ? 'active' : ''}">
+                <a th:href="@{/admin/reviews}" th:classappend="${#req.contains('/admin/reviews') ? 'active' : ''}">
                     <i class="far fa-comment-dots me-2"></i> 리뷰 관리
                 </a>
             </li>
             <li>
-                <a th:href="@{/admin/qna}" th:classappend="${#httpServletRequest.requestURI.contains('/admin/qna') ? 'active' : ''}">
+                <a th:href="@{/admin/qna}" th:classappend="${#req.contains('/admin/qna') ? 'active' : ''}">
                     <i class="far fa-question-circle me-2"></i> 문의 관리
                 </a>
             </li>
