@@ -60,7 +60,7 @@ public class Product {
     private BigDecimal salePrice;
 
     // 브랜드 필드를 String에서 Brand 엔티티로 변경
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "brand_id")
     private Brand brand;
 
@@ -68,7 +68,7 @@ public class Product {
     @Column(name = "brand_name")
     private String brandName;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")
     private Category category;
 
