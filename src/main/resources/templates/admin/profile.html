@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>관리자 프로필 | PeakMe Shop</title>
+    <style>
+        .profile-header {
+            background-color: #f8f9fa;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .profile-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #fff;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .profile-image-upload {
+            position: relative;
+            display: inline-block;
+        }
+        .profile-image-upload .upload-button {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: #007bff;
+            color: white;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        .profile-image-upload input[type="file"] {
+            display: none;
+        }
+        .password-strength {
+            height: 5px;
+            margin-top: 5px;
+            border-radius: 2px;
+        }
+        .activity-item {
+            border-left: 3px solid #007bff;
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+        .activity-item.warning {
+            border-left-color: #ffc107;
+        }
+        .session-item {
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .session-item.current {
+            border-color: #28a745;
+            background-color: rgba(40, 167, 69, 0.05);
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <h1 class="h2 mb-4">관리자 프로필</h1>
+
+        <!-- 프로필 요약 정보 -->
+        <div class="profile-header row">
+            <div class="col-md-2 text-center">
+                <div class="profile-image-upload">
+                    <img src="/placeholder.svg?height=120&width=120" alt="프로필 이미지" class="profile-image" id="profileImage">
+                    <label for="profileImageUpload" class="upload-button">
+                        <i class="fas fa-camera"></i>
+                    </label>
+                    <input type="file" id="profileImageUpload" accept="image/*">
+                </div>
+            </div>
+            <div class="col-md-10">
+                <h2 class="h3 mb-2">홍길동</h2>
+                <p class="text-muted mb-2">admin@peakmeshop.com</p>
+                <p class="mb-2"><span class="badge badge-primary">최고 관리자</span></p>
+                <p class="small text-muted">마지막 로그인: 2023년 6월 15일 14:30 (서울, 대한민국)</p>
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-outline-secondary mr-2">
+                        <i class="fas fa-key mr-1"></i> 비밀번호 변경
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-shield-alt mr-1"></i> 2단계 인증 설정
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <!-- 개인 정보 섹션 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-user mr-2"></i>개인 정보</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="profileForm">
+                            <div class="form-group">
+                                <label for="firstName">이름</label>
+                                <input type="text" class="form-control" id="firstName" value="홍길동">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">이메일</label>
+                                <input type="email" class="form-control" id="email" value="admin@peakmeshop.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">전화번호</label>
+                                <input type="tel" class="form-control" id="phone" value="010-1234-5678">
+                            </div>
+                            <div class="form-group">
+                                <label for="position">직책</label>
+                                <input type="text" class="form-control" id="position" value="최고 관리자">
+                            </div>
+                            <div class="form-group">
+                                <label for="timezone">시간대</label>
+                                <select class="form-control" id="timezone">
+                                    <option value="Asia/Seoul" selected>아시아/서울 (GMT+9)</option>
+                                    <option value="America/New_York">미국/뉴욕 (GMT-5)</option>
+                                    <option value="Europe/London">유럽/런던 (GMT+0)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="language">언어</label>
+                                <select class="form-control" id="language">
+                                    <option value="ko" selected>한국어</option>
+                                    <option value="en">영어</option>
+                                    <option value="ja">일본어</option>
+                                    <option value="zh">중국어</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save mr-1"></i> 정보 저장
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 비밀번호 변경 섹션 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-key mr-2"></i>비밀번호 변경</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="passwordForm">
+                            <div class="form-group">
+                                <label for="currentPassword">현재 비밀번호</label>
+                                <input type="password" class="form-control" id="currentPassword">
+                            </div>
+                            <div class="form-group">
+                                <label for="newPassword">새 비밀번호</label>
+                                <input type="password" class="form-control" id="newPassword">
+                                <div class="password-strength bg-danger" style="width: 30%"></div>
+                                <small class="form-text text-muted">비밀번호는 최소 8자 이상이어야 하며, 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다.</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="confirmPassword">비밀번호 확인</label>
+                                <input type="password" class="form-control" id="confirmPassword">
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check mr-1"></i> 비밀번호 변경
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 2단계 인증 설정 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-shield-alt mr-2"></i>2단계 인증</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="custom-control custom-switch mb-3">
+                            <input type="checkbox" class="custom-control-input" id="twoFactorAuth">
+                            <label class="custom-control-label" for="twoFactorAuth">2단계 인증 활성화</label>
+                        </div>
+                        <div id="twoFactorSetup" class="mt-4" style="display: none;">
+                            <p>아래 QR 코드를 Google Authenticator 또는 다른 인증 앱으로 스캔하세요.</p>
+                            <div class="text-center mb-3">
+                                <img src="/placeholder.svg?height=200&width=200" alt="2단계 인증 QR 코드" class="img-thumbnail">
+                            </div>
+                            <p>또는 이 코드를 수동으로 입력하세요: <strong>ABCD-EFGH-IJKL-MNOP</strong></p>
+                            <div class="form-group">
+                                <label for="authCode">인증 코드</label>
+                                <input type="text" class="form-control" id="authCode" placeholder="6자리 코드 입력">
+                            </div>
+                            <button class="btn btn-primary">
+                                <i class="fas fa-check mr-1"></i> 인증 확인
+                            </button>
+                            <hr>
+                            <h6>백업 코드</h6>
+                            <p class="small text-muted">인증 앱에 접근할 수 없는 경우를 대비하여 이 백업 코드를 안전한 곳에 보관하세요.</p>
+                            <div class="bg-light p-3 rounded">
+                                <code>1234-5678-9012</code><br>
+                                <code>2345-6789-0123</code><br>
+                                <code>3456-7890-1234</code><br>
+                                <code>4567-8901-2345</code>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary mt-2">
+                                <i class="fas fa-download mr-1"></i> 백업 코드 다운로드
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <!-- 알림 설정 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-bell mr-2"></i>알림 설정</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="mb-3">알림 채널</h6>
+                        <div class="custom-control custom-switch mb-2">
+                            <input type="checkbox" class="custom-control-input" id="emailNotifications" checked>
+                            <label class="custom-control-label" for="emailNotifications">이메일 알림</label>
+                        </div>
+                        <div class="custom-control custom-switch mb-2">
+                            <input type="checkbox" class="custom-control-input" id="pushNotifications" checked>
+                            <label class="custom-control-label" for="pushNotifications">푸시 알림</label>
+                        </div>
+                        <div class="custom-control custom-switch mb-4">
+                            <input type="checkbox" class="custom-control-input" id="smsNotifications">
+                            <label class="custom-control-label" for="smsNotifications">SMS 알림</label>
+                        </div>
+
+                        <h6 class="mb-3">알림 유형</h6>
+                        <div class="custom-control custom-switch mb-2">
+                            <input type="checkbox" class="custom-control-input" id="orderNotifications" checked>
+                            <label class="custom-control-label" for="orderNotifications">새 주문</label>
+                        </div>
+                        <div class="custom-control custom-switch mb-2">
+                            <input type="checkbox" class="custom-control-input" id="stockNotifications" checked>
+                            <label class="custom-control-label" for="stockNotifications">재고 부족</label>
+                        </div>
+                        <div class="custom-control custom-switch mb-2">
+                            <input type="checkbox" class="custom-control-input" id="memberNotifications" checked>
+                            <label class="custom-control-label" for="memberNotifications">새 회원 가입</label>
+                        </div>
+                        <div class="custom-control custom-switch mb-2">
+                            <input type="checkbox" class="custom-control-input" id="reviewNotifications" checked>
+                            <label class="custom-control-label" for="reviewNotifications">새 리뷰</label>
+                        </div>
+                        <div class="custom-control custom-switch mb-2">
+                            <input type="checkbox" class="custom-control-input" id="securityNotifications" checked>
+                            <label class="custom-control-label" for="securityNotifications">보안 알림</label>
+                        </div>
+
+                        <button class="btn btn-primary mt-3">
+                            <i class="fas fa-save mr-1"></i> 설정 저장
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 계정 활동 내역 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-history mr-2"></i>계정 활동 내역</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="activity-item">
+                            <p class="mb-1"><strong>로그인 성공</strong></p>
+                            <p class="small text-muted mb-0">2023년 6월 15일 14:30</p>
+                            <p class="small mb-0">IP: 123.456.789.0 | 기기: Chrome on Windows</p>
+                        </div>
+                        <div class="activity-item">
+                            <p class="mb-1"><strong>프로필 정보 변경</strong></p>
+                            <p class="small text-muted mb-0">2023년 6월 14일 11:15</p>
+                            <p class="small mb-0">전화번호가 변경되었습니다.</p>
+                        </div>
+                        <div class="activity-item warning">
+                            <p class="mb-1"><strong>로그인 실패</strong></p>
+                            <p class="small text-muted mb-0">2023년 6월 13일 09:45</p>
+                            <p class="small mb-0">IP: 987.654.321.0 | 기기: Unknown</p>
+                        </div>
+                        <div class="activity-item">
+                            <p class="mb-1"><strong>비밀번호 변경</strong></p>
+                            <p class="small text-muted mb-0">2023년 6월 10일 16:20</p>
+                            <p class="small mb-0">IP: 123.456.789.0 | 기기: Chrome on Windows</p>
+                        </div>
+                        <div class="activity-item">
+                            <p class="mb-1"><strong>로그인 성공</strong></p>
+                            <p class="small text-muted mb-0">2023년 6월 10일 09:10</p>
+                            <p class="small mb-0">IP: 123.456.789.0 | 기기: Chrome on Windows</p>
+                        </div>
+
+                        <button class="btn btn-outline-secondary btn-sm mt-3">
+                            <i class="fas fa-list mr-1"></i> 전체 활동 내역 보기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 세션 관리 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-desktop mr-2"></i>세션 관리</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="session-item current">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-laptop mr-2"></i> Windows PC (현재 세션)
+                                </h6>
+                                <span class="badge badge-success">활성</span>
+                            </div>
+                            <p class="small text-muted mb-1">Chrome 브라우저</p>
+                            <p class="small text-muted mb-0">IP: 123.456.789.0 | 서울, 대한민국</p>
+                            <p class="small text-muted">로그인: 2023년 6월 15일 14:30</p>
+                        </div>
+
+                        <div class="session-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-mobile-alt mr-2"></i> iPhone 13
+                                </h6>
+                                <span class="badge badge-secondary">비활성</span>
+                            </div>
+                            <p class="small text-muted mb-1">Safari 브라우저</p>
+                            <p class="small text-muted mb-0">IP: 234.567.890.1 | 서울, 대한민국</p>
+                            <p class="small text-muted">마지막 활동: 2023년 6월 14일 18:45</p>
+                            <button class="btn btn-sm btn-danger mt-2">
+                                <i class="fas fa-sign-out-alt mr-1"></i> 세션 종료
+                            </button>
+                        </div>
+
+                        <div class="session-item">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-tablet-alt mr-2"></i> iPad Pro
+                                </h6>
+                                <span class="badge badge-secondary">비활성</span>
+                            </div>
+                            <p class="small text-muted mb-1">Safari 브라우저</p>
+                            <p class="small text-muted mb-0">IP: 345.678.901.2 | 부산, 대한민국</p>
+                            <p class="small text-muted">마지막 활동: 2023년 6월 12일 10:15</p>
+                            <button class="btn btn-sm btn-danger mt-2">
+                                <i class="fas fa-sign-out-alt mr-1"></i> 세션 종료
+                            </button>
+                        </div>
+
+                        <button class="btn btn-outline-danger btn-block mt-3">
+                            <i class="fas fa-sign-out-alt mr-1"></i> 모든 다른 세션 종료
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        // 프로필 이미지 업로드 미리보기
+        const profileImageUpload = document.getElementById('profileImageUpload');
+        const profileImage = document.getElementById('profileImage');
+
+        if (profileImageUpload && profileImage) {
+            profileImageUpload.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        profileImage.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // 2단계 인증 토글
+        const twoFactorAuth = document.getElementById('twoFactorAuth');
+        const twoFactorSetup = document.getElementById('twoFactorSetup');
+
+        if (twoFactorAuth && twoFactorSetup) {
+            twoFactorAuth.addEventListener('change', function() {
+                if (this.checked) {
+                    twoFactorSetup.style.display = 'block';
+                } else {
+                    twoFactorSetup.style.display = 'none';
+                }
+            });
+        }
+
+        // 비밀번호 강도 표시
+        const newPassword = document.getElementById('newPassword');
+        const passwordStrength = document.querySelector('.password-strength');
+
+        if (newPassword && passwordStrength) {
+            newPassword.addEventListener('input', function() {
+                const value = this.value;
+                let strength = 0;
+
+                if (value.length >= 8) strength += 1;
+                if (/[A-Z]/.test(value)) strength += 1;
+                if (/[a-z]/.test(value)) strength += 1;
+                if (/[0-9]/.test(value)) strength += 1;
+                if (/[^A-Za-z0-9]/.test(value)) strength += 1;
+
+                // 강도에 따라 색상과 너비 변경
+                switch(strength) {
+                    case 0:
+                    case 1:
+                        passwordStrength.className = 'password-strength bg-danger';
+                        passwordStrength.style.width = '20%';
+                        break;
+                    case 2:
+                        passwordStrength.className = 'password-strength bg-warning';
+                        passwordStrength.style.width = '40%';
+                        break;
+                    case 3:
+                        passwordStrength.className = 'password-strength bg-info';
+                        passwordStrength.style.width = '60%';
+                        break;
+                    case 4:
+                        passwordStrength.className = 'password-strength bg-primary';
+                        passwordStrength.style.width = '80%';
+                        break;
+                    case 5:
+                        passwordStrength.className = 'password-strength bg-success';
+                        passwordStrength.style.width = '100%';
+                        break;
+                }
+            });
+        }
+
+        // 폼 제출 방지 (데모용)
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('이 기능은 데모 버전에서는 작동하지 않습니다.');
+            });
+        });
+    });
+</script>
+</body>
+</html>
+

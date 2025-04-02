@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title th:text="${category.id != null} ? '카테고리 수정 - PeakMeShop 관리자' : '새 카테고리 등록 - PeakMeShop 관리자'">
+        카테고리 등록/수정 - PeakMeShop 관리자
+    </title>
+    <meta name="description" content="카테고리 등록 및 수정 페이지입니다.">
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid px-4">
+        <h1 class="mt-4" th:text="${category.id != null} ? '카테고리 수정' : '새 카테고리 등록'">
+            카테고리 등록/수정
+        </h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/admin">대시보드</a></li>
+            <li class="breadcrumb-item"><a href="/admin/categories">카테고리 관리</a></li>
+            <li class="breadcrumb-item active" th:text="${category.id != null} ? '카테고리 수정' : '새 카테고리 등록'">
+                카테고리 등록/수정
+            </li>
+        </ol>
+
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-edit me-1"></i>
+                        카테고리 정보
+                    </div>
+                    <div class="card-body">
+                        <form id="categoryForm" th:object="${category}" method="post"
+                              th:action="${category.id != null} ? @{/api/categories/{id}(id=${category.id})} : @{/api/categories}"
+                              enctype="multipart/form-data">
+
+                            <input type="hidden" th:if="${category.id != null}" th:field="*{id}" />
+                            <input type="hidden" name="_method" th:value="${category.id != null} ? 'PUT' : 'POST'" />
+
+                            <div class="row mb-4">
+                                <div class="col-md-8">
+                                    <!-- 기본 정보 섹션 -->
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0">기본 정보</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label for="name" class="form-label">카테고리명 <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="name" th:field="*{name}"
+                                                       required placeholder="카테고리명을 입력하세요">
+                                                <div class="invalid-feedback">카테고리명을 입력해주세요.</div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="slug" class="form-label">슬러그 <span class="text-danger">*</span></label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" id="slug" th:field="*{slug}"
+                                                           required placeholder="URL에 사용될 슬러그">
+                                                    <button class="btn btn-outline-secondary" type="button" id="generateSlug">
+                                                        자동생성
+                                                    </button>
+                                                </div>
+                                                <small class="text-muted">영문 소문자, 숫자, 하이픈(-)만 사용 가능합니다.</small>
+                                                <div class="invalid-feedback">슬러그를 입력해주세요.</div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="parentId" class="form-label">상위 카테고리</label>
+                                                <select class="form-select" id="parentId" th:field="*{parentId}">
+                                                    <option value="">최상위 카테고리로 설정</option>
+                                                    <option th:each="parent : ${parentCategories}"
+                                                            th:value="${parent.id}"
+                                                            th:text="${parent.name}"
+                                                            th:selected="${parent.id == category.parentId}">
+                                                        패션
+                                                    </option>
+                                                </select>
+                                                <small class="text-muted">상위 카테고리가 없으면 최상위 카테고리로 설정됩니다.</small>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="description" class="form-label">설명</label>
+                                                <textarea class="form-control" id="description" th:field="*{description}"
+                                                          rows="4" placeholder="카테고리에 대한 설명을 입력하세요"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 필터 속성 섹션 -->
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0">필터 속성</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label class="form-label">필터링 가능한 속성</label>
+                                                <div class="input-group mb-2">
+                                                    <input type="text" class="form-control" id="attributeInput"
+                                                           placeholder="속성명 입력 (예: 색상, 사이즈, 소재 등)">
+                                                    <button class="btn btn-outline-primary" type="button" id="addAttribute">
+                                                        추가
+                                                    </button>
+                                                </div>
+                                                <small class="text-muted">
+                                                    이 카테고리에서 필터링 가능한 제품 속성을 추가하세요.
+                                                </small>
+
+                                                <div class="mt-3" id="attributesList">
+                                                    <div class="d-flex flex-wrap gap-2" id="attributeTags">
+                                                        <!-- 기존 속성 태그들 (Thymeleaf로 반복) -->
+                                                        <div th:each="attr : ${category.filterableAttributes}" class="attribute-tag">
+                                                                <span class="badge bg-primary d-flex align-items-center p-2">
+                                                                    <span th:text="${attr}">색상</span>
+                                                                    <button type="button" class="btn-close btn-close-white ms-2 remove-attribute"
+                                                                            th:data-attr="${attr}" aria-label="Remove"></button>
+                                                                    <input type="hidden" name="filterableAttributes" th:value="${attr}">
+                                                                </span>
+                                                        </div>
+                                                    </div>
+                                                    <p class="text-muted mt-2" id="noAttributesMessage"
+                                                       th:style="${not #lists.isEmpty(category.filterableAttributes)} ? 'display:none' : ''">
+                                                        추가된 필터 속성이 없습니다.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <!-- 이미지 업로드 섹션 -->
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0">카테고리 이미지</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="text-center mb-3">
+                                                <div class="image-preview-container border rounded p-2 mb-3" style="height: 200px;">
+                                                    <img th:if="${category.imageUrl}" th:src="${category.imageUrl}"
+                                                         id="imagePreview" class="img-fluid" alt="카테고리 이미지"
+                                                         style="max-height: 100%; max-width: 100%;">
+                                                    <div th:unless="${category.imageUrl}" class="d-flex align-items-center justify-content-center h-100">
+                                                            <span class="text-muted">
+                                                                <i class="fas fa-image fa-3x mb-2"></i><br>
+                                                                이미지 미리보기
+                                                            </span>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <input class="form-control" type="file" id="imageFile" name="imageFile"
+                                                           accept="image/*">
+                                                    <small class="text-muted">
+                                                        권장 크기: 800x600px, 최대 2MB
+                                                    </small>
+                                                </div>
+
+                                                <div th:if="${category.imageUrl}" class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" id="removeImage" name="removeImage">
+                                                    <label class="form-check-label" for="removeImage">
+                                                        기존 이미지 삭제
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 설정 섹션 -->
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0">설정</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3 form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="active" th:field="*{active}">
+                                                <label class="form-check-label" for="active">활성화</label>
+                                                <small class="d-block text-muted">
+                                                    비활성화된 카테고리는 쇼핑몰에 표시되지 않습니다.
+                                                </small>
+                                            </div>
+
+                                            <div class="mb-3 form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="featured" th:field="*{featured}">
+                                                <label class="form-check-label" for="featured">주요 카테고리로 설정</label>
+                                                <small class="d-block text-muted">
+                                                    주요 카테고리는 메인 페이지나 메뉴에서 강조됩니다.
+                                                </small>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="sortOrder" class="form-label">정렬 순서</label>
+                                                <input type="number" class="form-control" id="sortOrder" th:field="*{sortOrder}"
+                                                       min="0" placeholder="0">
+                                                <small class="text-muted">
+                                                    낮은 숫자가 먼저 표시됩니다. 기본값은 0입니다.
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <a href="/admin/categories" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i> 목록으로
+                                </a>
+                                <div>
+                                    <button type="reset" class="btn btn-light me-2">초기화</button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i> 저장하기
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 페이지 스크립트 -->
+<th:block layout:fragment="script">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const nameInput = document.getElementById('name');
+            const slugInput = document.getElementById('slug');
+            const generateSlugBtn = document.getElementById('generateSlug');
+            const imageFileInput = document.getElementById('imageFile');
+            const imagePreview = document.getElementById('imagePreview');
+            const removeImageCheckbox = document.getElementById('removeImage');
+            const attributeInput = document.getElementById('attributeInput');
+            const addAttributeBtn = document.getElementById('addAttribute');
+            const attributeTags = document.getElementById('attributeTags');
+            const noAttributesMessage = document.getElementById('noAttributesMessage');
+            const categoryForm = document.getElementById('categoryForm');
+
+            // 슬러그 자동 생성
+            generateSlugBtn.addEventListener('click', function() {
+                const name = nameInput.value.trim();
+                if (name) {
+                    // 한글, 특수문자 등을 영문 소문자, 숫자, 하이픈으로 변환
+                    const slug = name
+                        .toLowerCase()
+                        .replace(/[^a-z0-9가-힣\s]/g, '')  // 영문, 숫자, 한글, 공백만 남김
+                        .replace(/[가-힣]/g, '')          // 한글 제거
+                        .replace(/\s+/g, '-')             // 공백을 하이픈으로 변환
+                        .replace(/-+/g, '-')              // 연속된 하이픈을 하나로 변환
+                        .replace(/^-+|-+$/g, '');         // 시작과 끝의 하이픈 제거
+
+                    slugInput.value = slug;
+                }
+            });
+
+            // 이미지 미리보기
+            imageFileInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        if (!imagePreview.parentElement.querySelector('img')) {
+                            const img = document.createElement('img');
+                            img.id = 'imagePreview';
+                            img.className = 'img-fluid';
+                            img.alt = '카테고리 이미지';
+                            img.style.maxHeight = '100%';
+                            img.style.maxWidth = '100%';
+                            imagePreview.parentElement.innerHTML = '';
+                            imagePreview.parentElement.appendChild(img);
+                            imagePreview = document.getElementById('imagePreview');
+                        }
+                        imagePreview.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+
+                    // 이미지를 새로 업로드하면 삭제 체크박스 해제
+                    if (removeImageCheckbox) {
+                        removeImageCheckbox.checked = false;
+                    }
+                }
+            });
+
+            // 이미지 삭제 체크박스 이벤트
+            if (removeImageCheckbox) {
+                removeImageCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        imagePreview.style.display = 'none';
+                    } else {
+                        imagePreview.style.display = 'block';
+                    }
+                });
+            }
+
+            // 필터 속성 추가
+            addAttributeBtn.addEventListener('click', function() {
+                addAttribute();
+            });
+
+            attributeInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addAttribute();
+                }
+            });
+
+            function addAttribute() {
+                const attrValue = attributeInput.value.trim();
+                if (attrValue) {
+                    // 중복 체크
+                    const existingAttrs = Array.from(document.querySelectorAll('input[name="filterableAttributes"]')).map(input => input.value);
+                    if (existingAttrs.includes(attrValue)) {
+                        alert('이미 추가된 속성입니다.');
+                        return;
+                    }
+
+                    // 새 태그 추가
+                    const tagDiv = document.createElement('div');
+                    tagDiv.className = 'attribute-tag';
+                    tagDiv.innerHTML = `
+                            <span class="badge bg-primary d-flex align-items-center p-2">
+                                <span>${attrValue}</span>
+                                <button type="button" class="btn-close btn-close-white ms-2 remove-attribute"
+                                        data-attr="${attrValue}" aria-label="Remove"></button>
+                                <input type="hidden" name="filterableAttributes" value="${attrValue}">
+                            </span>
+                        `;
+
+                    attributeTags.appendChild(tagDiv);
+                    attributeInput.value = '';
+                    noAttributesMessage.style.display = 'none';
+
+                    // 삭제 이벤트 추가
+                    tagDiv.querySelector('.remove-attribute').addEventListener('click', function() {
+                        tagDiv.remove();
+                        if (attributeTags.children.length === 0) {
+                            noAttributesMessage.style.display = 'block';
+                        }
+                    });
+                }
+            }
+
+            // 기존 속성 태그 삭제 이벤트
+            document.querySelectorAll('.remove-attribute').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.closest('.attribute-tag').remove();
+                    if (attributeTags.children.length === 0) {
+                        noAttributesMessage.style.display = 'block';
+                    }
+                });
+            });
+
+            // 폼 제출 전 유효성 검사
+            categoryForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                let isValid = true;
+
+                // 필수 필드 검사
+                if (!nameInput.value.trim()) {
+                    nameInput.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    nameInput.classList.remove('is-invalid');
+                }
+
+                if (!slugInput.value.trim()) {
+                    slugInput.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    slugInput.classList.remove('is-invalid');
+                }
+
+                if (isValid) {
+                    // 폼 데이터 생성
+                    const formData = new FormData(this);
+
+                    // CSRF 토큰 추가
+                    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+                    // API 호출
+                    fetch(this.action, {
+                        method: formData.get('_method') || 'POST',
+                        body: formData,
+                        headers: {
+                            [csrfHeader]: csrfToken
+                        }
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                return response.json();
+                            }
+                            throw new Error('카테고리 저장 중 오류가 발생했습니다.');
+                        })
+                        .then(data => {
+                            alert('카테고리가 성공적으로 저장되었습니다.');
+                            window.location.href = '/admin/categories';
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert(error.message);
+                        });
+                }
+            });
+        });
+    </script>
+</th:block>
+</body>
+</html>
+

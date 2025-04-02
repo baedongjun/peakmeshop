@@ -38,37 +38,5 @@ public class AdminProductViewController {
         // model.addAttribute("product", productService.getProductById(id));
         return "admin/product-form";
     }
-
-    /**
-     * 카테고리 관리 페이지
-     */
-    @GetMapping("/categories")
-    public String categories() {
-        return "admin/categories";
-    }
-
-    /**
-     * 브랜드 관리 페이지
-     */
-    @GetMapping("/brands")
-    public String brands() {
-        return "admin/brands";
-    }
-
-    /**
-     * 리뷰 관리 페이지
-     */
-    @GetMapping("/reviews")
-    public String reviews() {
-        return "admin/reviews";
-    }
-
-    /**
-     * 재고 관리 페이지
-     */
-    @GetMapping("/inventory")
-    public String inventory() {
-        return "admin/inventory";
-    }
 }
 

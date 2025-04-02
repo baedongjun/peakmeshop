@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>카테고리 관리 - PeakMeShop 관리자</title>
+    <meta name="description" content="카테고리 목록 관리 페이지입니다.">
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container-fluid px-4">
+        <h1 class="mt-4">카테고리 관리</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/admin">대시보드</a></li>
+            <li class="breadcrumb-item active">카테고리 관리</li>
+        </ol>
+
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-table me-1"></i>
+                    카테고리 목록
+                </div>
+                <a href="/admin/categories/create" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> 새 카테고리 추가
+                </a>
+            </div>
+            <div class="card-body">
+                <!-- 검색 및 필터 -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <select id="parentFilter" class="form-select">
+                            <option value="">모든 상위 카테고리</option>
+                            <option value="0">최상위 카테고리만</option>
+                            <!-- 상위 카테고리 목록 -->
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select id="statusFilter" class="form-select">
+                            <option value="">모든 상태</option>
+                            <option value="true">활성화</option>
+                            <option value="false">비활성화</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select id="featuredFilter" class="form-select">
+                            <option value="">모든 유형</option>
+                            <option value="true">주요 카테고리</option>
+                            <option value="false">일반 카테고리</option>
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="input-group">
+                            <input type="text" id="searchInput" class="form-control" placeholder="카테고리명 검색...">
+                            <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 카테고리 테이블 -->
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="categoriesTable">
+                        <thead class="table-light">
+                        <tr>
+                            <th style="width: 50px">ID</th>
+                            <th style="width: 80px">이미지</th>
+                            <th>카테고리명</th>
+                            <th>상위 카테고리</th>
+                            <th style="width: 100px">상태</th>
+                            <th style="width: 100px">주요 카테고리</th>
+                            <th style="width: 80px">정렬 순서</th>
+                            <th style="width: 150px">등록일</th>
+                            <th style="width: 120px">관리</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- 카테고리 목록 (Thymeleaf로 반복) -->
+                        <tr th:each="category : ${categories}">
+                            <td th:text="${category.id}">1</td>
+                            <td>
+                                <img th:if="${category.imageUrl}" th:src="${category.imageUrl}"
+                                     class="img-thumbnail" alt="카테고리 이미지" style="max-height: 40px;">
+                                <span th:unless="${category.imageUrl}" class="text-muted">
+                                            <i class="fas fa-image"></i>
+                                        </span>
+                            </td>
+                            <td>
+                                <a th:href="@{/admin/categories/{id}(id=${category.id})}"
+                                   th:text="${category.name}" class="fw-bold text-decoration-none">
+                                    여성의류
+                                </a>
+                            </td>
+                            <td th:text="${category.parentName ?: '최상위 카테고리'}">패션</td>
+                            <td>
+                                <span th:if="${category.active}" class="badge bg-success">활성화</span>
+                                <span th:unless="${category.active}" class="badge bg-secondary">비활성화</span>
+                            </td>
+                            <td>
+                                <span th:if="${category.featured}" class="badge bg-primary">주요 카테고리</span>
+                                <span th:unless="${category.featured}" class="badge bg-light text-dark">일반</span>
+                            </td>
+                            <td th:text="${category.sortOrder}">10</td>
+                            <td th:text="${#temporals.format(category.createdAt, 'yyyy-MM-dd HH:mm')}">
+                                2023-06-15 14:30
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a th:href="@{/admin/categories/{id}/edit(id=${category.id})}"
+                                       class="btn btn-outline-primary" title="수정">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a th:href="@{/admin/categories/{id}(id=${category.id})}"
+                                       class="btn btn-outline-info" title="상세보기">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger delete-btn"
+                                            th:data-id="${category.id}" th:data-name="${category.name}"
+                                            title="삭제">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- 데이터가 없을 경우 -->
+                        <tr th:if="${#lists.isEmpty(categories)}">
+                            <td colspan="9" class="text-center py-4">
+                                <p class="mb-0 text-muted">등록된 카테고리가 없습니다.</p>
+                                <a href="/admin/categories/create" class="btn btn-sm btn-primary mt-2">
+                                    <i class="fas fa-plus"></i> 새 카테고리 추가하기
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 페이지네이션 -->
+                <nav th:if="${totalPages > 1}">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link" th:href="@{/admin/categories(page=0)}" aria-label="처음">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link" th:href="@{/admin/categories(page=${currentPage - 1})}" aria-label="이전">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                            th:classappend="${currentPage == i} ? 'active'">
+                            <a class="page-link" th:href="@{/admin/categories(page=${i})}" th:text="${i + 1}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                            <a class="page-link" th:href="@{/admin/categories(page=${currentPage + 1})}" aria-label="다음">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                            <a class="page-link" th:href="@{/admin/categories(page=${totalPages - 1})}" aria-label="마지막">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- 삭제 확인 모달 -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">카테고리 삭제 확인</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><span id="categoryNameToDelete"></span> 카테고리를 삭제하시겠습니까?</p>
+                    <p class="text-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        주의: 이 카테고리에 속한 모든 제품이 영향을 받을 수 있습니다.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-danger" id="confirmDelete">삭제</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 페이지 스크립트 -->
+<th:block layout:fragment="script">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 삭제 버튼 클릭 이벤트
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const categoryId = this.getAttribute('data-id');
+                    const categoryName = this.getAttribute('data-name');
+
+                    document.getElementById('categoryNameToDelete').textContent = categoryName;
+
+                    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                    deleteModal.show();
+
+                    document.getElementById('confirmDelete').onclick = function() {
+                        // 삭제 API 호출
+                        fetch(`/api/categories/${categoryId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').getAttribute('content')
+                            }
+                        })
+                            .then(response => {
+                                if (response.ok) {
+                                    window.location.reload();
+                                } else {
+                                    alert('카테고리 삭제 중 오류가 발생했습니다.');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('카테고리 삭제 중 오류가 발생했습니다.');
+                            });
+                    };
+                });
+            });
+
+            // 검색 및 필터링 기능
+            const searchButton = document.getElementById('searchButton');
+            const searchInput = document.getElementById('searchInput');
+            const parentFilter = document.getElementById('parentFilter');
+            const statusFilter = document.getElementById('statusFilter');
+            const featuredFilter = document.getElementById('featuredFilter');
+
+            function applyFilters() {
+                const searchTerm = searchInput.value.trim();
+                const parentValue = parentFilter.value;
+                const statusValue = statusFilter.value;
+                const featuredValue = featuredFilter.value;
+
+                let url = '/admin/categories?';
+
+                if (searchTerm) {
+                    url += `search=${encodeURIComponent(searchTerm)}&`;
+                }
+
+                if (parentValue) {
+                    url += `parent=${encodeURIComponent(parentValue)}&`;
+                }
+
+                if (statusValue) {
+                    url += `active=${encodeURIComponent(statusValue)}&`;
+                }
+
+                if (featuredValue) {
+                    url += `featured=${encodeURIComponent(featuredValue)}&`;
+                }
+
+                window.location.href = url;
+            }
+
+            searchButton.addEventListener('click', applyFilters);
+
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    applyFilters();
+                }
+            });
+
+            parentFilter.addEventListener('change', applyFilters);
+            statusFilter.addEventListener('change', applyFilters);
+            featuredFilter.addEventListener('change', applyFilters);
+        });
+    </script>
+</th:block>
+</body>
+</html>
+

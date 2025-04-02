@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>브랜드 관리 - PeakMe Shop 관리자</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">브랜드 관리</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="/admin/brands/create" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-plus-circle"></i> 새 브랜드 등록
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-download"></i> 내보내기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 검색 및 필터 -->
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <form class="d-flex" action="/admin/brands" method="get">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="브랜드명 검색..." name="keyword" th:value="${param.keyword}">
+                    <button class="btn btn-outline-secondary" type="submit">검색</button>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-4">
+            <div class="d-flex justify-content-end">
+                <select class="form-select form-select-sm w-50" name="status" id="statusFilter">
+                    <option value="">모든 상태</option>
+                    <option value="active">활성화</option>
+                    <option value="inactive">비활성화</option>
+                    <option value="featured">주요 브랜드</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- 알림 메시지 -->
+    <div class="alert alert-success alert-dismissible fade show" role="alert" th:if="${successMessage}">
+        <span th:text="${successMessage}">작업이 성공적으로 완료되었습니다.</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- 브랜드 목록 테이블 -->
+    <div class="table-responsive">
+        <table class="table table-striped table-sm">
+            <thead>
+            <tr>
+                <th scope="col" width="5%">#</th>
+                <th scope="col" width="10%">로고</th>
+                <th scope="col" width="20%">브랜드명</th>
+                <th scope="col" width="15%">제품 수</th>
+                <th scope="col" width="10%">상태</th>
+                <th scope="col" width="10%">주요 브랜드</th>
+                <th scope="col" width="15%">등록일</th>
+                <th scope="col" width="15%">관리</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="brand, stat : ${brands}" th:if="${brands != null && !brands.empty}">
+                <td th:text="${stat.count}">1</td>
+                <td>
+                    <img th:if="${brand.logo}" th:src="${brand.logo}" alt="브랜드 로고" class="img-thumbnail" style="max-height: 40px;">
+                    <span th:unless="${brand.logo}" class="badge bg-secondary">로고 없음</span>
+                </td>
+                <td>
+                    <a th:href="@{/admin/brands/{id}(id=${brand.id})}" th:text="${brand.name}">브랜드명</a>
+                </td>
+                <td th:text="${brand.productCount}">0</td>
+                <td>
+                    <span th:if="${brand.isActive}" class="badge bg-success">활성화</span>
+                    <span th:unless="${brand.isActive}" class="badge bg-danger">비활성화</span>
+                </td>
+                <td>
+                    <span th:if="${brand.isFeatured}" class="badge bg-primary">주요 브랜드</span>
+                    <span th:unless="${brand.isFeatured}" class="badge bg-secondary">일반</span>
+                </td>
+                <td th:text="${#temporals.format(brand.createdAt, 'yyyy-MM-dd')}">2023-01-01</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <a th:href="@{/admin/brands/{id}(id=${brand.id})}" class="btn btn-outline-secondary">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a th:href="@{/admin/brands/{id}/edit(id=${brand.id})}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <button type="button" class="btn btn-outline-danger"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteModal"
+                                th:data-brand-id="${brand.id}"
+                                th:data-brand-name="${brand.name}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            <tr th:if="${brands == null || brands.empty}">
+                <td colspan="8" class="text-center py-4">
+                    <p class="text-muted mb-0">등록된 브랜드가 없습니다.</p>
+                    <a href="/admin/brands/create" class="btn btn-sm btn-primary mt-2">
+                        <i class="bi bi-plus-circle"></i> 새 브랜드 등록하기
+                    </a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 페이지네이션 -->
+    <nav aria-label="Page navigation" th:if="${brands != null && !brands.empty}">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${currentPage <= 1} ? 'disabled' : ''">
+                <a class="page-link" th:href="@{/admin/brands(page=${currentPage - 1})}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <li class="page-item" th:each="i : ${#numbers.sequence(1, totalPages)}"
+                th:classappend="${i == currentPage} ? 'active' : ''">
+                <a class="page-link" th:href="@{/admin/brands(page=${i})}" th:text="${i}">1</a>
+            </li>
+            <li class="page-item" th:classappend="${currentPage >= totalPages} ? 'disabled' : ''">
+                <a class="page-link" th:href="@{/admin/brands(page=${currentPage + 1})}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- 삭제 확인 모달 -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">브랜드 삭제 확인</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>정말로 <strong id="brandNameToDelete"></strong> 브랜드를 삭제하시겠습니까?</p>
+                    <p class="text-danger">이 작업은 되돌릴 수 없으며, 해당 브랜드와 관련된 모든 데이터가 삭제됩니다.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <form id="deleteBrandForm" method="post" action="">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="btn btn-danger">삭제</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자바스크립트 -->
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // 삭제 모달 설정
+            const deleteModal = document.getElementById('deleteModal');
+            if (deleteModal) {
+                deleteModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const brandId = button.getAttribute('data-brand-id');
+                    const brandName = button.getAttribute('data-brand-name');
+
+                    document.getElementById('brandNameToDelete').textContent = brandName;
+                    document.getElementById('deleteBrandForm').action = '/admin/brands/' + brandId + '/delete';
+                });
+            }
+
+            // 상태 필터 변경 이벤트
+            const statusFilter = document.getElementById('statusFilter');
+            if (statusFilter) {
+                statusFilter.addEventListener('change', function() {
+                    window.location.href = '/admin/brands?status=' + this.value;
+                });
+
+                // URL 파라미터에서 현재 상태 값 가져와서 선택
+                const urlParams = new URLSearchParams(window.location.search);
+                const status = urlParams.get('status');
+                if (status) {
+                    statusFilter.value = status;
+                }
+            }
+        });
+    </script>
+</div>
+</body>
+</html>
+
