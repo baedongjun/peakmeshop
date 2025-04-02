@@ -50,11 +50,41 @@
             .payment-method-item .form-check-input {
                 margin-top: 0.25rem;
             }
+            .loading-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(255, 255, 255, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+                visibility: hidden;
+                opacity: 0;
+                transition: visibility 0s, opacity 0.3s;
+            }
+            .loading-overlay.show {
+                visibility: visible;
+                opacity: 1;
+            }
+            .spinner-border {
+                width: 3rem;
+                height: 3rem;
+            }
         </style>
     </th:block>
 </head>
 <body>
 <main layout:fragment="content">
+    <!-- 로딩 오버레이 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
     <section class="py-5">
         <div class="container">
             <h2 class="mb-4">결제</h2>
@@ -83,9 +113,6 @@
                                             <label class="form-label">저장된 배송지</label>
                                             <select class="form-select" id="savedAddress" name="savedAddressId">
                                                 <option value="">배송지 선택</option>
-                                                <option value="1">집 (서울시 강남구 테헤란로 123)</option>
-                                                <option value="2">회사 (서울시 서초구 서초대로 456)</option>
-                                                <option value="3">부모님 (경기도 성남시 분당구 판교로 789)</option>
                                             </select>
                                         </div>
                                     </div>
@@ -94,18 +121,18 @@
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
                                                 <label for="receiverName" class="form-label">받는 사람 <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="receiverName" name="receiverName" value="홍길동" required>
+                                                <input type="text" class="form-control" id="receiverName" name="receiverName" required>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label for="receiverPhone" class="form-label">연락처 <span class="text-danger">*</span></label>
-                                                <input type="tel" class="form-control" id="receiverPhone" name="receiverPhone" value="010-1234-5678" required>
+                                                <input type="tel" class="form-control" id="receiverPhone" name="receiverPhone" required>
                                             </div>
                                         </div>
 
                                         <div class="mb-3">
                                             <label for="zipcode" class="form-label">우편번호 <span class="text-danger">*</span></label>
                                             <div class="input-group">
-                                                <input type="text" class="form-control" id="zipcode" name="zipcode" value="12345" readonly required>
+                                                <input type="text" class="form-control" id="zipcode" name="zipcode" readonly required>
                                                 <button type="button" class="btn btn-outline-secondary" id="searchZipcode">
                                                     <i class="fas fa-search me-1"></i> 주소 찾기
                                                 </button>
@@ -114,12 +141,12 @@
 
                                         <div class="mb-3">
                                             <label for="address1" class="form-label">기본 주소 <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="address1" name="address1" value="서울시 강남구 테헤란로 123" readonly required>
+                                            <input type="text" class="form-control" id="address1" name="address1" readonly required>
                                         </div>
 
                                         <div class="mb-3">
                                             <label for="address2" class="form-label">상세 주소 <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="address2" name="address2" value="456동 789호" required>
+                                            <input type="text" class="form-control" id="address2" name="address2" required>
                                         </div>
 
                                         <div class="mb-3">
@@ -169,20 +196,14 @@
                                             </tr>
                                             </thead>
                                             <tbody>
-                                            &lt;!-- 주문 상품 목록 (실제로는 DB에서 가져올 것) -->
-                                            <tr th:each="item, stat : ${orderItems != null ? orderItems : {
-                                                            {1, '프리미엄 데님 자켓', 52000, 1},
-                                                            {2, '캐주얼 티셔츠', 35000, 2}
-                                                        }}">
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <img th:src="@{/placeholder.svg?height=50&width=50}" th:alt="${item[1]}" class="me-3" style="width: 50px; height: 50px; object-fit: cover; border-radius: 0.25rem;">
-                                                        <span th:text="${item[1]}">상품명</span>
+                                            <!-- 장바구니 상품 목록 (API에서 동적으로 로드) -->
+                                            <tr>
+                                                <td colspan="4" class="text-center py-4">
+                                                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
                                                     </div>
+                                                    상품 정보를 불러오는 중...
                                                 </td>
-                                                <td th:text="${'₩' + #numbers.formatInteger(item[2], 0, 'COMMA')}">가격</td>
-                                                <td th:text="${item[3]}">수량</td>
-                                                <td class="text-end" th:text="${'₩' + #numbers.formatInteger(item[2] * item[3], 0, 'COMMA')}">소계</td>
                                             </tr>
                                             </tbody>
                                         </table>
@@ -190,7 +211,32 @@
                                 </div>
                             </div>
 
-                            &lt;!-- 결제 방법 -->
+                            <!-- 쿠폰 적용 -->
+                            <div class="checkout-card">
+                                <div class="checkout-card-header">
+                                    <h4 class="mb-0">
+                                        <i class="fas fa-ticket-alt me-2"></i> 쿠폰 적용
+                                    </h4>
+                                </div>
+                                <div class="checkout-card-body">
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control" id="couponCode" placeholder="쿠폰 코드 입력">
+                                        <button class="btn btn-outline-primary" type="button" id="applyCouponBtn">적용</button>
+                                    </div>
+                                    <div id="appliedCoupon" class="d-none">
+                                        <div class="alert alert-success d-flex align-items-center">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            <div>
+                                                <strong id="couponName">쿠폰명</strong>
+                                                <p class="mb-0 small" id="couponDescription">쿠폰 설명</p>
+                                            </div>
+                                            <button type="button" class="btn-close ms-auto" id="removeCouponBtn"></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 결제 방법 -->
                             <div class="checkout-card">
                                 <div class="checkout-card-header">
                                     <h4 class="mb-0">
@@ -269,11 +315,11 @@
 
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>상품 금액</span>
-                                    <span id="subtotal">₩122,000</span>
+                                    <span id="subtotal">₩0</span>
                                 </div>
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>배송비</span>
-                                    <span id="shipping">₩3,000</span>
+                                    <span id="shipping">₩0</span>
                                 </div>
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>할인 금액</span>
@@ -284,7 +330,7 @@
 
                                 <div class="d-flex justify-content-between mb-4">
                                     <span class="fw-bold">총 결제 금액</span>
-                                    <span class="fw-bold text-primary" id="total">₩125,000</span>
+                                    <span class="fw-bold text-primary" id="total">₩0</span>
                                 </div>
 
                                 <div class="mb-3 form-check">
@@ -308,128 +354,7 @@
 </main>
 
 <th:block layout:fragment="script">
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 기본 배송지 사용 체크박스
-            const useDefaultAddressCheckbox = document.getElementById('useDefaultAddress');
-            const addressListDiv = document.getElementById('addressList');
-            const addressFormDiv = document.getElementById('addressForm');
-
-            // 배송 요청사항 선택
-            const deliveryRequestSelect = document.getElementById('deliveryRequest');
-            const customRequestDiv = document.getElementById('customRequestDiv');
-
-            // 결제 방법 선택
-            const paymentMethodItems = document.querySelectorAll('.payment-method-item');
-
-            // 기본 배송지 사용 체크박스 이벤트
-            useDefaultAddressCheckbox.addEventListener('change', function() {
-                if (this.checked) {
-                    addressListDiv.style.display = 'none';
-                    addressFormDiv.style.display = 'block';
-                } else {
-                    addressListDiv.style.display = 'block';
-                    addressFormDiv.style.display = 'none';
-                }
-            });
-
-            // 저장된 배송지 선택 이벤트
-            const savedAddressSelect = document.getElementById('savedAddress');
-            savedAddressSelect.addEventListener('change', function() {
-                if (this.value) {
-                    // 실제로는 서버에서 선택한 주소 정보를 가져와서 폼에 채워야 함
-                    addressFormDiv.style.display = 'block';
-
-                    // 예시 데이터
-                    if (this.value === '1') {
-                        document.getElementById('receiverName').value = '홍길동';
-                        document.getElementById('receiverPhone').value = '010-1234-5678';
-                        document.getElementById('zipcode').value = '12345';
-                        document.getElementById('address1').value = '서울시 강남구 테헤란로 123';
-                        document.getElementById('address2').value = '456동 789호';
-                    } else if (this.value === '2') {
-                        document.getElementById('receiverName').value = '홍길동';
-                        document.getElementById('receiverPhone').value = '010-1234-5678';
-                        document.getElementById('zipcode').value = '54321';
-                        document.getElementById('address1').value = '서울시 서초구 서초대로 456';
-                        document.getElementById('address2').value = '10층 1001호';
-                    } else if (this.value === '3') {
-                        document.getElementById('receiverName').value = '홍부모';
-                        document.getElementById('receiverPhone').value = '010-9876-5432';
-                        document.getElementById('zipcode').value = '67890';
-                        document.getElementById('address1').value = '경기도 성남시 분당구 판교로 789';
-                        document.getElementById('address2').value = '101동 202호';
-                    }
-                } else {
-                    // 선택 안 함
-                    addressFormDiv.style.display = 'none';
-                }
-            });
-
-            // 주소 찾기 버튼 이벤트
-            const searchZipcodeButton = document.getElementById('searchZipcode');
-            searchZipcodeButton.addEventListener('click', function() {
-                // 실제로는 다음 우편번호 API 등을 사용하여 주소 검색
-                alert('주소 검색 기능은 실제 구현 시 다음 우편번호 API 등을 사용하세요.');
-            });
-
-            // 배송 요청사항 선택 이벤트
-            deliveryRequestSelect.addEventListener('change', function() {
-                if (this.value === 'custom') {
-                    customRequestDiv.style.display = 'block';
-                } else {
-                    customRequestDiv.style.display = 'none';
-                }
-            });
-
-            // 결제 방법 선택 이벤트
-            paymentMethodItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    // 라디오 버튼 선택
-                    const radio = this.querySelector('input[type="radio"]');
-                    radio.checked = true;
-
-                    // 활성화 클래스 토글
-                    paymentMethodItems.forEach(i => i.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
-
-            // 폼 제출 이벤트
-            const checkoutForm = document.getElementById('checkoutForm');
-            checkoutForm.addEventListener('submit', function(event) {
-                // 필수 입력 필드 검증
-                const requiredFields = checkoutForm.querySelectorAll('[required]');
-                let isValid = true;
-
-                requiredFields.forEach(field => {
-                    if (!field.value.trim()) {
-                        isValid = false;
-                        field.classList.add('is-invalid');
-                    } else {
-                        field.classList.remove('is-invalid');
-                    }
-                });
-
-                if (!isValid) {
-                    event.preventDefault();
-                    alert('필수 입력 항목을 모두 입력해주세요.');
-                    return;
-                }
-
-                // 약관 동의 확인
-                const agreeTerms = document.getElementById('agreeTerms');
-                if (!agreeTerms.checked) {
-                    event.preventDefault();
-                    alert('이용약관과 개인정보처리방침에 동의해주세요.');
-                    return;
-                }
-
-                // 실제로는 여기서 결제 처리를 진행
-                // 예시: 결제 API 호출 등
-            });
-        });
-    </script>
+    <script th:src="@{/js/checkout.js}"></script>
 </th:block>
 </body>
 </html>

@@ -324,7 +324,7 @@
                         <!-- 정렬 및 필터 옵션 -->
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <div>
-                                <span th:text="${'총 ' + (products != null ? products.size() : 12) + '개 상품'}">총 12개 상품</span>
+                                <span id="totalProducts">총 0개 상품</span>
                             </div>
                             <div class="d-flex align-items-center">
                                 <label for="sortOrder" class="me-2">정렬:</label>
@@ -339,7 +339,7 @@
                         </div>
 
                         <!-- 상품이 없는 경우 -->
-                        <div th:if="${#lists.isEmpty(products)}" class="empty-results" style="display: none;">
+                        <div class="empty-results" style="display: none;">
                             <i class="fas fa-search"></i>
                             <h3>검색 결과가 없습니다</h3>
                             <p class="text-muted mb-4">다른 검색어나 필터 조건을 사용해보세요.</p>
@@ -348,77 +348,13 @@
 
                         <!-- 상품 그리드 -->
                         <div class="row" id="productGrid">
-                            <!-- 상품 목록 (실제로는 DB에서 가져올 것) -->
-                            <div th:each="product, stat : ${products != null ? products : {
-                                        {1, '프리미엄 데님 자켓', 65000, 52000, 4.5, true, false, true, '/placeholder.svg?height=250&width=250'},
-                                        {2, '캐주얼 티셔츠', 35000, 35000, 4.0, true, false, false, '/placeholder.svg?height=250&width=250'},
-                                        {3, '슬림핏 청바지', 75000, 60000, 5.0, false, true, false, '/placeholder.svg?height=250&width=250'},
-                                        {4, '캐주얼 스니커즈', 85000, 85000, 3.5, false, false, false, '/placeholder.svg?height=250&width=250'},
-                                        {5, '클래식 레더 자켓', 120000, 120000, 5.0, false, false, true, '/placeholder.svg?height=250&width=250'},
-                                        {6, '프리미엄 백팩', 95000, 76000, 4.5, false, true, false, '/placeholder.svg?height=250&width=250'},
-                                        {7, '캐주얼 후드티', 55000, 55000, 4.0, true, false, false, '/placeholder.svg?height=250&width=250'},
-                                        {8, '스포츠 런닝화', 110000, 88000, 5.0, false, true, false, '/placeholder.svg?height=250&width=250'},
-                                        {9, '캐주얼 셔츠', 45000, 45000, 4.0, true, false, false, '/placeholder.svg?height=250&width=250'},
-                                        {10, '슬림핏 치노팬츠', 65000, 52000, 4.5, false, true, false, '/placeholder.svg?height=250&width=250'},
-                                        {11, '클래식 모자', 25000, 25000, 4.0, true, false, false, '/placeholder.svg?height=250&width=250'},
-                                        {12, '가죽 벨트', 35000, 28000, 4.5, false, true, false, '/placeholder.svg?height=250&width=250'}
-                                    }}"
-                                 class="col-md-6 col-lg-4">
-                                <div class="product-card">
-                                    <div class="product-img-container">
-                                        <!-- 상품 배지 -->
-                                        <span th:if="${product[5]}" class="product-badge badge-new">NEW</span>
-                                        <span th:if="${product[2] > product[3]}" class="product-badge badge-sale"
-                                              th:text="${#numbers.formatInteger(100 - (product[3] * 100 / product[2]), 0) + '% OFF'}">20% OFF</span>
-                                        <span th:if="${product[7]}" class="product-badge badge-hot">HOT</span>
-
-                                        <!-- 상품 이미지 -->
-                                        <img th:src="${product[8]}" class="product-img" th:alt="${product[1]}">
-
-                                        <!-- 상품 액션 버튼 -->
-                                        <div class="product-actions">
-                                            <button class="product-action-btn" title="장바구니에 담기" th:onclick="'addToCart(' + ${product[0]} + ')'">
-                                                <i class="fas fa-shopping-cart"></i>
-                                            </button>
-                                            <button class="product-action-btn" title="위시리스트에 추가" th:onclick="'addToWishlist(' + ${product[0]} + ')'">
-                                                <i class="fas fa-heart"></i>
-                                            </button>
-                                            <button class="product-action-btn" title="빠른 보기" th:onclick="'quickView(' + ${product[0]} + ')'">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="card-body">
-                                        <h5 class="product-title">
-                                            <a th:href="@{'/products/' + ${product[0]}}" class="text-decoration-none text-dark" th:text="${product[1]}">상품명</a>
-                                        </h5>
-                                        <div class="product-rating">
-                                            <i th:each="i : ${#numbers.sequence(1, #numbers.formatDecimal(product[4], 0, 0))}" class="fas fa-star"></i>
-                                            <i th:if="${product[4] % 1 >= 0.5}" class="fas fa-star-half-alt"></i>
-                                            <i th:each="i : ${#numbers.sequence(1, 5 - #numbers.formatDecimal(product[4], 0, 0) - (product[4] % 1 >= 0.5 ? 1 : 0))}" class="far fa-star"></i>
-                                            <span class="ms-1 text-muted" th:text="${'(' + product[4] + ')'}"></span>
-                                        </div>
-                                        <div class="product-price">
-                                            <span th:if="${product[2] > product[3]}" class="original-price" th:text="${'₩' + #numbers.formatInteger(product[2], 0, 'COMMA')}">원가</span>
-                                            <span th:text="${'₩' + #numbers.formatInteger(product[3], 0, 'COMMA')}">판매가</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <!-- 여기는 비워두세요. JavaScript에서 동적으로 채워집니다. -->
                         </div>
 
                         <!-- 페이지네이션 -->
                         <nav aria-label="Page navigation" class="mt-4">
                             <ul class="pagination justify-content-center">
-                                <li class="page-item disabled">
-                                    <a class="page-link" href="#" tabindex="-1" aria-disabled="true">이전</a>
-                                </li>
-                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                                <li class="page-item">
-                                    <a class="page-link" href="#">다음</a>
-                                </li>
+                                <!-- 여기는 비워두세요. JavaScript에서 동적으로 채워집니다. -->
                             </ul>
                         </nav>
                     </div>
@@ -507,175 +443,7 @@
 </main>
 
 <th:block layout:fragment="script">
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 가격 범위 슬라이더
-            const priceRange = document.getElementById('priceRange');
-            const priceRangeValue = document.getElementById('priceRangeValue');
-
-            priceRange.addEventListener('input', function() {
-                priceRangeValue.textContent = '₩' + parseInt(this.value).toLocaleString();
-            });
-
-            // 색상 옵션 선택
-            const colorOptions = document.querySelectorAll('.color-option');
-
-            colorOptions.forEach(option => {
-                option.addEventListener('click', function() {
-                    // 이미 선택된 경우 선택 해제
-                    if (this.classList.contains('active')) {
-                        this.classList.remove('active');
-                    } else {
-                        // 다른 옵션 선택 해제
-                        colorOptions.forEach(opt => opt.classList.remove('active'));
-                        // 현재 옵션 선택
-                        this.classList.add('active');
-                    }
-                });
-            });
-
-            // 필터 초기화 버튼
-            const resetFiltersBtn = document.getElementById('resetFilters');
-
-            resetFiltersBtn.addEventListener('click', function() {
-                // 체크박스 초기화
-                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                    checkbox.checked = false;
-                });
-
-                // 가격 범위 초기화
-                priceRange.value = 200000;
-                priceRangeValue.textContent = '₩200,000';
-
-                // 색상 선택 초기화
-                colorOptions.forEach(option => option.classList.remove('active'));
-
-                // 정렬 옵션 초기화
-                document.getElementById('sortOrder').value = 'newest';
-
-                // 상품 목록 새로고침 (실제로는 서버에 요청)
-                alert('필터가 초기화되었습니다.');
-            });
-
-            // 검색 필터 초기화 버튼
-            const resetSearchFiltersBtn = document.getElementById('resetSearchFilters');
-            if (resetSearchFiltersBtn) {
-                resetSearchFiltersBtn.addEventListener('click', function() {
-                    // 필터 초기화 버튼 클릭
-                    resetFiltersBtn.click();
-                });
-            }
-
-            // 정렬 옵션 변경
-            const sortOrderSelect = document.getElementById('sortOrder');
-
-            sortOrderSelect.addEventListener('change', function() {
-                // 정렬 옵션에 따라 상품 목록 정렬 (실제로는 서버에 요청)
-                console.log('정렬 옵션 변경:', this.value);
-
-                // 임시 알림
-                alert('정렬 옵션이 변경되었습니다: ' + this.value);
-            });
-        });
-
-        // 장바구니에 상품 추가 함수
-        function addToCart(productId, quantity = 1) {
-            console.log(`상품 ID: ${productId}, 수량: ${quantity}를 장바구니에 추가합니다.`);
-
-            // 실제 구현에서는 서버에 장바구니 추가 요청을 보내야 합니다
-            // 임시 알림
-            alert('상품이 장바구니에 추가되었습니다.');
-        }
-
-        // 위시리스트에 상품 추가 함수
-        function addToWishlist(productId) {
-            console.log(`상품 ID: ${productId}를 위시리스트에 추가합니다.`);
-
-            // 실제 구현에서는 서버에 위시리스트 추가 요청을 보내야 합니다
-            // 임시 알림
-            alert('상품이 위시리스트에 추가되었습니다.');
-        }
-
-        // 빠른 보기 함수
-        function quickView(productId) {
-            console.log(`상품 ID: ${productId} 빠른 보기`);
-
-            // 실제 구현에서는 서버에서 상품 정보를 가져와야 합니다
-            // 임시 데이터
-            const productData = {
-                id: productId,
-                name: '프리미엄 데님 자켓',
-                price: 52000,
-                originalPrice: 65000,
-                rating: 4.5,
-                description: '최고급 데님 소재로 제작된 프리미엄 자켓입니다. 편안한 착용감과 세련된 디자인으로 다양한 스타일링이 가능합니다.',
-                image: '/placeholder.svg?height=400&width=400'
-            };
-
-            // 모달에 상품 정보 설정
-            document.getElementById('quickViewTitle').textContent = productData.name;
-            document.getElementById('quickViewDescription').textContent = productData.description;
-            document.getElementById('quickViewImage').src = productData.image;
-            document.getElementById('quickViewImage').alt = productData.name;
-
-            // 가격 설정
-            const priceElement = document.querySelector('#quickViewModal .product-price');
-            if (productData.originalPrice > productData.price) {
-                priceElement.innerHTML = `<span class="original-price">₩${productData.originalPrice.toLocaleString()}</span> <span>₩${productData.price.toLocaleString()}</span>`;
-            } else {
-                priceElement.innerHTML = `<span>₩${productData.price.toLocaleString()}</span>`;
-            }
-
-            // 상세 정보 링크 설정
-            document.getElementById('quickViewDetails').href = `/products/${productData.id}`;
-
-            // 장바구니 담기 버튼 이벤트
-            document.getElementById('quickViewAddToCart').onclick = function() {
-                const size = document.getElementById('quickViewSize').value;
-                const color = document.getElementById('quickViewColor').value;
-                const quantity = document.getElementById('quickViewQuantity').value;
-
-                if (!size) {
-                    alert('사이즈를 선택해주세요.');
-                    return;
-                }
-
-                if (!color) {
-                    alert('색상을 선택해주세요.');
-                    return;
-                }
-
-                addToCart(productData.id, quantity);
-
-                // 모달 닫기
-                const modal = bootstrap.Modal.getInstance(document.getElementById('quickViewModal'));
-                modal.hide();
-            };
-
-            // 수량 증가/감소 버튼 이벤트
-            const decreaseBtn = document.getElementById('quickViewDecreaseQuantity');
-            const increaseBtn = document.getElementById('quickViewIncreaseQuantity');
-            const quantityInput = document.getElementById('quickViewQuantity');
-
-            decreaseBtn.onclick = function() {
-                let quantity = parseInt(quantityInput.value);
-                if (quantity > 1) {
-                    quantityInput.value = quantity - 1;
-                }
-            };
-
-            increaseBtn.onclick = function() {
-                let quantity = parseInt(quantityInput.value);
-                if (quantity < 10) {
-                    quantityInput.value = quantity + 1;
-                }
-            };
-
-            // 모달 표시
-            const quickViewModal = new bootstrap.Modal(document.getElementById('quickViewModal'));
-            quickViewModal.show();
-        }
-    </script>
+    <script src="/js/product.js"></script>
 </th:block>
 </body>
 </html>

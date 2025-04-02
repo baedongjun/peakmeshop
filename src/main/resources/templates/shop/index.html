@@ -32,15 +32,16 @@
         <div class="container">
             <h2>인기 카테고리</h2>
             <div class="row">
-                <!-- 카테고리 목록 (실제로는 DB에서 가져올 것) -->
-                <div th:each="category, stat : ${categories != null ? categories : {'의류', '신발', '액세서리'}}"
+                <!-- 카테고리 목록 (API에서 가져옴) -->
+                <div th:each="category, stat : ${categories}"
                      class="col-md-4 mb-4 animate-fade-in" th:classappend="${'delay-' + (stat.index + 1)}">
                     <div class="card h-100">
-                        <img th:src="@{/placeholder.svg?height=250&width=350}" class="card-img-top" th:alt="${category}">
+                        <img th:src="${category.imageUrl != null ? category.imageUrl : '/placeholder.svg?height=250&width=350'}"
+                             class="card-img-top" th:alt="${category.name}">
                         <div class="card-body text-center">
-                            <h5 class="card-title" th:text="${category}">카테고리명</h5>
-                            <p class="card-text" th:text="${'최신 트렌드의 ' + category + ' 컬렉션을 만나보세요.'}">카테고리 설명</p>
-                            <a th:href="@{'/category/' + ${category}}" class="btn btn-primary">둘러보기</a>
+                            <h5 class="card-title" th:text="${category.name}">카테고리명</h5>
+                            <p class="card-text" th:text="${category.description != null ? category.description : '최신 트렌드의 ' + category.name + ' 컬렉션을 만나보세요.'}">카테고리 설명</p>
+                            <a th:href="@{'/category/' + ${category.slug}}" class="btn btn-primary">둘러보기</a>
                         </div>
                     </div>
                 </div>
@@ -53,42 +54,39 @@
         <div class="container">
             <h2>신상품</h2>
             <div class="row">
-                <!-- 신상품 목록 (실제로는 DB에서 가져올 것) -->
-                <div th:each="product, stat : ${newProducts != null ? newProducts : {
-                          {1, '프리미엄 데님 자켓', 65000, 52000, 4.5},
-                          {2, '캐주얼 티셔츠', 35000, 35000, 4.0},
-                          {3, '슬림핏 청바지', 75000, 60000, 5.0},
-                          {4, '캐주얼 스니커즈', 85000, 85000, 3.5}
-                      }}"
+                <!-- 신상품 목록 (API에서 가져옴) -->
+                <div th:each="product, stat : ${newProducts}"
                      class="col-6 col-md-3 mb-4 animate-fade-in" th:classappend="${stat.index > 0 ? 'delay-' + stat.index : ''}">
                     <div class="card h-100">
                         <span class="product-badge badge-new">NEW</span>
-                        <img th:src="@{/placeholder.svg?height=300&width=300}" class="card-img-top" th:alt="${product[1]}">
+                        <img th:src="${product.mainImage != null ? product.mainImage : '/placeholder.svg?height=300&width=300'}"
+                             class="card-img-top" th:alt="${product.name}">
                         <div class="card-body">
-                            <h5 class="card-title" th:text="${product[1]}">상품명</h5>
+                            <h5 class="card-title" th:text="${product.name}">상품명</h5>
                             <div class="product-rating">
-                                <!-- 별점 표시 (완전히 새로운 방식) -->
+                                <!-- 별점 표시 -->
                                 <div class="stars-container">
                                     <i class="fas fa-star"></i>
-                                    <i class="fas fa-star" th:if="${product[4] >= 2}"></i>
-                                    <i class="fas fa-star" th:if="${product[4] >= 3}"></i>
-                                    <i class="fas fa-star" th:if="${product[4] >= 4}"></i>
-                                    <i class="fas fa-star" th:if="${product[4] >= 5}"></i>
-                                    <i class="fas fa-star-half-alt" th:if="${product[4] % 1 >= 0.5 && product[4] < 5}"></i>
-                                    <i class="far fa-star" th:if="${product[4] < 2}"></i>
-                                    <i class="far fa-star" th:if="${product[4] < 3}"></i>
-                                    <i class="far fa-star" th:if="${product[4] < 4}"></i>
-                                    <i class="far fa-star" th:if="${product[4] < 5 && product[4] % 1 < 0.5}"></i>
-                                    <span class="ms-2 text-muted" th:text="${'(' + product[4] + ')'}"></span>
+                                    <i class="fas fa-star" th:if="${product.averageRating >= 2}"></i>
+                                    <i class="fas fa-star" th:if="${product.averageRating >= 3}"></i>
+                                    <i class="fas fa-star" th:if="${product.averageRating >= 4}"></i>
+                                    <i class="fas fa-star" th:if="${product.averageRating >= 5}"></i>
+                                    <i class="fas fa-star-half-alt" th:if="${product.averageRating % 1 >= 0.5 && product.averageRating < 5}"></i>
+                                    <i class="far fa-star" th:if="${product.averageRating < 2}"></i>
+                                    <i class="far fa-star" th:if="${product.averageRating < 3}"></i>
+                                    <i class="far fa-star" th:if="${product.averageRating < 4}"></i>
+                                    <i class="far fa-star" th:if="${product.averageRating < 5 && product.averageRating % 1 < 0.5}"></i>
+                                    <span class="ms-2 text-muted" th:text="${'(' + product.averageRating + ')'}"></span>
                                 </div>
                             </div>
                             <div class="product-price">
-                                <span th:if="${product[2] > product[3]}" class="original-price" th:text="${'₩' + #numbers.formatInteger(product[2], 0, 'COMMA')}">원가</span>
-                                <span th:text="${'₩' + #numbers.formatInteger(product[3], 0, 'COMMA')}">판매가</span>
+                                <span th:if="${product.price > product.salePrice && product.salePrice != null}" class="original-price"
+                                      th:text="${'₩' + #numbers.formatInteger(product.price, 0, 'COMMA')}">원가</span>
+                                <span th:text="${'₩' + #numbers.formatInteger(product.salePrice != null ? product.salePrice : product.price, 0, 'COMMA')}">판매가</span>
                             </div>
                             <div class="d-flex justify-content-between">
-                                <a th:href="@{'/products/' + ${product[0]}}" class="btn btn-sm btn-outline-primary">상세 보기</a>
-                                <button class="btn btn-sm btn-primary" th:onclick="'addToCart(' + ${product[0]} + ')'">
+                                <a th:href="@{'/products/' + ${product.id}}" class="btn btn-sm btn-outline-primary">상세 보기</a>
+                                <button class="btn btn-sm btn-primary" th:onclick="'addToCart(' + ${product.id} + ')'">
                                     <i class="fas fa-shopping-cart me-1"></i> 담기
                                 </button>
                             </div>
@@ -107,42 +105,39 @@
         <div class="container">
             <h2>베스트셀러</h2>
             <div class="row">
-                <!-- 베스트셀러 목록 (실제로는 DB에서 가져올 것) -->
-                <div th:each="product, stat : ${bestProducts != null ? bestProducts : {
-                          {5, '클래식 레더 자켓', 120000, 120000, 5.0},
-                          {6, '프리미엄 백팩', 95000, 76000, 4.5},
-                          {7, '캐주얼 후드티', 55000, 55000, 4.0},
-                          {8, '스포츠 런닝화', 110000, 88000, 5.0}
-                      }}"
+                <!-- 베스트셀러 목록 (API에서 가져옴) -->
+                <div th:each="product, stat : ${bestProducts}"
                      class="col-6 col-md-3 mb-4 animate-fade-in" th:classappend="${stat.index > 0 ? 'delay-' + stat.index : ''}">
                     <div class="card h-100">
                         <span class="product-badge badge-hot">HOT</span>
-                        <img th:src="@{/placeholder.svg?height=300&width=300}" class="card-img-top" th:alt="${product[1]}">
+                        <img th:src="${product.mainImage != null ? product.mainImage : '/placeholder.svg?height=300&width=300'}"
+                             class="card-img-top" th:alt="${product.name}">
                         <div class="card-body">
-                            <h5 class="card-title" th:text="${product[1]}">상품명</h5>
+                            <h5 class="card-title" th:text="${product.name}">상품명</h5>
                             <div class="product-rating">
-                                <!-- 별점 표시 (완전히 새로운 방식) -->
+                                <!-- 별점 표시 -->
                                 <div class="stars-container">
                                     <i class="fas fa-star"></i>
-                                    <i class="fas fa-star" th:if="${product[4] >= 2}"></i>
-                                    <i class="fas fa-star" th:if="${product[4] >= 3}"></i>
-                                    <i class="fas fa-star" th:if="${product[4] >= 4}"></i>
-                                    <i class="fas fa-star" th:if="${product[4] >= 5}"></i>
-                                    <i class="fas fa-star-half-alt" th:if="${product[4] % 1 >= 0.5 && product[4] < 5}"></i>
-                                    <i class="far fa-star" th:if="${product[4] < 2}"></i>
-                                    <i class="far fa-star" th:if="${product[4] < 3}"></i>
-                                    <i class="far fa-star" th:if="${product[4] < 4}"></i>
-                                    <i class="far fa-star" th:if="${product[4] < 5 && product[4] % 1 < 0.5}"></i>
-                                    <span class="ms-2 text-muted" th:text="${'(' + product[4] + ')'}"></span>
+                                    <i class="fas fa-star" th:if="${product.averageRating >= 2}"></i>
+                                    <i class="fas fa-star" th:if="${product.averageRating >= 3}"></i>
+                                    <i class="fas fa-star" th:if="${product.averageRating >= 4}"></i>
+                                    <i class="fas fa-star" th:if="${product.averageRating >= 5}"></i>
+                                    <i class="fas fa-star-half-alt" th:if="${product.averageRating % 1 >= 0.5 && product.averageRating < 5}"></i>
+                                    <i class="far fa-star" th:if="${product.averageRating < 2}"></i>
+                                    <i class="far fa-star" th:if="${product.averageRating < 3}"></i>
+                                    <i class="far fa-star" th:if="${product.averageRating < 4}"></i>
+                                    <i class="far fa-star" th:if="${product.averageRating < 5 && product.averageRating % 1 < 0.5}"></i>
+                                    <span class="ms-2 text-muted" th:text="${'(' + product.averageRating + ')'}"></span>
                                 </div>
                             </div>
                             <div class="product-price">
-                                <span th:if="${product[2] > product[3]}" class="original-price" th:text="${'₩' + #numbers.formatInteger(product[2], 0, 'COMMA')}">원가</span>
-                                <span th:text="${'₩' + #numbers.formatInteger(product[3], 0, 'COMMA')}">판매가</span>
+                                <span th:if="${product.price > product.salePrice && product.salePrice != null}" class="original-price"
+                                      th:text="${'₩' + #numbers.formatInteger(product.price, 0, 'COMMA')}">원가</span>
+                                <span th:text="${'₩' + #numbers.formatInteger(product.salePrice != null ? product.salePrice : product.price, 0, 'COMMA')}">판매가</span>
                             </div>
                             <div class="d-flex justify-content-between">
-                                <a th:href="@{'/products/' + ${product[0]}}" class="btn btn-sm btn-outline-primary">상세 보기</a>
-                                <button class="btn btn-sm btn-primary" th:onclick="'addToCart(' + ${product[0]} + ')'">
+                                <a th:href="@{'/products/' + ${product.id}}" class="btn btn-sm btn-outline-primary">상세 보기</a>
+                                <button class="btn btn-sm btn-primary" th:onclick="'addToCart(' + ${product.id} + ')'">
                                     <i class="fas fa-shopping-cart me-1"></i> 담기
                                 </button>
                             </div>
@@ -172,7 +167,27 @@
                     </div>
                 </div>
                 <div class="col-lg-6 mt-4 mt-lg-0 animate-fade-in delay-1">
-                    <img th:src="@{/placeholder.svg?height=400&width=600}" alt="특별 할인" class="img-fluid rounded-4 shadow">
+                    <div class="row">
+                        <!-- 할인 상품 목록 (API에서 가져옴) -->
+                        <div th:each="product, stat : ${discountedProducts}"
+                             class="col-6 mb-4" th:if="${stat.index < 4}">
+                            <div class="card h-100">
+                                <span class="product-badge badge-sale"
+                                      th:if="${product.price > product.salePrice && product.salePrice != null}"
+                                      th:text="${'-' + #numbers.formatInteger(100 - (product.salePrice * 100 / product.price), 0, 'COMMA') + '%'}">-20%</span>
+                                <img th:src="${product.mainImage != null ? product.mainImage : '/placeholder.svg?height=150&width=150'}"
+                                     class="card-img-top" th:alt="${product.name}">
+                                <div class="card-body">
+                                    <h6 class="card-title" th:text="${product.name}">상품명</h6>
+                                    <div class="product-price">
+                                        <span th:if="${product.price > product.salePrice && product.salePrice != null}" class="original-price"
+                                              th:text="${'₩' + #numbers.formatInteger(product.price, 0, 'COMMA')}">원가</span>
+                                        <span th:text="${'₩' + #numbers.formatInteger(product.salePrice != null ? product.salePrice : product.price, 0, 'COMMA')}">판매가</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -183,10 +198,13 @@
         <div class="container">
             <h2>인기 브랜드</h2>
             <div class="row justify-content-center">
-                <!-- 브랜드 목록 (실제로는 DB에서 가져올 것) -->
-                <div th:each="brand, stat : ${brands != null ? brands : {'브랜드1', '브랜드2', '브랜드3', '브랜드4', '브랜드5', '브랜드6'}}"
+                <!-- 브랜드 목록 (API에서 가져옴) -->
+                <div th:each="brand, stat : ${brands}"
                      class="col-4 col-md-2 mb-4 text-center animate-fade-in" th:classappend="${stat.index > 0 ? 'delay-' + (stat.index % 4 + 1) : ''}">
-                    <img th:src="@{/placeholder.svg?height=80&width=120}" th:alt="${brand}" class="img-fluid">
+                    <a th:href="@{'/brand/' + ${brand.slug}}">
+                        <img th:src="${brand.logo != null ? brand.logo : '/placeholder.svg?height=80&width=120'}"
+                             th:alt="${brand.name}" class="img-fluid">
+                    </a>
                 </div>
             </div>
         </div>
@@ -222,26 +240,42 @@
         </nav>
     </div>
 
-    <!-- 뉴스레터 섹션 -->
-    <section class="newsletter bg-primary text-white py-5">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-lg-8 text-center">
-                    <h3 class="mb-4">뉴스레터 구독하기</h3>
-                    <p class="mb-4">최신 트렌드와 특별 할인 정보를 가장 먼저 받아보세요!</p>
-                    <form class="row g-3 justify-content-center" th:action="@{/newsletter/subscribe}" method="post">
-                        <div class="col-md-8">
-                            <input type="email" class="form-control form-control-lg" name="email" placeholder="이메일 주소를 입력하세요" required>
-                        </div>
-                        <div class="col-md-auto">
-                            <button type="submit" class="btn btn-lg btn-light">구독하기</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </section>
+    <!-- 장바구니 추가 스크립트 -->
+    <script th:inline="javascript">
+        function addToCart(productId) {
+            fetch('/api/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    productId: productId,
+                    quantity: 1
+                })
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('장바구니에 추가하는 중 오류가 발생했습니다.');
+                })
+                .then(data => {
+                    // 성공 메시지 표시
+                    alert('상품이 장바구니에 추가되었습니다.');
+                    // 장바구니 아이콘 업데이트 (있는 경우)
+                    const cartCountElement = document.getElementById('cart-count');
+                    if (cartCountElement) {
+                        cartCountElement.textContent = data.totalItems;
+                        cartCountElement.classList.remove('d-none');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+        }
+    </script>
 </main>
 </body>
 </html>
-

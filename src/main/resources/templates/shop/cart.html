@@ -1,10 +1,10 @@
-&lt;!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/main-layout}">
 <head>
-    <title>장바구니</title>
+    <title>장바구니 - PeakMeShop</title>
     <th:block layout:fragment="css">
         <style>
             .cart-container {
@@ -65,113 +65,104 @@
                 margin-bottom: 1.5rem;
             }
         </style>
+        <!-- CSS 파일 -->
+        <link rel="stylesheet" href="/css/bootstrap.min.css">
+        <link rel="stylesheet" href="/css/font-awesome.min.css">
+        <link rel="stylesheet" href="/css/style.css">
     </th:block>
 </head>
 <body>
+<!-- 헤더 포함 -->
+<div th:replace="fragments/header :: header"></div>
+
+<!-- 페이지 타이틀 -->
+<div class="page-title-area">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="page-title-content">
+                    <h2>장바구니</h2>
+                    <ul class="breadcrumb">
+                        <li><a href="/">홈</a></li>
+                        <li><a href="/shop/product-list">쇼핑</a></li>
+                        <li class="active">장바구니</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <main layout:fragment="content">
+    <!-- 장바구니 영역 -->
     <section class="py-5">
         <div class="container">
             <h2 class="mb-4">장바구니</h2>
 
             <div class="cart-container">
-                &lt;!-- 장바구니가 비어있는 경우 -->
-                <div th:if="${#lists.isEmpty(cartItems)}" class="empty-cart">
-                    <i class="fas fa-shopping-cart"></i>
-                    <h3>장바구니가 비어있습니다</h3>
-                    <p class="text-muted mb-4">원하는 상품을 장바구니에 담아보세요!</p>
-                    <a th:href="@{/products}" class="btn btn-primary">쇼핑 계속하기</a>
-                </div>
+                <!-- 알림 메시지 컨테이너 -->
+                <div id="alert-container"></div>
 
-                &lt;!-- 장바구니에 상품이 있는 경우 -->
-                <div th:unless="${#lists.isEmpty(cartItems)}" class="row">
-                    <div class="col-lg-8">
-                        &lt;!-- 장바구니 아이템 목록 (실제로는 DB에서 가져올 것) -->
-                        <div th:each="item, stat : ${cartItems != null ? cartItems : {
-                                    {1, '프리미엄 데님 자켓', 52000, 1, true},
-                                    {2, '캐주얼 티셔츠', 35000, 2, true},
-                                    {3, '슬림핏 청바지', 60000, 1, false}
-                                }}"
-                             class="card cart-item mb-3">
-                            <div class="card-body p-3">
-                                <div class="row align-items-center">
-                                    <div class="col-auto">
-                                        <input type="checkbox" class="form-check-input cart-check"
-                                               th:checked="${item[4]}"
-                                               th:data-id="${item[0]}"
-                                               th:data-price="${item[2]}"
-                                               th:data-quantity="${item[3]}">
-                                    </div>
-                                    <div class="col-auto">
-                                        <img th:src="@{/placeholder.svg?height=100&width=100}" th:alt="${item[1]}" class="cart-item-img">
-                                    </div>
-                                    <div class="col">
-                                        <h5 class="mb-1" th:text="${item[1]}">상품명</h5>
-                                        <p class="text-primary mb-0" th:text="${'₩' + #numbers.formatInteger(item[2], 0, 'COMMA')}">가격</p>
-                                    </div>
-                                    <div class="col-auto">
-                                        <div class="quantity-control">
-                                            <button class="btn btn-sm btn-outline-secondary decrease-quantity"
-                                                    th:data-id="${item[0]}"
-                                                    th:disabled="${item[3] <= 1}">
-                                                <i class="fas fa-minus"></i>
-                                            </button>
-                                            <input type="text" class="quantity" th:value="${item[3]}" readonly>
-                                            <button class="btn btn-sm btn-outline-secondary increase-quantity"
-                                                    th:data-id="${item[0]}">
-                                                <i class="fas fa-plus"></i>
-                                            </button>
+                <!-- 장바구니 컨테이너 -->
+                <div id="cart-container">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="cart-table-wrapper">
+                                <div class="table-responsive">
+                                    <table class="table cart-table">
+                                        <thead>
+                                        <tr>
+                                            <th class="product-thumbnail">이미지</th>
+                                            <th class="product-name">상품</th>
+                                            <th class="product-price">가격</th>
+                                            <th class="product-quantity">수량</th>
+                                            <th class="product-subtotal">소계</th>
+                                            <th class="product-remove">삭제</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="cart-items">
+                                        <!-- 장바구니 아이템이 여기에 동적으로 추가됩니다 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- 장바구니 액션 버튼 -->
+                            <div class="cart-action-buttons mt-4">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="coupon-section" id="coupon-section">
+                                            <!-- 쿠폰 입력 폼이 여기에 동적으로 추가됩니다 -->
                                         </div>
                                     </div>
-                                    <div class="col-auto">
-                                        <p class="fw-bold mb-0" th:text="${'₩' + #numbers.formatInteger(item[2] * item[3], 0, 'COMMA')}">소계</p>
-                                    </div>
-                                    <div class="col-auto">
-                                        <button class="btn btn-sm btn-outline-danger remove-item" th:data-id="${item[0]}">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
+                                    <div class="col-md-6 text-end">
+                                        <button id="update-cart-btn" class="btn btn-outline-secondary me-2">장바구니 업데이트</button>
+                                        <button id="clear-cart-btn" class="btn btn-outline-danger">장바구니 비우기</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="selectAll">
-                                <label class="form-check-label" for="selectAll">전체 선택</label>
-                            </div>
-                            <button class="btn btn-outline-danger btn-sm" id="removeSelected">
-                                <i class="fas fa-trash-alt me-1"></i> 선택 삭제
-                            </button>
-                        </div>
                     </div>
 
-                    <div class="col-lg-4">
-                        <div class="cart-summary">
-                            <h4 class="mb-4">주문 요약</h4>
-
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>상품 금액</span>
-                                <span id="subtotal">₩147,000</span>
+                    <!-- 장바구니 요약 및 체크아웃 -->
+                    <div class="row mt-5">
+                        <div class="col-lg-6">
+                            <div class="cart-special-instructions">
+                                <h4>배송 메모</h4>
+                                <textarea class="form-control" rows="4" placeholder="배송 시 요청사항을 입력해주세요."></textarea>
                             </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>배송비</span>
-                                <span id="shipping">₩3,000</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>할인 금액</span>
-                                <span id="discount" class="text-danger">-₩0</span>
-                            </div>
-
-                            <hr>
-
-                            <div class="d-flex justify-content-between mb-4">
-                                <span class="fw-bold">총 결제 금액</span>
-                                <span class="fw-bold text-primary" id="total">₩150,000</span>
-                            </div>
-
-                            <div class="d-grid gap-2">
-                                <a th:href="@{/checkout}" class="btn btn-primary">결제하기</a>
-                                <a th:href="@{/products}" class="btn btn-outline-secondary">쇼핑 계속하기</a>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="cart-totals">
+                                <h3>장바구니 합계</h3>
+                                <table class="table">
+                                    <tbody id="cart-summary">
+                                    <!-- 장바구니 요약 정보가 여기에 동적으로 추가됩니다 -->
+                                    </tbody>
+                                </table>
+                                <form id="checkout-form">
+                                    <button type="submit" class="btn btn-primary btn-lg w-100">결제하기</button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -181,7 +172,13 @@
     </section>
 </main>
 
+<!-- 푸터 포함 -->
+<div th:replace="fragments/footer :: footer"></div>
+
 <th:block layout:fragment="script">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/cart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // 전체 선택 체크박스
