@@ -55,7 +55,7 @@ public class SecurityConfig {
                         .permitAll()
                 )
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/**")
+                        .ignoringRequestMatchers("/api/**")  // API 전체에 대해 CSRF 비활성화
                 );
 
         return http.build();

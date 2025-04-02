@@ -10,28 +10,16 @@ import com.peakmeshop.api.dto.ProductDTO;
 public interface ProductService {
 
     // 모든 상품 조회 (기존)
-    List<ProductDTO> getAllProducts();
-
-    // 모든 상품 조회 (컨트롤러에서 사용)
-    List<ProductDTO> findAllProducts();
+    Page<ProductDTO> getAllProducts(Pageable pageable);
 
     // 상품 ID로 조회 (기존)
     ProductDTO getProductById(Long id);
 
-    // 상품 ID로 조회 (컨트롤러에서 사용)
-    ProductDTO findProductById(Long id);
-
     // 상품 생성 (기존)
     ProductDTO createProduct(ProductDTO productDTO);
 
-    // 상품 생성 (컨트롤러에서 사용)
-    ProductDTO saveProduct(ProductDTO productDTO);
-
     // 상품 수정 (기존)
     ProductDTO updateProduct(Long id, ProductDTO productDTO);
-
-    // 상품 수정 (컨트롤러에서 사용)
-    ProductDTO updateProduct(ProductDTO productDTO);
 
     // 상품 삭제
     void deleteProduct(Long id);
@@ -55,16 +43,16 @@ public interface ProductService {
     Page<ProductDTO> searchProducts(String keyword, Pageable pageable);
 
     // 추천 상품 조회
-    List<ProductDTO> getFeaturedProducts(int limit);
+    Page<ProductDTO> getFeaturedProducts(Pageable pageable);
 
     // 신상품 조회
-    List<ProductDTO> getNewArrivals(int limit);
+    Page<ProductDTO> getNewArrivals(Pageable pageable);
 
     // 베스트셀러 조회
-    List<ProductDTO> getBestSellers(int limit);
+    Page<ProductDTO> getBestSellers(Pageable pageable);
 
     // 할인 상품 조회
-    List<ProductDTO> getDiscountedProducts(int limit);
+    Page<ProductDTO> getDiscountedProducts(Pageable pageable);
 
     // 상품 랭킹 업데이트
     void updateProductRankings();

@@ -32,11 +32,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductDTO> getAllProducts() {
-        List<Product> products = productRepository.findAll();
-        return products.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Page<ProductDTO> getAllProducts(Pageable pageable) {
+        Page<Product> products = productRepository.findAll(pageable);
+        return products.map(this::convertToDTO);
     }
 
     @Override
@@ -205,38 +203,30 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductDTO> getFeaturedProducts(int limit) {
-        List<Product> products = productRepository.findByFeaturedTrueAndActiveTrue(Pageable.ofSize(limit)).getContent();
-        return products.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Page<ProductDTO> getFeaturedProducts(Pageable pageable) {
+        Page<Product> products = productRepository.findByFeaturedTrueAndActiveTrue(pageable);
+        return products.map(this::convertToDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductDTO> getNewArrivals(int limit) {
-        List<Product> products = productRepository.findByActiveTrueOrderByCreatedAtDesc(Pageable.ofSize(limit)).getContent();
-        return products.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Page<ProductDTO> getNewArrivals(Pageable pageable) {
+        Page<Product> products = productRepository.findByActiveTrueOrderByCreatedAtDesc(pageable);
+        return products.map(this::convertToDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductDTO> getBestSellers(int limit) {
-        List<Product> products = productRepository.findByActiveTrueOrderBySalesCountDesc(Pageable.ofSize(limit)).getContent();
-        return products.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Page<ProductDTO> getBestSellers(Pageable pageable) {
+        Page<Product> products = productRepository.findByActiveTrueOrderBySalesCountDesc(pageable);
+        return products.map(this::convertToDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProductDTO> getDiscountedProducts(int limit) {
-        List<Product> products = productRepository.findByActiveTrueAndSalePriceIsNotNullOrderBySalePriceAsc(Pageable.ofSize(limit)).getContent();
-        return products.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Page<ProductDTO> getDiscountedProducts(Pageable pageable) {
+        Page<Product> products = productRepository.findByActiveTrueAndSalePriceIsNotNullOrderBySalePriceAsc(pageable);
+        return products.map(this::convertToDTO);
     }
 
     @Override
@@ -285,33 +275,6 @@ public class ProductServiceImpl implements ProductService {
         }
 
         return dto;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductDTO> findAllProducts() {
-        return getAllProducts();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ProductDTO findProductById(Long id) {
-        return getProductById(id);
-    }
-
-    @Override
-    @Transactional
-    public ProductDTO saveProduct(ProductDTO productDTO) {
-        return createProduct(productDTO);
-    }
-
-    @Override
-    @Transactional
-    public ProductDTO updateProduct(ProductDTO productDTO) {
-        if (productDTO.getId() == null) {
-            throw new BadRequestException("상품 ID가 필요합니다.");
-        }
-        return updateProduct(productDTO.getId(), productDTO);
     }
 
     @Override

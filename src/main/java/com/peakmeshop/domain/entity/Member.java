@@ -70,6 +70,12 @@ public class Member {
     @Column(name = "email_verified")
     private boolean emailVerified;
 
+    @Column(name = "agree_terms")
+    private boolean agreeTerms;
+
+    @Column(name = "agree_marketing")
+    private boolean agreeMarketing;
+
     @Column(length = 20)
     private String provider;
 

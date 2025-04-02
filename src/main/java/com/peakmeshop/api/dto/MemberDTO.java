@@ -58,4 +58,8 @@ public class MemberDTO {
     private String gender;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public Boolean isEmailVerified() { // 또는 boolean isEmailVerified()
+        return emailVerified;
+    }
 }

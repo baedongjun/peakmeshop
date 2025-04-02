@@ -196,10 +196,10 @@
 
             // 회원 목록 로드 함수
             function loadMembers() {
-                let url = '/api/members?page=' + currentPage + '&size=10';
+                let url = '/api/admin/members?page=' + currentPage + '&size=10';
 
                 if (searchKeyword) {
-                    url = '/api/members/search?keyword=' + encodeURIComponent(searchKeyword) + '&page=' + currentPage + '&size=10';
+                    url = '/api/admin/members/search?keyword=' + encodeURIComponent(searchKeyword) + '&page=' + currentPage + '&size=10';
                 }
 
                 $.ajax({
@@ -355,12 +355,8 @@
                 const status = $('#memberStatus').val();
 
                 $.ajax({
-                    url: `/api/members/${id}`,
+                    url: `/api/admin/members/${id}/status?status=${status}`,
                     type: 'PUT',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        status: status
-                    }),
                     success: function(response) {
                         $('#statusModal').modal('hide');
                         loadMembers();
@@ -378,7 +374,7 @@
                 const id = $('#deleteId').val();
 
                 $.ajax({
-                    url: `/api/members/${id}`,
+                    url: `/api/admin/members/${id}`,
                     type: 'DELETE',
                     success: function(response) {
                         $('#deleteModal').modal('hide');

@@ -42,8 +42,8 @@ public class AdminMemberController {
 
     @GetMapping("/search")
     public ResponseEntity<Page<MemberDTO>> searchMembers(@RequestParam String keyword, @PageableDefault(size = 10) Pageable pageable) {
-        // List<MemberDTO>를 Page<MemberDTO>로 변환
-        Page<MemberDTO> members = memberService.getAllMembers(pageable);
+
+        Page<MemberDTO> members = memberService.searchMembers(keyword, pageable);
         return ResponseEntity.ok(members);
     }
 
@@ -75,6 +75,9 @@ public class AdminMemberController {
 
     @PostMapping
     public ResponseEntity<MemberDTO> createMember(@RequestBody MemberDTO memberDTO) {
+        if (memberDTO.getUserId() == null || memberDTO.getUserId().isEmpty()) {
+            return ResponseEntity.badRequest().body(null);
+        }
         MemberDTO createdMember = memberService.createMember(memberDTO);
         return new ResponseEntity<>(createdMember, HttpStatus.CREATED);
     }

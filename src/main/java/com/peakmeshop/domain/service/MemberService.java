@@ -42,7 +42,7 @@ public interface MemberService {
 
     boolean existsByEmail(String email);
 
-    List<MemberDTO> searchMembers(String keyword, Pageable pageable);
+    Page<MemberDTO> searchMembers(String keyword, Pageable pageable);
 
     long countMembers();
 }

@@ -72,6 +72,7 @@ public class MemberServiceImpl implements MemberService {
         String encodedPassword = passwordEncoder.encode(memberDTO.getPassword());
 
         Member member = Member.builder()
+                .userId(memberDTO.getUserId())
                 .email(memberDTO.getEmail())
                 .password(encodedPassword)
                 .name(memberDTO.getName())
@@ -80,7 +81,8 @@ public class MemberServiceImpl implements MemberService {
                 .enabled(false)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
-                .build();
+                .emailVerified(memberDTO.isEmailVerified())
+                .agreeTerms(memberDTO.isAgreeTerms()).agreeMarketing(memberDTO.isAgreeMarketing()).build();
 
         Member savedMember = memberRepository.save(member);
 
@@ -273,23 +275,26 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MemberDTO> searchMembers(String keyword, Pageable pageable) {
+    public Page<MemberDTO> searchMembers(String keyword, Pageable pageable) {
         Page<Member> members = memberRepository.findByEmailContainingOrNameContaining(keyword, keyword, pageable);
-        return members.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        return  members.map(this::convertToDTO);
     }
 
     private MemberDTO convertToDTO(Member member) {
         return MemberDTO.builder()
                 .id(member.getId())
+                .userId(member.getUserId())
                 .email(member.getEmail())
                 .name(member.getName())
                 .phone(member.getPhone())
                 .userRole(member.getUserRole())
                 .enabled(member.isEnabled())
+                .status(member.getStatus())
                 .createdAt(member.getCreatedAt())
                 .updatedAt(member.getUpdatedAt())
+                .agreeTerms(member.isAgreeTerms())
+                .agreeMarketing(member.isAgreeMarketing())
+                .emailVerified(member.isEmailVerified())
                 .build();
     }
 
