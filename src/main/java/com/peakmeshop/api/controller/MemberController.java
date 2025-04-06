@@ -49,8 +49,8 @@ public class MemberController {
 
     @GetMapping("/search")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<MemberDTO>> searchMembers(@RequestParam String keyword, @PageableDefault(size = 10) Pageable pageable) {
-        List<MemberDTO> members = memberService.searchMembers(keyword, pageable);
+    public ResponseEntity<Page<MemberDTO>> searchMembers(@RequestParam String keyword, @PageableDefault(size = 10) Pageable pageable) {
+        Page<MemberDTO> members = memberService.searchMembers(keyword, pageable);
         return ResponseEntity.ok(members);
     }
 
