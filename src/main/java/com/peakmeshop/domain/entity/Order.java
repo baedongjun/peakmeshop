@@ -52,7 +52,7 @@ public class Order extends BaseTimeEntity {
     private String recipientMessage;
 
     @Enumerated(EnumType.STRING)
-    private String paymentMethod;
+    private PaymentMethod paymentMethod;
 
     private String paymentStatus;
     private String paymentTransactionId;

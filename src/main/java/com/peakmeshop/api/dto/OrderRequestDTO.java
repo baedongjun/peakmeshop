@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import com.peakmeshop.api.dto.OrderItemDTO;
+import com.peakmeshop.domain.enums.PaymentMethod;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,7 +21,7 @@ public class OrderRequestDTO {
     private BigDecimal shippingCost;
     private BigDecimal tax;
     private BigDecimal totalAmount;
-    private String paymentMethod;
+    private PaymentMethod paymentMethod;
     private String shippingMethod;
     private Long shippingAddressId;
     private Long billingAddressId;

@@ -32,7 +32,7 @@ public class OrderDTO {
     private String recipientAddress;
     private String recipientDetailAddress;
     private String recipientMessage;
-    private String paymentMethod;
+    private PaymentMethod paymentMethod;
     private String trackingNumber;
     private String shippingCompany;
     private String cancelReason;
