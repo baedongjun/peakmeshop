@@ -2,6 +2,7 @@ package com.peakmeshop.admin.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
@@ -17,6 +18,21 @@ public class AdminMemberViewController {
     @GetMapping("/members")
     public String members() {
         return "admin/members";
+    }
+
+    @GetMapping("/members/create")
+    public String createMemberForm() {
+        return "admin/member-form";
+    }
+
+    @GetMapping("/members/{id}/edit")
+    public String editMemberForm(@PathVariable Long id) {
+        return "admin/member-form";
+    }
+
+    @GetMapping("/members/{id}")
+    public String memberDetail(@PathVariable Long id) {
+        return "admin/member-detail";
     }
 
     /**
