@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>공급사 관리 - Peak Me Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">공급사 관리</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item active">공급사 관리</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a th:href="@{/admin/suppliers/new}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> 공급사 등록
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 통계 카드 시작 -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="stats-info">
+                            <h6>전체 공급사</h6>
+                            <h4 th:text="${#numbers.formatInteger(summary.totalSuppliers, 0, 'COMMA')}">100</h4>
+                            <p class="text-muted">등록된 전체 공급사 수</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="stats-info">
+                            <h6>활성 공급사</h6>
+                            <h4 th:text="${#numbers.formatInteger(summary.activeSuppliers, 0, 'COMMA')}">80</h4>
+                            <p class="text-muted">현재 활성화된 공급사 수</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="stats-info">
+                            <h6>전체 상품</h6>
+                            <h4 th:text="${#numbers.formatInteger(summary.totalProducts, 0, 'COMMA')}">1,234</h4>
+                            <p class="text-muted">공급사별 전체 상품 수</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="stats-info">
+                            <h6>총 매출</h6>
+                            <h4 th:text="${#numbers.formatInteger(summary.totalSales, 0, 'COMMA')} + '원'">1,000,000원</h4>
+                            <p class="text-muted">공급사별 총 매출액</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 통계 카드 끝 -->
+
+        <!-- 검색 필터 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <form th:action="@{/admin/suppliers}" method="get" class="form">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>상태</label>
+                                <select name="status" class="form-control">
+                                    <option value="">전체</option>
+                                    <option value="ACTIVE" th:selected="${param.status == 'ACTIVE'}">활성</option>
+                                    <option value="INACTIVE" th:selected="${param.status == 'INACTIVE'}">비활성</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>정렬</label>
+                                <select name="sort" class="form-control">
+                                    <option value="name" th:selected="${param.sort == 'name'}">공급사명</option>
+                                    <option value="productCount" th:selected="${param.sort == 'productCount'}">상품 수</option>
+                                    <option value="totalSales" th:selected="${param.sort == 'totalSales'}">총 매출</option>
+                                    <option value="createdAt" th:selected="${param.sort == 'createdAt'}">등록일</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>검색어</label>
+                                <input type="text" name="keyword" class="form-control" 
+                                       th:value="${param.keyword}"
+                                       placeholder="공급사명, 사업자번호 입력">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i class="fas fa-search"></i> 검색
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 검색 필터 끝 -->
+
+        <!-- 공급사 목록 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>공급사코드</th>
+                                <th>공급사명</th>
+                                <th>사업자번호</th>
+                                <th>연락처</th>
+                                <th>상품 수</th>
+                                <th>총 매출</th>
+                                <th>상태</th>
+                                <th>등록일</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="supplier : ${suppliers}">
+                                <td th:text="${supplier.code}">SUP001</td>
+                                <td>
+                                    <a th:href="@{/admin/suppliers/{id}(id=${supplier.id})}" 
+                                       th:text="${supplier.name}">공급사명</a>
+                                </td>
+                                <td th:text="${supplier.businessNumber}">123-45-67890</td>
+                                <td th:text="${supplier.phone}">02-1234-5678</td>
+                                <td>
+                                    <a th:href="@{/admin/products(supplierId=${supplier.id})}" 
+                                       th:text="${#numbers.formatInteger(supplier.productCount, 0, 'COMMA')}">100</a>
+                                </td>
+                                <td th:text="${#numbers.formatInteger(supplier.totalSales, 0, 'COMMA')} + '원'">1,000,000원</td>
+                                <td>
+                                    <span th:class="${supplier.status == 'ACTIVE' ? 'badge badge-success' : 'badge badge-danger'}"
+                                          th:text="${supplier.status == 'ACTIVE' ? '활성' : '비활성'}">활성</span>
+                                </td>
+                                <td th:text="${#temporals.format(supplier.createdAt, 'yyyy-MM-dd')}">2024-01-01</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a th:href="@{/admin/suppliers/{id}/edit(id=${supplier.id})}" 
+                                           class="btn btn-sm btn-outline-primary">수정</a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                th:onclick="'deleteSupplier(' + ${supplier.id} + ')'">삭제</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(suppliers)}">
+                                <td colspan="9" class="text-center">등록된 공급사가 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 페이지네이션 시작 -->
+                <div th:if="${!#lists.isEmpty(suppliers)}" class="row">
+                    <div class="col-sm-12 col-md-5">
+                        <div class="dataTables_info">
+                            전체 <span th:text="${totalElements}">0</span>개 중
+                            <span th:text="${pageNumber * pageSize + 1}">1</span>-<span th:text="${(pageNumber + 1) * pageSize}">10</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md-7">
+                        <div class="dataTables_paginate">
+                            <ul class="pagination justify-content-end">
+                                <li class="paginate_button page-item previous" th:classappend="${pageNumber == 0 ? 'disabled' : ''}">
+                                    <a th:href="@{${#httpServletRequest.requestURI}(page=${pageNumber - 1})}"
+                                       class="page-link">이전</a>
+                                </li>
+                                <li th:each="page : ${#numbers.sequence(0, totalPages - 1)}"
+                                    class="paginate_button page-item"
+                                    th:classappend="${page == pageNumber ? 'active' : ''}">
+                                    <a th:href="@{${#httpServletRequest.requestURI}(page=${page})}"
+                                       class="page-link" th:text="${page + 1}">1</a>
+                                </li>
+                                <li class="paginate_button page-item next" th:classappend="${pageNumber + 1 >= totalPages ? 'disabled' : ''}">
+                                    <a th:href="@{${#httpServletRequest.requestURI}(page=${pageNumber + 1})}"
+                                       class="page-link">다음</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- 페이지네이션 끝 -->
+            </div>
+        </div>
+        <!-- 공급사 목록 끝 -->
+
+        <!-- 삭제 확인 모달 시작 -->
+        <div class="modal fade" id="deleteSupplierModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">공급사 삭제</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>정말 이 공급사를 삭제하시겠습니까?</p>
+                        <p class="text-danger">* 주의: 삭제된 공급사는 복구할 수 없습니다.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-danger" id="confirmDelete">삭제</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 삭제 확인 모달 끝 -->
+    </div>
+
+    <!-- 공급사 관리 스크립트 -->
+    <th:block layout:fragment="script">
+        <script th:inline="javascript">
+            let supplierIdToDelete;
+
+            function deleteSupplier(id) {
+                supplierIdToDelete = id;
+                $('#deleteSupplierModal').modal('show');
+            }
+
+            document.getElementById('confirmDelete').addEventListener('click', function() {
+                fetch('/api/admin/suppliers/' + supplierIdToDelete, {
+                    method: 'DELETE'
+                }).then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        throw new Error('공급사 삭제에 실패했습니다.');
+                    }
+                }).catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+                $('#deleteSupplierModal').modal('hide');
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

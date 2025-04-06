@@ -3,21 +3,29 @@ package com.peakmeshop.domain.service.impl;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.HashMap;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 
+import com.peakmeshop.api.dto.*;
+import com.peakmeshop.domain.entity.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.peakmeshop.api.dto.ProductDTO;
-import com.peakmeshop.domain.entity.Category;
-import com.peakmeshop.domain.entity.Product;
 import com.peakmeshop.common.exception.BadRequestException;
 import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.repository.CategoryRepository;
 import com.peakmeshop.domain.repository.ProductRepository;
+import com.peakmeshop.domain.repository.ProductReviewRepository;
+import com.peakmeshop.domain.repository.ProductQnaRepository;
+import com.peakmeshop.domain.repository.ProductOptionRepository;
 import com.peakmeshop.domain.service.ProductService;
+import com.peakmeshop.domain.repository.ProductOptionValueRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +37,10 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductReviewRepository reviewRepository;
+    private final ProductQnaRepository qnaRepository;
+    private final ProductOptionRepository optionRepository;
+    private final ProductOptionValueRepository optionValueRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -315,5 +327,174 @@ public class ProductServiceImpl implements ProductService {
 
         Product updatedProduct = productRepository.save(product);
         return convertToDTO(updatedProduct);
+    }
+
+    @Override
+    public Map<String, Object> getProductSummary() {
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("totalProducts", productRepository.count());
+        summary.put("activeProducts", productRepository.countByIsActiveTrue());
+        summary.put("outOfStockProducts", productRepository.countByStockLessThanEqual(0));
+        return summary;
+    }
+
+    @Override
+    public Map<String, Object> getProductSummary(Long productId) {
+        Map<String, Object> summary = new HashMap<>();
+        productRepository.findById(productId).ifPresent(product -> {
+            summary.put("totalSales", product.getTotalSales());
+            summary.put("totalRevenue", product.getTotalRevenue());
+            summary.put("totalReviews", reviewRepository.countByProductId(productId));
+            summary.put("totalQnas", qnaRepository.countByProductId(productId));
+        });
+        return summary;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getProductStatistics(String startDate, String endDate, String interval, String category) {
+        LocalDateTime start = LocalDateTime.parse(startDate);
+        LocalDateTime end = LocalDateTime.parse(endDate);
+
+        Map<String, Object> statistics = new HashMap<>();
+        statistics.put("totalProducts", productRepository.count());
+        statistics.put("activeProducts", productRepository.countByIsActiveTrue());
+        statistics.put("featuredProducts", productRepository.countByIsFeaturedTrue());
+        statistics.put("totalSales", productRepository.calculateTotalSales().longValue());
+        statistics.put("averageRating", productRepository.calculateAverageRating().doubleValue());
+
+        // 카테고리별 판매 통계
+        List<Object[]> salesByCategory = productRepository.findSalesByCategory(start, end);
+        List<Map<String, Object>> categorySales = new ArrayList<>();
+        for (Object[] row : salesByCategory) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("category", row[0]);
+            map.put("count", ((Number) row[1]).longValue());
+            map.put("total", ((BigDecimal) row[2]).doubleValue());
+            categorySales.add(map);
+        }
+        statistics.put("salesByCategory", categorySales);
+
+        // 인기 상품
+        Page<Product> topProducts = productRepository.findTopProducts(start, end, PageRequest.of(0, 10));
+        statistics.put("topProducts", topProducts.getContent().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList()));
+
+        // 판매 추이
+        List<Object[]> salesTrend = productRepository.findSalesTrend(start, end);
+        List<Map<String, Object>> trend = new ArrayList<>();
+        for (Object[] row : salesTrend) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("date", row[0]);
+            map.put("count", ((Number) row[1]).longValue());
+            map.put("total", ((BigDecimal) row[2]).doubleValue());
+            trend.add(map);
+        }
+        statistics.put("salesTrend", trend);
+
+        return statistics;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getInventoryStatistics() {
+        Map<String, Object> statistics = new HashMap<>();
+
+        // 카테고리별 재고 현황
+        List<Object[]> stockByCategory = productRepository.findStockByCategory();
+        List<Map<String, Object>> categoryStock = new ArrayList<>();
+        for (Object[] row : stockByCategory) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("category", row[0]);
+            map.put("totalStock", ((Number) row[1]).longValue());
+            categoryStock.add(map);
+        }
+        statistics.put("stockByCategory", categoryStock);
+
+        // 재고 부족 상품
+        List<Product> lowStockProducts = productRepository.findLowStockProducts();
+        statistics.put("lowStockProducts", lowStockProducts.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList()));
+
+        // 품절 상품
+        List<Product> outOfStockProducts = productRepository.findOutOfStockProducts();
+        statistics.put("outOfStockProducts", outOfStockProducts.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList()));
+
+        return statistics;
+    }
+
+    @Override
+    public Page<ProductReviewDTO> getProductReviews(Pageable pageable) {
+        return reviewRepository.findAll(pageable).map(this::convertToReviewDTO);
+    }
+
+    @Override
+    public ProductReviewDTO getReviewById(Long id) {
+        return reviewRepository.findById(id)
+                .map(this::convertToReviewDTO)
+                .orElseThrow(() -> new RuntimeException("Review not found"));
+    }
+
+    @Override
+    public Page<ProductQnaDTO> getProductQnas(Pageable pageable) {
+        return qnaRepository.findAll(pageable).map(this::convertToQnaDTO);
+    }
+
+    @Override
+    public ProductQnaDTO getQnaById(Long id) {
+        return qnaRepository.findById(id)
+                .map(this::convertToQnaDTO)
+                .orElseThrow(() -> new RuntimeException("QnA not found"));
+    }
+
+    @Override
+    public Map<String, Object> getInventory(String category) {
+        Map<String, Object> inventory = new HashMap<>();
+        if (category != null) {
+            inventory.put("stockByCategory", productRepository.findStockByCategory());
+        }
+        inventory.put("lowStockProducts", productRepository.findLowStockProducts());
+        inventory.put("outOfStockProducts", productRepository.findOutOfStockProducts());
+        return inventory;
+    }
+
+    @Override
+    public List<ProductOptionDTO> getProductOptions(Long productId) {
+        return optionRepository.findByProductId(productId).stream()
+                .map(this::convertToOptionDTO)
+                .toList();
+    }
+
+    private ProductReviewDTO convertToReviewDTO(ProductReview review) {
+        // ProductReview 엔티티를 DTO로 변환하는 로직
+        return null; // TODO: 구현 필요
+    }
+
+    private ProductQnaDTO convertToQnaDTO(ProductQna qna) {
+        // ProductQna 엔티티를 DTO로 변환하는 로직
+        return null; // TODO: 구현 필요
+    }
+
+    private ProductOptionDTO convertToOptionDTO(ProductOption option) {
+        // ProductOption 엔티티를 DTO로 변환하는 로직
+        return null; // TODO: 구현 필요
+    }
+
+    private ProductOptionValueDTO convertToOptionValueDTO(ProductOptionValue value) {
+        ProductOptionValueDTO dto = new ProductOptionValueDTO();
+        dto.setId(value.getId());
+        dto.setOptionId(value.getOption().getId());
+        dto.setValue(value.getValue());
+        dto.setAdditionalPrice(value.getAdditionalPrice());
+        dto.setStock(value.getStock());
+        dto.setSku(value.getSku());
+        dto.setActive(value.isActive());
+        dto.setCreatedAt(value.getCreatedAt());
+        dto.setUpdatedAt(value.getUpdatedAt());
+        return dto;
     }
 }

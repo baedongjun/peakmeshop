@@ -1,6 +1,7 @@
 package com.peakmeshop.api.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,4 +21,10 @@ public class ProductOptionValueDTO {
     private Integer stockQuantity;
     private String sku;
     private Boolean active;
+    private BigDecimal additionalPrice;
+    private Integer stock;
+    private Integer displayOrder;
+    private Boolean isActive;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

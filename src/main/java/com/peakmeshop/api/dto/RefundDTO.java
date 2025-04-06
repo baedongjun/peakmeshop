@@ -8,31 +8,37 @@ import java.util.Map;
 import com.peakmeshop.domain.enums.OrderStatus;
 import com.peakmeshop.domain.enums.RefundStatus;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RefundDTO {
     private Long id;
-    private Long orderId;
     private String orderNumber;
     private Long memberId;
+    private String memberName;
     private String memberEmail;
+    private BigDecimal totalAmount;
+    private LocalDateTime refundedAt;
+    private Long orderId;
     private String refundNumber;
-    private RefundStatus status;
-    private String reason;
-    private String refundMethod;
     private BigDecimal amount;
     private BigDecimal shippingAmount;
-    private BigDecimal totalAmount;
-    private String transactionId;
-    private List<RefundItemDTO> items;
-    private Map<String, String> metadata;
+    private RefundStatus status;
     private String adminNotes;
+    private String reason;
+    private String transactionId;
+    private OrderStatus orderStatus;
     private LocalDateTime requestedAt;
     private LocalDateTime processedAt;
     private LocalDateTime completedAt;
     private LocalDateTime rejectedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private OrderStatus orderStatus;
+    private List<RefundItemDTO> items;
 }

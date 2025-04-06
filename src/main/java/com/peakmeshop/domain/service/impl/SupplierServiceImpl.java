@@ -2,9 +2,12 @@ package com.peakmeshop.domain.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.peakmeshop.api.dto.ContractDTO;
+import com.peakmeshop.api.dto.SettlementDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -159,6 +162,31 @@ public class SupplierServiceImpl implements SupplierService {
         return supplierRepository.findByNameContainingIgnoreCaseOrCodeContainingIgnoreCase(keyword, keyword).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Long> getSupplierSummary() {
+        return null;
+    }
+
+    @Override
+    public Map<String, Long> getSupplierSummary(Long supplierId) {
+        return null;
+    }
+
+    @Override
+    public Page<SettlementDTO> getSettlements(Pageable pageable) {
+        return null;
+    }
+
+    @Override
+    public Page<ContractDTO> getContracts(Pageable pageable) {
+        return null;
+    }
+
+    @Override
+    public ContractDTO getContractById(Long id) {
+        return null;
     }
 
     // 헬퍼 메서드

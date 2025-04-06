@@ -8,9 +8,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class PointDTO {
 
     private Long id;
@@ -21,4 +21,11 @@ public class PointDTO {
     private Integer totalEarnedPoint;
     private Integer totalUsedPoint;
     private LocalDateTime updatedAt;
+    private Long amount;
+    private String type;
+    private String reason;
+    private Long orderId;
+    private String orderNumber;
+    private LocalDateTime expiredAt;
+    private LocalDateTime createdAt;
 }

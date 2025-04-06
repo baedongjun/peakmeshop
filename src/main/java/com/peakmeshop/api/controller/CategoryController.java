@@ -43,7 +43,7 @@ public class CategoryController {
 
     @GetMapping
     public ResponseEntity<Page<CategoryDTO>> getAllCategories(Pageable pageable) {
-        Page<CategoryDTO> categories = categoryService.getAllCategoriesPaged(pageable);
+        Page<CategoryDTO> categories = categoryService.getCategories(pageable);
         return ResponseEntity.ok(categories);
     }
 

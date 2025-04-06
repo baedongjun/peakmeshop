@@ -37,16 +37,16 @@ public interface EmailService {
     void sendPasswordResetRequestEmail(String to, String resetToken);
 
     // 주문 확인 이메일
-    void sendOrderConfirmationEmail(String to, Long orderId, String orderNumber);
+    void sendOrderConfirmationEmail(String email, Long orderId, String orderNumber);
 
     // 배송 알림 이메일
-    void sendShippingNotificationEmail(String to, Long orderId, String trackingNumber);
+    void sendShippingNotificationEmail(String email, Long orderId, String orderNumber, String trackingNumber);
 
     // 쿠폰 발급 이메일
     void sendCouponEmail(String to, String couponCode, String couponName);
 
     // 환불 확인 이메일
-    void sendRefundConfirmationEmail(String to, Long orderId, String orderNumber);
+    void sendRefundConfirmationEmail(String email, Long orderId, String orderNumber);
 
     void sendRefundRequestEmail(String email, Long orderId, String orderNumber);
     void sendRefundRejectionEmail(String email, Long orderId, String orderNumber, String reason);
@@ -70,4 +70,7 @@ public interface EmailService {
      * @param orderNumber 주문 번호
      */
     void sendDeliveryCompletionEmail(String email, Long orderId, String orderNumber);
+
+    void sendDeliveryConfirmationEmail(String email, Long orderId, String orderNumber);
+    void sendCancellationConfirmationEmail(String email, Long orderId, String orderNumber);
 }

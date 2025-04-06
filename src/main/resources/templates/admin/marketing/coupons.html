@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>쿠폰 관리 - Peak Me Shop 관리자</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- 페이지 헤더 시작 -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">쿠폰 관리</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                    <li class="breadcrumb-item active">쿠폰 관리</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a th:href="@{/admin/coupons/new}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> 쿠폰 등록
+                </a>
+            </div>
+        </div>
+    </div>
+    <!-- 페이지 헤더 끝 -->
+
+    <!-- 통계 카드 시작 -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="stats-info">
+                        <h6>총 발행 쿠폰</h6>
+                        <h4 th:text="${#numbers.formatInteger(summary.totalCoupons, 0, 'COMMA')}">1,234</h4>
+                        <p class="text-muted">전체 발행된 쿠폰 수</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="stats-info">
+                        <h6>사용 가능 쿠폰</h6>
+                        <h4 th:text="${#numbers.formatInteger(summary.availableCoupons, 0, 'COMMA')}">500</h4>
+                        <p class="text-muted">현재 사용 가능한 쿠폰 수</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="stats-info">
+                        <h6>이번 달 사용</h6>
+                        <h4 th:text="${#numbers.formatInteger(summary.monthlyUsedCoupons, 0, 'COMMA')}">150</h4>
+                        <p class="text-muted">이번 달 사용된 쿠폰 수</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="stats-info">
+                        <h6>총 할인 금액</h6>
+                        <h4 th:text="${#numbers.formatInteger(summary.totalDiscountAmount, 0, 'COMMA') + '원'}">1,500,000원</h4>
+                        <p class="text-muted">쿠폰으로 인한 총 할인 금액</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 통계 카드 끝 -->
+
+    <!-- 검색 필터 시작 -->
+    <div class="card">
+        <div class="card-body">
+            <form th:action="@{/admin/coupons}" method="get" class="form">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>쿠폰 유형</label>
+                            <select name="type" class="form-control">
+                                <option value="">전체</option>
+                                <option value="DISCOUNT" th:selected="${param.type == 'DISCOUNT'}">할인 쿠폰</option>
+                                <option value="SHIPPING" th:selected="${param.type == 'SHIPPING'}">배송비 쿠폰</option>
+                                <option value="GIFT" th:selected="${param.type == 'GIFT'}">사은품 쿠폰</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>상태</label>
+                            <select name="status" class="form-control">
+                                <option value="">전체</option>
+                                <option value="READY" th:selected="${param.status == 'READY'}">대기</option>
+                                <option value="ACTIVE" th:selected="${param.status == 'ACTIVE'}">진행중</option>
+                                <option value="ENDED" th:selected="${param.status == 'ENDED'}">종료</option>
+                                <option value="SUSPENDED" th:selected="${param.status == 'SUSPENDED'}">중지</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>검색어</label>
+                            <input type="text" name="keyword" class="form-control" 
+                                   th:value="${param.keyword}"
+                                   placeholder="쿠폰명 또는 쿠폰코드 입력">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fas fa-search"></i> 검색
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- 검색 필터 끝 -->
+
+    <!-- 쿠폰 목록 시작 -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>쿠폰코드</th>
+                            <th>쿠폰명</th>
+                            <th>유형</th>
+                            <th>혜택</th>
+                            <th>발행수</th>
+                            <th>사용수</th>
+                            <th>시작일</th>
+                            <th>종료일</th>
+                            <th>상태</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="coupon : ${coupons}">
+                            <td th:text="${coupon.code}">SPRING2024</td>
+                            <td>
+                                <a th:href="@{/admin/coupons/{id}(id=${coupon.id})}" 
+                                   th:text="${coupon.name}">봄맞이 할인 쿠폰</a>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="${coupon.type == 'DISCOUNT' ? 'badge-info' : 
+                                                                   coupon.type == 'SHIPPING' ? 'badge-success' : 
+                                                                   'badge-warning'}"
+                                      th:text="${coupon.typeText}">할인 쿠폰</span>
+                            </td>
+                            <td th:text="${coupon.benefitText}">10% 할인</td>
+                            <td th:text="${#numbers.formatInteger(coupon.issuedCount, 0, 'COMMA')}">1,000</td>
+                            <td th:text="${#numbers.formatInteger(coupon.usedCount, 0, 'COMMA')}">500</td>
+                            <td th:text="${#temporals.format(coupon.startDate, 'yyyy-MM-dd')}">2024-03-01</td>
+                            <td th:text="${#temporals.format(coupon.endDate, 'yyyy-MM-dd')}">2024-03-31</td>
+                            <td>
+                                <span class="badge" th:classappend="${coupon.status == 'READY' ? 'badge-warning' : 
+                                                                   coupon.status == 'ACTIVE' ? 'badge-success' : 
+                                                                   coupon.status == 'ENDED' ? 'badge-secondary' : 
+                                                                   'badge-danger'}"
+                                      th:text="${coupon.statusText}">진행중</span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a th:href="@{/admin/coupons/{id}/edit(id=${coupon.id})}" 
+                                       class="btn btn-sm btn-outline-primary">수정</a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            th:onclick="'deleteCoupon(' + ${coupon.id} + ')'">삭제</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(coupons)}">
+                            <td colspan="10" class="text-center">등록된 쿠폰이 없습니다.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이지네이션 시작 -->
+            <nav th:if="${!#lists.isEmpty(coupons)}" aria-label="Page navigation" class="mt-3">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/coupons(page=${page.number - 1}, size=${page.size}, type=${param.type}, status=${param.status}, keyword=${param.keyword})}">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
+                        th:classappend="${page.number == i} ? 'active'">
+                        <a class="page-link" th:href="@{/admin/coupons(page=${i}, size=${page.size}, type=${param.type}, status=${param.status}, keyword=${param.keyword})}"
+                           th:text="${i + 1}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/coupons(page=${page.number + 1}, size=${page.size}, type=${param.type}, status=${param.status}, keyword=${param.keyword})}">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <!-- 페이지네이션 끝 -->
+        </div>
+    </div>
+    <!-- 쿠폰 목록 끝 -->
+</div>
+
+<!-- 쿠폰 삭제 확인 모달 -->
+<div class="modal fade" id="deleteCouponModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">쿠폰 삭제</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>이 쿠폰을 삭제하시겠습니까?</p>
+                <p class="text-danger">삭제된 쿠폰은 복구할 수 없으며, 이미 발급된 쿠폰도 모두 사용할 수 없게 됩니다.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">삭제</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 쿠폰 관리 스크립트 -->
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        let couponIdToDelete;
+
+        function deleteCoupon(id) {
+            couponIdToDelete = id;
+            $('#deleteCouponModal').modal('show');
+        }
+
+        function confirmDelete() {
+            fetch(`/api/admin/coupons/${couponIdToDelete}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    throw new Error('쿠폰 삭제에 실패했습니다.');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                alert(error.message);
+            });
+            $('#deleteCouponModal').modal('hide');
+        }
+    </script>
+</th:block>
+</body>
+</html> 

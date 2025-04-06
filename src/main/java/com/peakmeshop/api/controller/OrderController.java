@@ -5,6 +5,7 @@ import com.peakmeshop.api.dto.OrderItemDTO;
 import com.peakmeshop.api.dto.OrderRequestDTO;
 import com.peakmeshop.api.dto.OrderStatusUpdateDTO;
 import com.peakmeshop.common.security.oauth2.user.UserPrincipal;
+import com.peakmeshop.domain.entity.Order;
 import com.peakmeshop.domain.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +28,8 @@ public class OrderController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or @orderService.getOrderById(#id).memberId == authentication.principal.id")
-    public ResponseEntity<OrderDTO> getOrderById(@PathVariable Long id) {
-        OrderDTO order = orderService.getOrderDTOById(id);
+    public ResponseEntity<Order> getOrderById(@PathVariable Long id) {
+        Order order = orderService.getOrderById(id);
         return ResponseEntity.ok(order);
     }
 

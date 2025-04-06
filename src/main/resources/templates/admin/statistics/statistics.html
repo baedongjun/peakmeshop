@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>통계 관리 - Peak Me Shop 관리자</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">통계 관리</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="/admin">대시보드</a></li>
+                <li class="breadcrumb-item active">통계 관리</li>
+            </ol>
+
+            <!-- 통계 필터 -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form id="statisticsForm" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="statisticsType" class="form-label">통계 유형</label>
+                            <select class="form-select" id="statisticsType" name="statisticsType">
+                                <option value="SALES">매출 통계</option>
+                                <option value="ORDERS">주문 통계</option>
+                                <option value="PRODUCTS">상품 통계</option>
+                                <option value="MEMBERS">회원 통계</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="periodType" class="form-label">기간 단위</label>
+                            <select class="form-select" id="periodType" name="periodType">
+                                <option value="DAILY">일별</option>
+                                <option value="WEEKLY">주별</option>
+                                <option value="MONTHLY">월별</option>
+                                <option value="YEARLY">연별</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="dateRange" class="form-label">기간 선택</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="startDate" name="startDate">
+                                <span class="input-group-text">~</span>
+                                <input type="date" class="form-control" id="endDate" name="endDate">
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <div class="btn-group w-100">
+                                <button type="button" class="btn btn-outline-secondary" onclick="setDateRange(7)">7일</button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="setDateRange(30)">30일</button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="setDateRange(90)">90일</button>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <button type="button" class="btn btn-primary" onclick="loadStatistics()">조회</button>
+                            <button type="button" class="btn btn-success" onclick="downloadExcel()">엑셀 다운로드</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 요약 통계 -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-primary text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>총 매출액</div>
+                                <div class="h3 mb-0" th:text="${#numbers.formatCurrency(totalSales)}">0원</div>
+                            </div>
+                            <div class="small">전월 대비: <span th:text="${salesGrowth}">0%</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-success text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>총 주문수</div>
+                                <div class="h3 mb-0" th:text="${totalOrders}">0건</div>
+                            </div>
+                            <div class="small">전월 대비: <span th:text="${ordersGrowth}">0%</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-warning text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>평균 구매액</div>
+                                <div class="h3 mb-0" th:text="${#numbers.formatCurrency(averageOrderAmount)}">0원</div>
+                            </div>
+                            <div class="small">전월 대비: <span th:text="${averageOrderGrowth}">0%</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-danger text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>취소/환불액</div>
+                                <div class="h3 mb-0" th:text="${#numbers.formatCurrency(totalRefunds)}">0원</div>
+                            </div>
+                            <div class="small">전월 대비: <span th:text="${refundsGrowth}">0%</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 그래프 -->
+            <div class="row mb-4">
+                <div class="col-xl-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">추이 그래프</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">분포 그래프</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="distributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 상세 데이터 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">상세 데이터</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="statisticsTable" class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>기간</th>
+                                    <th>매출액</th>
+                                    <th>주문수</th>
+                                    <th>평균 구매액</th>
+                                    <th>취소/환불</th>
+                                    <th>순매출</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="stat : ${statistics}">
+                                    <td th:text="${stat.period}"></td>
+                                    <td th:text="${#numbers.formatCurrency(stat.sales)}">0원</td>
+                                    <td th:text="${stat.orders}">0건</td>
+                                    <td th:text="${#numbers.formatCurrency(stat.averageOrder)}">0원</td>
+                                    <td th:text="${#numbers.formatCurrency(stat.refunds)}">0원</td>
+                                    <td th:text="${#numbers.formatCurrency(stat.netSales)}">0원</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th>합계</th>
+                                    <th th:text="${#numbers.formatCurrency(totalSales)}">0원</th>
+                                    <th th:text="${totalOrders}">0건</th>
+                                    <th th:text="${#numbers.formatCurrency(averageOrderAmount)}">0원</th>
+                                    <th th:text="${#numbers.formatCurrency(totalRefunds)}">0원</th>
+                                    <th th:text="${#numbers.formatCurrency(netSales)}">0원</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자바스크립트 -->
+    <th:block layout:fragment="script">
+        <script>
+            let trendChart = null;
+            let distributionChart = null;
+
+            $(document).ready(function() {
+                $('#statisticsTable').DataTable({
+                    order: [[0, 'desc']],
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Korean.json'
+                    }
+                });
+
+                setDefaultDateRange();
+                loadStatistics();
+            });
+
+            function setDefaultDateRange() {
+                const today = new Date();
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(today.getDate() - 30);
+
+                document.getElementById('startDate').value = formatDate(thirtyDaysAgo);
+                document.getElementById('endDate').value = formatDate(today);
+            }
+
+            function setDateRange(days) {
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setDate(endDate.getDate() - days + 1);
+
+                document.getElementById('startDate').value = formatDate(startDate);
+                document.getElementById('endDate').value = formatDate(endDate);
+            }
+
+            function formatDate(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            function loadStatistics() {
+                const formData = new FormData(document.getElementById('statisticsForm'));
+                const params = new URLSearchParams(formData);
+
+                fetch(`/api/admin/statistics?${params}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        updateCharts(data);
+                        updateTable(data);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('통계 데이터를 불러오는데 실패했습니다.');
+                    });
+            }
+
+            function updateCharts(data) {
+                // 추이 그래프 업데이트
+                const ctx1 = document.getElementById('trendChart').getContext('2d');
+                if (trendChart) {
+                    trendChart.destroy();
+                }
+                trendChart = new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels: data.periods,
+                        datasets: [{
+                            label: '매출액',
+                            data: data.sales,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        }, {
+                            label: '주문수',
+                            data: data.orders,
+                            borderColor: 'rgb(255, 99, 132)',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        }
+                    }
+                });
+
+                // 분포 그래프 업데이트
+                const ctx2 = document.getElementById('distributionChart').getContext('2d');
+                if (distributionChart) {
+                    distributionChart.destroy();
+                }
+                distributionChart = new Chart(ctx2, {
+                    type: 'pie',
+                    data: {
+                        labels: data.categories,
+                        datasets: [{
+                            data: data.distribution,
+                            backgroundColor: [
+                                'rgb(255, 99, 132)',
+                                'rgb(54, 162, 235)',
+                                'rgb(255, 205, 86)',
+                                'rgb(75, 192, 192)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true
+                    }
+                });
+            }
+
+            function updateTable(data) {
+                const table = $('#statisticsTable').DataTable();
+                table.clear();
+                
+                data.details.forEach(detail => {
+                    table.row.add([
+                        detail.period,
+                        formatCurrency(detail.sales),
+                        detail.orders,
+                        formatCurrency(detail.averageOrder),
+                        formatCurrency(detail.refunds),
+                        formatCurrency(detail.netSales)
+                    ]);
+                });
+                
+                table.draw();
+            }
+
+            function formatCurrency(amount) {
+                return new Intl.NumberFormat('ko-KR', {
+                    style: 'currency',
+                    currency: 'KRW'
+                }).format(amount);
+            }
+
+            function downloadExcel() {
+                const formData = new FormData(document.getElementById('statisticsForm'));
+                const params = new URLSearchParams(formData);
+                
+                window.location.href = `/api/admin/statistics/excel?${params}`;
+            }
+        </script>
+    </th:block>
+</body>
+</html> 

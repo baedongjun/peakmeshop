@@ -18,7 +18,7 @@ public interface CategoryService {
 
     List<CategoryDTO> getAllCategories();
 
-    Page<CategoryDTO> getAllCategoriesPaged(Pageable pageable);
+    Page<CategoryDTO> getCategories(Pageable pageable);
 
     List<CategoryDTO> getActiveCategories();
 

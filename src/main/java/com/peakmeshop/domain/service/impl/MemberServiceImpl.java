@@ -2,19 +2,17 @@ package com.peakmeshop.domain.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.peakmeshop.api.dto.PasswordResetDTO;
-import com.peakmeshop.api.dto.PasswordResetRequestDTO;
+import com.peakmeshop.api.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.peakmeshop.api.dto.MemberDTO;
-import com.peakmeshop.api.dto.MemberUpdateDTO;
 import com.peakmeshop.domain.entity.Member;
 import com.peakmeshop.domain.entity.VerificationToken;
 import com.peakmeshop.common.exception.BadRequestException;
@@ -333,6 +331,41 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    public List<MemberGradeDTO> getAllGrades() {
+        return null;
+    }
+
+    @Override
+    public MemberGradeDTO getGradeById(Long id) {
+        return null;
+    }
+
+    @Override
+    public Map<String, Long> getMemberSummary() {
+        return null;
+    }
+
+    @Override
+    public Map<String, Long> getMemberSummary(Long memberId) {
+        return null;
+    }
+
+    @Override
+    public Map<String, Object> getMemberStatistics(String period, String startDate, String endDate) {
+        return null;
+    }
+
+    @Override
+    public Page<PointDTO> getPoints(Pageable pageable) {
+        return null;
+    }
+
+    @Override
+    public PointDTO getPointById(Long id) {
+        return null;
+    }
+
+    @Override
     @Transactional
     public void requestPasswordReset(PasswordResetRequestDTO requestDTO) {
         Member member = memberRepository.findByEmail(requestDTO.getEmail())
@@ -346,5 +379,29 @@ public class MemberServiceImpl implements MemberService {
 
         // 비밀번호 재설정 이메일 발송
         emailService.sendPasswordResetRequestEmail(member.getEmail(), token);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<MemberDTO> getWithdrawnMembers(String startDate, String endDate, Pageable pageable) {
+        LocalDateTime start = startDate != null ? LocalDateTime.parse(startDate) : null;
+        LocalDateTime end = endDate != null ? LocalDateTime.parse(endDate) : null;
+        
+        Page<Member> members;
+        if (start != null && end != null) {
+            members = memberRepository.findByIsWithdrawnTrueAndWithdrawnAtBetween(start, end, pageable);
+        } else {
+            members = memberRepository.findByIsWithdrawnTrue(pageable);
+        }
+        
+        return members.map(this::convertToDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<MemberDTO> getDormantMembers(Pageable pageable) {
+        LocalDateTime threeMonthsAgo = LocalDateTime.now().minusMonths(3);
+        Page<Member> members = memberRepository.findByLastLoginAtBeforeAndIsWithdrawnFalse(threeMonthsAgo, pageable);
+        return members.map(this::convertToDTO);
     }
 }

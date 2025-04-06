@@ -27,4 +27,9 @@ public class OrderRequestDTO {
     private List<OrderItemDTO> items;
     private String couponCode;
     private String notes;
+    private String recipientName;
+    private String recipientTel;
+    private String recipientAddress;
+    private String recipientDetailAddress;
+    private String recipientMessage;
 }

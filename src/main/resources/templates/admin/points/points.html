@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>포인트 관리 - Peak Me Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">포인트 관리</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="/admin">대시보드</a></li>
+                <li class="breadcrumb-item active">포인트 관리</li>
+            </ol>
+
+            <!-- 검색 및 필터 -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form th:action="@{/admin/points}" method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="searchType" class="form-label">검색 유형</label>
+                            <select class="form-select" id="searchType" name="searchType">
+                                <option value="member">회원명</option>
+                                <option value="type">포인트 유형</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="searchKeyword" class="form-label">검색어</label>
+                            <input type="text" class="form-control" id="searchKeyword" name="searchKeyword">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="dateRange" class="form-label">기간</label>
+                            <select class="form-select" id="dateRange" name="dateRange">
+                                <option value="all">전체</option>
+                                <option value="today">오늘</option>
+                                <option value="week">1주일</option>
+                                <option value="month">1개월</option>
+                                <option value="year">1년</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">검색</button>
+                            <button type="reset" class="btn btn-secondary">초기화</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 포인트 적립/차감 버튼 -->
+            <div class="mb-4">
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addPointModal">
+                    포인트 적립
+                </button>
+                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#deductPointModal">
+                    포인트 차감
+                </button>
+            </div>
+
+            <!-- 포인트 내역 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-table me-1"></i>
+                    포인트 내역
+                </div>
+                <div class="card-body">
+                    <table id="pointsTable" class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>회원명</th>
+                                <th>포인트</th>
+                                <th>유형</th>
+                                <th>내용</th>
+                                <th>잔여 포인트</th>
+                                <th>일시</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="point : ${points}">
+                                <td th:text="${point.id}"></td>
+                                <td>
+                                    <a th:href="@{/admin/members/{id}(id=${point.member.id})}" 
+                                       th:text="${point.member.name}"></a>
+                                </td>
+                                <td>
+                                    <span th:class="${point.amount >= 0 ? 'text-success' : 'text-danger'}"
+                                          th:text="${point.amount >= 0 ? '+' : ''} + ${#numbers.formatInteger(point.amount, 0, 'COMMA')}">
+                                    </span>
+                                </td>
+                                <td th:text="${point.type}"></td>
+                                <td th:text="${point.description}"></td>
+                                <td th:text="${#numbers.formatInteger(point.balance, 0, 'COMMA')}"></td>
+                                <td th:text="${#temporals.format(point.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td>
+                                    <a th:href="@{/admin/points/{id}(id=${point.id})}" 
+                                       class="btn btn-sm btn-primary">상세</a>
+                                    <button th:if="${point.cancelable}" 
+                                            class="btn btn-sm btn-danger"
+                                            th:onclick="'cancelPoint(' + ${point.id} + ')'">취소</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- 페이지네이션 -->
+                    <nav aria-label="Page navigation" th:if="${points.totalPages > 0}">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item" th:classappend="${!points.hasPrevious()} ? disabled">
+                                <a class="page-link" th:href="@{/admin/points(page=${points.number - 1})}">이전</a>
+                            </li>
+                            <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, points.totalPages - 1)}"
+                                th:classappend="${pageNum == points.number} ? active">
+                                <a class="page-link" th:href="@{/admin/points(page=${pageNum})}" 
+                                   th:text="${pageNum + 1}"></a>
+                            </li>
+                            <li class="page-item" th:classappend="${!points.hasNext()} ? disabled">
+                                <a class="page-link" th:href="@{/admin/points(page=${points.number + 1})}">다음</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 포인트 적립 모달 -->
+    <div class="modal fade" id="addPointModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">포인트 적립</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addPointForm">
+                        <div class="mb-3">
+                            <label for="memberId" class="form-label">회원 선택</label>
+                            <select class="form-select" id="memberId" required>
+                                <option value="">회원을 선택하세요</option>
+                                <option th:each="member : ${members}" 
+                                        th:value="${member.id}" 
+                                        th:text="${member.name + ' (' + member.email + ')'}">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">적립 포인트</label>
+                            <input type="number" class="form-control" id="amount" required min="1">
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">적립 사유</label>
+                            <textarea class="form-control" id="description" rows="3" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="addPoint()">적립</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 포인트 차감 모달 -->
+    <div class="modal fade" id="deductPointModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">포인트 차감</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="deductPointForm">
+                        <div class="mb-3">
+                            <label for="deductMemberId" class="form-label">회원 선택</label>
+                            <select class="form-select" id="deductMemberId" required>
+                                <option value="">회원을 선택하세요</option>
+                                <option th:each="member : ${members}" 
+                                        th:value="${member.id}" 
+                                        th:text="${member.name + ' (' + member.email + ')'}">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="deductAmount" class="form-label">차감 포인트</label>
+                            <input type="number" class="form-control" id="deductAmount" required min="1">
+                        </div>
+                        <div class="mb-3">
+                            <label for="deductDescription" class="form-label">차감 사유</label>
+                            <textarea class="form-control" id="deductDescription" rows="3" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-warning" onclick="deductPoint()">차감</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자바스크립트 -->
+    <th:block layout:fragment="script">
+        <script>
+            $(document).ready(function() {
+                $('#pointsTable').DataTable({
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Korean.json'
+                    }
+                });
+            });
+
+            function addPoint() {
+                const memberId = document.getElementById('memberId').value;
+                const amount = document.getElementById('amount').value;
+                const description = document.getElementById('description').value;
+
+                if (!memberId || !amount || !description) {
+                    alert('모든 필드를 입력해주세요.');
+                    return;
+                }
+
+                fetch('/api/admin/points/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        memberId: memberId,
+                        amount: parseInt(amount),
+                        description: description
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('포인트가 적립되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('포인트 적립에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('포인트 적립 중 오류가 발생했습니다.');
+                });
+            }
+
+            function deductPoint() {
+                const memberId = document.getElementById('deductMemberId').value;
+                const amount = document.getElementById('deductAmount').value;
+                const description = document.getElementById('deductDescription').value;
+
+                if (!memberId || !amount || !description) {
+                    alert('모든 필드를 입력해주세요.');
+                    return;
+                }
+
+                fetch('/api/admin/points/deduct', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        memberId: memberId,
+                        amount: parseInt(amount),
+                        description: description
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('포인트가 차감되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('포인트 차감에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('포인트 차감 중 오류가 발생했습니다.');
+                });
+            }
+
+            function cancelPoint(pointId) {
+                if (confirm('정말로 이 포인트 내역을 취소하시겠습니까?')) {
+                    fetch(`/api/admin/points/${pointId}/cancel`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            alert('포인트 내역이 취소되었습니다.');
+                            location.reload();
+                        } else {
+                            alert('포인트 내역 취소에 실패했습니다.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('포인트 내역 취소 중 오류가 발생했습니다.');
+                    });
+                }
+            }
+        </script>
+    </th:block>
+</body>
+</html> 

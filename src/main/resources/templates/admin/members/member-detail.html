@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>회원 상세 - Peak Me Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">회원 상세</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="/admin">대시보드</a></li>
+                <li class="breadcrumb-item"><a href="/admin/members">회원 관리</a></li>
+                <li class="breadcrumb-item active">회원 상세</li>
+            </ol>
+
+            <!-- 회원 기본 정보 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-user me-1"></i>
+                    기본 정보
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th style="width: 150px;">회원 ID</th>
+                                    <td th:text="${member.id}"></td>
+                                </tr>
+                                <tr>
+                                    <th>이름</th>
+                                    <td th:text="${member.name}"></td>
+                                </tr>
+                                <tr>
+                                    <th>이메일</th>
+                                    <td th:text="${member.email}"></td>
+                                </tr>
+                                <tr>
+                                    <th>전화번호</th>
+                                    <td th:text="${member.phone}"></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th style="width: 150px;">가입일</th>
+                                    <td th:text="${#temporals.format(member.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                                </tr>
+                                <tr>
+                                    <th>최근 접속일</th>
+                                    <td th:text="${#temporals.format(member.lastLoginAt, 'yyyy-MM-dd HH:mm')}"></td>
+                                </tr>
+                                <tr>
+                                    <th>상태</th>
+                                    <td>
+                                        <span th:class="${member.status == 'ACTIVE' ? 'badge bg-success' : 
+                                                        (member.status == 'INACTIVE' ? 'badge bg-secondary' : 'badge bg-danger')}"
+                                              th:text="${member.status}"></span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>보유 포인트</th>
+                                    <td th:text="${#numbers.formatInteger(member.points, 0, 'COMMA')}"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button type="button" class="btn btn-warning" 
+                                    th:onclick="'showStatusModal(' + ${member.id} + ')'">상태 변경</button>
+                            <button type="button" class="btn btn-info"
+                                    th:onclick="'showPointModal(' + ${member.id} + ')'">포인트 관리</button>
+                            <button type="button" class="btn btn-primary" onclick="exportMemberHistory()">활동 내역 다운로드</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 배송지 정보 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-map-marker-alt me-1"></i>
+                    배송지 정보
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>배송지명</th>
+                                <th>수령인</th>
+                                <th>연락처</th>
+                                <th>주소</th>
+                                <th>기본배송지</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="address : ${addresses}">
+                                <td th:text="${address.name}"></td>
+                                <td th:text="${address.recipient}"></td>
+                                <td th:text="${address.phone}"></td>
+                                <td th:text="${address.fullAddress}"></td>
+                                <td>
+                                    <span th:if="${address.isDefault}" class="badge bg-primary">기본</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 주문 내역 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-shopping-cart me-1"></i>
+                    주문 내역
+                </div>
+                <div class="card-body">
+                    <table id="ordersTable" class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>주문번호</th>
+                                <th>주문일시</th>
+                                <th>상품정보</th>
+                                <th>결제금액</th>
+                                <th>주문상태</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="order : ${orders}">
+                                <td th:text="${order.orderNumber}"></td>
+                                <td th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td>
+                                    <span th:text="${order.productName}"></span>
+                                    <span th:if="${order.productCount > 1}" 
+                                          th:text="'외 ' + ${order.productCount - 1} + '건'"></span>
+                                </td>
+                                <td th:text="${#numbers.formatInteger(order.totalAmount, 0, 'COMMA')} + '원'"></td>
+                                <td>
+                                    <span th:class="${'badge bg-' + order.status.color}"
+                                          th:text="${order.status}"></span>
+                                </td>
+                                <td>
+                                    <a th:href="@{/admin/orders/{id}(id=${order.id})}" 
+                                       class="btn btn-sm btn-primary">상세</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 포인트 내역 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-coins me-1"></i>
+                    포인트 내역
+                </div>
+                <div class="card-body">
+                    <table id="pointsTable" class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>일시</th>
+                                <th>유형</th>
+                                <th>포인트</th>
+                                <th>내용</th>
+                                <th>잔여 포인트</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="point : ${points}">
+                                <td th:text="${#temporals.format(point.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td>
+                                    <span th:class="${point.type == 'ADD' ? 'badge bg-success' : 'badge bg-danger'}"
+                                          th:text="${point.type}"></span>
+                                </td>
+                                <td>
+                                    <span th:text="${point.type == 'ADD' ? '+' : '-'} + ${#numbers.formatInteger(point.amount, 0, 'COMMA')}"></span>
+                                </td>
+                                <td th:text="${point.reason}"></td>
+                                <td th:text="${#numbers.formatInteger(point.remainingPoints, 0, 'COMMA')}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 리뷰 내역 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-comments me-1"></i>
+                    리뷰 내역
+                </div>
+                <div class="card-body">
+                    <table id="reviewsTable" class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>작성일</th>
+                                <th>상품정보</th>
+                                <th>평점</th>
+                                <th>내용</th>
+                                <th>상태</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="review : ${reviews}">
+                                <td th:text="${#temporals.format(review.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td>
+                                    <a th:href="@{/admin/products/{id}(id=${review.product.id})}" 
+                                       th:text="${review.product.name}"></a>
+                                </td>
+                                <td>
+                                    <div class="text-warning">
+                                        <i class="fas fa-star" th:each="i : ${#numbers.sequence(1, review.rating)}"></i>
+                                    </div>
+                                </td>
+                                <td th:text="${review.content}"></td>
+                                <td>
+                                    <span th:class="${review.status == 'ACTIVE' ? 'badge bg-success' : 'badge bg-danger'}"
+                                          th:text="${review.status}"></span>
+                                </td>
+                                <td>
+                                    <a th:href="@{/admin/reviews/{id}(id=${review.id})}" 
+                                       class="btn btn-sm btn-primary">상세</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 회원 상태 변경 모달 -->
+    <div class="modal fade" id="statusModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">회원 상태 변경</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="statusForm">
+                        <input type="hidden" id="statusMemberId" th:value="${member.id}">
+                        <div class="mb-3">
+                            <label for="newStatus" class="form-label">새로운 상태</label>
+                            <select class="form-select" id="newStatus" required>
+                                <option value="ACTIVE">활성</option>
+                                <option value="INACTIVE">비활성</option>
+                                <option value="SUSPENDED">정지</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="statusReason" class="form-label">사유</label>
+                            <textarea class="form-control" id="statusReason" rows="3" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="updateMemberStatus()">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 포인트 관리 모달 -->
+    <div class="modal fade" id="pointModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">포인트 관리</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="pointForm">
+                        <input type="hidden" id="pointMemberId" th:value="${member.id}">
+                        <div class="mb-3">
+                            <label for="pointType" class="form-label">포인트 유형</label>
+                            <select class="form-select" id="pointType" required>
+                                <option value="ADD">적립</option>
+                                <option value="DEDUCT">차감</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="pointAmount" class="form-label">포인트 금액</label>
+                            <input type="number" class="form-control" id="pointAmount" required min="1">
+                        </div>
+                        <div class="mb-3">
+                            <label for="pointReason" class="form-label">사유</label>
+                            <textarea class="form-control" id="pointReason" rows="3" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="updateMemberPoints()">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자바스크립트 -->
+    <th:block layout:fragment="script">
+        <script>
+            $(document).ready(function() {
+                $('#ordersTable').DataTable({
+                    order: [[1, 'desc']],
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Korean.json'
+                    }
+                });
+
+                $('#pointsTable').DataTable({
+                    order: [[0, 'desc']],
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Korean.json'
+                    }
+                });
+
+                $('#reviewsTable').DataTable({
+                    order: [[0, 'desc']],
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Korean.json'
+                    }
+                });
+            });
+
+            function showStatusModal(memberId) {
+                document.getElementById('statusMemberId').value = memberId;
+                const modal = new bootstrap.Modal(document.getElementById('statusModal'));
+                modal.show();
+            }
+
+            function showPointModal(memberId) {
+                document.getElementById('pointMemberId').value = memberId;
+                const modal = new bootstrap.Modal(document.getElementById('pointModal'));
+                modal.show();
+            }
+
+            function updateMemberStatus() {
+                const memberId = document.getElementById('statusMemberId').value;
+                const newStatus = document.getElementById('newStatus').value;
+                const reason = document.getElementById('statusReason').value;
+
+                if (!newStatus || !reason) {
+                    alert('모든 필드를 입력해주세요.');
+                    return;
+                }
+
+                fetch(`/api/admin/members/${memberId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        status: newStatus,
+                        reason: reason
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('회원 상태가 변경되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('회원 상태 변경에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('회원 상태 변경 중 오류가 발생했습니다.');
+                });
+            }
+
+            function updateMemberPoints() {
+                const memberId = document.getElementById('pointMemberId').value;
+                const pointType = document.getElementById('pointType').value;
+                const amount = document.getElementById('pointAmount').value;
+                const reason = document.getElementById('pointReason').value;
+
+                if (!pointType || !amount || !reason) {
+                    alert('모든 필드를 입력해주세요.');
+                    return;
+                }
+
+                fetch(`/api/admin/members/${memberId}/points`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        type: pointType,
+                        amount: parseInt(amount),
+                        reason: reason
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('포인트가 변경되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('포인트 변경에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('포인트 변경 중 오류가 발생했습니다.');
+                });
+            }
+
+            function exportMemberHistory() {
+                const memberId = document.getElementById('pointMemberId').value;
+                window.location.href = `/api/admin/members/${memberId}/history/export`;
+            }
+        </script>
+    </th:block>
+</body>
+</html> 

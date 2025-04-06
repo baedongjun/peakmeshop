@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>배너 관리 - Peak Me Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">배너 관리</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="/admin">대시보드</a></li>
+                <li class="breadcrumb-item active">배너 관리</li>
+            </ol>
+
+            <!-- 검색 필터 -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form id="searchForm" class="row g-3">
+                        <div class="col-md-2">
+                            <label for="searchType" class="form-label">검색 유형</label>
+                            <select class="form-select" id="searchType" name="searchType">
+                                <option value="TITLE">제목</option>
+                                <option value="CONTENT">내용</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="searchKeyword" class="form-label">검색어</label>
+                            <input type="text" class="form-control" id="searchKeyword" name="searchKeyword">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="status" class="form-label">상태</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">전체</option>
+                                <option value="ACTIVE">활성</option>
+                                <option value="INACTIVE">비활성</option>
+                                <option value="SCHEDULED">예약</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="location" class="form-label">노출 위치</label>
+                            <select class="form-select" id="location" name="location">
+                                <option value="">전체</option>
+                                <option value="MAIN_TOP">메인 상단</option>
+                                <option value="MAIN_MIDDLE">메인 중단</option>
+                                <option value="MAIN_BOTTOM">메인 하단</option>
+                                <option value="SUB_TOP">서브 상단</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="button" class="btn btn-primary" onclick="searchBanners()">검색</button>
+                            <button type="button" class="btn btn-success" onclick="openBannerModal()">배너 등록</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 배너 통계 -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-primary text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>전체 배너</div>
+                                <div class="h3 mb-0" th:text="${totalBanners}">0개</div>
+                            </div>
+                            <div class="small">클릭수: <span th:text="${totalClicks}">0회</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-success text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>활성 배너</div>
+                                <div class="h3 mb-0" th:text="${activeBanners}">0개</div>
+                            </div>
+                            <div class="small">클릭수: <span th:text="${activeClicks}">0회</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-warning text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>예약 배너</div>
+                                <div class="h3 mb-0" th:text="${scheduledBanners}">0개</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-danger text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>종료 예정</div>
+                                <div class="h3 mb-0" th:text="${endingSoonBanners}">0개</div>
+                            </div>
+                            <div class="small">7일 이내</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 배너 목록 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">배너 목록</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="bannerTable" class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>번호</th>
+                                    <th>이미지</th>
+                                    <th>제목</th>
+                                    <th>노출 위치</th>
+                                    <th>노출 기간</th>
+                                    <th>클릭수</th>
+                                    <th>상태</th>
+                                    <th>관리</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="banner : ${banners}">
+                                    <td th:text="${banner.id}"></td>
+                                    <td>
+                                        <img th:if="${banner.imageUrl}" th:src="${banner.imageUrl}" 
+                                             alt="배너 이미지" style="max-width: 100px;">
+                                    </td>
+                                    <td>
+                                        <div th:text="${banner.title}"></div>
+                                        <small class="text-muted" th:text="${banner.description}"></small>
+                                    </td>
+                                    <td th:text="${banner.location}"></td>
+                                    <td>
+                                        <div th:text="${#temporals.format(banner.startDate, 'yyyy-MM-dd')}"></div>
+                                        <div>~</div>
+                                        <div th:text="${#temporals.format(banner.endDate, 'yyyy-MM-dd')}"></div>
+                                    </td>
+                                    <td th:text="${banner.clicks}"></td>
+                                    <td>
+                                        <span th:class="${'badge ' + banner.statusClass}" 
+                                              th:text="${banner.statusName}"></span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                    th:onclick="'previewBanner(' + ${banner.id} + ')'">미리보기</button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                    th:onclick="'editBanner(' + ${banner.id} + ')'">수정</button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    th:onclick="'deleteBanner(' + ${banner.id} + ')'">삭제</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 배너 등록/수정 모달 -->
+    <div class="modal fade" id="bannerModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">배너 등록</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="bannerForm">
+                        <input type="hidden" id="bannerId" name="id">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">제목</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">설명</label>
+                            <textarea class="form-control" id="description" name="description" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="imageFile" class="form-label">이미지</label>
+                            <input type="file" class="form-control" id="imageFile" name="imageFile" 
+                                   accept="image/*" onchange="previewImage(this)">
+                            <div id="imagePreview" class="mt-2"></div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="bannerLocation" class="form-label">노출 위치</label>
+                                <select class="form-select" id="bannerLocation" name="location" required>
+                                    <option value="MAIN_TOP">메인 상단</option>
+                                    <option value="MAIN_MIDDLE">메인 중단</option>
+                                    <option value="MAIN_BOTTOM">메인 하단</option>
+                                    <option value="SUB_TOP">서브 상단</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="priority" class="form-label">우선순위</label>
+                                <input type="number" class="form-control" id="priority" name="priority" 
+                                       min="1" max="100" value="1">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="startDate" class="form-label">시작일</label>
+                                <input type="date" class="form-control" id="startDate" name="startDate" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="endDate" class="form-label">종료일</label>
+                                <input type="date" class="form-control" id="endDate" name="endDate" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="linkUrl" class="form-label">링크 URL</label>
+                            <input type="url" class="form-control" id="linkUrl" name="linkUrl">
+                        </div>
+                        <div class="mb-3">
+                            <label for="bannerStatus" class="form-label">상태</label>
+                            <select class="form-select" id="bannerStatus" name="status" required>
+                                <option value="ACTIVE">활성</option>
+                                <option value="INACTIVE">비활성</option>
+                                <option value="SCHEDULED">예약</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="saveBanner()">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 배너 미리보기 모달 -->
+    <div class="modal fade" id="previewModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">배너 미리보기</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="previewContent" class="text-center"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자바스크립트 -->
+    <th:block layout:fragment="script">
+        <script>
+            let bannerModal = null;
+            let previewModal = null;
+
+            $(document).ready(function() {
+                $('#bannerTable').DataTable({
+                    order: [[0, 'desc']],
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Korean.json'
+                    }
+                });
+
+                bannerModal = new bootstrap.Modal(document.getElementById('bannerModal'));
+                previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+
+                // 시작일/종료일 최소값 설정
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('startDate').min = today;
+                document.getElementById('endDate').min = today;
+            });
+
+            function searchBanners() {
+                const formData = new FormData(document.getElementById('searchForm'));
+                const params = new URLSearchParams(formData);
+
+                location.href = `/admin/banners?${params}`;
+            }
+
+            function openBannerModal() {
+                document.getElementById('modalTitle').textContent = '배너 등록';
+                document.getElementById('bannerForm').reset();
+                document.getElementById('bannerId').value = '';
+                document.getElementById('imagePreview').innerHTML = '';
+                bannerModal.show();
+            }
+
+            function previewImage(input) {
+                const preview = document.getElementById('imagePreview');
+                preview.innerHTML = '';
+
+                if (input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.style.maxWidth = '100%';
+                        img.style.maxHeight = '200px';
+                        preview.appendChild(img);
+                    }
+                    reader.readAsDataURL(input.files[0]);
+                }
+            }
+
+            function editBanner(id) {
+                fetch(`/api/admin/banners/${id}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('modalTitle').textContent = '배너 수정';
+                        document.getElementById('bannerId').value = data.id;
+                        document.getElementById('title').value = data.title;
+                        document.getElementById('description').value = data.description;
+                        document.getElementById('bannerLocation').value = data.location;
+                        document.getElementById('priority').value = data.priority;
+                        document.getElementById('startDate').value = data.startDate;
+                        document.getElementById('endDate').value = data.endDate;
+                        document.getElementById('linkUrl').value = data.linkUrl;
+                        document.getElementById('bannerStatus').value = data.status;
+
+                        if (data.imageUrl) {
+                            const preview = document.getElementById('imagePreview');
+                            preview.innerHTML = `<img src="${data.imageUrl}" style="max-width: 100%; max-height: 200px;">`;
+                        }
+
+                        bannerModal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('배너 정보를 불러오는데 실패했습니다.');
+                    });
+            }
+
+            function saveBanner() {
+                const form = document.getElementById('bannerForm');
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const formData = new FormData(form);
+                const id = formData.get('id');
+                const method = id ? 'PUT' : 'POST';
+                const url = id ? `/api/admin/banners/${id}` : '/api/admin/banners';
+
+                fetch(url, {
+                    method: method,
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('배너 저장에 실패했습니다.');
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+            }
+
+            function previewBanner(id) {
+                fetch(`/api/admin/banners/${id}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const preview = document.getElementById('previewContent');
+                        preview.innerHTML = `
+                            <div class="mb-3">
+                                <h4>${data.title}</h4>
+                                <p class="text-muted">${data.description || ''}</p>
+                            </div>
+                            <div>
+                                <a href="${data.linkUrl}" target="_blank">
+                                    <img src="${data.imageUrl}" style="max-width: 100%;" alt="${data.title}">
+                                </a>
+                            </div>
+                        `;
+                        previewModal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('배너 미리보기를 불러오는데 실패했습니다.');
+                    });
+            }
+
+            function deleteBanner(id) {
+                if (!confirm('정말 삭제하시겠습니까?')) return;
+
+                fetch(`/api/admin/banners/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('배너 삭제에 실패했습니다.');
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+            }
+        </script>
+    </th:block>
+</body>
+</html> 

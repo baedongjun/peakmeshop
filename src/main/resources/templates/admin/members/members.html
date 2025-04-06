@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>회원 관리 - Peak Me Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">회원 관리</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="/admin">대시보드</a></li>
+                <li class="breadcrumb-item active">회원 관리</li>
+            </ol>
+
+            <!-- 검색 및 필터 -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form th:action="@{/admin/members}" method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="searchType" class="form-label">검색 유형</label>
+                            <select class="form-select" id="searchType" name="searchType">
+                                <option value="name">이름</option>
+                                <option value="email">이메일</option>
+                                <option value="phone">연락처</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="searchKeyword" class="form-label">검색어</label>
+                            <input type="text" class="form-control" id="searchKeyword" name="searchKeyword">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="memberStatus" class="form-label">회원상태</label>
+                            <select class="form-select" id="memberStatus" name="memberStatus">
+                                <option value="">전체</option>
+                                <option value="ACTIVE">정상</option>
+                                <option value="DORMANT">휴면</option>
+                                <option value="SUSPENDED">정지</option>
+                                <option value="WITHDRAWN">탈퇴</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="memberGrade" class="form-label">회원등급</label>
+                            <select class="form-select" id="memberGrade" name="memberGrade">
+                                <option value="">전체</option>
+                                <option value="BRONZE">브론즈</option>
+                                <option value="SILVER">실버</option>
+                                <option value="GOLD">골드</option>
+                                <option value="PLATINUM">플래티넘</option>
+                                <option value="DIAMOND">다이아몬드</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="dateRange" class="form-label">가입기간</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="startDate" name="startDate">
+                                <span class="input-group-text">~</span>
+                                <input type="date" class="form-control" id="endDate" name="endDate">
+                                <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('today')">오늘</button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('week')">1주일</button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('month')">1개월</button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('3months')">3개월</button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="orderAmount" class="form-label">누적 주문금액</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="minOrderAmount" name="minOrderAmount" placeholder="최소금액">
+                                <span class="input-group-text">~</span>
+                                <input type="number" class="form-control" id="maxOrderAmount" name="maxOrderAmount" placeholder="최대금액">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">검색</button>
+                            <button type="reset" class="btn btn-secondary">초기화</button>
+                            <button type="button" class="btn btn-info" onclick="downloadMemberList()">회원 목록 다운로드</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 회원 통계 -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-primary text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>전체 회원</div>
+                                <div class="h3 mb-0" th:text="${totalMembers}">0</div>
+                            </div>
+                            <div class="small">활성 회원: <span th:text="${activeMembers}">0</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-success text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>신규 회원</div>
+                                <div class="h3 mb-0" th:text="${newMembers}">0</div>
+                            </div>
+                            <div class="small">오늘 가입: <span th:text="${todayMembers}">0</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-warning text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>휴면 예정</div>
+                                <div class="h3 mb-0" th:text="${dormantSoonMembers}">0</div>
+                            </div>
+                            <div class="small">휴면 회원: <span th:text="${dormantMembers}">0</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-danger text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>정지 회원</div>
+                                <div class="h3 mb-0" th:text="${suspendedMembers}">0</div>
+                            </div>
+                            <div class="small">탈퇴 회원: <span th:text="${withdrawnMembers}">0</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 회원 목록 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-users me-1"></i>
+                    회원 목록
+                </div>
+                <div class="card-body">
+                    <table id="membersTable" class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>회원번호</th>
+                                <th>회원정보</th>
+                                <th>등급/상태</th>
+                                <th>주문정보</th>
+                                <th>가입일시</th>
+                                <th>최근접속</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="member : ${members}">
+                                <td th:text="${member.memberNumber}"></td>
+                                <td>
+                                    <strong th:text="${member.name}"></strong>
+                                    <br>
+                                    <small class="text-muted" th:text="${member.email}"></small>
+                                    <br>
+                                    <small class="text-muted" th:text="${member.phone}"></small>
+                                </td>
+                                <td>
+                                    <span th:class="${'badge bg-' + 
+                                        (member.grade == 'DIAMOND' ? 'info' :
+                                        (member.grade == 'PLATINUM' ? 'primary' :
+                                        (member.grade == 'GOLD' ? 'warning' :
+                                        (member.grade == 'SILVER' ? 'secondary' : 'dark'))))}">
+                                        <i class="fas fa-crown me-1"></i>
+                                        <span th:text="${member.grade}"></span>
+                                    </span>
+                                    <br>
+                                    <span th:class="${'badge bg-' + 
+                                        (member.status == 'ACTIVE' ? 'success' :
+                                        (member.status == 'DORMANT' ? 'warning' :
+                                        (member.status == 'SUSPENDED' ? 'danger' : 'secondary')))}"
+                                          th:text="${member.status}">
+                                    </span>
+                                </td>
+                                <td>
+                                    <div>주문: <span th:text="${member.orderCount}">0</span>건</div>
+                                    <div>금액: <span th:text="${#numbers.formatDecimal(member.totalOrderAmount, 0, 'COMMA', 0, 'POINT')}">0</span>원</div>
+                                </td>
+                                <td>
+                                    <div th:text="${#temporals.format(member.createdAt, 'yyyy-MM-dd HH:mm')}"></div>
+                                </td>
+                                <td>
+                                    <div th:text="${#temporals.format(member.lastLoginAt, 'yyyy-MM-dd HH:mm')}"></div>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-primary"
+                                                th:onclick="'showMemberDetail(\'' + ${member.memberNumber} + '\')'">상세</button>
+                                        <button type="button" class="btn btn-sm btn-warning"
+                                                th:onclick="'showStatusModal(\'' + ${member.memberNumber} + '\')'"
+                                                th:disabled="${member.status == 'WITHDRAWN'}">상태변경</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- 페이지네이션 -->
+                    <nav aria-label="Page navigation" th:if="${members.totalPages > 0}">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item" th:classappend="${!members.hasPrevious()} ? disabled">
+                                <a class="page-link" th:href="@{/admin/members(page=${members.number - 1})}">이전</a>
+                            </li>
+                            <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, members.totalPages - 1)}"
+                                th:classappend="${pageNum == members.number} ? active">
+                                <a class="page-link" th:href="@{/admin/members(page=${pageNum})}" 
+                                   th:text="${pageNum + 1}"></a>
+                            </li>
+                            <li class="page-item" th:classappend="${!members.hasNext()} ? disabled">
+                                <a class="page-link" th:href="@{/admin/members(page=${members.number + 1})}">다음</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 회원 상세 모달 -->
+    <div class="modal fade" id="memberDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">회원 상세</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="memberDetail">
+                    <!-- 회원 상세 정보가 동적으로 채워집니다 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 회원상태 변경 모달 -->
+    <div class="modal fade" id="statusModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">회원상태 변경</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="statusForm">
+                        <input type="hidden" id="statusMemberNumber">
+                        <div class="mb-3">
+                            <label for="newStatus" class="form-label">변경할 상태</label>
+                            <select class="form-select" id="newStatus" required>
+                                <option value="ACTIVE">정상</option>
+                                <option value="DORMANT">휴면</option>
+                                <option value="SUSPENDED">정지</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="statusNote" class="form-label">처리메모</label>
+                            <textarea class="form-control" id="statusNote" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="updateMemberStatus()">변경</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자바스크립트 -->
+    <th:block layout:fragment="script">
+        <script>
+            $(document).ready(function() {
+                $('#membersTable').DataTable({
+                    order: [[4, 'desc']],
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Korean.json'
+                    }
+                });
+            });
+
+            function setDateRange(range) {
+                const today = new Date();
+                let startDate = new Date();
+
+                switch(range) {
+                    case 'today':
+                        break;
+                    case 'week':
+                        startDate.setDate(today.getDate() - 7);
+                        break;
+                    case 'month':
+                        startDate.setMonth(today.getMonth() - 1);
+                        break;
+                    case '3months':
+                        startDate.setMonth(today.getMonth() - 3);
+                        break;
+                }
+
+                document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+                document.getElementById('endDate').value = today.toISOString().split('T')[0];
+            }
+
+            function showMemberDetail(memberNumber) {
+                fetch(`/api/admin/members/${memberNumber}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const detail = document.getElementById('memberDetail');
+                        detail.innerHTML = `
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h6>기본 정보</h6>
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th style="width: 35%;">회원번호</th>
+                                            <td>${data.memberNumber}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>이름</th>
+                                            <td>${data.name}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>이메일</th>
+                                            <td>${data.email}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>연락처</th>
+                                            <td>${data.phone}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>생년월일</th>
+                                            <td>${data.birthDate || '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>성별</th>
+                                            <td>${data.gender || '-'}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>회원 상태</h6>
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th style="width: 35%;">회원등급</th>
+                                            <td>
+                                                <span class="badge bg-${
+                                                    data.grade === 'DIAMOND' ? 'info' :
+                                                    data.grade === 'PLATINUM' ? 'primary' :
+                                                    data.grade === 'GOLD' ? 'warning' :
+                                                    data.grade === 'SILVER' ? 'secondary' : 'dark'
+                                                }">
+                                                    <i class="fas fa-crown me-1"></i>
+                                                    ${data.grade}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>회원상태</th>
+                                            <td>
+                                                <span class="badge bg-${
+                                                    data.status === 'ACTIVE' ? 'success' :
+                                                    data.status === 'DORMANT' ? 'warning' :
+                                                    data.status === 'SUSPENDED' ? 'danger' : 'secondary'
+                                                }">${data.status}</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>가입일시</th>
+                                            <td>${data.createdAt}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>최근접속</th>
+                                            <td>${data.lastLoginAt}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6>주문 정보</h6>
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th style="width: 20%;">총 주문건수</th>
+                                            <td>${data.orderCount}건</td>
+                                        </tr>
+                                        <tr>
+                                            <th>총 주문금액</th>
+                                            <td>${data.totalOrderAmount.toLocaleString()}원</td>
+                                        </tr>
+                                        <tr>
+                                            <th>최근 주문일</th>
+                                            <td>${data.lastOrderDate || '-'}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6>포인트/쿠폰</h6>
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th style="width: 20%;">보유 포인트</th>
+                                            <td>${data.point.toLocaleString()}P</td>
+                                        </tr>
+                                        <tr>
+                                            <th>사용 가능 쿠폰</th>
+                                            <td>${data.availableCoupons}장</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            ${data.statusHistory ? `
+                                <div class="row">
+                                    <div class="col-12">
+                                        <h6>상태 변경 이력</h6>
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>변경일시</th>
+                                                    <th>변경상태</th>
+                                                    <th>처리자</th>
+                                                    <th>처리메모</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${data.statusHistory.map(history => `
+                                                    <tr>
+                                                        <td>${history.processedAt}</td>
+                                                        <td>${history.status}</td>
+                                                        <td>${history.processor}</td>
+                                                        <td>${history.note || '-'}</td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        `;
+
+                        const modal = new bootstrap.Modal(document.getElementById('memberDetailModal'));
+                        modal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('회원 정보를 불러오는데 실패했습니다.');
+                    });
+            }
+
+            function showStatusModal(memberNumber) {
+                document.getElementById('statusMemberNumber').value = memberNumber;
+                const modal = new bootstrap.Modal(document.getElementById('statusModal'));
+                modal.show();
+            }
+
+            function updateMemberStatus() {
+                const memberNumber = document.getElementById('statusMemberNumber').value;
+                const newStatus = document.getElementById('newStatus').value;
+                const statusNote = document.getElementById('statusNote').value;
+
+                fetch(`/api/admin/members/${memberNumber}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        status: newStatus,
+                        note: statusNote
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('회원상태가 변경되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('회원상태 변경에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('오류가 발생했습니다.');
+                });
+            }
+
+            function downloadMemberList() {
+                window.location.href = '/api/admin/members/download';
+            }
+        </script>
+    </th:block>
+</body>
+</html> 

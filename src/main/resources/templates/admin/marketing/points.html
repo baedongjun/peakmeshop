@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>포인트/마일리지 관리 - Peak Me Shop 관리자</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- 페이지 헤더 시작 -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">포인트/마일리지 관리</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                    <li class="breadcrumb-item active">포인트/마일리지 관리</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a th:href="@{/admin/points/settings}" class="btn btn-primary">
+                    <i class="fas fa-cog"></i> 설정
+                </a>
+            </div>
+        </div>
+    </div>
+    <!-- 페이지 헤더 끝 -->
+
+    <!-- 통계 카드 시작 -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="stats-info">
+                        <h6>총 적립금</h6>
+                        <h4 th:text="${#numbers.formatInteger(totalPoints, 0, 'COMMA') + '원'}">5,000,000원</h4>
+                        <p class="text-muted">전체 회원의 총 적립금</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="stats-info">
+                        <h6>이번 달 적립</h6>
+                        <h4 th:text="${#numbers.formatInteger(monthlyPoints, 0, 'COMMA') + '원'}">500,000원</h4>
+                        <p class="text-muted">이번 달 적립된 포인트</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="stats-info">
+                        <h6>이번 달 사용</h6>
+                        <h4 th:text="${#numbers.formatInteger(monthlyUsedPoints, 0, 'COMMA') + '원'}">300,000원</h4>
+                        <p class="text-muted">이번 달 사용된 포인트</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="stats-info">
+                        <h6>소멸 예정</h6>
+                        <h4 th:text="${#numbers.formatInteger(expiringPoints, 0, 'COMMA') + '원'}">100,000원</h4>
+                        <p class="text-muted">이번 달 소멸 예정 포인트</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 통계 카드 끝 -->
+
+    <!-- 검색 필터 시작 -->
+    <div class="card">
+        <div class="card-body">
+            <form th:action="@{/admin/points}" method="get" class="form">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>유형</label>
+                            <select name="type" class="form-control">
+                                <option value="">전체</option>
+                                <option value="EARN" th:selected="${type == 'EARN'}">적립</option>
+                                <option value="USE" th:selected="${type == 'USE'}">사용</option>
+                                <option value="EXPIRE" th:selected="${type == 'EXPIRE'}">소멸</option>
+                                <option value="CANCEL" th:selected="${type == 'CANCEL'}">취소</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>기간</label>
+                            <select name="period" class="form-control" onchange="updateDateFields()">
+                                <option value="ALL">전체 기간</option>
+                                <option value="TODAY" th:selected="${period == 'TODAY'}">오늘</option>
+                                <option value="WEEK" th:selected="${period == 'WEEK'}">이번 주</option>
+                                <option value="MONTH" th:selected="${period == 'MONTH'}">이번 달</option>
+                                <option value="CUSTOM" th:selected="${period == 'CUSTOM'}">직접 입력</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4 date-fields" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>시작일</label>
+                                    <input type="date" name="startDate" class="form-control" 
+                                           th:value="${startDate}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>종료일</label>
+                                    <input type="date" name="endDate" class="form-control" 
+                                           th:value="${endDate}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fas fa-search"></i> 검색
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- 검색 필터 끝 -->
+
+    <!-- 포인트 내역 목록 시작 -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>일시</th>
+                            <th>회원</th>
+                            <th>유형</th>
+                            <th>포인트</th>
+                            <th>내용</th>
+                            <th>주문번호</th>
+                            <th>만료일</th>
+                            <th>잔여 포인트</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="point : ${points}">
+                            <td th:text="${#temporals.format(point.createdAt, 'yyyy-MM-dd HH:mm')}">2024-03-01 14:30</td>
+                            <td>
+                                <a th:href="@{/admin/members/{id}(id=${point.memberId})}" 
+                                   th:text="${point.memberName}">홍길동</a>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="${point.type == 'EARN' ? 'badge-success' : 
+                                                                   point.type == 'USE' ? 'badge-info' : 
+                                                                   point.type == 'EXPIRE' ? 'badge-warning' : 
+                                                                   'badge-secondary'}"
+                                      th:text="${point.typeText}">적립</span>
+                            </td>
+                            <td>
+                                <span th:class="${point.type == 'EARN' ? 'text-success' : 'text-danger'}"
+                                      th:text="${(point.type == 'EARN' ? '+' : '-') + #numbers.formatInteger(point.amount, 0, 'COMMA')}">
+                                    +1,000
+                                </span>
+                            </td>
+                            <td th:text="${point.description}">상품 구매 적립</td>
+                            <td>
+                                <a th:if="${point.orderId != null}" 
+                                   th:href="@{/admin/orders/{id}(id=${point.orderId})}"
+                                   th:text="${point.orderNumber}">ORDER-20240301-0001</a>
+                            </td>
+                            <td th:text="${point.expiryDate != null ? #temporals.format(point.expiryDate, 'yyyy-MM-dd') : '-'}">
+                                2025-03-01
+                            </td>
+                            <td th:text="${#numbers.formatInteger(point.balance, 0, 'COMMA')}">5,000</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(points)}">
+                            <td colspan="8" class="text-center">포인트 내역이 없습니다.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이지네이션 시작 -->
+            <nav th:if="${!#lists.isEmpty(points)}" aria-label="Page navigation" class="mt-3">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/points(page=${page.number - 1}, size=${page.size}, type=${param.type}, period=${param.period}, startDate=${param.startDate}, endDate=${param.endDate})}">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
+                        th:classappend="${page.number == i} ? 'active'">
+                        <a class="page-link" th:href="@{/admin/points(page=${i}, size=${page.size}, type=${param.type}, period=${param.period}, startDate=${param.startDate}, endDate=${param.endDate})}"
+                           th:text="${i + 1}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/points(page=${page.number + 1}, size=${page.size}, type=${param.type}, period=${param.period}, startDate=${param.startDate}, endDate=${param.endDate})}">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <!-- 페이지네이션 끝 -->
+        </div>
+    </div>
+    <!-- 포인트 내역 목록 끝 -->
+</div>
+
+<!-- 포인트 관리 스크립트 -->
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        function updateDateFields() {
+            const period = document.querySelector('select[name="period"]').value;
+            const dateFields = document.querySelector('.date-fields');
+            
+            if (period === 'CUSTOM') {
+                dateFields.style.display = 'block';
+            } else {
+                dateFields.style.display = 'none';
+            }
+        }
+
+        // 초기 상태 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDateFields();
+        });
+    </script>
+</th:block>
+</body>
+</html> 

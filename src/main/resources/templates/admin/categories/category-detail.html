@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>카테고리 상세 - Peak Me Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">카테고리 상세</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/categories}">카테고리 관리</a></li>
+                        <li class="breadcrumb-item active" th:text="${category.name}">카테고리명</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a th:href="@{/admin/categories/{id}/edit(id=${category.id})}" class="btn btn-primary me-2">
+                        <i class="fas fa-edit"></i> 수정
+                    </a>
+                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteCategoryModal">
+                        <i class="fas fa-trash"></i> 삭제
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 카테고리 정보 시작 -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">기본 정보</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="text-muted">카테고리명</label>
+                                    <p class="form-control-static" th:text="${category.name}">카테고리명</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="text-muted">카테고리코드</label>
+                                    <p class="form-control-static" th:text="${category.code}">카테고리코드</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="text-muted">상위 카테고리</label>
+                                    <p class="form-control-static">
+                                        <a th:if="${category.parent != null}" 
+                                           th:href="@{/admin/categories/{id}(id=${category.parent.id})}"
+                                           th:text="${category.parent.name}">상위 카테고리</a>
+                                        <span th:unless="${category.parent != null}">없음</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="text-muted">상태</label>
+                                    <p class="form-control-static">
+                                        <span th:class="${category.status == 'ACTIVE' ? 'badge badge-success' : 'badge badge-danger'}"
+                                              th:text="${category.status == 'ACTIVE' ? '활성' : '비활성'}">상태</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="text-muted">노출 순서</label>
+                                    <p class="form-control-static" th:text="${category.position}">0</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="text-muted">등록일</label>
+                                    <p class="form-control-static" th:text="${#temporals.format(category.createdAt, 'yyyy-MM-dd HH:mm')}">등록일</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="text-muted">설명</label>
+                                    <p class="form-control-static" th:text="${category.description ?: '-'}">설명</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">아이콘</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img th:if="${category.iconUrl}" th:src="${category.iconUrl}" alt="카테고리 아이콘" class="img-fluid mb-3" style="max-height: 100px;">
+                        <p th:unless="${category.iconUrl}" class="text-muted">등록된 아이콘이 없습니다.</p>
+                    </div>
+                </div>
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="card-title">통계</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="stats-info">
+                                    <h6>총 상품</h6>
+                                    <h4 th:text="${#numbers.formatInteger(category.totalProducts, 0, 'COMMA')}">0</h4>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stats-info">
+                                    <h6>판매중</h6>
+                                    <h4 th:text="${#numbers.formatInteger(category.activeProducts, 0, 'COMMA')}">0</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-6">
+                                <div class="stats-info">
+                                    <h6>하위 카테고리</h6>
+                                    <h4 th:text="${#numbers.formatInteger(category.childCount, 0, 'COMMA')}">0</h4>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stats-info">
+                                    <h6>총 매출</h6>
+                                    <h4 th:text="${#numbers.formatInteger(category.totalSales, 0, 'COMMA')} + '원'">0원</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 카테고리 정보 끝 -->
+
+        <!-- 하위 카테고리 목록 시작 -->
+        <div class="card mt-4" th:if="${!#lists.isEmpty(children)}">
+            <div class="card-header">
+                <h5 class="card-title">하위 카테고리</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>카테고리코드</th>
+                                <th>카테고리명</th>
+                                <th>상품 수</th>
+                                <th>노출 순서</th>
+                                <th>상태</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="child : ${children}">
+                                <td th:text="${child.code}">카테고리코드</td>
+                                <td>
+                                    <a th:href="@{/admin/categories/{id}(id=${child.id})}" th:text="${child.name}">카테고리명</a>
+                                </td>
+                                <td>
+                                    <a th:href="@{/admin/products(categoryId=${child.id})}" 
+                                       th:text="${#numbers.formatInteger(child.productCount, 0, 'COMMA')}">0</a>
+                                </td>
+                                <td th:text="${child.position}">0</td>
+                                <td>
+                                    <span th:class="${child.status == 'ACTIVE' ? 'badge badge-success' : 'badge badge-danger'}"
+                                          th:text="${child.status == 'ACTIVE' ? '활성' : '비활성'}">상태</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a th:href="@{/admin/categories/{id}/edit(id=${child.id})}" 
+                                           class="btn btn-sm btn-outline-primary">수정</a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                th:onclick="'deleteCategory(' + ${child.id} + ')'">삭제</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- 하위 카테고리 목록 끝 -->
+
+        <!-- 카테고리 상품 목록 시작 -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title">상품 목록</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>상품코드</th>
+                                <th>상품명</th>
+                                <th>브랜드</th>
+                                <th>판매가</th>
+                                <th>재고</th>
+                                <th>상태</th>
+                                <th>등록일</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="product : ${products}">
+                                <td th:text="${product.code}">상품코드</td>
+                                <td>
+                                    <a th:href="@{/admin/products/{id}(id=${product.id})}" th:text="${product.name}">상품명</a>
+                                </td>
+                                <td>
+                                    <a th:href="@{/admin/brands/{id}(id=${product.brand.id})}" th:text="${product.brand.name}">브랜드</a>
+                                </td>
+                                <td th:text="${#numbers.formatInteger(product.price, 0, 'COMMA')} + '원'">판매가</td>
+                                <td th:text="${product.stock}">재고</td>
+                                <td>
+                                    <span th:class="${product.status == 'ACTIVE' ? 'badge badge-success' : 'badge badge-danger'}"
+                                          th:text="${product.status == 'ACTIVE' ? '판매중' : '판매중지'}">상태</span>
+                                </td>
+                                <td th:text="${#temporals.format(product.createdAt, 'yyyy-MM-dd')}">등록일</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(products)}">
+                                <td colspan="7" class="text-center">등록된 상품이 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 페이지네이션 시작 -->
+                <div th:if="${!#lists.isEmpty(products)}" class="row">
+                    <div class="col-sm-12 col-md-5">
+                        <div class="dataTables_info">
+                            전체 <span th:text="${totalElements}">0</span>개 중
+                            <span th:text="${pageNumber * pageSize + 1}">1</span>-<span th:text="${(pageNumber + 1) * pageSize}">10</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md-7">
+                        <div class="dataTables_paginate">
+                            <ul class="pagination justify-content-end">
+                                <li class="paginate_button page-item previous" th:classappend="${pageNumber == 0 ? 'disabled' : ''}">
+                                    <a th:href="@{${#httpServletRequest.requestURI}(page=${pageNumber - 1})}"
+                                       class="page-link">이전</a>
+                                </li>
+                                <li th:each="page : ${#numbers.sequence(0, totalPages - 1)}"
+                                    class="paginate_button page-item"
+                                    th:classappend="${page == pageNumber ? 'active' : ''}">
+                                    <a th:href="@{${#httpServletRequest.requestURI}(page=${page})}"
+                                       class="page-link" th:text="${page + 1}">1</a>
+                                </li>
+                                <li class="paginate_button page-item next" th:classappend="${pageNumber + 1 >= totalPages ? 'disabled' : ''}">
+                                    <a th:href="@{${#httpServletRequest.requestURI}(page=${pageNumber + 1})}"
+                                       class="page-link">다음</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- 페이지네이션 끝 -->
+            </div>
+        </div>
+        <!-- 카테고리 상품 목록 끝 -->
+
+        <!-- 삭제 확인 모달 시작 -->
+        <div class="modal fade" id="deleteCategoryModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">카테고리 삭제</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>정말 이 카테고리를 삭제하시겠습니까?</p>
+                        <p class="text-danger">* 주의: 하위 카테고리가 있는 경우 함께 삭제되며, 복구할 수 없습니다.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-danger" id="confirmDelete">삭제</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 삭제 확인 모달 끝 -->
+    </div>
+
+    <!-- 카테고리 상세 스크립트 -->
+    <th:block layout:fragment="script">
+        <script th:inline="javascript">
+            // 카테고리 삭제 처리
+            document.getElementById('confirmDelete').addEventListener('click', function() {
+                fetch('/api/admin/categories/' + [[${category.id}]], {
+                    method: 'DELETE'
+                }).then(response => {
+                    if (response.ok) {
+                        window.location.href = '/admin/categories';
+                    } else {
+                        throw new Error('카테고리 삭제에 실패했습니다.');
+                    }
+                }).catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

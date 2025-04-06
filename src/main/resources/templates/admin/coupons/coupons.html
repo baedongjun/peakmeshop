@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>쿠폰 관리 - Peak Me Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">쿠폰 관리</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="/admin">대시보드</a></li>
+                <li class="breadcrumb-item active">쿠폰 관리</li>
+            </ol>
+
+            <!-- 검색 및 필터 -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form th:action="@{/admin/coupons}" method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="searchType" class="form-label">검색 유형</label>
+                            <select class="form-select" id="searchType" name="searchType">
+                                <option value="name">쿠폰명</option>
+                                <option value="code">쿠폰코드</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="searchKeyword" class="form-label">검색어</label>
+                            <input type="text" class="form-control" id="searchKeyword" name="searchKeyword">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">상태</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">전체</option>
+                                <option value="ACTIVE">활성</option>
+                                <option value="INACTIVE">비활성</option>
+                                <option value="EXPIRED">만료</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="type" class="form-label">쿠폰 유형</label>
+                            <select class="form-select" id="type" name="type">
+                                <option value="">전체</option>
+                                <option value="FIXED">정액</option>
+                                <option value="PERCENTAGE">정률</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="dateRange" class="form-label">유효기간</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="startDate" name="startDate">
+                                <span class="input-group-text">~</span>
+                                <input type="date" class="form-control" id="endDate" name="endDate">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="issuanceType" class="form-label">발급 유형</label>
+                            <select class="form-select" id="issuanceType" name="issuanceType">
+                                <option value="">전체</option>
+                                <option value="MANUAL">수동발급</option>
+                                <option value="AUTO">자동발급</option>
+                                <option value="CODE">코드입력</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">검색</button>
+                            <button type="reset" class="btn btn-secondary">초기화</button>
+                            <button type="button" class="btn btn-success" onclick="showCreateModal()">쿠폰 등록</button>
+                            <button type="button" class="btn btn-info" onclick="downloadCouponList()">쿠폰 목록 다운로드</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 쿠폰 통계 -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-primary text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>전체 쿠폰</div>
+                                <div class="h3 mb-0" th:text="${totalCoupons}">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-success text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>활성 쿠폰</div>
+                                <div class="h3 mb-0" th:text="${activeCoupons}">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-warning text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>발급된 쿠폰</div>
+                                <div class="h3 mb-0" th:text="${issuedCoupons}">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-danger text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>만료 예정</div>
+                                <div class="h3 mb-0" th:text="${expiringCoupons}">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 쿠폰 목록 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-ticket-alt me-1"></i>
+                    쿠폰 목록
+                </div>
+                <div class="card-body">
+                    <table id="couponsTable" class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>쿠폰번호</th>
+                                <th>쿠폰정보</th>
+                                <th>할인정보</th>
+                                <th>발급정보</th>
+                                <th>유효기간</th>
+                                <th>상태</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="coupon : ${coupons}">
+                                <td th:text="${coupon.id}"></td>
+                                <td>
+                                    <strong th:text="${coupon.name}"></strong>
+                                    <br>
+                                    <small class="text-muted" th:text="${coupon.code}"></small>
+                                    <br>
+                                    <small class="text-muted" th:text="${coupon.description}"></small>
+                                </td>
+                                <td>
+                                    <span th:if="${coupon.type == 'FIXED'}" 
+                                          th:text="${#numbers.formatDecimal(coupon.discountAmount, 0, 'COMMA', 0, 'POINT') + '원'}">
+                                    </span>
+                                    <span th:if="${coupon.type == 'PERCENTAGE'}" 
+                                          th:text="${coupon.discountRate + '%'}">
+                                    </span>
+                                    <br>
+                                    <small class="text-muted" 
+                                           th:text="'최소주문금액: ' + ${#numbers.formatDecimal(coupon.minimumOrderAmount, 0, 'COMMA', 0, 'POINT') + '원'}">
+                                    </small>
+                                    <br>
+                                    <small class="text-muted" th:if="${coupon.type == 'PERCENTAGE'}"
+                                           th:text="'최대할인: ' + ${#numbers.formatDecimal(coupon.maximumDiscountAmount, 0, 'COMMA', 0, 'POINT') + '원'}">
+                                    </small>
+                                </td>
+                                <td>
+                                    <span th:text="${coupon.issuanceType}"></span>
+                                    <br>
+                                    <small class="text-muted" 
+                                           th:text="'발급수량: ' + ${coupon.issuedCount + '/' + (coupon.maxIssuance == null ? '∞' : coupon.maxIssuance)}">
+                                    </small>
+                                </td>
+                                <td>
+                                    <div th:text="${#temporals.format(coupon.startDate, 'yyyy-MM-dd')}"></div>
+                                    <div th:text="${#temporals.format(coupon.endDate, 'yyyy-MM-dd')}"></div>
+                                </td>
+                                <td>
+                                    <span th:class="${'badge bg-' + 
+                                        (coupon.status == 'ACTIVE' ? 'success' : 
+                                        (coupon.status == 'INACTIVE' ? 'secondary' : 'danger'))}"
+                                          th:text="${coupon.status}">
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-primary"
+                                                th:onclick="'showCouponDetail(' + ${coupon.id} + ')'">상세</button>
+                                        <button type="button" class="btn btn-sm btn-warning"
+                                                th:onclick="'showEditModal(' + ${coupon.id} + ')'">수정</button>
+                                        <button type="button" class="btn btn-sm btn-danger"
+                                                th:onclick="'deleteCoupon(' + ${coupon.id} + ')'">삭제</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- 페이지네이션 -->
+                    <nav aria-label="Page navigation" th:if="${coupons.totalPages > 0}">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item" th:classappend="${!coupons.hasPrevious()} ? disabled">
+                                <a class="page-link" th:href="@{/admin/coupons(page=${coupons.number - 1})}">이전</a>
+                            </li>
+                            <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, coupons.totalPages - 1)}"
+                                th:classappend="${pageNum == coupons.number} ? active">
+                                <a class="page-link" th:href="@{/admin/coupons(page=${pageNum})}" 
+                                   th:text="${pageNum + 1}"></a>
+                            </li>
+                            <li class="page-item" th:classappend="${!coupons.hasNext()} ? disabled">
+                                <a class="page-link" th:href="@{/admin/coupons(page=${coupons.number + 1})}">다음</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 쿠폰 등록/수정 모달 -->
+    <div class="modal fade" id="couponModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">쿠폰 등록</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="couponForm">
+                        <input type="hidden" id="couponId">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">쿠폰명</label>
+                                <input type="text" class="form-control" id="name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="code" class="form-label">쿠폰코드</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="code">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="generateCouponCode()">자동생성</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">설명</label>
+                            <textarea class="form-control" id="description" rows="2"></textarea>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="type" class="form-label">할인 유형</label>
+                                <select class="form-select" id="couponType" required onchange="toggleDiscountFields()">
+                                    <option value="FIXED">정액</option>
+                                    <option value="PERCENTAGE">정률</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6" id="fixedDiscountField">
+                                <label for="discountAmount" class="form-label">할인 금액</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="discountAmount" min="0">
+                                    <span class="input-group-text">원</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6" id="percentageDiscountField" style="display: none;">
+                                <label for="discountRate" class="form-label">할인율</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="discountRate" min="0" max="100">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="minimumOrderAmount" class="form-label">최소주문금액</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="minimumOrderAmount" min="0" required>
+                                    <span class="input-group-text">원</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6" id="maximumDiscountField" style="display: none;">
+                                <label for="maximumDiscountAmount" class="form-label">최대할인금액</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="maximumDiscountAmount" min="0">
+                                    <span class="input-group-text">원</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="startDate" class="form-label">시작일</label>
+                                <input type="datetime-local" class="form-control" id="couponStartDate" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="endDate" class="form-label">종료일</label>
+                                <input type="datetime-local" class="form-control" id="couponEndDate" required>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="issuanceType" class="form-label">발급 유형</label>
+                                <select class="form-select" id="couponIssuanceType" required onchange="toggleIssuanceFields()">
+                                    <option value="MANUAL">수동발급</option>
+                                    <option value="AUTO">자동발급</option>
+                                    <option value="CODE">코드입력</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="maxIssuance" class="form-label">최대발급수량</label>
+                                <input type="number" class="form-control" id="maxIssuance" min="0" placeholder="무제한은 비워두세요">
+                            </div>
+                        </div>
+                        <div class="mb-3" id="autoIssuanceField" style="display: none;">
+                            <label for="autoIssuanceConditions" class="form-label">자동발급 조건</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="newUserCondition">
+                                <label class="form-check-label" for="newUserCondition">
+                                    신규 회원 가입 시
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="birthdayCondition">
+                                <label class="form-check-label" for="birthdayCondition">
+                                    회원 생일
+                                </label>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="status" class="form-label">상태</label>
+                                <select class="form-select" id="couponStatus" required>
+                                    <option value="ACTIVE">활성</option>
+                                    <option value="INACTIVE">비활성</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="saveCoupon()">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 쿠폰 상세 모달 -->
+    <div class="modal fade" id="couponDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">쿠폰 상세</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="couponDetail">
+                    <!-- 쿠폰 상세 정보가 동적으로 채워집니다 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자바스크립트 -->
+    <th:block layout:fragment="script">
+        <script>
+            $(document).ready(function() {
+                $('#couponsTable').DataTable({
+                    order: [[0, 'desc']],
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Korean.json'
+                    }
+                });
+            });
+
+            function showCreateModal() {
+                document.getElementById('modalTitle').textContent = '쿠폰 등록';
+                document.getElementById('couponId').value = '';
+                document.getElementById('couponForm').reset();
+                toggleDiscountFields();
+                toggleIssuanceFields();
+                const modal = new bootstrap.Modal(document.getElementById('couponModal'));
+                modal.show();
+            }
+
+            function generateCouponCode() {
+                const code = 'PEAK' + Math.random().toString(36).substring(2, 8).toUpperCase();
+                document.getElementById('code').value = code;
+            }
+
+            function toggleDiscountFields() {
+                const type = document.getElementById('couponType').value;
+                const fixedField = document.getElementById('fixedDiscountField');
+                const percentageField = document.getElementById('percentageDiscountField');
+                const maximumDiscountField = document.getElementById('maximumDiscountField');
+
+                if (type === 'FIXED') {
+                    fixedField.style.display = '';
+                    percentageField.style.display = 'none';
+                    maximumDiscountField.style.display = 'none';
+                } else {
+                    fixedField.style.display = 'none';
+                    percentageField.style.display = '';
+                    maximumDiscountField.style.display = '';
+                }
+            }
+
+            function toggleIssuanceFields() {
+                const type = document.getElementById('couponIssuanceType').value;
+                const autoField = document.getElementById('autoIssuanceField');
+                const codeField = document.getElementById('code');
+
+                autoField.style.display = type === 'AUTO' ? '' : 'none';
+                codeField.required = type === 'CODE';
+            }
+
+            function showCouponDetail(couponId) {
+                fetch(`/api/admin/coupons/${couponId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const detail = document.getElementById('couponDetail');
+                        detail.innerHTML = `
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th style="width: 150px;">쿠폰명</th>
+                                    <td>${data.name}</td>
+                                </tr>
+                                <tr>
+                                    <th>쿠폰코드</th>
+                                    <td>${data.code || '-'}</td>
+                                </tr>
+                                <tr>
+                                    <th>설명</th>
+                                    <td>${data.description || ''}</td>
+                                </tr>
+                                <tr>
+                                    <th>할인 정보</th>
+                                    <td>
+                                        ${data.type === 'FIXED' ? 
+                                            data.discountAmount.toLocaleString() + '원' : 
+                                            data.discountRate + '%'}
+                                        <br>
+                                        <small class="text-muted">
+                                            최소주문금액: ${data.minimumOrderAmount.toLocaleString()}원
+                                            ${data.type === 'PERCENTAGE' ? 
+                                                '<br>최대할인금액: ' + data.maximumDiscountAmount.toLocaleString() + '원' : 
+                                                ''}
+                                        </small>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>발급 정보</th>
+                                    <td>
+                                        ${data.issuanceType}
+                                        <br>
+                                        <small class="text-muted">
+                                            발급수량: ${data.issuedCount}/${data.maxIssuance || '∞'}
+                                        </small>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>유효기간</th>
+                                    <td>${data.startDate} ~ ${data.endDate}</td>
+                                </tr>
+                                <tr>
+                                    <th>상태</th>
+                                    <td>
+                                        <span class="badge bg-${
+                                            data.status === 'ACTIVE' ? 'success' : 
+                                            data.status === 'INACTIVE' ? 'secondary' : 'danger'
+                                        }">${data.status}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>등록일</th>
+                                    <td>${data.createdAt}</td>
+                                </tr>
+                                <tr>
+                                    <th>수정일</th>
+                                    <td>${data.updatedAt}</td>
+                                </tr>
+                            </table>
+                        `;
+
+                        const modal = new bootstrap.Modal(document.getElementById('couponDetailModal'));
+                        modal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('쿠폰 정보를 불러오는데 실패했습니다.');
+                    });
+            }
+
+            function showEditModal(couponId) {
+                document.getElementById('modalTitle').textContent = '쿠폰 수정';
+                document.getElementById('couponId').value = couponId;
+
+                fetch(`/api/admin/coupons/${couponId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('name').value = data.name;
+                        document.getElementById('code').value = data.code;
+                        document.getElementById('description').value = data.description;
+                        document.getElementById('couponType').value = data.type;
+                        document.getElementById('discountAmount').value = data.discountAmount;
+                        document.getElementById('discountRate').value = data.discountRate;
+                        document.getElementById('minimumOrderAmount').value = data.minimumOrderAmount;
+                        document.getElementById('maximumDiscountAmount').value = data.maximumDiscountAmount;
+                        document.getElementById('couponStartDate').value = data.startDate.replace(' ', 'T');
+                        document.getElementById('couponEndDate').value = data.endDate.replace(' ', 'T');
+                        document.getElementById('couponIssuanceType').value = data.issuanceType;
+                        document.getElementById('maxIssuance').value = data.maxIssuance;
+                        document.getElementById('couponStatus').value = data.status;
+
+                        if (data.issuanceType === 'AUTO') {
+                            document.getElementById('newUserCondition').checked = data.autoIssuanceConditions?.includes('NEW_USER');
+                            document.getElementById('birthdayCondition').checked = data.autoIssuanceConditions?.includes('BIRTHDAY');
+                        }
+
+                        toggleDiscountFields();
+                        toggleIssuanceFields();
+                        
+                        const modal = new bootstrap.Modal(document.getElementById('couponModal'));
+                        modal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('쿠폰 정보를 불러오는데 실패했습니다.');
+                    });
+            }
+
+            function saveCoupon() {
+                const couponId = document.getElementById('couponId').value;
+                const type = document.getElementById('couponType').value;
+                const issuanceType = document.getElementById('couponIssuanceType').value;
+
+                const data = {
+                    name: document.getElementById('name').value,
+                    code: document.getElementById('code').value,
+                    description: document.getElementById('description').value,
+                    type: type,
+                    discountAmount: type === 'FIXED' ? Number(document.getElementById('discountAmount').value) : null,
+                    discountRate: type === 'PERCENTAGE' ? Number(document.getElementById('discountRate').value) : null,
+                    minimumOrderAmount: Number(document.getElementById('minimumOrderAmount').value),
+                    maximumDiscountAmount: type === 'PERCENTAGE' ? Number(document.getElementById('maximumDiscountAmount').value) : null,
+                    startDate: document.getElementById('couponStartDate').value,
+                    endDate: document.getElementById('couponEndDate').value,
+                    issuanceType: issuanceType,
+                    maxIssuance: document.getElementById('maxIssuance').value || null,
+                    status: document.getElementById('couponStatus').value
+                };
+
+                if (issuanceType === 'AUTO') {
+                    data.autoIssuanceConditions = [];
+                    if (document.getElementById('newUserCondition').checked) {
+                        data.autoIssuanceConditions.push('NEW_USER');
+                    }
+                    if (document.getElementById('birthdayCondition').checked) {
+                        data.autoIssuanceConditions.push('BIRTHDAY');
+                    }
+                }
+
+                const url = couponId ? `/api/admin/coupons/${couponId}` : '/api/admin/coupons';
+                const method = couponId ? 'PUT' : 'POST';
+
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert(couponId ? '쿠폰이 수정되었습니다.' : '쿠폰이 등록되었습니다.');
+                        location.reload();
+                    } else {
+                        alert(couponId ? '쿠폰 수정에 실패했습니다.' : '쿠폰 등록에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('오류가 발생했습니다.');
+                });
+            }
+
+            function deleteCoupon(couponId) {
+                if (!confirm('정말 이 쿠폰을 삭제하시겠습니까?')) {
+                    return;
+                }
+
+                fetch(`/api/admin/coupons/${couponId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('쿠폰이 삭제되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('쿠폰 삭제에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('쿠폰 삭제 중 오류가 발생했습니다.');
+                });
+            }
+
+            function downloadCouponList() {
+                window.location.href = '/api/admin/coupons/download';
+            }
+        </script>
+    </th:block>
+</body>
+</html> 

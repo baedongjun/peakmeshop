@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>설정 관리 - Peak Me Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">설정 관리</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="/admin">대시보드</a></li>
+                <li class="breadcrumb-item active">설정 관리</li>
+            </ol>
+
+            <!-- 설정 탭 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#basicSettings">
+                                기본 설정
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#paymentSettings">
+                                결제 설정
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#deliverySettings">
+                                배송 설정
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#pointSettings">
+                                포인트/적립금 설정
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#smsSettings">
+                                SMS 설정
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <!-- 기본 설정 -->
+                        <div class="tab-pane fade show active" id="basicSettings">
+                            <form id="basicSettingsForm" class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="shopName" class="form-label">쇼핑몰 이름</label>
+                                    <input type="text" class="form-control" id="shopName" name="shopName" 
+                                           th:value="${settings.shopName}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="adminEmail" class="form-label">관리자 이메일</label>
+                                    <input type="email" class="form-control" id="adminEmail" name="adminEmail" 
+                                           th:value="${settings.adminEmail}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="customerServicePhone" class="form-label">고객센터 전화번호</label>
+                                    <input type="tel" class="form-control" id="customerServicePhone" name="customerServicePhone" 
+                                           th:value="${settings.customerServicePhone}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="customerServiceHours" class="form-label">고객센터 운영시간</label>
+                                    <input type="text" class="form-control" id="customerServiceHours" name="customerServiceHours" 
+                                           th:value="${settings.customerServiceHours}" required>
+                                </div>
+                                <div class="col-12">
+                                    <label for="companyInfo" class="form-label">회사 정보</label>
+                                    <textarea class="form-control" id="companyInfo" name="companyInfo" rows="3" 
+                                              th:text="${settings.companyInfo}" required></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label for="termsOfService" class="form-label">이용약관</label>
+                                    <textarea class="form-control" id="termsOfService" name="termsOfService" rows="5" 
+                                              th:text="${settings.termsOfService}" required></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label for="privacyPolicy" class="form-label">개인정보처리방침</label>
+                                    <textarea class="form-control" id="privacyPolicy" name="privacyPolicy" rows="5" 
+                                              th:text="${settings.privacyPolicy}" required></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary" onclick="saveSettings('basic')">저장</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- 결제 설정 -->
+                        <div class="tab-pane fade" id="paymentSettings">
+                            <form id="paymentSettingsForm" class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">결제 수단</label>
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="creditCard" name="paymentMethods" 
+                                               value="CREDIT_CARD" th:checked="${settings.creditCardEnabled}">
+                                        <label class="form-check-label" for="creditCard">신용카드</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="bankTransfer" name="paymentMethods" 
+                                               value="BANK_TRANSFER" th:checked="${settings.bankTransferEnabled}">
+                                        <label class="form-check-label" for="bankTransfer">계좌이체</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="virtualAccount" name="paymentMethods" 
+                                               value="VIRTUAL_ACCOUNT" th:checked="${settings.virtualAccountEnabled}">
+                                        <label class="form-check-label" for="virtualAccount">가상계좌</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="mobilePay" name="paymentMethods" 
+                                               value="MOBILE_PAY" th:checked="${settings.mobilePayEnabled}">
+                                        <label class="form-check-label" for="mobilePay">휴대폰 결제</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="minOrderAmount" class="form-label">최소 주문금액</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="minOrderAmount" name="minOrderAmount" 
+                                               th:value="${settings.minOrderAmount}" required>
+                                        <span class="input-group-text">원</span>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="pgProvider" class="form-label">PG사 설정</label>
+                                    <select class="form-select" id="pgProvider" name="pgProvider">
+                                        <option value="INICIS" th:selected="${settings.pgProvider == 'INICIS'}">KG이니시스</option>
+                                        <option value="NICE" th:selected="${settings.pgProvider == 'NICE'}">나이스페이</option>
+                                        <option value="TOSS" th:selected="${settings.pgProvider == 'TOSS'}">토스페이먼츠</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="pgMerchantId" class="form-label">상점 아이디</label>
+                                    <input type="text" class="form-control" id="pgMerchantId" name="pgMerchantId" 
+                                           th:value="${settings.pgMerchantId}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="pgSecretKey" class="form-label">시크릿 키</label>
+                                    <input type="password" class="form-control" id="pgSecretKey" name="pgSecretKey" 
+                                           placeholder="변경시에만 입력">
+                                </div>
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary" onclick="saveSettings('payment')">저장</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- 배송 설정 -->
+                        <div class="tab-pane fade" id="deliverySettings">
+                            <form id="deliverySettingsForm" class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="defaultDeliveryFee" class="form-label">기본 배송비</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="defaultDeliveryFee" name="defaultDeliveryFee" 
+                                               th:value="${settings.defaultDeliveryFee}" required>
+                                        <span class="input-group-text">원</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="freeDeliveryThreshold" class="form-label">무료배송 기준금액</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="freeDeliveryThreshold" name="freeDeliveryThreshold" 
+                                               th:value="${settings.freeDeliveryThreshold}" required>
+                                        <span class="input-group-text">원</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="defaultDeliveryCompany" class="form-label">기본 배송업체</label>
+                                    <select class="form-select" id="defaultDeliveryCompany" name="defaultDeliveryCompany">
+                                        <option value="CJ" th:selected="${settings.defaultDeliveryCompany == 'CJ'}">CJ대한통운</option>
+                                        <option value="LOTTE" th:selected="${settings.defaultDeliveryCompany == 'LOTTE'}">롯데택배</option>
+                                        <option value="HANJIN" th:selected="${settings.defaultDeliveryCompany == 'HANJIN'}">한진택배</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">반품 주소</label>
+                                    <div class="row g-2">
+                                        <div class="col-md-4">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="returnZipcode" name="returnZipcode" 
+                                                       th:value="${settings.returnZipcode}" readonly>
+                                                <button type="button" class="btn btn-outline-secondary" onclick="searchAddress()">
+                                                    주소 검색
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <input type="text" class="form-control" id="returnAddress1" name="returnAddress1" 
+                                                   th:value="${settings.returnAddress1}" readonly>
+                                        </div>
+                                        <div class="col-12">
+                                            <input type="text" class="form-control" id="returnAddress2" name="returnAddress2" 
+                                                   th:value="${settings.returnAddress2}" placeholder="상세주소">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary" onclick="saveSettings('delivery')">저장</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- 포인트/적립금 설정 -->
+                        <div class="tab-pane fade" id="pointSettings">
+                            <form id="pointSettingsForm" class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="pointRate" class="form-label">적립률</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="pointRate" name="pointRate" 
+                                               th:value="${settings.pointRate}" min="0" max="100" step="0.1" required>
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="minPointAmount" class="form-label">최소 적립금액</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="minPointAmount" name="minPointAmount" 
+                                               th:value="${settings.minPointAmount}" required>
+                                        <span class="input-group-text">원</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="signupPoint" class="form-label">회원가입 포인트</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="signupPoint" name="signupPoint" 
+                                               th:value="${settings.signupPoint}" required>
+                                        <span class="input-group-text">P</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="reviewPoint" class="form-label">리뷰작성 포인트</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="reviewPoint" name="reviewPoint" 
+                                               th:value="${settings.reviewPoint}" required>
+                                        <span class="input-group-text">P</span>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary" onclick="saveSettings('point')">저장</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- SMS 설정 -->
+                        <div class="tab-pane fade" id="smsSettings">
+                            <form id="smsSettingsForm" class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="smsProvider" class="form-label">SMS 서비스</label>
+                                    <select class="form-select" id="smsProvider" name="smsProvider">
+                                        <option value="ALIGO" th:selected="${settings.smsProvider == 'ALIGO'}">알리고</option>
+                                        <option value="COOLSMS" th:selected="${settings.smsProvider == 'COOLSMS'}">쿨SMS</option>
+                                        <option value="NCLOUD" th:selected="${settings.smsProvider == 'NCLOUD'}">네이버클라우드</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="smsKey" class="form-label">API Key</label>
+                                    <input type="password" class="form-control" id="smsKey" name="smsKey" 
+                                           placeholder="변경시에만 입력">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="smsSecret" class="form-label">API Secret</label>
+                                    <input type="password" class="form-control" id="smsSecret" name="smsSecret" 
+                                           placeholder="변경시에만 입력">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="smsSenderId" class="form-label">발신번호</label>
+                                    <input type="text" class="form-control" id="smsSenderId" name="smsSenderId" 
+                                           th:value="${settings.smsSenderId}">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">알림 설정</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="orderSmsEnabled" 
+                                                       name="orderSmsEnabled" th:checked="${settings.orderSmsEnabled}">
+                                                <label class="form-check-label" for="orderSmsEnabled">
+                                                    주문 관련 알림
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="deliverySmsEnabled" 
+                                                       name="deliverySmsEnabled" th:checked="${settings.deliverySmsEnabled}">
+                                                <label class="form-check-label" for="deliverySmsEnabled">
+                                                    배송 관련 알림
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="pointSmsEnabled" 
+                                                       name="pointSmsEnabled" th:checked="${settings.pointSmsEnabled}">
+                                                <label class="form-check-label" for="pointSmsEnabled">
+                                                    포인트 관련 알림
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="marketingSmsEnabled" 
+                                                       name="marketingSmsEnabled" th:checked="${settings.marketingSmsEnabled}">
+                                                <label class="form-check-label" for="marketingSmsEnabled">
+                                                    마케팅 알림
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary" onclick="saveSettings('sms')">저장</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자바스크립트 -->
+    <th:block layout:fragment="script">
+        <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+        <script>
+            function saveSettings(type) {
+                const form = document.getElementById(`${type}SettingsForm`);
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const formData = new FormData(form);
+                fetch(`/api/admin/settings/${type}`, {
+                    method: 'PUT',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('설정 저장에 실패했습니다.');
+                    alert('설정이 저장되었습니다.');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+            }
+
+            function searchAddress() {
+                new daum.Postcode({
+                    oncomplete: function(data) {
+                        document.getElementById('returnZipcode').value = data.zonecode;
+                        document.getElementById('returnAddress1').value = data.address;
+                        document.getElementById('returnAddress2').focus();
+                    }
+                }).open();
+            }
+
+            // URL 해시값에 따른 탭 활성화
+            $(document).ready(function() {
+                const hash = window.location.hash;
+                if (hash) {
+                    $('.nav-tabs a[href="' + hash + '"]').tab('show');
+                }
+
+                $('.nav-tabs a').on('click', function(e) {
+                    $(this).tab('show');
+                    window.location.hash = $(this).attr('href');
+                });
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

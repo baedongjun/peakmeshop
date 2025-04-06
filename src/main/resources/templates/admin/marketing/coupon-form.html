@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>쿠폰 등록/수정 - Peak Me Shop 관리자</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- 페이지 헤더 시작 -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title" th:text="${coupon != null ? '쿠폰 수정' : '쿠폰 등록'}">쿠폰 등록</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/admin/coupons}">쿠폰 관리</a></li>
+                    <li class="breadcrumb-item active" th:text="${coupon != null ? '쿠폰 수정' : '쿠폰 등록'}">쿠폰 등록</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- 페이지 헤더 끝 -->
+
+    <!-- 쿠폰 폼 시작 -->
+    <div class="card">
+        <div class="card-body">
+            <form th:action="${coupon != null ? '/api/admin/coupons/' + coupon.id : '/api/admin/coupons'}"
+                  th:method="${coupon != null ? 'PUT' : 'POST'}"
+                  id="couponForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="required">쿠폰명</label>
+                            <input type="text" class="form-control" name="name" required
+                                   th:value="${coupon != null ? coupon.name : ''}"
+                                   placeholder="쿠폰명을 입력하세요">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="required">쿠폰코드</label>
+                            <input type="text" class="form-control" name="code" required
+                                   th:value="${coupon != null ? coupon.code : ''}"
+                                   th:readonly="${coupon != null}"
+                                   placeholder="쿠폰코드를 입력하세요">
+                            <small class="form-text text-muted">영문, 숫자 조합으로 입력하세요. (예: SPRING2024)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="required">쿠폰 유형</label>
+                            <select class="form-control" name="type" required onchange="updateBenefitFields()">
+                                <option value="">선택하세요</option>
+                                <option value="DISCOUNT" th:selected="${coupon != null && coupon.type == 'DISCOUNT'}">할인 쿠폰</option>
+                                <option value="SHIPPING" th:selected="${coupon != null && coupon.type == 'SHIPPING'}">배송비 쿠폰</option>
+                                <option value="GIFT" th:selected="${coupon != null && coupon.type == 'GIFT'}">사은품 쿠폰</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="required">발행 수량</label>
+                            <input type="number" class="form-control" name="quantity" required
+                                   th:value="${coupon != null ? coupon.quantity : ''}"
+                                   min="1" placeholder="발행할 쿠폰 수량을 입력하세요">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 혜택 설정 영역 시작 -->
+                <div class="row benefit-fields">
+                    <!-- 할인 쿠폰 필드 -->
+                    <div class="col-md-6 benefit-field discount-field" style="display: none;">
+                        <div class="form-group">
+                            <label class="required">할인 유형</label>
+                            <select class="form-control" name="discountType">
+                                <option value="PERCENTAGE" th:selected="${coupon != null && coupon.discountType == 'PERCENTAGE'}">정률 할인</option>
+                                <option value="FIXED" th:selected="${coupon != null && coupon.discountType == 'FIXED'}">정액 할인</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="required">할인값</label>
+                            <input type="number" class="form-control" name="discountValue"
+                                   th:value="${coupon != null ? coupon.discountValue : ''}"
+                                   placeholder="할인율 또는 할인금액을 입력하세요">
+                        </div>
+                        <div class="form-group">
+                            <label>최대 할인 금액</label>
+                            <input type="number" class="form-control" name="maxDiscountAmount"
+                                   th:value="${coupon != null ? coupon.maxDiscountAmount : ''}"
+                                   placeholder="최대 할인 금액을 입력하세요">
+                            <small class="form-text text-muted">정률 할인의 경우에만 적용됩니다.</small>
+                        </div>
+                    </div>
+
+                    <!-- 배송비 쿠폰 필드 -->
+                    <div class="col-md-6 benefit-field shipping-field" style="display: none;">
+                        <div class="form-group">
+                            <label class="required">할인 금액</label>
+                            <input type="number" class="form-control" name="shippingDiscountAmount"
+                                   th:value="${coupon != null ? coupon.shippingDiscountAmount : ''}"
+                                   placeholder="배송비 할인 금액을 입력하세요">
+                        </div>
+                    </div>
+
+                    <!-- 사은품 쿠폰 필드 -->
+                    <div class="col-md-6 benefit-field gift-field" style="display: none;">
+                        <div class="form-group">
+                            <label class="required">사은품명</label>
+                            <input type="text" class="form-control" name="giftName"
+                                   th:value="${coupon != null ? coupon.giftName : ''}"
+                                   placeholder="사은품명을 입력하세요">
+                        </div>
+                        <div class="form-group">
+                            <label class="required">사은품 수량</label>
+                            <input type="number" class="form-control" name="giftQuantity"
+                                   th:value="${coupon != null ? coupon.giftQuantity : ''}"
+                                   placeholder="사은품 수량을 입력하세요">
+                        </div>
+                    </div>
+                </div>
+                <!-- 혜택 설정 영역 끝 -->
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="required">최소 주문 금액</label>
+                            <input type="number" class="form-control" name="minimumOrderAmount" required
+                                   th:value="${coupon != null ? coupon.minimumOrderAmount : ''}"
+                                   placeholder="최소 주문 금액을 입력하세요">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>적용 대상</label>
+                            <select class="form-control" name="target" onchange="updateTargetFields()">
+                                <option value="ALL" th:selected="${coupon != null && coupon.target == 'ALL'}">전체 상품</option>
+                                <option value="CATEGORY" th:selected="${coupon != null && coupon.target == 'CATEGORY'}">특정 카테고리</option>
+                                <option value="PRODUCT" th:selected="${coupon != null && coupon.target == 'PRODUCT'}">특정 상품</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 적용 대상 설정 영역 시작 -->
+                <div class="row target-fields">
+                    <!-- 카테고리 선택 필드 -->
+                    <div class="col-md-6 target-field category-field" style="display: none;">
+                        <div class="form-group">
+                            <label class="required">카테고리 선택</label>
+                            <select class="form-control" name="categoryId" multiple>
+                                <option th:each="category : ${categories}"
+                                        th:value="${category.id}"
+                                        th:text="${category.name}"
+                                        th:selected="${coupon != null && coupon.categoryIds.contains(category.id)}">
+                                    카테고리명
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 상품 선택 필드 -->
+                    <div class="col-md-6 target-field product-field" style="display: none;">
+                        <div class="form-group">
+                            <label class="required">상품 선택</label>
+                            <select class="form-control" name="productId" multiple>
+                                <option th:each="product : ${products}"
+                                        th:value="${product.id}"
+                                        th:text="${product.name}"
+                                        th:selected="${coupon != null && coupon.productIds.contains(product.id)}">
+                                    상품명
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- 적용 대상 설정 영역 끝 -->
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="required">시작일</label>
+                            <input type="date" class="form-control" name="startDate" required
+                                   th:value="${coupon != null ? #temporals.format(coupon.startDate, 'yyyy-MM-dd') : ''}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="required">종료일</label>
+                            <input type="date" class="form-control" name="endDate" required
+                                   th:value="${coupon != null ? #temporals.format(coupon.endDate, 'yyyy-MM-dd') : ''}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>설명</label>
+                    <textarea class="form-control" name="description" rows="4"
+                              th:text="${coupon != null ? coupon.description : ''}"
+                              placeholder="쿠폰에 대한 설명을 입력하세요"></textarea>
+                </div>
+
+                <div class="text-right mt-3">
+                    <a th:href="@{/admin/coupons}" class="btn btn-secondary">취소</a>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- 쿠폰 폼 끝 -->
+</div>
+
+<!-- 쿠폰 폼 스크립트 -->
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        // 혜택 필드 업데이트
+        function updateBenefitFields() {
+            const type = document.querySelector('select[name="type"]').value;
+            document.querySelectorAll('.benefit-field').forEach(field => {
+                field.style.display = 'none';
+            });
+
+            if (type) {
+                const targetField = document.querySelector(`.${type.toLowerCase()}-field`);
+                if (targetField) {
+                    targetField.style.display = 'block';
+                }
+            }
+        }
+
+        // 적용 대상 필드 업데이트
+        function updateTargetFields() {
+            const target = document.querySelector('select[name="target"]').value;
+            document.querySelectorAll('.target-field').forEach(field => {
+                field.style.display = 'none';
+            });
+
+            if (target && target !== 'ALL') {
+                const targetField = document.querySelector(`.${target.toLowerCase()}-field`);
+                if (targetField) {
+                    targetField.style.display = 'block';
+                }
+            }
+        }
+
+        // 폼 제출 처리
+        document.getElementById('couponForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+
+            fetch(this.action, {
+                method: this.method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            }).then(response => {
+                if (response.ok) {
+                    window.location.href = '/admin/coupons';
+                } else {
+                    throw new Error('쿠폰 저장에 실패했습니다.');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                alert(error.message);
+            });
+        });
+
+        // 초기 필드 상태 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            updateBenefitFields();
+            updateTargetFields();
+        });
+    </script>
+</th:block>
+</body>
+</html> 

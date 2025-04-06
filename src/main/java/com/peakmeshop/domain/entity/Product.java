@@ -1,30 +1,18 @@
 package com.peakmeshop.domain.entity;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import com.peakmeshop.common.converter.StringListConverter;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import com.peakmeshop.common.converter.StringListConverter;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -44,7 +32,7 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     private String code;
 
     @Column(nullable = false)
@@ -55,6 +43,9 @@ public class Product {
 
     @Column(nullable = false)
     private BigDecimal price;
+
+    @Column(nullable = false)
+    private BigDecimal cost;
 
     @Column(name = "sale_price")
     private BigDecimal salePrice;
@@ -83,6 +74,11 @@ public class Product {
 
     private Integer stock;
 
+    private Integer stockAlert;
+
+    @Column(columnDefinition = "TEXT")
+    private String shortDescription;
+
     private String status;
 
     private Boolean active;
@@ -98,10 +94,12 @@ public class Product {
     @Column(name = "sales_count")
     private Integer salesCount;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @UpdateTimestamp
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -120,6 +118,24 @@ public class Product {
     )
     @Builder.Default
     private List<Tag> tags = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "supplier_id")
+    private Supplier supplier;
+
+    @OneToMany(mappedBy = "product")
+    private List<OrderItem> orderItems = new ArrayList<>();
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
     // 브랜드 이름 반환 메서드
     public String getBrandName() {
@@ -196,9 +212,29 @@ public class Product {
 
     /**
      * 상품의 재고 여부를 확인합니다.
+     *
      * @return 재고가 있으면 true, 없으면 false
      */
     public boolean isInStock() {
         return this.stock != null && this.stock > 0;
+    }
+
+    public BigDecimal getTotalSales() {
+        return orderItems.stream()
+                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getTotalRevenue() {
+        int totalQuantity = orderItems.stream()
+                .mapToInt(OrderItem::getQuantity)
+                .sum();
+        return price.multiply(BigDecimal.valueOf(totalQuantity));
+    }
+
+    private BigDecimal getTotalCost() {
+        return orderItems.stream()
+                .map(item -> this.cost.multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

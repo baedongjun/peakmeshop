@@ -1,17 +1,14 @@
 package com.peakmeshop.domain.entity;
 
+import com.peakmeshop.domain.enums.OrderStatus;
+import com.peakmeshop.domain.enums.PaymentMethod;
+import jakarta.persistence.*;
+import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.peakmeshop.domain.enums.OrderStatus;
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Table(name = "orders")
@@ -20,133 +17,103 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Order {
+public class Order extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String orderNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
+    @JoinColumn(name = "member_id")
     private Member member;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shipping_address_id")
-    private Address shippingAddress;
-
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "billing_address_id")
-    private Address billingAddress;
-    @Enumerated(EnumType.ORDINAL)
-    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
-    @Column(nullable = false)
-    private BigDecimal subtotal;
+    @Column(precision = 10, scale = 2)
+    private BigDecimal totalPrice;
 
-    @Column
-    private BigDecimal discountAmount;
+    @Column(precision = 10, scale = 2)
+    private BigDecimal discount;
 
-    @Column
-    private BigDecimal shippingCost;
+    @Column(precision = 10, scale = 2)
+    private BigDecimal deliveryFee;
 
-    @Column
-    private BigDecimal tax;
+    @Column(precision = 10, scale = 2)
+    private BigDecimal finalPrice;
 
-    @Column(nullable = false)
-    private BigDecimal totalAmount;
+    private String recipientName;
+    private String recipientTel;
+    private String recipientAddress;
+    private String recipientDetailAddress;
+    private String recipientMessage;
 
-    @Column
+    @Enumerated(EnumType.STRING)
     private String paymentMethod;
 
-    @Column
     private String paymentStatus;
-
-    @Column
     private String paymentTransactionId;
-
-    @Column
     private String shippingMethod;
-
-    @Column
     private String trackingNumber;
-
-    @Column
     private String shippingCompany;
-
-    @Column
     private String cancelReason;
-
-    @Column
     private String refundReason;
 
-    @Column
     private LocalDateTime paidAt;
-
-    @Column
     private LocalDateTime shippedAt;
-
-    @Column
     private LocalDateTime deliveredAt;
-
-    @Column
     private LocalDateTime cancelledAt;
-
-    @Column
     private LocalDateTime refundedAt;
-
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column
-    private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
-    public BigDecimal getTotalAmount() {
-        if (totalAmount != null) {
-            return totalAmount;
-        }
-
-        // 주문 항목이 없는 경우
-        if (items == null || items.isEmpty()) {
-            return BigDecimal.ZERO;
-        }
-
-        // 주문 항목의 총 금액 계산
-        BigDecimal total = items.stream()
-                .map(item -> {
-                    BigDecimal itemPrice = item.getPrice().multiply(new BigDecimal(item.getQuantity()));
-                    if (item.getDiscount() != null) {
-                        itemPrice = itemPrice.subtract(item.getDiscount());
-                    }
-                    return itemPrice;
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // 배송비 추가
-        if (shippingCost != null) {
-            total = total.add(shippingCost);
-        }
-
-        // 세금 추가
-        if (tax != null) {
-            total = total.add(tax);
-        }
-
-        // 할인 적용
-        if (discountAmount != null) {
-            total = total.subtract(discountAmount);
-        }
-
-        return total;
+    public List<OrderItem> getOrderItems() {
+        return items;
     }
 
-    public List<OrderItem> getItems() {
-        return items;
+    public void addItem(OrderItem item) {
+        items.add(item);
+        item.setOrder(this);
+    }
+
+    public void removeItem(OrderItem item) {
+        items.remove(item);
+        item.setOrder(null);
+    }
+
+    public BigDecimal getSubtotal() {
+        return totalPrice;
+    }
+
+    public BigDecimal getDiscountAmount() {
+        return discount;
+    }
+
+    public BigDecimal getShippingCost() {
+        return deliveryFee;
+    }
+
+    public BigDecimal getTax() {
+        return BigDecimal.ZERO;
+    }
+
+    public BigDecimal getTotalAmount() {
+        return finalPrice;
+    }
+
+    public BigDecimal getTotalSales() {
+        return items.stream()
+                .map(OrderItem::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getTotalProfit() {
+        return items.stream()
+                .map(OrderItem::getProfit)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

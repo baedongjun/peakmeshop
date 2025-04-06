@@ -83,9 +83,9 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<CategoryDTO> getAllCategoriesPaged(Pageable pageable) {
-        Page<Category> categoryPage = categoryRepository.findAll(pageable);
-        return categoryPage.map(this::convertToDTO);
+    public Page<CategoryDTO> getCategories(Pageable pageable) {
+        Page<Category> categories = categoryRepository.findAll(pageable);
+        return categories.map(this::convertToDTO);
     }
 
     @Override
@@ -265,6 +265,17 @@ public class CategoryServiceImpl implements CategoryService {
             filterableAttributes = List.of(category.getFilterableAttributes().split(","));
         }
 
+        // Calculate depth
+        int depth = 0;
+        Category parent = category.getParent();
+        while (parent != null) {
+            depth++;
+            parent = parent.getParent();
+        }
+
+        // Get product count from repository
+        long productCount = productRepository.countByCategoryId(category.getId());
+
         return CategoryDTO.builder()
                 .id(category.getId())
                 .name(category.getName())
@@ -279,6 +290,8 @@ public class CategoryServiceImpl implements CategoryService {
                 .filterableAttributes(filterableAttributes)
                 .createdAt(category.getCreatedAt())
                 .updatedAt(category.getUpdatedAt())
+                .productCount(productCount)
+                .depth(depth)
                 .build();
     }
 }

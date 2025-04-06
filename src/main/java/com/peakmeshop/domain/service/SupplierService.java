@@ -2,12 +2,15 @@ package com.peakmeshop.domain.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.peakmeshop.api.dto.ProductDTO;
 import com.peakmeshop.api.dto.SupplierDTO;
+import com.peakmeshop.api.dto.SettlementDTO;
+import com.peakmeshop.api.dto.ContractDTO;
 
 public interface SupplierService {
 
@@ -32,4 +35,14 @@ public interface SupplierService {
     void removeProductFromSupplier(Long supplierId, Long productId);
 
     List<SupplierDTO> searchSuppliers(String keyword);
+
+    Map<String, Long> getSupplierSummary();
+
+    Map<String, Long> getSupplierSummary(Long supplierId);
+
+    Page<SettlementDTO> getSettlements(Pageable pageable);
+
+    Page<ContractDTO> getContracts(Pageable pageable);
+
+    ContractDTO getContractById(Long id);
 }

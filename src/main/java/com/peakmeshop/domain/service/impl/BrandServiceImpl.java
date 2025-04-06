@@ -1,9 +1,13 @@
 package com.peakmeshop.domain.service.impl;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.HashMap;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -70,8 +74,13 @@ public class BrandServiceImpl implements BrandService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Page<BrandDTO> getAllBrandsPaged(Pageable pageable) {
+        return null;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BrandDTO> getAllBrands(Pageable pageable) {
         Page<Brand> brandsPage = brandRepository.findAll(pageable);
         return brandsPage.map(this::mapToDTO);
     }
@@ -195,6 +204,97 @@ public class BrandServiceImpl implements BrandService {
         }
 
         return false;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Long> getBrandSummary(Long brandId) {
+        Brand brand = brandRepository.findById(brandId)
+                .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + brandId));
+
+        Map<String, Long> summary = new HashMap<>();
+        summary.put("id", brand.getId());
+        summary.put("productCount", (long) getProductCountByBrandId(brandId));
+        summary.put("totalSales", brandRepository.calculateTotalSalesByBrandId(brandId).longValue());
+        summary.put("totalOrders", brandRepository.countOrdersByBrandId(brandId));
+        summary.put("averageRating", brandRepository.calculateAverageRatingByBrandId(brandId).longValue());
+
+        return summary;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Long> getBrandSummary() {
+        Map<String, Long> summary = new HashMap<>();
+        summary.put("totalBrands", brandRepository.count());
+        summary.put("activeBrands", brandRepository.countByIsActiveTrue());
+        summary.put("featuredBrands", brandRepository.countByIsFeaturedTrue());
+        summary.put("totalProducts", brandRepository.countTotalProducts());
+        summary.put("totalSales", brandRepository.calculateTotalSales().longValue());
+        summary.put("averageRating", brandRepository.calculateAverageRating().longValue());
+
+        return summary;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getBrandStatistics(String period, String startDate, String endDate) {
+        Map<String, Object> statistics = new HashMap<>();
+        
+        // 기간별 통계 데이터 수집
+        LocalDateTime start = null;
+        LocalDateTime end = LocalDateTime.now();
+        
+        if (period != null) {
+            switch (period) {
+                case "daily":
+                    start = end.minusDays(1);
+                    break;
+                case "weekly":
+                    start = end.minusWeeks(1);
+                    break;
+                case "monthly":
+                    start = end.minusMonths(1);
+                    break;
+                case "yearly":
+                    start = end.minusYears(1);
+                    break;
+                default:
+                    start = end.minusMonths(1); // 기본값: 1개월
+            }
+        } else if (startDate != null && endDate != null) {
+            // 날짜 형식: yyyy-MM-dd
+            start = LocalDate.parse(startDate).atStartOfDay();
+            end = LocalDate.parse(endDate).atTime(23, 59, 59);
+        } else {
+            start = end.minusMonths(1); // 기본값: 1개월
+        }
+
+        // 브랜드별 통계 수집
+        List<Brand> brands = brandRepository.findAll();
+        final LocalDateTime finalStart = start;
+        final LocalDateTime finalEnd = end;
+        List<Map<String, Object>> brandStats = brands.stream()
+            .map(brand -> {
+                Map<String, Object> stat = new HashMap<>();
+                stat.put("id", brand.getId());
+                stat.put("name", brand.getName());
+                stat.put("productCount", getProductCountByBrandId(brand.getId()));
+                stat.put("orderCount", brandRepository.countOrdersByBrandIdAndDateRange(brand.getId(), finalStart, finalEnd));
+                stat.put("totalSales", brandRepository.calculateTotalSalesByBrandIdAndDateRange(brand.getId(), finalStart, finalEnd));
+                return stat;
+            })
+            .collect(Collectors.toList());
+
+        statistics.put("brands", brandStats);
+        statistics.put("totalBrands", brands.size());
+        statistics.put("activeBrands", brandRepository.countByIsActiveTrue());
+        statistics.put("featuredBrands", brandRepository.countByIsFeaturedTrue());
+        statistics.put("period", period);
+        statistics.put("startDate", start);
+        statistics.put("endDate", end);
+
+        return statistics;
     }
 
     // Entity -> DTO 변환

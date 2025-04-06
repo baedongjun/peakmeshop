@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>주문 상세 - Peak Me Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">주문 상세</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="/admin">대시보드</a></li>
+                <li class="breadcrumb-item"><a href="/admin/orders">주문 관리</a></li>
+                <li class="breadcrumb-item active">주문 상세</li>
+            </ol>
+
+            <!-- 주문 기본 정보 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-info-circle me-1"></i>
+                    주문 정보
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th style="width: 150px;">주문번호</th>
+                                    <td th:text="${order.orderNumber}"></td>
+                                </tr>
+                                <tr>
+                                    <th>주문일시</th>
+                                    <td th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                                </tr>
+                                <tr>
+                                    <th>주문자</th>
+                                    <td>
+                                        <a th:href="@{/admin/members/{id}(id=${order.member.id})}" 
+                                           th:text="${order.member.name}"></a>
+                                        <br>
+                                        <small th:text="${order.member.phone}"></small>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>주문상태</th>
+                                    <td>
+                                        <span th:class="${'badge bg-' + order.status.color}"
+                                              th:text="${order.status}"></span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th style="width: 150px;">결제수단</th>
+                                    <td th:text="${order.paymentMethod}"></td>
+                                </tr>
+                                <tr>
+                                    <th>결제금액</th>
+                                    <td th:text="${#numbers.formatInteger(order.totalAmount, 0, 'COMMA')} + '원'"></td>
+                                </tr>
+                                <tr>
+                                    <th>사용 포인트</th>
+                                    <td th:text="${#numbers.formatInteger(order.usedPoints, 0, 'COMMA')} + ' P'"></td>
+                                </tr>
+                                <tr>
+                                    <th>적립 포인트</th>
+                                    <td th:text="${#numbers.formatInteger(order.earnedPoints, 0, 'COMMA')} + ' P'"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button type="button" class="btn btn-warning" 
+                                    th:onclick="'showStatusModal(' + ${order.id} + ')'">상태 변경</button>
+                            <button type="button" class="btn btn-danger" 
+                                    th:if="${order.status.name() == 'PAID'}"
+                                    onclick="cancelOrder()">주문 취소</button>
+                            <button type="button" class="btn btn-info" 
+                                    th:if="${order.status.name() == 'COMPLETED'}"
+                                    onclick="showRefundModal()">환불 처리</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 배송 정보 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-truck me-1"></i>
+                    배송 정보
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 150px;">수령인</th>
+                            <td th:text="${order.shippingInfo.recipient}"></td>
+                        </tr>
+                        <tr>
+                            <th>연락처</th>
+                            <td th:text="${order.shippingInfo.phone}"></td>
+                        </tr>
+                        <tr>
+                            <th>주소</th>
+                            <td th:text="${order.shippingInfo.address}"></td>
+                        </tr>
+                        <tr>
+                            <th>배송요청사항</th>
+                            <td th:text="${order.shippingInfo.message}"></td>
+                        </tr>
+                        <tr th:if="${order.trackingNumber}">
+                            <th>운송장번호</th>
+                            <td>
+                                <span th:text="${order.trackingNumber}"></span>
+                                <a th:href="@{${order.trackingUrl}}" target="_blank" class="btn btn-sm btn-primary ms-2">
+                                    배송조회
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 주문 상품 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-box me-1"></i>
+                    주문 상품
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>상품정보</th>
+                                <th>옵션</th>
+                                <th>수량</th>
+                                <th>상품금액</th>
+                                <th>할인금액</th>
+                                <th>주문금액</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="item : ${order.orderItems}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img th:src="${item.product.thumbnail}" 
+                                             alt="상품 이미지" style="width: 50px; height: 50px; object-fit: cover;"
+                                             class="me-2">
+                                        <div>
+                                            <a th:href="@{/admin/products/{id}(id=${item.product.id})}" 
+                                               th:text="${item.product.name}"></a>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td th:text="${item.optionName}"></td>
+                                <td th:text="${item.quantity}"></td>
+                                <td th:text="${#numbers.formatInteger(item.price, 0, 'COMMA')} + '원'"></td>
+                                <td th:text="${#numbers.formatInteger(item.discount, 0, 'COMMA')} + '원'"></td>
+                                <td th:text="${#numbers.formatInteger(item.totalAmount, 0, 'COMMA')} + '원'"></td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" class="text-end">총 상품금액</td>
+                                <td th:text="${#numbers.formatInteger(order.totalProductAmount, 0, 'COMMA')} + '원'"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="5" class="text-end">총 할인금액</td>
+                                <td th:text="${#numbers.formatInteger(order.totalDiscountAmount, 0, 'COMMA')} + '원'"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="5" class="text-end">배송비</td>
+                                <td th:text="${#numbers.formatInteger(order.shippingFee, 0, 'COMMA')} + '원'"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="5" class="text-end">사용 포인트</td>
+                                <td th:text="${#numbers.formatInteger(order.usedPoints, 0, 'COMMA')} + ' P'"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="5" class="text-end fw-bold">최종 결제금액</td>
+                                <td class="fw-bold" th:text="${#numbers.formatInteger(order.totalAmount, 0, 'COMMA')} + '원'"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 주문 처리 내역 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-history me-1"></i>
+                    처리 내역
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>처리일시</th>
+                                <th>처리내용</th>
+                                <th>처리자</th>
+                                <th>사유</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="history : ${order.histories}">
+                                <td th:text="${#temporals.format(history.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td>
+                                    <span th:text="${history.fromStatus}"></span>
+                                    <i class="fas fa-arrow-right mx-2"></i>
+                                    <span th:text="${history.toStatus}"></span>
+                                </td>
+                                <td th:text="${history.createdBy}"></td>
+                                <td th:text="${history.reason}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 주문 상태 변경 모달 -->
+    <div class="modal fade" id="statusModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">주문 상태 변경</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="statusForm">
+                        <input type="hidden" id="orderId" th:value="${order.id}">
+                        <div class="mb-3">
+                            <label for="newStatus" class="form-label">새로운 상태</label>
+                            <select class="form-select" id="newStatus" required>
+                                <option value="PENDING">결제대기</option>
+                                <option value="PAID">결제완료</option>
+                                <option value="PREPARING">상품준비중</option>
+                                <option value="SHIPPING">배송중</option>
+                                <option value="DELIVERED">배송완료</option>
+                                <option value="COMPLETED">구매확정</option>
+                                <option value="CANCELLED">주문취소</option>
+                                <option value="REFUNDING">환불진행중</option>
+                                <option value="REFUNDED">환불완료</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="trackingNumber" class="form-label">운송장 번호</label>
+                            <input type="text" class="form-control" id="trackingNumber">
+                            <small class="form-text text-muted">배송중 상태로 변경 시 필수 입력</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="statusReason" class="form-label">사유</label>
+                            <textarea class="form-control" id="statusReason" rows="3" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="updateOrderStatus()">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 환불 처리 모달 -->
+    <div class="modal fade" id="refundModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">환불 처리</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="refundForm">
+                        <div class="mb-3">
+                            <label for="refundAmount" class="form-label">환불 금액</label>
+                            <input type="number" class="form-control" id="refundAmount" required
+                                   th:max="${order.totalAmount}">
+                            <small class="form-text text-muted">최대 환불 가능 금액: 
+                                <span th:text="${#numbers.formatInteger(order.totalAmount, 0, 'COMMA')}"></span>원</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="refundReason" class="form-label">환불 사유</label>
+                            <textarea class="form-control" id="refundReason" rows="3" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="processRefund()">환불 처리</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자바스크립트 -->
+    <th:block layout:fragment="script">
+        <script>
+            function showStatusModal(orderId) {
+                document.getElementById('orderId').value = orderId;
+                const modal = new bootstrap.Modal(document.getElementById('statusModal'));
+                modal.show();
+            }
+
+            function showRefundModal() {
+                const modal = new bootstrap.Modal(document.getElementById('refundModal'));
+                modal.show();
+            }
+
+            function updateOrderStatus() {
+                const orderId = document.getElementById('orderId').value;
+                const newStatus = document.getElementById('newStatus').value;
+                const trackingNumber = document.getElementById('trackingNumber').value;
+                const reason = document.getElementById('statusReason').value;
+
+                if (!newStatus || !reason) {
+                    alert('모든 필수 필드를 입력해주세요.');
+                    return;
+                }
+
+                if (newStatus === 'SHIPPING' && !trackingNumber) {
+                    alert('배송중 상태로 변경 시 운송장 번호를 입력해주세요.');
+                    return;
+                }
+
+                fetch(`/api/admin/orders/${orderId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        status: newStatus,
+                        trackingNumber: trackingNumber,
+                        reason: reason
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('주문 상태가 변경되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('주문 상태 변경에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('주문 상태 변경 중 오류가 발생했습니다.');
+                });
+            }
+
+            function cancelOrder() {
+                if (!confirm('주문을 취소하시겠습니까?')) {
+                    return;
+                }
+
+                const orderId = document.getElementById('orderId').value;
+
+                fetch(`/api/admin/orders/${orderId}/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('주문이 취소되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('주문 취소에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('주문 취소 중 오류가 발생했습니다.');
+                });
+            }
+
+            function processRefund() {
+                const orderId = document.getElementById('orderId').value;
+                const amount = document.getElementById('refundAmount').value;
+                const reason = document.getElementById('refundReason').value;
+
+                if (!amount || !reason) {
+                    alert('모든 필수 필드를 입력해주세요.');
+                    return;
+                }
+
+                fetch(`/api/admin/orders/${orderId}/refund`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        amount: parseInt(amount),
+                        reason: reason
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('환불이 처리되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('환불 처리에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('환불 처리 중 오류가 발생했습니다.');
+                });
+            }
+        </script>
+    </th:block>
+</body>
+</html> 

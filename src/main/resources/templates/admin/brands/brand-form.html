@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>브랜드 등록/수정 - Peak Me Shop 관리자</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- 페이지 헤더 시작 -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title" th:text="${brand != null ? '브랜드 수정' : '브랜드 등록'}">브랜드 등록</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/admin/brands}">브랜드 관리</a></li>
+                    <li class="breadcrumb-item active" th:text="${brand != null ? '브랜드 수정' : '브랜드 등록'}">브랜드 등록</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- 페이지 헤더 끝 -->
+
+    <!-- 브랜드 폼 시작 -->
+    <div class="card">
+        <div class="card-body">
+            <form th:action="${brand != null ? '/api/admin/brands/' + brand.id : '/api/admin/brands'}"
+                  th:method="${brand != null ? 'PUT' : 'POST'}"
+                  id="brandForm"
+                  enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="required">브랜드명</label>
+                            <input type="text" class="form-control" name="name" required
+                                   th:value="${brand != null ? brand.name : ''}"
+                                   placeholder="브랜드명을 입력하세요">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="required">브랜드코드</label>
+                            <input type="text" class="form-control" name="code" required
+                                   th:value="${brand != null ? brand.code : ''}"
+                                   th:readonly="${brand != null}"
+                                   placeholder="브랜드코드를 입력하세요">
+                            <small class="form-text text-muted">영문, 숫자 조합으로 입력하세요. (예: NIKE)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>영문명</label>
+                            <input type="text" class="form-control" name="nameEn"
+                                   th:value="${brand != null ? brand.nameEn : ''}"
+                                   placeholder="영문 브랜드명을 입력하세요">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>상태</label>
+                            <select class="form-control" name="status">
+                                <option value="ACTIVE" th:selected="${brand != null && brand.status == 'ACTIVE'}">활성</option>
+                                <option value="INACTIVE" th:selected="${brand != null && brand.status == 'INACTIVE'}">비활성</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>연락처</label>
+                            <input type="tel" class="form-control" name="phone"
+                                   th:value="${brand != null ? brand.phone : ''}"
+                                   placeholder="연락처를 입력하세요">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>이메일</label>
+                            <input type="email" class="form-control" name="email"
+                                   th:value="${brand != null ? brand.email : ''}"
+                                   placeholder="이메일을 입력하세요">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>웹사이트</label>
+                            <input type="url" class="form-control" name="website"
+                                   th:value="${brand != null ? brand.website : ''}"
+                                   placeholder="웹사이트 URL을 입력하세요">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>로고</label>
+                            <input type="file" class="form-control" name="logo" accept="image/*">
+                            <small class="form-text text-muted">권장 크기: 200x200px, 최대 2MB</small>
+                            <div th:if="${brand != null && brand.logoUrl != null}" class="mt-2">
+                                <img th:src="${brand.logoUrl}" alt="현재 로고" style="height: 50px;">
+                                <div class="custom-control custom-checkbox mt-2">
+                                    <input type="checkbox" class="custom-control-input" id="removeLogo" name="removeLogo">
+                                    <label class="custom-control-label" for="removeLogo">로고 삭제</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>설명</label>
+                    <textarea class="form-control" name="description" rows="4"
+                              th:text="${brand != null ? brand.description : ''}"
+                              placeholder="브랜드에 대한 설명을 입력하세요"></textarea>
+                </div>
+
+                <div class="text-right mt-3">
+                    <a th:href="@{/admin/brands}" class="btn btn-secondary">취소</a>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- 브랜드 폼 끝 -->
+</div>
+
+<!-- 브랜드 폼 스크립트 -->
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        // 폼 제출 처리
+        document.getElementById('brandForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            // 로고 삭제 체크박스가 체크되어 있으면 로고 파일 제거
+            if (document.getElementById('removeLogo') && document.getElementById('removeLogo').checked) {
+                formData.delete('logo');
+                formData.append('removeLogo', 'true');
+            }
+
+            fetch(this.action, {
+                method: this.method,
+                body: formData
+            }).then(response => {
+                if (response.ok) {
+                    window.location.href = '/admin/brands';
+                } else {
+                    throw new Error('브랜드 저장에 실패했습니다.');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                alert(error.message);
+            });
+        });
+    </script>
+</th:block>
+</body>
+</html> 

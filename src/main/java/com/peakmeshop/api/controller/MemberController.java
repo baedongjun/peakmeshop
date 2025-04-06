@@ -102,6 +102,8 @@ public class MemberController {
                 .gender(member.getGender())
                 .createdAt(member.getCreatedAt())
                 .updatedAt(member.getUpdatedAt())
+                .agreeTerms(member.isAgreeTerms())
+                .agreeMarketing(member.isAgreeMarketing())
                 .build();
 
         return ResponseEntity.ok(memberDTO);

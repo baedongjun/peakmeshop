@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>팝업 관리 - Peak Me Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">팝업 관리</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="/admin">대시보드</a></li>
+                <li class="breadcrumb-item active">팝업 관리</li>
+            </ol>
+
+            <!-- 검색 및 필터 -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form th:action="@{/admin/popups}" method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="searchType" class="form-label">검색 유형</label>
+                            <select class="form-select" id="searchType" name="searchType">
+                                <option value="title">제목</option>
+                                <option value="content">내용</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="searchKeyword" class="form-label">검색어</label>
+                            <input type="text" class="form-control" id="searchKeyword" name="searchKeyword">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="popupStatus" class="form-label">팝업상태</label>
+                            <select class="form-select" id="popupStatus" name="popupStatus">
+                                <option value="">전체</option>
+                                <option value="ACTIVE">활성</option>
+                                <option value="INACTIVE">비활성</option>
+                                <option value="SCHEDULED">예약</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="displayType" class="form-label">표시 유형</label>
+                            <select class="form-select" id="displayType" name="displayType">
+                                <option value="">전체</option>
+                                <option value="MODAL">모달</option>
+                                <option value="LAYER">레이어</option>
+                                <option value="FULL">전체화면</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="dateRange" class="form-label">노출기간</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="startDate" name="startDate">
+                                <span class="input-group-text">~</span>
+                                <input type="date" class="form-control" id="endDate" name="endDate">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">검색</button>
+                            <button type="reset" class="btn btn-secondary">초기화</button>
+                            <button type="button" class="btn btn-success" onclick="showCreateModal()">팝업 등록</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 팝업 통계 -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-primary text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>전체 팝업</div>
+                                <div class="h3 mb-0" th:text="${totalPopups}">0</div>
+                            </div>
+                            <div class="small">활성 팝업: <span th:text="${activePopups}">0</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-success text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>노출 중</div>
+                                <div class="h3 mb-0" th:text="${displayingPopups}">0</div>
+                            </div>
+                            <div class="small">노출수: <span th:text="${totalImpressions}">0</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-warning text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>예약 팝업</div>
+                                <div class="h3 mb-0" th:text="${scheduledPopups}">0</div>
+                            </div>
+                            <div class="small">오늘 시작: <span th:text="${todayStartPopups}">0</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card bg-danger text-white mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>종료 예정</div>
+                                <div class="h3 mb-0" th:text="${endingSoonPopups}">0</div>
+                            </div>
+                            <div class="small">오늘 종료: <span th:text="${todayEndPopups}">0</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 팝업 목록 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-window-restore me-1"></i>
+                    팝업 목록
+                </div>
+                <div class="card-body">
+                    <table id="popupsTable" class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>팝업번호</th>
+                                <th>팝업정보</th>
+                                <th>표시정보</th>
+                                <th>노출정보</th>
+                                <th>노출기간</th>
+                                <th>상태</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="popup : ${popups}">
+                                <td th:text="${popup.popupNumber}"></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img th:src="${popup.imageUrl}" 
+                                             alt="팝업 이미지" 
+                                             style="width: 100px; height: 50px; object-fit: cover;"
+                                             class="me-2">
+                                        <div>
+                                            <strong th:text="${popup.title}"></strong>
+                                            <br>
+                                            <small class="text-muted" th:text="${popup.description}"></small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div th:text="${popup.displayType}"></div>
+                                    <small class="text-muted">크기: <span th:text="${popup.width + 'x' + popup.height}"></span></small>
+                                    <br>
+                                    <small class="text-muted">우선순위: <span th:text="${popup.priority}"></span></small>
+                                </td>
+                                <td>
+                                    <div>노출수: <span th:text="${popup.impressions}">0</span></div>
+                                    <div>닫기수: <span th:text="${popup.closes}">0</span></div>
+                                    <div>오늘보지않기: <span th:text="${popup.hideTodays}">0</span></div>
+                                </td>
+                                <td>
+                                    <div th:text="${#temporals.format(popup.startDate, 'yyyy-MM-dd')}"></div>
+                                    <div>~</div>
+                                    <div th:text="${#temporals.format(popup.endDate, 'yyyy-MM-dd')}"></div>
+                                </td>
+                                <td>
+                                    <span th:class="${'badge bg-' + 
+                                        (popup.status == 'ACTIVE' ? 'success' : 
+                                        (popup.status == 'SCHEDULED' ? 'warning' : 'secondary'))}"
+                                          th:text="${popup.status}">
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-info"
+                                                th:onclick="'previewPopup(\'' + ${popup.popupNumber} + '\')'">미리보기</button>
+                                        <button type="button" class="btn btn-sm btn-primary"
+                                                th:onclick="'showEditModal(\'' + ${popup.popupNumber} + '\')'">수정</button>
+                                        <button type="button" class="btn btn-sm btn-danger"
+                                                th:onclick="'deletePopup(\'' + ${popup.popupNumber} + '\')'">삭제</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- 페이지네이션 -->
+                    <nav aria-label="Page navigation" th:if="${popups.totalPages > 0}">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item" th:classappend="${!popups.hasPrevious()} ? disabled">
+                                <a class="page-link" th:href="@{/admin/popups(page=${popups.number - 1})}">이전</a>
+                            </li>
+                            <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, popups.totalPages - 1)}"
+                                th:classappend="${pageNum == popups.number} ? active">
+                                <a class="page-link" th:href="@{/admin/popups(page=${pageNum})}" 
+                                   th:text="${pageNum + 1}"></a>
+                            </li>
+                            <li class="page-item" th:classappend="${!popups.hasNext()} ? disabled">
+                                <a class="page-link" th:href="@{/admin/popups(page=${popups.number + 1})}">다음</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 팝업 등록/수정 모달 -->
+    <div class="modal fade" id="popupModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">팝업 등록</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="popupForm">
+                        <input type="hidden" id="popupNumber" name="popupNumber">
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">팝업 제목</label>
+                                    <input type="text" class="form-control" id="title" name="title" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">팝업 설명</label>
+                                    <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">팝업 이미지</label>
+                                    <div class="text-center">
+                                        <img id="imagePreview" src="/images/no-image.png" 
+                                             alt="팝업 이미지 미리보기"
+                                             style="max-width: 100%; height: 150px; object-fit: contain;">
+                                    </div>
+                                    <input type="file" class="form-control mt-2" id="imageFile" name="imageFile" 
+                                           accept="image/*" onchange="previewImage(this)">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="displayType" class="form-label">표시 유형</label>
+                                <select class="form-select" id="modalDisplayType" name="displayType" required>
+                                    <option value="MODAL">모달</option>
+                                    <option value="LAYER">레이어</option>
+                                    <option value="FULL">전체화면</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="width" class="form-label">너비 (px)</label>
+                                <input type="number" class="form-control" id="width" name="width" 
+                                       min="100" max="2000" value="400">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="height" class="form-label">높이 (px)</label>
+                                <input type="number" class="form-control" id="height" name="height" 
+                                       min="100" max="2000" value="300">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="modalStartDate" class="form-label">시작일</label>
+                                <input type="date" class="form-control" id="modalStartDate" name="startDate" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="modalEndDate" class="form-label">종료일</label>
+                                <input type="date" class="form-control" id="modalEndDate" name="endDate" required>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="linkUrl" class="form-label">링크 URL</label>
+                                <input type="url" class="form-control" id="linkUrl" name="linkUrl" 
+                                       placeholder="https://">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="priority" class="form-label">우선순위</label>
+                                <input type="number" class="form-control" id="priority" name="priority" 
+                                       min="1" max="100" value="1">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="status" class="form-label">상태</label>
+                                <select class="form-select" id="status" name="status" required>
+                                    <option value="ACTIVE">활성</option>
+                                    <option value="INACTIVE">비활성</option>
+                                    <option value="SCHEDULED">예약</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="deviceType" class="form-label">디바이스</label>
+                                <select class="form-select" id="deviceType" name="deviceType">
+                                    <option value="ALL">모든 기기</option>
+                                    <option value="PC">PC</option>
+                                    <option value="MOBILE">모바일</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showTodayCheck" name="showTodayCheck">
+                                    <label class="form-check-label" for="showTodayCheck">
+                                        오늘 하루 보지 않기 표시
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showCloseButton" name="showCloseButton" checked>
+                                    <label class="form-check-label" for="showCloseButton">
+                                        닫기 버튼 표시
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="savePopup()">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 팝업 미리보기 모달 -->
+    <div class="modal fade" id="previewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">팝업 미리보기</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="popupPreview" class="border p-3">
+                        <!-- 팝업 미리보기 내용이 동적으로 채워집니다 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자바스크립트 -->
+    <th:block layout:fragment="script">
+        <script>
+            $(document).ready(function() {
+                $('#popupsTable').DataTable({
+                    order: [[0, 'desc']],
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Korean.json'
+                    }
+                });
+            });
+
+            function previewImage(input) {
+                if (input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('imagePreview').src = e.target.result;
+                    };
+                    reader.readAsDataURL(input.files[0]);
+                }
+            }
+
+            function showCreateModal() {
+                document.getElementById('modalTitle').textContent = '팝업 등록';
+                document.getElementById('popupForm').reset();
+                document.getElementById('popupNumber').value = '';
+                document.getElementById('imagePreview').src = '/images/no-image.png';
+                
+                const modal = new bootstrap.Modal(document.getElementById('popupModal'));
+                modal.show();
+            }
+
+            function showEditModal(popupNumber) {
+                document.getElementById('modalTitle').textContent = '팝업 수정';
+                
+                fetch(`/api/admin/popups/${popupNumber}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('popupNumber').value = data.popupNumber;
+                        document.getElementById('title').value = data.title;
+                        document.getElementById('description').value = data.description;
+                        document.getElementById('imagePreview').src = data.imageUrl;
+                        document.getElementById('modalDisplayType').value = data.displayType;
+                        document.getElementById('width').value = data.width;
+                        document.getElementById('height').value = data.height;
+                        document.getElementById('priority').value = data.priority;
+                        document.getElementById('modalStartDate').value = data.startDate;
+                        document.getElementById('modalEndDate').value = data.endDate;
+                        document.getElementById('linkUrl').value = data.linkUrl;
+                        document.getElementById('status').value = data.status;
+                        document.getElementById('deviceType').value = data.deviceType;
+                        document.getElementById('showTodayCheck').checked = data.showTodayCheck;
+                        document.getElementById('showCloseButton').checked = data.showCloseButton;
+
+                        const modal = new bootstrap.Modal(document.getElementById('popupModal'));
+                        modal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('팝업 정보를 불러오는데 실패했습니다.');
+                    });
+            }
+
+            function previewPopup(popupNumber) {
+                fetch(`/api/admin/popups/${popupNumber}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const preview = document.getElementById('popupPreview');
+                        preview.style.width = data.width + 'px';
+                        preview.style.height = data.height + 'px';
+                        preview.style.position = 'relative';
+                        
+                        let html = `
+                            <div class="text-end mb-2">
+                                ${data.showTodayCheck ? '<div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="previewTodayCheck">
+                                    <label class="form-check-label" for="previewTodayCheck">오늘 하루 보지 않기</label>
+                                </div>' : ''}
+                                ${data.showCloseButton ? '<button type="button" class="btn-close"></button>' : ''}
+                            </div>
+                            <div class="text-center">
+                                <img src="${data.imageUrl}" alt="${data.title}" 
+                                     style="max-width: 100%; max-height: ${data.height - 50}px;">
+                            </div>
+                        `;
+                        preview.innerHTML = html;
+
+                        const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+                        modal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('팝업 미리보기를 불러오는데 실패했습니다.');
+                    });
+            }
+
+            function savePopup() {
+                const formData = new FormData(document.getElementById('popupForm'));
+                const popupNumber = document.getElementById('popupNumber').value;
+                const method = popupNumber ? 'PUT' : 'POST';
+                const url = popupNumber ? `/api/admin/popups/${popupNumber}` : '/api/admin/popups';
+
+                fetch(url, {
+                    method: method,
+                    body: formData
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert(popupNumber ? '팝업이 수정되었습니다.' : '팝업이 등록되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('팝업 저장에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('오류가 발생했습니다.');
+                });
+            }
+
+            function deletePopup(popupNumber) {
+                if (!confirm('정말 삭제하시겠습니까?')) {
+                    return;
+                }
+
+                fetch(`/api/admin/popups/${popupNumber}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('팝업이 삭제되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('팝업 삭제에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('오류가 발생했습니다.');
+                });
+            }
+        </script>
+    </th:block>
+</body>
+</html> 

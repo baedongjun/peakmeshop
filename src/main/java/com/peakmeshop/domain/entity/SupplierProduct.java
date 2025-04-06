@@ -3,6 +3,7 @@ package com.peakmeshop.domain.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -30,4 +31,18 @@ public class SupplierProduct {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    public BigDecimal getTotalSales() {
+        return product.getOrderItems().stream()
+                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getTotalRevenue() {
+        BigDecimal totalSales = getTotalSales();
+        BigDecimal totalCost = product.getOrderItems().stream()
+                .map(item -> product.getCost().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return totalSales.subtract(totalCost);
+    }
 }

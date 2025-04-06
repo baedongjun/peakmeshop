@@ -5,9 +5,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
- * 관리자 마케팅 관련 뷰 컨트롤러
+ * 관리자 마케팅 관리 관련 뷰 컨트롤러
  */
 @Controller
 @RequestMapping("/admin")
@@ -17,73 +18,111 @@ public class AdminMarketingViewController {
      * 쿠폰 관리 페이지
      */
     @GetMapping("/coupons")
-    public String coupons() {
-        return "admin/coupons";
+    public String coupons(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String status,
+            Model model) {
+        if (type != null) {
+            model.addAttribute("type", type);
+        }
+        if (status != null) {
+            model.addAttribute("status", status);
+        }
+        return "admin/marketing/coupons";
     }
 
     /**
      * 쿠폰 등록 페이지
      */
     @GetMapping("/coupons/new")
-    public String newCoupon() {
-        return "admin/coupon-form";
+    public String createCoupon() {
+        return "admin/marketing/coupon-form";
     }
 
     /**
      * 쿠폰 수정 페이지
      */
-    @GetMapping("/coupons/edit/{id}")
+    @GetMapping("/coupons/{id}/edit")
     public String editCoupon(@PathVariable Long id, Model model) {
-        // 실제 구현에서는 id를 사용하여 쿠폰 정보를 조회하고 모델에 추가
-        return "admin/coupon-form";
+        model.addAttribute("couponId", id);
+        return "admin/marketing/coupon-form";
     }
 
     /**
-     * 배너 관리 페이지
+     * 쿠폰 상세 페이지
      */
-    @GetMapping("/banners")
-    public String banners() {
-        return "admin/banners";
-    }
-
-    /**
-     * 배너 등록 페이지
-     */
-    @GetMapping("/banners/new")
-    public String newBanner() {
-        return "admin/banner-form";
-    }
-
-    /**
-     * 배너 수정 페이지
-     */
-    @GetMapping("/banners/edit/{id}")
-    public String editBanner(@PathVariable Long id, Model model) {
-        return "admin/banner-form";
+    @GetMapping("/coupons/{id}")
+    public String couponDetail(@PathVariable Long id, Model model) {
+        model.addAttribute("couponId", id);
+        return "admin/marketing/coupon-detail";
     }
 
     /**
      * 프로모션 관리 페이지
      */
     @GetMapping("/promotions")
-    public String promotions() {
-        return "admin/promotions";
+    public String promotions(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String status,
+            Model model) {
+        if (type != null) {
+            model.addAttribute("type", type);
+        }
+        if (status != null) {
+            model.addAttribute("status", status);
+        }
+        return "admin/marketing/promotions";
     }
 
     /**
      * 프로모션 등록 페이지
      */
     @GetMapping("/promotions/new")
-    public String newPromotion() {
-        return "admin/promotion-form";
+    public String createPromotion() {
+        return "admin/marketing/promotion-form";
     }
 
     /**
      * 프로모션 수정 페이지
      */
-    @GetMapping("/promotions/edit/{id}")
+    @GetMapping("/promotions/{id}/edit")
     public String editPromotion(@PathVariable Long id, Model model) {
-        return "admin/promotion-form";
+        model.addAttribute("promotionId", id);
+        return "admin/marketing/promotion-form";
+    }
+
+    /**
+     * 프로모션 상세 페이지
+     */
+    @GetMapping("/promotions/{id}")
+    public String promotionDetail(@PathVariable Long id, Model model) {
+        model.addAttribute("promotionId", id);
+        return "admin/marketing/promotion-detail";
+    }
+
+    /**
+     * 마케팅 통계 페이지
+     */
+    @GetMapping("/marketing/statistics")
+    public String marketingStatistics(
+            @RequestParam(required = false) String period,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) String type,
+            Model model) {
+        if (period != null) {
+            model.addAttribute("period", period);
+        }
+        if (startDate != null) {
+            model.addAttribute("startDate", startDate);
+        }
+        if (endDate != null) {
+            model.addAttribute("endDate", endDate);
+        }
+        if (type != null) {
+            model.addAttribute("type", type);
+        }
+        return "admin/marketing/statistics";
     }
 }
 

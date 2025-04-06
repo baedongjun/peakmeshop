@@ -1,11 +1,15 @@
 package com.peakmeshop.domain.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.peakmeshop.api.dto.ProductDTO;
+import com.peakmeshop.api.dto.ProductReviewDTO;
+import com.peakmeshop.api.dto.ProductQnaDTO;
+import com.peakmeshop.api.dto.ProductOptionDTO;
 
 public interface ProductService {
 
@@ -56,4 +60,17 @@ public interface ProductService {
 
     // 상품 랭킹 업데이트
     void updateProductRankings();
+
+    Map<String, Object> getProductSummary();
+    Map<String, Object> getProductSummary(Long productId);
+
+    Map<String, Object> getProductStatistics(String startDate, String endDate, String interval, String category);
+    Page<ProductReviewDTO> getProductReviews(Pageable pageable);
+    ProductReviewDTO getReviewById(Long id);
+    Page<ProductQnaDTO> getProductQnas(Pageable pageable);
+    ProductQnaDTO getQnaById(Long id);
+    Map<String, Object> getInventory(String category);
+    List<ProductOptionDTO> getProductOptions(Long productId);
+
+    Map<String, Object> getInventoryStatistics();
 }

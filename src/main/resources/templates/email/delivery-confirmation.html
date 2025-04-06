@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>배송 완료 안내</title>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            max-width: 200px;
+            margin-bottom: 20px;
+        }
+        .content {
+            background-color: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+        }
+        .delivery-info {
+            margin-bottom: 20px;
+        }
+        .notice {
+            background-color: #e9ecef;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img class="logo" src="cid:logo" alt="PeakMeShop Logo">
+        <h1>배송이 완료되었습니다</h1>
+    </div>
+    
+    <div class="content">
+        <div class="delivery-info">
+            <p>안녕하세요.</p>
+            <p>주문하신 상품이 배송지에 도착하였습니다.</p>
+            <p>주문 번호: <strong th:text="${orderNumber}">ORDER-123456</strong></p>
+        </div>
+        
+        <div class="notice">
+            <h3>구매 확정 안내</h3>
+            <p>상품을 수령하신 후 문제가 없다면 구매 확정을 해주세요.</p>
+            <p>구매 확정 후에는 교환/반품이 어려울 수 있습니다.</p>
+        </div>
+        
+        <a class="button" th:href="@{${baseUrl} + '/orders/' + ${orderId}}">
+            주문 상세 보기
+        </a>
+    </div>
+    
+    <div class="footer">
+        <p>본 메일은 발신 전용입니다. 문의사항이 있으시면 고객센터를 이용해 주시기 바랍니다.</p>
+        <p>&copy; 2024 PeakMeShop. All rights reserved.</p>
+    </div>
+</body>
+</html> 

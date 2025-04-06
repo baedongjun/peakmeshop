@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>카테고리 등록/수정 - Peak Me Shop 관리자</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- 페이지 헤더 시작 -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title" th:text="${category != null ? '카테고리 수정' : '카테고리 등록'}">카테고리 등록</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/admin/categories}">카테고리 관리</a></li>
+                    <li class="breadcrumb-item active" th:text="${category != null ? '카테고리 수정' : '카테고리 등록'}">카테고리 등록</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- 페이지 헤더 끝 -->
+
+    <!-- 카테고리 폼 시작 -->
+    <div class="card">
+        <div class="card-body">
+            <form th:action="${category != null ? '/api/admin/categories/' + category.id : '/api/admin/categories'}"
+                  th:method="${category != null ? 'PUT' : 'POST'}"
+                  id="categoryForm"
+                  enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="required">카테고리명</label>
+                            <input type="text" class="form-control" name="name" required
+                                   th:value="${category != null ? category.name : ''}"
+                                   placeholder="카테고리명을 입력하세요">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="required">카테고리코드</label>
+                            <input type="text" class="form-control" name="code" required
+                                   th:value="${category != null ? category.code : ''}"
+                                   th:readonly="${category != null}"
+                                   placeholder="카테고리코드를 입력하세요">
+                            <small class="form-text text-muted">영문, 숫자 조합으로 입력하세요. (예: SHOES)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>상위 카테고리</label>
+                            <select class="form-control" name="parentId">
+                                <option value="">없음 (최상위 카테고리)</option>
+                                <option th:each="parent : ${parents}"
+                                        th:value="${parent.id}"
+                                        th:text="${'[' + parent.code + '] ' + parent.name}"
+                                        th:selected="${category != null && category.parentId == parent.id}">
+                                    상위 카테고리
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>상태</label>
+                            <select class="form-control" name="status">
+                                <option value="ACTIVE" th:selected="${category != null && category.status == 'ACTIVE'}">활성</option>
+                                <option value="INACTIVE" th:selected="${category != null && category.status == 'INACTIVE'}">비활성</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>노출 순서</label>
+                            <input type="number" class="form-control" name="position" min="0"
+                                   th:value="${category != null ? category.position : 0}">
+                            <small class="form-text text-muted">숫자가 작을수록 먼저 표시됩니다.</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>아이콘</label>
+                            <input type="file" class="form-control" name="icon" accept="image/*">
+                            <small class="form-text text-muted">권장 크기: 32x32px, 최대 1MB</small>
+                            <div th:if="${category != null && category.iconUrl != null}" class="mt-2">
+                                <img th:src="${category.iconUrl}" alt="현재 아이콘" style="height: 32px;">
+                                <div class="custom-control custom-checkbox mt-2">
+                                    <input type="checkbox" class="custom-control-input" id="removeIcon" name="removeIcon">
+                                    <label class="custom-control-label" for="removeIcon">아이콘 삭제</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>설명</label>
+                    <textarea class="form-control" name="description" rows="4"
+                              th:text="${category != null ? category.description : ''}"
+                              placeholder="카테고리에 대한 설명을 입력하세요"></textarea>
+                </div>
+
+                <div class="text-right mt-3">
+                    <a th:href="@{/admin/categories}" class="btn btn-secondary">취소</a>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- 카테고리 폼 끝 -->
+</div>
+
+<!-- 카테고리 폼 스크립트 -->
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        // 폼 제출 처리
+        document.getElementById('categoryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            // 아이콘 삭제 체크박스가 체크되어 있으면 아이콘 파일 제거
+            if (document.getElementById('removeIcon') && document.getElementById('removeIcon').checked) {
+                formData.delete('icon');
+                formData.append('removeIcon', 'true');
+            }
+
+            fetch(this.action, {
+                method: this.method,
+                body: formData
+            }).then(response => {
+                if (response.ok) {
+                    window.location.href = '/admin/categories';
+                } else {
+                    throw new Error('카테고리 저장에 실패했습니다.');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                alert(error.message);
+            });
+        });
+    </script>
+</th:block>
+</body>
+</html> 

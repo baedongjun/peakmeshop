@@ -2,6 +2,8 @@ package com.peakmeshop.domain.service;
 
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 import com.peakmeshop.api.dto.OrderStatusUpdateDTO;
 import com.peakmeshop.domain.entity.Order;
@@ -12,11 +14,12 @@ import org.springframework.data.domain.Pageable;
 import com.peakmeshop.api.dto.OrderDTO;
 import com.peakmeshop.api.dto.OrderItemDTO;
 import com.peakmeshop.api.dto.OrderRequestDTO;
+import com.peakmeshop.api.dto.RefundDTO;
+import com.peakmeshop.api.dto.CancellationDTO;
 
 public interface OrderService {
 
-    OrderDTO getOrderDTOById(Long orderId); // DTO를 반환하는 메서드
-    Order getOrderEntityById(Long orderId);
+    Order getOrderById(Long id);
 
     OrderDTO getOrderByOrderNumber(String orderNumber);
 
@@ -28,11 +31,11 @@ public interface OrderService {
 
     Page<OrderDTO> getOrdersByStatus(OrderStatus status, Pageable pageable);
 
-    OrderDTO createOrder(OrderDTO orderDTO);
-
     OrderDTO createOrder(Long memberId, OrderRequestDTO orderRequestDTO);
 
     OrderDTO updateOrderStatus(Long id, OrderStatusUpdateDTO statusUpdateDTO);
+
+    OrderDTO updateOrderStatus(Long id, OrderStatus status);
 
     OrderDTO updateTrackingInfo(Long id, String trackingNumber, String shippingCompany);
 
@@ -47,4 +50,46 @@ public interface OrderService {
     Map<String, Long> getOrderCountByStatus();
 
     List<OrderDTO> getRecentOrders(int limit);
+
+    Map<String, Long> getOrderSummary();
+
+    Map<String, Object> getOrderStatistics(String period, String startDate, String endDate);
+
+    Map<String, Object> getSalesStatistics(String period, String startDate, String endDate);
+
+    Page<RefundDTO> getRefunds(Pageable pageable);
+
+    RefundDTO getRefundById(Long id);
+
+    Page<CancellationDTO> getCancellations(Pageable pageable);
+
+    CancellationDTO getCancellationById(Long id);
+
+    Order createOrder(Order order);
+    
+    Optional<Order> findById(Long id);
+    
+    Optional<Order> findByOrderNumber(String orderNumber);
+    
+    Page<Order> findByMemberId(Long memberId, Pageable pageable);
+    
+    Page<Order> findByStatus(OrderStatus status, Pageable pageable);
+    
+    Page<Order> findByMemberIdAndStatus(Long memberId, OrderStatus status, Pageable pageable);
+    
+    List<Order> findByDateRange(LocalDateTime startDate, LocalDateTime endDate);
+    
+    List<Order> findByMemberIdAndDateRange(Long memberId, LocalDateTime startDate, LocalDateTime endDate);
+    
+    long countByStatus(OrderStatus status);
+    
+    Map<OrderStatus, Long> getOrderStatusDistribution();
+    
+    List<Object[]> getDailySales(LocalDateTime startDate, LocalDateTime endDate);
+    
+    List<Object[]> getMonthlySales(LocalDateTime startDate, LocalDateTime endDate);
+    
+    List<Object[]> getTopCustomers(int limit);
+
+    Page<OrderDTO> getCancelledOrders(Pageable pageable);
 }

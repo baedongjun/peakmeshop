@@ -2,7 +2,10 @@ package com.peakmeshop.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,4 +70,38 @@ public class Supplier {
 
     @OneToMany(mappedBy = "supplier")
     private List<SupplierProduct> supplierProducts = new ArrayList<>();
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAtTimestamp;
+
+    @UpdateTimestamp
+    @Column(nullable = false)
+    private LocalDateTime updatedAtTimestamp;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        createdAtTimestamp = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        updatedAtTimestamp = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+        updatedAtTimestamp = LocalDateTime.now();
+    }
+
+    public BigDecimal getTotalSales() {
+        return supplierProducts.stream()
+                .map(SupplierProduct::getTotalSales)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getTotalRevenue() {
+        return supplierProducts.stream()
+                .map(SupplierProduct::getTotalRevenue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 }

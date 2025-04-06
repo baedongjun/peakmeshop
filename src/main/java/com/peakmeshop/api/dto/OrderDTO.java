@@ -5,15 +5,16 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.peakmeshop.domain.enums.OrderStatus;
+import com.peakmeshop.domain.enums.PaymentMethod;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class OrderDTO {
 
     private Long id;
@@ -22,15 +23,16 @@ public class OrderDTO {
     private String memberName;
     private String memberEmail;
     private OrderStatus status;
-    private BigDecimal subtotal;
-    private BigDecimal discountAmount;
-    private BigDecimal shippingCost;
-    private BigDecimal tax;
-    private BigDecimal totalAmount;
+    private BigDecimal totalPrice;
+    private BigDecimal discount;
+    private BigDecimal deliveryFee;
+    private BigDecimal finalPrice;
+    private String recipientName;
+    private String recipientTel;
+    private String recipientAddress;
+    private String recipientDetailAddress;
+    private String recipientMessage;
     private String paymentMethod;
-    private String paymentStatus;
-    private String paymentTransactionId;
-    private String shippingMethod;
     private String trackingNumber;
     private String shippingCompany;
     private String cancelReason;
@@ -46,46 +48,6 @@ public class OrderDTO {
 
     private Long shippingAddressId;
     private Long billingAddressId;
-    private com.peakmeshop.api.dto.AddressDTO shippingAddress;
+    private AddressDTO shippingAddress;
     private AddressDTO billingAddress;
-
-    public BigDecimal getSubtotal() {
-        return subtotal;
-    }
-
-    public BigDecimal getDiscountAmount() {
-        return discountAmount;
-    }
-
-    public BigDecimal getShippingCost() {
-        return shippingCost;
-    }
-
-    public BigDecimal getTax() {
-        return tax;
-    }
-
-    public BigDecimal getTotalAmount() {
-        return totalAmount;
-    }
-
-    public String getPaymentMethod() {
-        return paymentMethod;
-    }
-
-    public String getPaymentStatus() {
-        return paymentStatus;
-    }
-
-    public String getShippingMethod() {
-        return shippingMethod;
-    }
-
-    public Long getShippingAddressId() {
-        return shippingAddressId;
-    }
-
-    public Long getBillingAddressId() {
-        return billingAddressId;
-    }
 }

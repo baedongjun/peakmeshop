@@ -2,97 +2,82 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>배송 안내</title>
+    <title>배송 시작 안내</title>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            max-width: 200px;
+            margin-bottom: 20px;
+        }
+        .content {
+            background-color: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+        }
+        .shipping-info {
+            margin-bottom: 20px;
+        }
+        .tracking-info {
+            background-color: #e9ecef;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #6c757d;
+        }
+    </style>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background-color: #f4f4f4;">
-<table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-    <tr>
-        <td style="padding: 40px 30px; text-align: center; background-color: #f8f9fa; border-bottom: 1px solid #dee2e6;">
-            <h1 style="margin: 0; color: #343a40; font-size: 24px;">PeakMeShop</h1>
-        </td>
-    </tr>
-    <tr>
-        <td style="padding: 40px 30px;">
-            <h2 style="margin-top: 0; color: #343a40; font-size: 20px;">상품이 발송되었습니다!</h2>
-            <p style="margin-bottom: 20px; color: #495057; line-height: 1.6;">
-                안녕하세요, <span th:text="${name}">고객</span>님!<br>
-                주문하신 상품이 발송되었습니다. 배송 정보를 확인해 주세요.
-            </p>
-
-            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px; border: 1px solid #dee2e6; border-collapse: collapse;">
-                <tr>
-                    <td style="padding: 10px 15px; background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: bold;">주문 번호</td>
-                    <td style="padding: 10px 15px; border-bottom: 1px solid #dee2e6;" th:text="${orderNumber}">ORDER-12345</td>
-                </tr>
-                <tr>
-                    <td style="padding: 10px 15px; background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: bold;">발송일</td>
-                    <td style="padding: 10px 15px; border-bottom: 1px solid #dee2e6;" th:text="${shippingDate}">2023년 11월 15일</td>
-                </tr>
-                <tr>
-                    <td style="padding: 10px 15px; background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: bold;">택배사</td>
-                    <td style="padding: 10px 15px; border-bottom: 1px solid #dee2e6;" th:text="${courierName}">CJ대한통운</td>
-                </tr>
-                <tr>
-                    <td style="padding: 10px 15px; background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: bold;">운송장 번호</td>
-                    <td style="padding: 10px 15px; border-bottom: 1px solid #dee2e6;" th:text="${trackingNumber}">1234567890</td>
-                </tr>
-                <tr>
-                    <td style="padding: 10px 15px; background-color: #f8f9fa; font-weight: bold;">배송지</td>
-                    <td style="padding: 10px 15px;" th:text="${shippingAddress}">서울특별시 강남구 테헤란로 123, 456호</td>
-                </tr>
-            </table>
-
-            <h3 style="margin-top: 0; color: #343a40; font-size: 18px;">발송 상품</h3>
-            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px; border: 1px solid #dee2e6; border-collapse: collapse;">
-                <tr>
-                    <th style="padding: 10px 15px; background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; text-align: left;">상품명</th>
-                    <th style="padding: 10px 15px; background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; text-align: center;">수량</th>
-                </tr>
-                <tr th:each="item : ${shippingItems}">
-                    <td style="padding: 10px 15px; border-bottom: 1px solid #dee2e6;" th:text="${item.productName}">프리미엄 티셔츠</td>
-                    <td style="padding: 10px 15px; border-bottom: 1px solid #dee2e6; text-align: center;" th:text="${item.quantity}">2</td>
-                </tr>
-            </table>
-
-            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">
-                <tr>
-                    <td align="center">
-                        <a th:href="${trackingUrl}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #ffffff; text-decoration: none; font-weight: bold; border-radius: 4px;">배송 조회하기</a>
-                    </td>
-                </tr>
-            </table>
-
-            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px; background-color: #e9ecef; border-radius: 4px; padding: 20px;">
-                <tr>
-                    <td>
-                        <p style="margin: 0; color: #495057; line-height: 1.6;">
-                            <strong>배송 안내:</strong><br>
-                            • 택배사 사정에 따라 배송이 지연될 수 있습니다.<br>
-                            • 배송 조회는 발송 후 익일부터 가능합니다.<br>
-                            • 배송 관련 문의는 택배사 고객센터로 문의해 주세요.
-                        </p>
-                    </td>
-                </tr>
-            </table>
-
-            <p style="margin-bottom: 0; color: #6c757d; font-size: 14px;">
-                * 상품 수령 후 문제가 있을 경우 7일 이내에 고객센터로 연락해 주세요.<br>
-                * 문의사항은 고객센터(1234-5678)로 연락해 주세요.
-            </p>
-        </td>
-    </tr>
-    <tr>
-        <td style="padding: 20px 30px; text-align: center; background-color: #f8f9fa; color: #6c757d; font-size: 12px; border-top: 1px solid #dee2e6;">
-            <p style="margin: 0 0 10px 0;">
-                본 메일은 발신 전용이므로 회신하실 수 없습니다.
-            </p>
-            <p style="margin: 0;">
-                &copy; 2023 PeakMeShop. All rights reserved.
-            </p>
-        </td>
-    </tr>
-</table>
+<body>
+    <div class="header">
+        <img class="logo" src="cid:logo" alt="PeakMeShop Logo">
+        <h1>상품이 발송되었습니다</h1>
+    </div>
+    
+    <div class="content">
+        <div class="shipping-info">
+            <p>안녕하세요.</p>
+            <p>주문하신 상품이 발송되었습니다.</p>
+            <p>주문 번호: <strong th:text="${orderNumber}">ORDER-123456</strong></p>
+        </div>
+        
+        <div class="tracking-info">
+            <h3>배송 조회 정보</h3>
+            <p>운송장 번호: <strong th:text="${trackingNumber}">1234567890</strong></p>
+        </div>
+        
+        <a class="button" th:href="@{${baseUrl} + '/orders/' + ${orderId}}">
+            주문 상세 보기
+        </a>
+    </div>
+    
+    <div class="footer">
+        <p>본 메일은 발신 전용입니다. 문의사항이 있으시면 고객센터를 이용해 주시기 바랍니다.</p>
+        <p>&copy; 2024 PeakMeShop. All rights reserved.</p>
+    </div>
 </body>
 </html>
 

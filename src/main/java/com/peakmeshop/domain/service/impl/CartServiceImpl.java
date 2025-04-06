@@ -3,15 +3,16 @@ package com.peakmeshop.domain.service.impl;
 import com.peakmeshop.api.dto.*;
 import com.peakmeshop.common.exception.BadRequestException;
 import com.peakmeshop.common.exception.ResourceNotFoundException;
-import com.peakmeshop.domain.service.CartService;
 import com.peakmeshop.domain.entity.*;
 import com.peakmeshop.domain.repository.*;
+import com.peakmeshop.domain.service.CartService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -594,9 +595,9 @@ public class CartServiceImpl implements CartService {
                 if (discountValue != null) {
                     // Integer를 BigDecimal로 변환
                     BigDecimal discountPercent = new BigDecimal(discountValue);
-                    // RoundingMode 없이 setScale 사용
+                    // RoundingMode를 명시적으로 지정
                     BigDecimal hundred = new BigDecimal(100);
-                    discount = subtotal.multiply(discountPercent).divide(hundred, 2, BigDecimal.ROUND_HALF_UP);
+                    discount = subtotal.multiply(discountPercent).divide(hundred, 2, RoundingMode.HALF_UP);
 
                     // 최대 할인 금액 제한
                     if (coupon.getMaxDiscountAmount() != null) {

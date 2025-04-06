@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+<head>
+    <title>프로모션 상세 - Peak Me Shop 관리자</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- 페이지 헤더 시작 -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">프로모션 상세</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/admin/promotions}">프로모션 관리</a></li>
+                    <li class="breadcrumb-item active">프로모션 상세</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <a th:href="@{/admin/promotions/{id}/edit(id=${promotion.id})}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> 수정
+                    </a>
+                    <button type="button" class="btn btn-danger" onclick="deletePromotion()">
+                        <i class="fas fa-trash"></i> 삭제
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 페이지 헤더 끝 -->
+
+    <!-- 프로모션 정보 시작 -->
+    <div class="row">
+        <!-- 기본 정보 -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">기본 정보</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th style="width: 150px;">프로모션명</th>
+                                <td th:text="${promotion.name}">2024 봄 신상품 할인</td>
+                            </tr>
+                            <tr>
+                                <th>프로모션 유형</th>
+                                <td>
+                                    <span class="badge" th:classappend="${promotion.type == 'DISCOUNT' ? 'badge-info' : 
+                                                                       promotion.type == 'GIFT' ? 'badge-success' : 
+                                                                       promotion.type == 'POINT' ? 'badge-warning' : 
+                                                                       'badge-primary'}"
+                                          th:text="${promotion.typeText}">할인</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>혜택</th>
+                                <td th:text="${promotion.benefitText}">20% 할인</td>
+                            </tr>
+                            <tr>
+                                <th>적용 대상</th>
+                                <td th:text="${promotion.targetText}">전체 상품</td>
+                            </tr>
+                            <tr>
+                                <th>기간</th>
+                                <td>
+                                    <span th:text="${#temporals.format(promotion.startDate, 'yyyy-MM-dd')}">2024-03-01</span>
+                                    ~
+                                    <span th:text="${#temporals.format(promotion.endDate, 'yyyy-MM-dd')}">2024-03-31</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>상태</th>
+                                <td>
+                                    <span class="badge" th:classappend="${promotion.status == 'READY' ? 'badge-warning' : 
+                                                                       promotion.status == 'ACTIVE' ? 'badge-success' : 
+                                                                       'badge-secondary'}"
+                                          th:text="${promotion.statusText}">진행중</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>설명</th>
+                                <td th:text="${promotion.description}">프로모션 설명</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 통계 정보 -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">통계 정보</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="stats-info">
+                                <h6>총 주문 건수</h6>
+                                <h4 th:text="${#numbers.formatInteger(promotion.totalOrders, 0, 'COMMA')}">150</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="stats-info">
+                                <h6>총 할인 금액</h6>
+                                <h4 th:text="${#numbers.formatInteger(promotion.totalDiscountAmount, 0, 'COMMA') + '원'}">1,500,000원</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="stats-info">
+                                <h6>총 적용 상품 수</h6>
+                                <h4 th:text="${#numbers.formatInteger(promotion.totalProducts, 0, 'COMMA')}">50</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="stats-info">
+                                <h6>총 적용 회원 수</h6>
+                                <h4 th:text="${#numbers.formatInteger(promotion.totalMembers, 0, 'COMMA')}">100</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 적용 대상 목록 -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">적용 대상 목록</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" th:if="${promotion.target == 'PRODUCT'}">
+                    <thead>
+                        <tr>
+                            <th>상품코드</th>
+                            <th>상품명</th>
+                            <th>판매가</th>
+                            <th>할인가</th>
+                            <th>재고</th>
+                            <th>판매상태</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="product : ${products}">
+                            <td th:text="${product.code}">P0001</td>
+                            <td>
+                                <a th:href="@{/admin/products/{id}(id=${product.id})}" 
+                                   th:text="${product.name}">상품명</a>
+                            </td>
+                            <td th:text="${#numbers.formatInteger(product.price, 0, 'COMMA') + '원'}">50,000원</td>
+                            <td th:text="${#numbers.formatInteger(product.discountPrice, 0, 'COMMA') + '원'}">40,000원</td>
+                            <td th:text="${product.stock}">100</td>
+                            <td>
+                                <span class="badge" th:classappend="${product.status == 'SALE' ? 'badge-success' : 'badge-secondary'}"
+                                      th:text="${product.statusText}">판매중</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <table class="table table-hover" th:if="${promotion.target == 'CATEGORY'}">
+                    <thead>
+                        <tr>
+                            <th>카테고리명</th>
+                            <th>상품 수</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="category : ${categories}">
+                            <td>
+                                <a th:href="@{/admin/categories/{id}(id=${category.id})}" 
+                                   th:text="${category.name}">카테고리명</a>
+                            </td>
+                            <td th:text="${category.productCount}">50</td>
+                            <td>
+                                <span class="badge" th:classappend="${category.status == 'ACTIVE' ? 'badge-success' : 'badge-secondary'}"
+                                      th:text="${category.statusText}">사용중</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- 프로모션 정보 끝 -->
+</div>
+
+<!-- 프로모션 삭제 확인 모달 -->
+<div class="modal fade" id="deletePromotionModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">프로모션 삭제</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>이 프로모션을 삭제하시겠습니까?</p>
+                <p class="text-danger">삭제된 프로모션은 복구할 수 없습니다.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">삭제</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 프로모션 삭제 스크립트 -->
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        function deletePromotion() {
+            $('#deletePromotionModal').modal('show');
+        }
+
+        function confirmDelete() {
+            const promotionId = [[${promotion.id}]];
+            fetch(`/api/admin/promotions/${promotionId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => {
+                if (response.ok) {
+                    window.location.href = '/admin/promotions';
+                } else {
+                    throw new Error('프로모션 삭제에 실패했습니다.');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                alert(error.message);
+            });
+            $('#deletePromotionModal').modal('hide');
+        }
+    </script>
+</th:block>
+</body>
+</html> 

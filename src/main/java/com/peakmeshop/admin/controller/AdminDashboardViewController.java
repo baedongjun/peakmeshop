@@ -26,13 +26,5 @@ public class AdminDashboardViewController {
     public String profile() {
         return "admin/profile";
     }
-
-    /**
-     * 관리자 설정 페이지
-     */
-    @GetMapping("/settings")
-    public String settings() {
-        return "admin/settings";
-    }
 }
 

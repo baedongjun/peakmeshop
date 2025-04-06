@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>상품 상세 - Peak Me Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">상품 상세</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/products}">상품 관리</a></li>
+                        <li class="breadcrumb-item active" th:text="${product.name}">상품명</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a th:href="@{/admin/products/{id}/edit(id=${product.id})}" class="btn btn-primary me-2">
+                        <i class="fas fa-edit"></i> 수정
+                    </a>
+                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteProductModal">
+                        <i class="fas fa-trash"></i> 삭제
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 상품 정보 시작 -->
+        <div class="row">
+            <div class="col-md-8">
+                <!-- 기본 정보 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">기본 정보</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="text-muted">상품명</label>
+                                    <p class="form-control-static" th:text="${product.name}">상품명</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="text-muted">상품코드</label>
+                                    <p class="form-control-static" th:text="${product.code}">상품코드</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="text-muted">카테고리</label>
+                                    <p class="form-control-static">
+                                        <a th:href="@{/admin/categories/{id}(id=${product.category.id})}" 
+                                           th:text="${product.category.name}">카테고리</a>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="text-muted">공급사</label>
+                                    <p class="form-control-static">
+                                        <a th:href="@{/admin/suppliers/{id}(id=${product.supplier.id})}" 
+                                           th:text="${product.supplier.name}">공급사</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="text-muted">판매가</label>
+                                    <p class="form-control-static" th:text="${#numbers.formatInteger(product.price, 0, 'COMMA')} + '원'">판매가</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="text-muted">원가</label>
+                                    <p class="form-control-static" th:text="${#numbers.formatInteger(product.cost, 0, 'COMMA')} + '원'">원가</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="text-muted">마진율</label>
+                                    <p class="form-control-static" th:text="${#numbers.formatDecimal((product.price - product.cost) / product.price * 100, 1, 1)} + '%'">마진율</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="text-muted">재고</label>
+                                    <p class="form-control-static">
+                                        <span th:text="${product.stock}">재고</span>
+                                        <span th:if="${product.stock <= product.stockAlert}" 
+                                              class="badge badge-danger">부족</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="text-muted">재고 알림</label>
+                                    <p class="form-control-static" th:text="${product.stockAlert}">재고 알림</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="text-muted">최대 구매 수량</label>
+                                    <p class="form-control-static" th:text="${product.maxPurchaseQuantity ?: '제한 없음'}">최대 구매 수량</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="text-muted">상태</label>
+                                    <p class="form-control-static">
+                                        <span th:class="${product.status == 'ACTIVE' ? 'badge badge-success' : 
+                                                        (product.status == 'OUT_OF_STOCK' ? 'badge badge-warning' : 'badge badge-danger')}"
+                                              th:text="${product.status == 'ACTIVE' ? '판매중' : 
+                                                       (product.status == 'OUT_OF_STOCK' ? '품절' : '판매중지')}">상태</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="text-muted">등록일</label>
+                                    <p class="form-control-static" th:text="${#temporals.format(product.createdAt, 'yyyy-MM-dd HH:mm')}">등록일</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="text-muted">수정일</label>
+                                    <p class="form-control-static" th:text="${#temporals.format(product.updatedAt, 'yyyy-MM-dd HH:mm')}">수정일</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 상품 설명 -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="card-title">상품 설명</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="text-muted">간단 설명</label>
+                            <p class="form-control-static" th:text="${product.shortDescription}">간단 설명</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="text-muted">상세 설명</label>
+                            <div class="form-control-static" th:utext="${product.description}">상세 설명</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 상품 이미지 -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="card-title">상품 이미지</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="text-muted">대표 이미지</label>
+                                    <div>
+                                        <img th:if="${product.thumbnail}" 
+                                             th:src="${product.thumbnail}" 
+                                             alt="대표 이미지" 
+                                             class="img-thumbnail"
+                                             style="max-width: 200px;">
+                                        <span th:unless="${product.thumbnail}" class="text-muted">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="text-muted">추가 이미지</label>
+                                    <div class="row">
+                                        <div th:each="image : ${product.images}" class="col-md-4 mb-2">
+                                            <img th:src="${image.url}" 
+                                                 alt="추가 이미지" 
+                                                 class="img-thumbnail">
+                                        </div>
+                                        <div th:unless="${!#lists.isEmpty(product.images)}" class="col">
+                                            <span class="text-muted">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 옵션 정보 -->
+                <div class="card mt-4" th:if="${!#lists.isEmpty(product.options)}">
+                    <div class="card-header">
+                        <h5 class="card-title">옵션 정보</h5>
+                    </div>
+                    <div class="card-body">
+                        <div th:each="group : ${product.options}" class="mb-4">
+                            <h6 th:text="${group.name}">옵션 그룹명</h6>
+                            <div class="row">
+                                <div th:each="value : ${group.values}" class="col-auto">
+                                    <span class="badge badge-info" th:text="${value}">옵션 값</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 통계 정보 -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">통계</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="stats-info">
+                                    <h6>총 주문</h6>
+                                    <h4 th:text="${#numbers.formatInteger(summary.totalOrders, 0, 'COMMA')}">0</h4>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stats-info">
+                                    <h6>총 판매량</h6>
+                                    <h4 th:text="${#numbers.formatInteger(summary.totalQuantity, 0, 'COMMA')}">0</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-6">
+                                <div class="stats-info">
+                                    <h6>총 매출</h6>
+                                    <h4 th:text="${#numbers.formatInteger(summary.totalSales, 0, 'COMMA')} + '원'">0원</h4>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stats-info">
+                                    <h6>총 마진</h6>
+                                    <h4 th:text="${#numbers.formatInteger(summary.totalProfit, 0, 'COMMA')} + '원'">0원</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 월별 매출 차트 -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="card-title">월별 매출</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="monthlySalesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 재고 이력 -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="card-title">재고 이력</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>일시</th>
+                                        <th>유형</th>
+                                        <th>수량</th>
+                                        <th>잔량</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="history : ${stockHistory}">
+                                        <td th:text="${#temporals.format(history.createdAt, 'yyyy-MM-dd HH:mm')}">일시</td>
+                                        <td>
+                                            <span th:class="${history.type == 'IN' ? 'badge badge-success' : 'badge badge-danger'}"
+                                                  th:text="${history.type == 'IN' ? '입고' : '출고'}">유형</span>
+                                        </td>
+                                        <td th:text="${history.quantity}">수량</td>
+                                        <td th:text="${history.remainingStock}">잔량</td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(stockHistory)}">
+                                        <td colspan="4" class="text-center">재고 이력이 없습니다.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 주문 내역 -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title">주문 내역</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>주문번호</th>
+                                <th>주문일시</th>
+                                <th>주문자</th>
+                                <th>옵션</th>
+                                <th>수량</th>
+                                <th>판매가</th>
+                                <th>상태</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="order : ${orders}">
+                                <td>
+                                    <a th:href="@{/admin/orders/{id}(id=${order.id})}" 
+                                       th:text="${order.orderNumber}">주문번호</a>
+                                </td>
+                                <td th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm')}">주문일시</td>
+                                <td>
+                                    <a th:href="@{/admin/members/{id}(id=${order.member.id})}" 
+                                       th:text="${order.member.name}">주문자</a>
+                                </td>
+                                <td th:text="${order.optionText ?: '-'}">옵션</td>
+                                <td th:text="${order.quantity}">수량</td>
+                                <td th:text="${#numbers.formatInteger(order.price, 0, 'COMMA')} + '원'">판매가</td>
+                                <td>
+                                    <span th:class="${'badge badge-' + order.status.color}"
+                                          th:text="${order.status.text}">상태</span>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(orders)}">
+                                <td colspan="7" class="text-center">주문 내역이 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 페이지네이션 시작 -->
+                <div th:if="${!#lists.isEmpty(orders)}" class="row">
+                    <div class="col-sm-12 col-md-5">
+                        <div class="dataTables_info">
+                            전체 <span th:text="${totalElements}">0</span>개 중
+                            <span th:text="${pageNumber * pageSize + 1}">1</span>-<span th:text="${(pageNumber + 1) * pageSize}">10</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md-7">
+                        <div class="dataTables_paginate">
+                            <ul class="pagination justify-content-end">
+                                <li class="paginate_button page-item previous" th:classappend="${pageNumber == 0 ? 'disabled' : ''}">
+                                    <a th:href="@{${#httpServletRequest.requestURI}(page=${pageNumber - 1})}"
+                                       class="page-link">이전</a>
+                                </li>
+                                <li th:each="page : ${#numbers.sequence(0, totalPages - 1)}"
+                                    class="paginate_button page-item"
+                                    th:classappend="${page == pageNumber ? 'active' : ''}">
+                                    <a th:href="@{${#httpServletRequest.requestURI}(page=${page})}"
+                                       class="page-link" th:text="${page + 1}">1</a>
+                                </li>
+                                <li class="paginate_button page-item next" th:classappend="${pageNumber + 1 >= totalPages ? 'disabled' : ''}">
+                                    <a th:href="@{${#httpServletRequest.requestURI}(page=${pageNumber + 1})}"
+                                       class="page-link">다음</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- 페이지네이션 끝 -->
+            </div>
+        </div>
+
+        <!-- 삭제 확인 모달 시작 -->
+        <div class="modal fade" id="deleteProductModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">상품 삭제</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>정말 이 상품을 삭제하시겠습니까?</p>
+                        <p class="text-danger">* 주의: 삭제된 상품은 복구할 수 없습니다.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-danger" id="confirmDelete">삭제</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 삭제 확인 모달 끝 -->
+    </div>
+
+    <!-- 상품 상세 스크립트 -->
+    <th:block layout:fragment="script">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script th:inline="javascript">
+            // 월별 매출 차트
+            const monthlySalesData = /*[[${monthlySales}]]*/ [];
+            const productId = /*[[${product.id}]]*/ 0;
+            const ctx = document.getElementById('monthlySalesChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: monthlySalesData.map(data => data.month),
+                    datasets: [{
+                        label: '월별 매출',
+                        data: monthlySalesData.map(data => data.sales),
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString() + '원';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 상품 삭제 처리
+            document.getElementById('confirmDelete').addEventListener('click', function() {
+                fetch('/api/admin/products/' + productId, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        window.location.href = '/admin/products';
+                    } else {
+                        throw new Error('상품 삭제에 실패했습니다.');
+                    }
+                }).catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+                $('#deleteProductModal').modal('hide');
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

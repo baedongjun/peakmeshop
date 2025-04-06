@@ -1,18 +1,5 @@
 package com.peakmeshop.domain.service.impl;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.Period;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.peakmeshop.api.dto.OrderStatusUpdateDTO;
 import com.peakmeshop.api.dto.RefundDTO;
 import com.peakmeshop.api.dto.RefundItemDTO;
@@ -29,9 +16,20 @@ import com.peakmeshop.domain.service.EmailService;
 import com.peakmeshop.domain.service.OrderService;
 import com.peakmeshop.domain.service.PaymentService;
 import com.peakmeshop.domain.service.RefundService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +46,7 @@ public class RefundServiceImpl implements RefundService {
 
     @Override
     public RefundDTO requestRefund(RefundRequestDTO refundRequest) {
-        Order order = orderService.getOrderEntityById(refundRequest.getOrderId());
+        Order order = orderService.getOrderById(refundRequest.getOrderId());
 
         // 주문 상태 확인
         if (order.getStatus().equals(OrderStatus.CANCELLED) ||
@@ -239,7 +237,7 @@ public class RefundServiceImpl implements RefundService {
 
     @Override
     public RefundDTO createRefund(RefundDTO refundDTO) {
-        Order order = orderService.getOrderEntityById(refundDTO.getOrderId());
+        Order order = orderService.getOrderById(refundDTO.getOrderId());
 
         Refund refund = new Refund();
         refund.setOrder(order);
@@ -491,7 +489,7 @@ public class RefundServiceImpl implements RefundService {
 
     @Override
     public boolean canRequestRefund(Long orderId) {
-        Order order = orderService.getOrderEntityById(orderId);
+        Order order = orderService.getOrderById(orderId);
 
         // 환불 가능한 주문 상태 확인
         if (order.getStatus().equals(OrderStatus.CANCELLED) ||
@@ -535,7 +533,7 @@ public class RefundServiceImpl implements RefundService {
 
     private String generateRefundNumber() {
         // 환불 번호 생성 로직 (예: RF + 타임스탬프 + 랜덤 숫자)
-        return "RF" + System.currentTimeMillis() + String.format("%04d", (int)(Math.random() * 10000));
+        return "RF" + System.currentTimeMillis() + String.format("%04d", (int) (Math.random() * 10000));
     }
 
     private void saveRefundItems(Refund refund, List<RefundItemDTO> itemDTOs) {

@@ -2,6 +2,7 @@ package com.peakmeshop.domain.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -47,5 +48,13 @@ public interface BrandService {
     boolean isSlugUnique(String slug, Long brandId);
 
     boolean isNameUnique(String name, Long brandId);
+
+    Page<BrandDTO> getAllBrands(Pageable pageable);
+
+    Map<String, Long> getBrandSummary();
+
+    Map<String, Long> getBrandSummary(Long brandId);
+
+    Map<String, Object> getBrandStatistics(String period, String startDate, String endDate);
 }
 

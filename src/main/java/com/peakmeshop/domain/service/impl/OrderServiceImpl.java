@@ -1,15 +1,20 @@
 package com.peakmeshop.domain.service.impl;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.stream.Collectors;
-
+import com.peakmeshop.api.dto.*;
+import com.peakmeshop.common.exception.ResourceNotFoundException;
+import com.peakmeshop.domain.entity.Member;
+import com.peakmeshop.domain.entity.Order;
+import com.peakmeshop.domain.entity.OrderItem;
+import com.peakmeshop.domain.entity.Product;
 import com.peakmeshop.domain.enums.OrderStatus;
+import com.peakmeshop.domain.repository.MemberRepository;
+import com.peakmeshop.domain.repository.OrderItemRepository;
+import com.peakmeshop.domain.repository.OrderRepository;
+import com.peakmeshop.domain.repository.ProductRepository;
+import com.peakmeshop.domain.service.EmailService;
+import com.peakmeshop.domain.service.OrderService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,59 +23,245 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.peakmeshop.api.dto.OrderDTO;
-import com.peakmeshop.api.dto.OrderItemDTO;
-import com.peakmeshop.api.dto.OrderRequestDTO;
-import com.peakmeshop.api.dto.OrderStatusUpdateDTO;
-import com.peakmeshop.domain.entity.Address;
-import com.peakmeshop.domain.entity.Member;
-import com.peakmeshop.domain.entity.Order;
-import com.peakmeshop.domain.entity.OrderItem;
-import com.peakmeshop.domain.entity.Product;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
-import com.peakmeshop.domain.repository.AddressRepository;
-import com.peakmeshop.domain.repository.MemberRepository;
-import com.peakmeshop.domain.repository.OrderItemRepository;
-import com.peakmeshop.domain.repository.OrderRepository;
-import com.peakmeshop.domain.repository.ProductRepository;
-import com.peakmeshop.domain.service.EmailService;
-import com.peakmeshop.domain.service.OrderService;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-@Service
-@RequiredArgsConstructor
 @Slf4j
+@Service
+@Transactional
+@RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
-    private final OrderItemRepository orderItemRepository;
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
-    private final AddressRepository addressRepository;
+    private final OrderItemRepository orderItemRepository;
     private final EmailService emailService;
     private final Random random = new Random();
 
     @Override
-    public OrderDTO getOrderDTOById(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
-        return convertToDTO(order);
+    public Order getOrderById(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        return order;
     }
 
     @Override
-    public Order getOrderEntityById(Long orderId) {
-        return orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다: " + orderId));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public OrderDTO getOrderByOrderNumber(String orderNumber) {
-        Order order = orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with order number: " + orderNumber));
+        return null;
+    }
+
+    @Override
+    public Page<OrderDTO> getOrdersByMemberId(Long memberId, Pageable pageable) {
+        Page<Order> orders = orderRepository.findByMemberIdOrderByCreatedAtDesc(memberId, pageable);
+        return orders.map(this::convertToDTO);
+    }
+
+    @Override
+    public OrderDTO createOrder(Long memberId, OrderRequestDTO orderRequestDTO) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
+
+        Order order = Order.builder()
+                .member(member)
+                .orderNumber(generateOrderNumber())
+                .status(OrderStatus.PENDING)
+                .totalPrice(orderRequestDTO.getTotalAmount())
+                .discount(orderRequestDTO.getDiscountAmount())
+                .deliveryFee(orderRequestDTO.getShippingCost())
+                .finalPrice(orderRequestDTO.getTotalAmount().subtract(orderRequestDTO.getDiscountAmount()).add(orderRequestDTO.getShippingCost()))
+                .recipientName(orderRequestDTO.getRecipientName())
+                .recipientTel(orderRequestDTO.getRecipientTel())
+                .recipientAddress(orderRequestDTO.getRecipientAddress())
+                .recipientDetailAddress(orderRequestDTO.getRecipientDetailAddress())
+                .recipientMessage(orderRequestDTO.getRecipientMessage())
+                .paymentMethod(orderRequestDTO.getPaymentMethod())
+                .build();
+
+        order = orderRepository.save(order);
+
+        for (OrderItemDTO itemDTO : orderRequestDTO.getItems()) {
+            Product product = productRepository.findById(itemDTO.getProductId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+            if (product.getStock() < itemDTO.getQuantity()) {
+                throw new IllegalArgumentException("Insufficient stock for product: " + product.getName());
+            }
+
+            OrderItem orderItem = OrderItem.builder()
+                    .order(order)
+                    .product(product)
+                    .name(product.getName())
+                    .price(product.getPrice())
+                    .cost(product.getCost())
+                    .quantity(itemDTO.getQuantity())
+                    .options(itemDTO.getOptions())
+                    .build();
+
+            orderItemRepository.save(orderItem);
+
+            product.setStock(product.getStock() - itemDTO.getQuantity());
+            productRepository.save(product);
+        }
+
         return convertToDTO(order);
+    }
+
+    @Override
+    public OrderDTO updateOrderStatus(Long orderId, OrderStatusUpdateDTO statusUpdateDTO) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        order.setStatus(statusUpdateDTO.getStatus());
+
+        if (statusUpdateDTO.getStatus() == OrderStatus.PAID) {
+            order.setPaidAt(LocalDateTime.now());
+        } else if (statusUpdateDTO.getStatus() == OrderStatus.SHIPPING) {
+            order.setShippedAt(LocalDateTime.now());
+            order.setTrackingNumber(statusUpdateDTO.getTrackingNumber());
+            order.setShippingCompany(statusUpdateDTO.getShippingCompany());
+        } else if (statusUpdateDTO.getStatus() == OrderStatus.DELIVERED) {
+            order.setDeliveredAt(LocalDateTime.now());
+        } else if (statusUpdateDTO.getStatus() == OrderStatus.CANCELLED) {
+            order.setCancelledAt(LocalDateTime.now());
+            order.setCancelReason(statusUpdateDTO.getReason());
+            restoreProductStock(order);
+        } else if (statusUpdateDTO.getStatus() == OrderStatus.REFUNDED) {
+            order.setRefundedAt(LocalDateTime.now());
+            order.setRefundReason(statusUpdateDTO.getReason());
+            restoreProductStock(order);
+        }
+
+        order = orderRepository.save(order);
+        return convertToDTO(order);
+    }
+
+    @Override
+    public OrderDTO updateOrderStatus(Long orderId, OrderStatus status) {
+        OrderStatusUpdateDTO statusUpdateDTO = OrderStatusUpdateDTO.builder()
+                .status(status)
+                .build();
+        return updateOrderStatus(orderId, statusUpdateDTO);
+    }
+
+    @Override
+    public OrderDTO updateTrackingInfo(Long orderId, String trackingNumber, String shippingCompany) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        order.setTrackingNumber(trackingNumber);
+        order.setShippingCompany(shippingCompany);
+        return convertToDTO(orderRepository.save(order));
+    }
+
+    @Override
+    public Page<OrderDTO> getOrdersByStatus(OrderStatus status, Pageable pageable) {
+        Page<Order> orders = orderRepository.findAllByOrderStatus(status, pageable);
+        return orders.map(this::convertToDTO);
+    }
+
+    @Override
+    public Page<OrderDTO> getCancelledOrders(Pageable pageable) {
+        Page<Order> orders = orderRepository.findByStatusOrderByCreatedAtDesc(OrderStatus.CANCELLED, pageable);
+        return orders.map(this::convertToDTO);
+    }
+
+    @Override
+    public OrderDTO refundOrder(Long orderId) {
+        OrderStatusUpdateDTO statusUpdateDTO = OrderStatusUpdateDTO.builder()
+                .status(OrderStatus.REFUNDED)
+                .build();
+        return updateOrderStatus(orderId, statusUpdateDTO);
+    }
+
+    private String generateOrderNumber() {
+        return "ORD" + System.currentTimeMillis();
+    }
+
+    private String generateRefundNumber() {
+        return "REF" + System.currentTimeMillis();
+    }
+
+    private void restoreProductStock(Order order) {
+        for (OrderItem item : order.getOrderItems()) {
+            Product product = item.getProduct();
+            product.setStock(product.getStock() + item.getQuantity());
+            productRepository.save(product);
+        }
+    }
+
+    private Map<String, String> convertOptionsToMap(String options) {
+        if (options == null || options.isEmpty()) {
+            return new HashMap<>();
+        }
+        Map<String, String> optionsMap = new HashMap<>();
+        String[] pairs = options.split(",");
+        for (String pair : pairs) {
+            String[] keyValue = pair.split(":");
+            if (keyValue.length == 2) {
+                optionsMap.put(keyValue[0].trim(), keyValue[1].trim());
+            }
+        }
+        return optionsMap;
+    }
+
+    private String convertOptionsToString(Map<String, String> options) {
+        if (options == null || options.isEmpty()) {
+            return "";
+        }
+        return options.entrySet().stream()
+                .map(entry -> entry.getKey() + ":" + entry.getValue())
+                .collect(Collectors.joining(","));
+    }
+
+    private OrderDTO convertToDTO(Order order) {
+        return OrderDTO.builder()
+                .id(order.getId())
+                .orderNumber(order.getOrderNumber())
+                .memberId(order.getMember().getId())
+                .memberName(order.getMember().getName())
+                .memberEmail(order.getMember().getEmail())
+                .status(order.getStatus())
+                .totalPrice(order.getTotalPrice())
+                .discount(order.getDiscount())
+                .deliveryFee(order.getDeliveryFee())
+                .finalPrice(order.getFinalPrice())
+                .recipientName(order.getRecipientName())
+                .recipientTel(order.getRecipientTel())
+                .recipientAddress(order.getRecipientAddress())
+                .recipientDetailAddress(order.getRecipientDetailAddress())
+                .recipientMessage(order.getRecipientMessage())
+                .paymentMethod(order.getPaymentMethod())
+                .trackingNumber(order.getTrackingNumber())
+                .shippingCompany(order.getShippingCompany())
+                .cancelReason(order.getCancelReason())
+                .refundReason(order.getRefundReason())
+                .paidAt(order.getPaidAt())
+                .shippedAt(order.getShippedAt())
+                .deliveredAt(order.getDeliveredAt())
+                .cancelledAt(order.getCancelledAt())
+                .refundedAt(order.getRefundedAt())
+                .createdAt(order.getCreatedAt())
+                .updatedAt(order.getUpdatedAt())
+                .items(order.getOrderItems().stream()
+                        .map(this::convertToItemDTO)
+                        .collect(Collectors.toList()))
+                .build();
+    }
+
+    private OrderItemDTO convertToItemDTO(OrderItem item) {
+        return OrderItemDTO.builder()
+                .id(item.getId())
+                .orderId(item.getOrder().getId())
+                .productId(item.getProduct().getId())
+                .name(item.getName())
+                .price(item.getPrice())
+                .cost(item.getCost())
+                .quantity(item.getQuantity())
+                .options(item.getOptions())
+                .createdAt(item.getCreatedAt())
+                .updatedAt(item.getUpdatedAt())
+                .build();
     }
 
     @Override
@@ -84,261 +275,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<OrderDTO> getOrdersByMemberId(Long memberId, Pageable pageable) {
-        Page<Order> orders = orderRepository.findByMemberIdOrderByCreatedAtDesc(memberId, pageable);
-        return orders.map(this::convertToDTO);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Page<OrderDTO> getAllOrders(Pageable pageable) {
         Page<Order> orders = orderRepository.findAllByOrderByCreatedAtDesc(pageable);
         return orders.map(this::convertToDTO);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<OrderDTO> getOrdersByStatus(OrderStatus status, Pageable pageable) {
-        Page<Order> orders = orderRepository.findByStatusOrderByCreatedAtDesc(status, pageable);
-        return orders.map(this::convertToDTO);
-    }
-
-    @Override
-    @Transactional
-    public OrderDTO createOrder(OrderDTO orderDTO) {
-        Member member = memberRepository.findById(orderDTO.getMemberId())
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found with id: " + orderDTO.getMemberId()));
-
-        Order order = Order.builder()
-                .orderNumber(generateOrderNumber())
-                .member(member)
-                .status(OrderStatus.PENDING)
-                .subtotal(orderDTO.getSubtotal())
-                .discountAmount(orderDTO.getDiscountAmount())
-                .shippingCost(orderDTO.getShippingCost())
-                .tax(orderDTO.getTax())
-                .totalAmount(orderDTO.getTotalAmount())
-                .paymentMethod(orderDTO.getPaymentMethod())
-                .paymentStatus(orderDTO.getPaymentStatus())
-                .shippingMethod(orderDTO.getShippingMethod())
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        // 배송지 및 청구지 주소 설정
-        if (orderDTO.getShippingAddressId() != null) {
-            Address shippingAddress = addressRepository.findById(orderDTO.getShippingAddressId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Shipping address not found with id: " + orderDTO.getShippingAddressId()));
-            order.setShippingAddress(shippingAddress);
-        }
-
-        if (orderDTO.getBillingAddressId() != null) {
-            Address billingAddress = addressRepository.findById(orderDTO.getBillingAddressId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Billing address not found with id: " + orderDTO.getBillingAddressId()));
-            order.setBillingAddress(billingAddress);
-        }
-
-        Order savedOrder = orderRepository.save(order);
-
-        // 주문 항목 저장
-        if (orderDTO.getItems() != null) {
-            for (OrderItemDTO itemDTO : orderDTO.getItems()) {
-                Product product = productRepository.findById(itemDTO.getProductId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemDTO.getProductId()));
-
-                OrderItem orderItem = OrderItem.builder()
-                        .order(savedOrder)
-                        .product(product)
-                        .productName(product.getName())
-                        .productImage(product.getMainImage())
-                        .quantity(itemDTO.getQuantity())
-                        .price(product.getPrice())
-                        .discount(product.getDiscountAmount())
-                        .options(itemDTO.getOptions())
-                        .build();
-
-                orderItemRepository.save(orderItem);
-
-                // 재고 감소
-                product.setStock(product.getStock() - itemDTO.getQuantity());
-                productRepository.save(product);
-            }
-        }
-
-        return getOrderDTOById(savedOrder.getId());
-    }
-
-    @Override
-    @Transactional
-    public OrderDTO createOrder(Long memberId, OrderRequestDTO orderRequestDTO) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found with id: " + memberId));
-
-        // 주문 생성
-        Order order = Order.builder()
-                .orderNumber(generateOrderNumber())
-                .member(member)
-                .status(OrderStatus.PENDING)
-                .subtotal(orderRequestDTO.getSubtotal())
-                .discountAmount(orderRequestDTO.getDiscountAmount())
-                .shippingCost(orderRequestDTO.getShippingCost())
-                .tax(orderRequestDTO.getTax())
-                .totalAmount(orderRequestDTO.getTotalAmount())
-                .paymentMethod(orderRequestDTO.getPaymentMethod())
-                .paymentStatus("PENDING")
-                .shippingMethod(orderRequestDTO.getShippingMethod())
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        // 배송지 주소 설정
-        if (orderRequestDTO.getShippingAddressId() != null) {
-            Address shippingAddress = addressRepository.findById(orderRequestDTO.getShippingAddressId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Shipping address not found with id: " + orderRequestDTO.getShippingAddressId()));
-            order.setShippingAddress(shippingAddress);
-        }
-
-        // 청구지 주소 설정
-        if (orderRequestDTO.getBillingAddressId() != null) {
-            Address billingAddress = addressRepository.findById(orderRequestDTO.getBillingAddressId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Billing address not found with id: " + orderRequestDTO.getBillingAddressId()));
-            order.setBillingAddress(billingAddress);
-        }
-
-        Order savedOrder = orderRepository.save(order);
-
-        // 주문 항목 저장
-        if (orderRequestDTO.getItems() != null) {
-            for (OrderItemDTO itemDTO : orderRequestDTO.getItems()) {
-                Product product = productRepository.findById(itemDTO.getProductId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemDTO.getProductId()));
-
-                OrderItem orderItem = OrderItem.builder()
-                        .order(savedOrder)
-                        .product(product)
-                        .productName(product.getName())
-                        .productImage(product.getMainImage())
-                        .quantity(itemDTO.getQuantity())
-                        .price(product.getPrice())
-                        .discount(product.getDiscountAmount())
-                        .options(itemDTO.getOptions())
-                        .build();
-
-                orderItemRepository.save(orderItem);
-
-                // 재고 감소
-                product.setStock(product.getStock() - itemDTO.getQuantity());
-                productRepository.save(product);
-            }
-        }
-
-        return getOrderDTOById(savedOrder.getId());
-    }
-
-    @Override
-    @Transactional
-    public OrderDTO updateOrderStatus(Long id, OrderStatusUpdateDTO statusUpdateDTO) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
-
-        OrderStatus oldStatus = order.getStatus();
-        OrderStatus newStatus = statusUpdateDTO.getStatus();
-
-        order.setStatus(newStatus);
-        order.setUpdatedAt(LocalDateTime.now());
-
-        // 상태별 추가 처리
-        switch (newStatus) {
-            case COMPLETED:
-                order.setPaidAt(LocalDateTime.now());
-                order.setPaymentStatus("COMPLETED");
-                order.setPaymentTransactionId(statusUpdateDTO.getTransactionId());
-                break;
-            case SHIPPED:
-                order.setShippedAt(LocalDateTime.now());
-                order.setTrackingNumber(statusUpdateDTO.getTrackingNumber());
-                order.setShippingCompany(statusUpdateDTO.getShippingCompany());
-
-                // 배송 알림 이메일 발송
-                if (statusUpdateDTO.getTrackingNumber() != null) {
-                    // 257줄 부근 - 주문 확인 이메일 전송
-                    emailService.sendOrderConfirmationEmail(
-                            order.getMember().getEmail(),
-                            order.getId(),
-                            String.valueOf(order.getOrderNumber())  // Long을 String으로 변환
-                    );
-                }
-                break;
-            case DELIVERED:
-                order.setDeliveredAt(LocalDateTime.now());
-                break;
-            case CANCELLED:
-                order.setCancelledAt(LocalDateTime.now());
-                order.setCancelReason(statusUpdateDTO.getReason());
-
-                // 취소된 상품 재고 복구
-                restoreProductStock(order);
-                break;
-            case REFUNDED:
-                order.setRefundedAt(LocalDateTime.now());
-                order.setRefundReason(statusUpdateDTO.getReason());
-
-                // 환불된 상품 재고 복구 (이미 취소되지 않은 경우)
-                if (!OrderStatus.CANCELLED.equals(oldStatus)) {
-                    restoreProductStock(order);
-                }
-                break;
-        }
-
-        Order updatedOrder = orderRepository.save(order);
-        return convertToDTO(updatedOrder);
-    }
-
-    @Override
-    @Transactional
-    public OrderDTO updateTrackingInfo(Long id, String trackingNumber, String shippingCompany) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
-
-        order.setTrackingNumber(trackingNumber);
-        order.setShippingCompany(shippingCompany);
-        order.setUpdatedAt(LocalDateTime.now());
-
-        // 배송 상태로 변경
-        if (OrderStatus.PROCESSING.equals(order.getStatus())) {
-            order.setStatus(OrderStatus.SHIPPED);
-            order.setShippedAt(LocalDateTime.now());
-
-            // 배송 알림 이메일 발송
-            emailService.sendRefundConfirmationEmail(
-                    order.getMember().getEmail(),
-                    order.getId(),
-                    String.valueOf(order.getOrderNumber())  // Long을 String으로 변환
-            );
-        }
-
-        Order updatedOrder = orderRepository.save(order);
-        return convertToDTO(updatedOrder);
-    }
-
-    @Override
-    @Transactional
-    public OrderDTO refundOrder(Long id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
-
-        // 환불 가능한 상태인지 확인
-        if (!OrderStatus.DELIVERED.equals(order.getStatus()) &&
-                !OrderStatus.SHIPPED.equals(order.getStatus()) &&
-                !OrderStatus.PROCESSING.equals(order.getStatus()) &&
-                !OrderStatus.COMPLETED.equals(order.getStatus())) {
-            throw new IllegalStateException("Order cannot be refunded in current status: " + order.getStatus());
-        }
-
-        OrderStatusUpdateDTO statusUpdateDTO = OrderStatusUpdateDTO.builder()
-                .status(OrderStatus.REFUNDED)
-                .reason("고객 요청에 의한 환불")
-                .build();
-
-        return updateOrderStatus(id, statusUpdateDTO);
     }
 
     @Override
@@ -413,77 +352,183 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
     }
 
-    private String generateOrderNumber() {
-        // 주문번호 생성 로직 (예: 날짜 + 랜덤 숫자)
-        String datePrefix = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String randomSuffix = String.format("%06d", random.nextInt(1000000));
-        return "ORD-" + datePrefix + "-" + randomSuffix;
+    @Override
+    @Transactional
+    public Order createOrder(Order order) {
+        return orderRepository.save(order);
     }
 
-    private void restoreProductStock(Order order) {
-        for (OrderItem item : order.getItems()) {
-            Product product = item.getProduct();
-            product.setStock(product.getStock() + item.getQuantity());
-            productRepository.save(product);
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Order> findById(Long id) {
+        return orderRepository.findById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Order> findByOrderNumber(String orderNumber) {
+        return orderRepository.findByOrderNumber(orderNumber);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Order> findByMemberId(Long memberId, Pageable pageable) {
+        return orderRepository.findByMemberIdOrderByCreatedAtDesc(memberId, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Order> findByStatus(OrderStatus status, Pageable pageable) {
+        return orderRepository.findByStatusOrderByCreatedAtDesc(status, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Order> findByMemberIdAndStatus(Long memberId, OrderStatus status, Pageable pageable) {
+        return orderRepository.findByMemberIdAndStatus(memberId, status, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Order> findByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
+        return orderRepository.findByDateRange(startDate, endDate);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Order> findByMemberIdAndDateRange(Long memberId, LocalDateTime startDate, LocalDateTime endDate) {
+        return orderRepository.findByMemberIdAndDateRange(memberId, startDate, endDate);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countByStatus(OrderStatus status) {
+        return orderRepository.countByStatus(status);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<OrderStatus, Long> getOrderStatusDistribution() {
+        List<Object[]> distribution = orderRepository.findOrderStatusDistribution();
+        Map<OrderStatus, Long> result = new HashMap<>();
+
+        for (Object[] row : distribution) {
+            OrderStatus status = (OrderStatus) row[0];
+            Long count = (Long) row[1];
+            result.put(status, count);
         }
+
+        return result;
     }
 
-    private OrderDTO convertToDTO(Order order) {
-        List<OrderItemDTO> itemDTOs = order.getItems().stream()
-                .map(this::convertToItemDTO)
-                .collect(Collectors.toList());
+    @Override
+    @Transactional(readOnly = true)
+    public List<Object[]> getDailySales(LocalDateTime startDate, LocalDateTime endDate) {
+        return orderRepository.findDailySalesBetween(startDate, endDate);
+    }
 
-        return OrderDTO.builder()
+    @Override
+    @Transactional(readOnly = true)
+    public List<Object[]> getMonthlySales(LocalDateTime startDate, LocalDateTime endDate) {
+        return orderRepository.findMonthlySalesBetween(startDate, endDate);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Object[]> getTopCustomers(int limit) {
+        Pageable pageable = PageRequest.of(0, limit);
+        return orderRepository.findTopCustomers(pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getOrderStatistics(String period, String startDate, String endDate) {
+        LocalDateTime start = startDate != null ? LocalDateTime.parse(startDate) : null;
+        LocalDateTime end = endDate != null ? LocalDateTime.parse(endDate) : null;
+
+        Map<String, Object> statistics = new HashMap<>();
+        statistics.put("orderCount", orderRepository.countByCreatedAtBetween(start, end));
+        statistics.put("statusDistribution", getOrderStatusDistribution());
+        statistics.put("dailySales", getDailySales(start, end));
+        statistics.put("monthlySales", getMonthlySales(start, end));
+
+        return statistics;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getSalesStatistics(String period, String startDate, String endDate) {
+        LocalDateTime start = startDate != null ? LocalDateTime.parse(startDate) : null;
+        LocalDateTime end = endDate != null ? LocalDateTime.parse(endDate) : null;
+
+        Map<String, Object> statistics = new HashMap<>();
+        statistics.put("dailySales", getDailySales(start, end));
+        statistics.put("monthlySales", getMonthlySales(start, end));
+        statistics.put("topCustomers", getTopCustomers(10));
+
+        return statistics;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Long> getOrderSummary() {
+        Map<String, Long> summary = new HashMap<>();
+        summary.put("totalOrders", orderRepository.count());
+        summary.put("pendingOrders", orderRepository.countByStatus(OrderStatus.PENDING));
+        summary.put("completedOrders", orderRepository.countByStatus(OrderStatus.DELIVERED));
+        summary.put("cancelledOrders", orderRepository.countByStatus(OrderStatus.CANCELLED));
+        return summary;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<RefundDTO> getRefunds(Pageable pageable) {
+        Page<Order> orders = orderRepository.findByStatusOrderByCreatedAtDesc(OrderStatus.REFUNDED, pageable);
+        return orders.map(this::convertToRefundDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RefundDTO getRefundById(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("환불 정보를 찾을 수 없습니다: " + id));
+        return convertToRefundDTO(order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CancellationDTO> getCancellations(Pageable pageable) {
+        Page<Order> orders = orderRepository.findByStatusOrderByCreatedAtDesc(OrderStatus.CANCELLED, pageable);
+        return orders.map(this::convertToCancellationDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CancellationDTO getCancellationById(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("취소 정보를 찾을 수 없습니다: " + id));
+        return convertToCancellationDTO(order);
+    }
+
+    private RefundDTO convertToRefundDTO(Order order) {
+        return RefundDTO.builder()
                 .id(order.getId())
                 .orderNumber(order.getOrderNumber())
                 .memberId(order.getMember().getId())
                 .memberName(order.getMember().getName())
-                .memberEmail(order.getMember().getEmail())
-                .status(order.getStatus())
-                .subtotal(order.getSubtotal())
-                .discountAmount(order.getDiscountAmount())
-                .shippingCost(order.getShippingCost())
-                .tax(order.getTax())
-                .totalAmount(order.getTotalAmount())
-                .paymentMethod(order.getPaymentMethod())
-                .paymentStatus(order.getPaymentStatus())
-                .paymentTransactionId(order.getPaymentTransactionId())
-                .shippingMethod(order.getShippingMethod())
-                .trackingNumber(order.getTrackingNumber())
-                .shippingCompany(order.getShippingCompany())
-                .cancelReason(order.getCancelReason())
-                .refundReason(order.getRefundReason())
-                .paidAt(order.getPaidAt())
-                .shippedAt(order.getShippedAt())
-                .deliveredAt(order.getDeliveredAt())
-                .cancelledAt(order.getCancelledAt())
-                .refundedAt(order.getRefundedAt())
-                .createdAt(order.getCreatedAt())
-                .updatedAt(order.getUpdatedAt())
-                .items(itemDTOs)
+                .totalAmount(order.getFinalPrice())
+                .refundedAt(order.getUpdatedAt())
                 .build();
     }
 
-    private OrderItemDTO convertToItemDTO(OrderItem orderItem) {
-        return OrderItemDTO.builder()
-                .id(orderItem.getId())
-                .orderId(orderItem.getOrder().getId())
-                .productId(orderItem.getProduct().getId())
-                .productName(orderItem.getProductName())
-                .productImage(orderItem.getProductImage())
-                .quantity(orderItem.getQuantity())
-                .price(orderItem.getPrice())
-                .discount(orderItem.getDiscount())
-                .totalPrice(calculateTotalPrice(orderItem))
-                .options(orderItem.getOptions())
+    private CancellationDTO convertToCancellationDTO(Order order) {
+        return CancellationDTO.builder()
+                .id(order.getId())
+                .orderNumber(order.getOrderNumber())
+                .memberId(order.getMember().getId())
+                .memberName(order.getMember().getName())
+                .totalAmount(order.getFinalPrice())
+                .cancelledAt(order.getUpdatedAt())
                 .build();
-    }
-
-    private BigDecimal calculateTotalPrice(OrderItem orderItem) {
-        BigDecimal itemPrice = orderItem.getPrice().multiply(new BigDecimal(orderItem.getQuantity()));
-        if (orderItem.getDiscount() != null) {
-            itemPrice = itemPrice.subtract(orderItem.getDiscount().multiply(new BigDecimal(orderItem.getQuantity())));
-        }
-        return itemPrice;
     }
 }
