@@ -65,7 +65,7 @@ public class AdminBrandViewController {
         model.addAttribute("brandId", id);
         model.addAttribute("brand", brandService.getBrandById(id));
         model.addAttribute("summary", brandService.getBrandSummary(id));
-        return "admin/brands/detail";
+        return "admin/brands/category-detail";
     }
 
     /**

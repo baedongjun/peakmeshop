@@ -89,7 +89,7 @@ public class AdminCategoryViewController {
     @GetMapping("/categories/{id}")
     public String categoryDetail(@PathVariable Long id, Model model) {
         model.addAttribute("categoryId", id);
-        return "admin/categories/detail";
+        return "admin/categories/category-detail";
     }
 
     /**
