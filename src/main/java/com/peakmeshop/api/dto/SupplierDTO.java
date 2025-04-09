@@ -16,17 +16,25 @@ public class SupplierDTO {
     private Long id;
     private String code;
     private String name;
-    private String contactName;
-    private String email;
+    private String businessNumber;
+    private String representativeName;
     private String phone;
-    private String address;
+    private String email;
+    private String zipCode;
+    private String address1;
+    private String address2;
+    private String bankName;
+    private String accountNumber;
+    private String accountHolder;
     private String city;
     private String state;
-    private String zipCode;
+
     private String country;
     private String website;
     private String description;
     private String status;
+    private Long productCount;
+    private Long totalSales;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

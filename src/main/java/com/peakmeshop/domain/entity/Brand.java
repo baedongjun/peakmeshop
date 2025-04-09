@@ -35,6 +35,9 @@ public class Brand {
     @Column(nullable = false)
     private String name;
 
+    @Column
+    private String nameEn;
+
     @Column(nullable = false, unique = true)
     private String slug;
 
@@ -50,9 +53,6 @@ public class Brand {
 
     @Column
     private String website;
-
-    @Column
-    private boolean featured;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

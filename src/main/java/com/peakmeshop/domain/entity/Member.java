@@ -103,6 +103,12 @@ public class Member {
     @Column(name = "reset_token_expiry")
     private LocalDateTime resetTokenExpiry;
 
+    @Column(name = "is_withdrawn")
+    private boolean isWithdrawn;
+
+    @Column(name = "withdrawn_at")
+    private LocalDateTime withdrawnAt;
+
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 

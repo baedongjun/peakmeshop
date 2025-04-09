@@ -74,6 +74,8 @@ public class Product {
 
     private Integer stock;
 
+    private Integer lowStockThreshold;
+
     private Integer stockAlert;
 
     @Column(columnDefinition = "TEXT")
@@ -81,9 +83,11 @@ public class Product {
 
     private String status;
 
-    private Boolean active;
+    private String slug;
 
-    private Boolean featured;
+    private Boolean isFeatured;
+
+    private Boolean isActive;
 
     @Column(name = "average_rating")
     private Double averageRating;
@@ -110,6 +114,10 @@ public class Product {
     @Builder.Default
     private List<ProductVariant> variants = new ArrayList<>();
 
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Review> reviews = new ArrayList<>();
+
     @ManyToMany
     @JoinTable(
             name = "product_tags",
@@ -130,6 +138,9 @@ public class Product {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (cost == null) {
+            cost = BigDecimal.ZERO;
+        }
     }
 
     @PreUpdate

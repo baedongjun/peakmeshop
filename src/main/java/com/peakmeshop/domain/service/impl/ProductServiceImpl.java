@@ -69,8 +69,8 @@ public class ProductServiceImpl implements ProductService {
 
         // 카테고리 확인
         Category category = null;
-        if (productDTO.getCategoryId() != null) {
-            category = categoryRepository.findById(productDTO.getCategoryId())
+        if (productDTO.getCategory().getId() != null) {
+            category = categoryRepository.findById(productDTO.getCategory().getId())
                     .orElseThrow(() -> new ResourceNotFoundException("카테고리를 찾을 수 없습니다."));
         }
 
@@ -86,8 +86,8 @@ public class ProductServiceImpl implements ProductService {
                 .images(productDTO.getImages())
                 .stock(productDTO.getStock())
                 .status(productDTO.getStatus())
-                .active(productDTO.isActive())
-                .featured(productDTO.isFeatured())
+                .isActive(productDTO.getIsActive())
+                .isFeatured(productDTO.getIsFeatured())
                 .averageRating(0.0)
                 .reviewCount(0)
                 .salesCount(0)
@@ -114,8 +114,8 @@ public class ProductServiceImpl implements ProductService {
         }
 
         // 카테고리 확인 (변경된 경우)
-        if (productDTO.getCategoryId() != null) {
-            Category category = categoryRepository.findById(productDTO.getCategoryId())
+        if (productDTO.getCategory().getId() != null) {
+            Category category = categoryRepository.findById(productDTO.getCategory().getId())
                     .orElseThrow(() -> new ResourceNotFoundException("카테고리를 찾을 수 없습니다."));
             product.setCategory(category);
         }
@@ -147,11 +147,11 @@ public class ProductServiceImpl implements ProductService {
         if (productDTO.getStatus() != null) {
             product.setStatus(productDTO.getStatus());
         }
-        if (productDTO.getActive() != null) {
-            product.setActive(productDTO.getActive());
+        if (productDTO.getIsActive() != null) {
+            product.setIsActive(productDTO.getIsActive());
         }
-        if (productDTO.getFeatured() != null) {
-            product.setFeatured(productDTO.getFeatured());
+        if (productDTO.getIsFeatured() != null) {
+            product.setIsFeatured(productDTO.getIsFeatured());
         }
 
         product.setUpdatedAt(LocalDateTime.now());
@@ -173,7 +173,7 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("상품을 찾을 수 없습니다."));
 
-        product.setActive(!product.getActive());
+        product.setIsActive(!product.getIsActive());
         product.setUpdatedAt(LocalDateTime.now());
 
         Product updatedProduct = productRepository.save(product);
@@ -216,28 +216,28 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProductDTO> getFeaturedProducts(Pageable pageable) {
-        Page<Product> products = productRepository.findByFeaturedTrueAndActiveTrue(pageable);
+        Page<Product> products = productRepository.findByIsFeaturedTrueAndIsActiveTrue(pageable);
         return products.map(this::convertToDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ProductDTO> getNewArrivals(Pageable pageable) {
-        Page<Product> products = productRepository.findByActiveTrueOrderByCreatedAtDesc(pageable);
+        Page<Product> products = productRepository.findByIsActiveTrueOrderByCreatedAtDesc(pageable);
         return products.map(this::convertToDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ProductDTO> getBestSellers(Pageable pageable) {
-        Page<Product> products = productRepository.findByActiveTrueOrderBySalesCountDesc(pageable);
+        Page<Product> products = productRepository.findByIsActiveTrueOrderBySalesCountDesc(pageable);
         return products.map(this::convertToDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ProductDTO> getDiscountedProducts(Pageable pageable) {
-        Page<Product> products = productRepository.findByActiveTrueAndSalePriceIsNotNullOrderBySalePriceAsc(pageable);
+        Page<Product> products = productRepository.findByIsActiveTrueAndSalePriceIsNotNullOrderBySalePriceAsc(pageable);
         return products.map(this::convertToDTO);
     }
 
@@ -250,9 +250,9 @@ public class ProductServiceImpl implements ProductService {
 
         // 여기에 랭킹 업데이트 로직 구현
         // 예: 판매량이 많은 상품을 베스트셀러로 표시
-        List<Product> bestSellers = productRepository.findTop10ByActiveTrueOrderBySalesCountDesc();
+        List<Product> bestSellers = productRepository.findTop10ByIsActiveTrueOrderBySalesCountDesc();
         for (Product product : bestSellers) {
-            product.setFeatured(true);
+            product.setIsFeatured(true);
             productRepository.save(product);
         }
     }
@@ -268,23 +268,20 @@ public class ProductServiceImpl implements ProductService {
                 .salePrice(product.getSalePrice())
                 .discountedPrice(product.getSalePrice()) // salePrice를 discountedPrice로도 설정
                 .brand(product.getBrand())
+                .category(product.getCategory())
+                .supplier(product.getSupplier())
                 .mainImage(product.getMainImage())
                 .images(product.getImages())
                 .stock(product.getStock())
                 .status(product.getStatus())
-                .active(product.getActive())
-                .featured(product.getFeatured())
+                .isActive(product.getIsActive())
+                .isFeatured(product.getIsFeatured())
                 .averageRating(product.getAverageRating())
                 .reviewCount(product.getReviewCount())
                 .salesCount(product.getSalesCount())
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .build();
-
-        if (product.getCategory() != null) {
-            dto.setCategoryId(product.getCategory().getId());
-            dto.setCategoryName(product.getCategory().getName());
-        }
 
         return dto;
     }
@@ -320,9 +317,9 @@ public class ProductServiceImpl implements ProductService {
 
         // 상태가 ACTIVE가 아니면 active를 false로 설정
         if (!"ACTIVE".equals(status)) {
-            product.setActive(false);
+            product.setIsActive(false);
         } else {
-            product.setActive(true);
+            product.setIsActive(true);
         }
 
         Product updatedProduct = productRepository.save(product);
@@ -334,6 +331,7 @@ public class ProductServiceImpl implements ProductService {
         Map<String, Object> summary = new HashMap<>();
         summary.put("totalProducts", productRepository.count());
         summary.put("activeProducts", productRepository.countByIsActiveTrue());
+        summary.put("inactiveProducts", productRepository.countByIsActiveFalse());
         summary.put("outOfStockProducts", productRepository.countByStockLessThanEqual(0));
         return summary;
     }

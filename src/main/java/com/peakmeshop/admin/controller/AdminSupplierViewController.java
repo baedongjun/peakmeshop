@@ -1,5 +1,6 @@
 package com.peakmeshop.admin.controller;
 
+import com.peakmeshop.api.dto.SupplierDTO;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
@@ -61,11 +62,14 @@ public class AdminSupplierViewController {
      * 공급사 상세 페이지
      */
     @GetMapping("/suppliers/{id}")
-    public String supplierDetail(@PathVariable Long id, Model model) {
+    public String supplierDetail(@PathVariable Long id, @PageableDefault(size = 20) Pageable pageable, Model model) {
+        SupplierDTO supplier = supplierService.getSupplierById(id)
+                .orElseThrow(() -> new IllegalArgumentException("공급사를 찾을 수 없습니다: " + id));
         model.addAttribute("supplierId", id);
-        model.addAttribute("supplier", supplierService.getSupplierById(id));
+        model.addAttribute("supplier", supplier);
         model.addAttribute("summary", supplierService.getSupplierSummary(id));
-        return "admin/suppliers/detail";
+        model.addAttribute("products", supplierService.getSupplierProducts(id, pageable));
+        return "admin/suppliers/supplier-detail";
     }
 
     /**

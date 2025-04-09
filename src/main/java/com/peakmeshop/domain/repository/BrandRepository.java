@@ -47,10 +47,10 @@ public interface BrandRepository extends JpaRepository<Brand, Long> {
     @Query("SELECT COUNT(p) FROM Brand b JOIN b.products p")
     long countTotalProducts();
 
-    @Query("SELECT SUM(oi.price * oi.quantity) FROM Brand b JOIN b.products p JOIN p.orderItems oi")
+    @Query("SELECT coalesce(SUM(oi.price * oi.quantity),0) FROM Brand b JOIN b.products p JOIN p.orderItems oi")
     BigDecimal calculateTotalSales();
 
-    @Query("SELECT AVG(r.rating) FROM Brand b JOIN b.products p JOIN p.reviews r")
+    @Query("SELECT coalesce(AVG(r.rating),0) FROM Brand b JOIN b.products p JOIN p.reviews r")
     Double calculateAverageRating();
 
     @Query("SELECT SUM(oi.price * oi.quantity) FROM Brand b JOIN b.products p JOIN p.orderItems oi WHERE b.id = :brandId")
@@ -67,5 +67,15 @@ public interface BrandRepository extends JpaRepository<Brand, Long> {
 
     @Query("SELECT SUM(oi.price * oi.quantity) FROM Brand b JOIN b.products p JOIN p.orderItems oi WHERE b.id = :brandId AND oi.createdAt BETWEEN :startDate AND :endDate")
     BigDecimal calculateTotalSalesByBrandIdAndDateRange(@Param("brandId") Long brandId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * 이번 달에 등록된 신규 브랜드 수를 조회합니다.
+     *
+     * @param startOfMonth 이번 달의 시작일
+     * @param endOfMonth 이번 달의 마지막일
+     * @return 이번 달 신규 등록된 브랜드 수
+     */
+    @Query("SELECT COUNT(b) FROM Brand b WHERE b.createdAt BETWEEN :startOfMonth AND :endOfMonth")
+    Long countMonthlyNewBrands(LocalDateTime startOfMonth, LocalDateTime endOfMonth);
 }
 

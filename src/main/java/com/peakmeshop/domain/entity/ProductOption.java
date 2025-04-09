@@ -33,15 +33,15 @@ public class ProductOption {
     @OneToMany(mappedBy = "option", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductOptionValue> values = new ArrayList<>();
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
     private boolean isRequired;
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
 
     @PrePersist
@@ -50,6 +50,9 @@ public class ProductOption {
         updatedAt = LocalDateTime.now();
         if (additionalPrice == null) {
             additionalPrice = BigDecimal.ZERO;
+        }
+        if (isRequired) {
+            isRequired = false; // 기본값 설정
         }
     }
 

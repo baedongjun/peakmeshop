@@ -55,10 +55,10 @@ public class Category {
     private String imageUrl;
 
     @Column(nullable = false)
-    private boolean active;
+    private boolean isActive;
 
     @Column
-    private boolean featured;
+    private boolean isFeatured;
 
     @Column(name = "sort_order")
     private Integer sortOrder;

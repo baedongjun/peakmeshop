@@ -28,15 +28,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Page<Product> findByNameContainingOrDescriptionContainingAndCategoryId(String name, String description, Long categoryId, Pageable pageable);
 
-    Page<Product> findByFeaturedTrueAndActiveTrue(Pageable pageable);
+    Page<Product> findByIsFeaturedTrueAndIsActiveTrue(Pageable pageable);
 
-    Page<Product> findByActiveTrueOrderByCreatedAtDesc(Pageable pageable);
+    Page<Product> findByIsActiveTrueOrderByCreatedAtDesc(Pageable pageable);
 
-    Page<Product> findByActiveTrueOrderBySalesCountDesc(Pageable pageable);
+    Page<Product> findByIsActiveTrueOrderBySalesCountDesc(Pageable pageable);
 
-    Page<Product> findByActiveTrueAndSalePriceIsNotNullOrderBySalePriceAsc(Pageable pageable);
+    Page<Product> findByIsActiveTrueAndSalePriceIsNotNullOrderBySalePriceAsc(Pageable pageable);
 
-    List<Product> findTop10ByActiveTrueOrderBySalesCountDesc();
+    List<Product> findTop10ByIsActiveTrueOrderBySalesCountDesc();
 
     long countByCategoryId(Long categoryId);
 
@@ -80,18 +80,19 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Object[]> findProductCategoryDistribution();
 
     long countByIsActiveTrue();
-    
+    long countByIsActiveFalse();
+
     long countByIsFeaturedTrue();
     
     long countByStockLessThanEqual(int stock);
 
-    @Query("SELECT COALESCE(SUM(p.totalSales), 0) FROM Product p")
+    @Query("SELECT COALESCE(SUM(p.salePrice), 0) FROM Product p")
     BigDecimal calculateTotalSales();
     
-    @Query("SELECT COALESCE(AVG(p.rating), 0) FROM Product p WHERE p.rating > 0")
+    @Query("SELECT COALESCE(AVG(p.averageRating), 0) FROM Product p WHERE p.averageRating > 0")
     BigDecimal calculateAverageRating();
 
-    @Query("SELECT p.category.name as category, COUNT(p) as count, SUM(p.totalSales) as total " +
+    @Query("SELECT p.category.name as category, COUNT(p) as count, SUM(p.salePrice) as total " +
            "FROM Product p WHERE p.createdAt BETWEEN :startDate AND :endDate " +
            "GROUP BY p.category.name")
     List<Object[]> findSalesByCategory(@Param("startDate") LocalDateTime startDate, 
@@ -105,12 +106,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p " +
            "WHERE p.createdAt BETWEEN :startDate AND :endDate " +
-           "ORDER BY p.totalSales DESC")
+           "ORDER BY p.salePrice DESC")
     Page<Product> findTopProducts(@Param("startDate") LocalDateTime startDate, 
                                 @Param("endDate") LocalDateTime endDate, 
                                 Pageable pageable);
 
-    @Query("SELECT DATE(p.createdAt) as date, COUNT(p) as count, SUM(p.totalSales) as total " +
+    @Query("SELECT DATE(p.createdAt) as date, COUNT(p) as count, SUM(p.salePrice) as total " +
            "FROM Product p " +
            "WHERE p.createdAt BETWEEN :startDate AND :endDate " +
            "GROUP BY DATE(p.createdAt)")

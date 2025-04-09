@@ -156,7 +156,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Page<OrderDTO> getOrdersByStatus(OrderStatus status, Pageable pageable) {
-        Page<Order> orders = orderRepository.findAllByOrderStatus(status, pageable);
+        Page<Order> orders = orderRepository.findAllByStatus(status, pageable);
         return orders.map(this::convertToDTO);
     }
 

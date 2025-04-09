@@ -44,8 +44,8 @@ public class CategoryServiceImpl implements CategoryService {
                 .slug(categoryDTO.getSlug())
                 .parent(parent)
                 .imageUrl(categoryDTO.getImageUrl())
-                .active(categoryDTO.isActive())
-                .featured(categoryDTO.isFeatured())
+                .isActive(categoryDTO.isActive())
+                .isFeatured(categoryDTO.isFeatured())
                 .sortOrder(categoryDTO.getSortOrder())
                 .filterableAttributes(categoryDTO.getFilterableAttributes() != null ?
                         String.join(",", categoryDTO.getFilterableAttributes()) : null)
@@ -91,7 +91,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional(readOnly = true)
     public List<CategoryDTO> getActiveCategories() {
-        List<Category> categories = categoryRepository.findByActiveTrue();
+        List<Category> categories = categoryRepository.findByIsActiveTrue();
         return categories.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -252,7 +252,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional(readOnly = true)
     public List<CategoryDTO> getFeaturedCategories() {
-        List<Category> categories = categoryRepository.findByFeaturedTrue();
+        List<Category> categories = categoryRepository.findByIsFeaturedTrue();
         return categories.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -284,8 +284,8 @@ public class CategoryServiceImpl implements CategoryService {
                 .parentId(category.getParent() != null ? category.getParent().getId() : null)
                 .parentName(category.getParent() != null ? category.getParent().getName() : null)
                 .imageUrl(category.getImageUrl())
-                .active(category.isActive())
-                .featured(category.isFeatured())
+                .isActive(category.isActive())
+                .isFeatured(category.isFeatured())
                 .sortOrder(category.getSortOrder())
                 .filterableAttributes(filterableAttributes)
                 .createdAt(category.getCreatedAt())

@@ -1,5 +1,6 @@
 package com.peakmeshop.api.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -49,17 +50,17 @@ public class MemberDTO {
     private String userRole;
     private boolean enabled;
     private String status;
-    private boolean emailVerified;
+    private String grade;
+    private boolean isEmailVerified;
     private String provider;
     private String providerId;
     private String providerType;
     private String imageUrl;
+    private Integer orderCount;
+    private BigDecimal totalOrderAmount;
     private LocalDate birthDate;
     private String gender;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-    public Boolean isEmailVerified() { // 또는 boolean isEmailVerified()
-        return emailVerified;
-    }
+    private LocalDateTime lastLoginAt;
 }

@@ -59,7 +59,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT o.member.id, o.member.name, COUNT(o), SUM(o.finalPrice) FROM Order o GROUP BY o.member.id, o.member.name ORDER BY COUNT(o) DESC")
     List<Object[]> findTopCustomers(Pageable pageable);
 
-    Page<Order> findAllByOrderStatus(OrderStatus status, Pageable pageable);
+    Page<Order> findAllByStatus(OrderStatus status, Pageable pageable);
 
-    Page<Order> findByMemberIdAndOrderStatusOrderByCreatedAtDesc(Long memberId, OrderStatus status, Pageable pageable);
+    Page<Order> findByMemberIdAndStatusOrderByCreatedAtDesc(Long memberId, OrderStatus status, Pageable pageable);
 }

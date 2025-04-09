@@ -43,7 +43,7 @@ public class ProductBundle {
     private BigDecimal discountAmount;
 
     @Column(nullable = false)
-    private boolean active;
+    private boolean isActive;
 
     @Column(name = "start_date")
     private LocalDateTime startDate;

@@ -57,7 +57,7 @@ public class ProductBundleServiceImpl implements ProductBundleService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProductBundleDTO> getActiveBundles(Pageable pageable) {
-        Page<ProductBundle> bundles = bundleRepository.findByActiveTrue(pageable);
+        Page<ProductBundle> bundles = bundleRepository.findByIsActiveTrue(pageable);
         return bundles.map(this::convertToDTO);
     }
 
@@ -69,7 +69,7 @@ public class ProductBundleServiceImpl implements ProductBundleService {
                 .description(bundleDTO.getDescription())
                 .discountRate(bundleDTO.getDiscountRate())
                 .discountAmount(bundleDTO.getDiscountAmount())
-                .active(bundleDTO.isActive())
+                .isActive(bundleDTO.isActive())
                 .startDate(bundleDTO.getStartDate())
                 .endDate(bundleDTO.getEndDate())
                 .createdAt(LocalDateTime.now())

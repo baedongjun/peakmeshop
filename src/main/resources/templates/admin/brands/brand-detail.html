@@ -265,7 +265,7 @@
         <script th:inline="javascript">
             // 브랜드 삭제 처리
             document.getElementById('confirmDelete').addEventListener('click', function() {
-                fetch('/api/admin/brands/' + [[${brand.id}]], {
+                fetch('/api/brands/' + [[${brand.id}]], {
                     method: 'DELETE'
                 }).then(response => {
                     if (response.ok) {

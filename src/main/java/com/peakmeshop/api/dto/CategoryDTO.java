@@ -22,8 +22,8 @@ public class CategoryDTO {
         private Long parentId;
         private String parentName;
         private String imageUrl;
-        private boolean active;
-        private boolean featured;
+        private boolean isActive;
+        private boolean isFeatured;
         private Integer sortOrder;
         private List<String> filterableAttributes;
         private LocalDateTime createdAt;
@@ -31,7 +31,4 @@ public class CategoryDTO {
         private Long productCount;
         private Integer depth;
 
-        public boolean isActive() {
-            return active;
-        }
 }

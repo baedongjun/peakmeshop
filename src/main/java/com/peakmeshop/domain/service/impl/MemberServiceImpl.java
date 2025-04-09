@@ -292,7 +292,7 @@ public class MemberServiceImpl implements MemberService {
                 .updatedAt(member.getUpdatedAt())
                 .agreeTerms(member.isAgreeTerms())
                 .agreeMarketing(member.isAgreeMarketing())
-                .emailVerified(member.isEmailVerified())
+                .isEmailVerified(member.isEmailVerified())
                 .build();
     }
 

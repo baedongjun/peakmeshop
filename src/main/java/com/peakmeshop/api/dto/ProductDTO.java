@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.peakmeshop.domain.entity.Brand;
+import com.peakmeshop.domain.entity.Category;
+import com.peakmeshop.domain.entity.Supplier;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,14 +29,14 @@ public class ProductDTO {
     private BigDecimal salePrice; // 판매가 (할인가)
     private BigDecimal discountedPrice; // 할인가 (다른 이름)
     private Brand brand; // 브랜드
-    private Long categoryId;
-    private String categoryName;
+    private Category category;
+    private Supplier supplier;
     private String mainImage;
     private List<String> images;
     private Integer stock;
     private String status; // 상품 상태 (ACTIVE, INACTIVE, OUT_OF_STOCK 등)
-    private Boolean active; // 활성화 여부
-    private Boolean featured; // 추천 상품 여부
+    private Boolean isActive; // 활성화 여부
+    private Boolean isFeatured; // 추천 상품 여부
     private Double averageRating;
     private Integer reviewCount;
     private Integer salesCount; // 판매 수량
@@ -64,15 +66,5 @@ public class ProductDTO {
         }
 
         return price.subtract(salePrice);
-    }
-
-    // 활성화 여부 확인
-    public boolean isActive() {
-        return Boolean.TRUE.equals(active);
-    }
-
-    // 추천 상품 여부 확인
-    public boolean isFeatured() {
-        return Boolean.TRUE.equals(featured);
     }
 }

@@ -5,9 +5,10 @@ import java.time.LocalDateTime;
 public record BrandDTO(
         Long id,
         String name,
+        String nameEn,
         String slug,
         String description,
-        String logo,
+        String logoUrl,
         String website,
         boolean isActive,
         boolean isFeatured,

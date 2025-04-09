@@ -310,7 +310,7 @@
             }
 
             function editBanner(id) {
-                fetch(`/api/admin/banners/${id}`)
+                fetch(`/api/banners/${id}`)
                     .then(response => response.json())
                     .then(data => {
                         document.getElementById('modalTitle').textContent = '배너 수정';
@@ -347,7 +347,7 @@
                 const formData = new FormData(form);
                 const id = formData.get('id');
                 const method = id ? 'PUT' : 'POST';
-                const url = id ? `/api/admin/banners/${id}` : '/api/admin/banners';
+                const url = id ? `/api/banners/${id}` : '/api/banners';
 
                 fetch(url, {
                     method: method,
@@ -364,7 +364,7 @@
             }
 
             function previewBanner(id) {
-                fetch(`/api/admin/banners/${id}`)
+                fetch(`/api/banners/${id}`)
                     .then(response => response.json())
                     .then(data => {
                         const preview = document.getElementById('previewContent');
@@ -390,7 +390,7 @@
             function deleteBanner(id) {
                 if (!confirm('정말 삭제하시겠습니까?')) return;
 
-                fetch(`/api/admin/banners/${id}`, {
+                fetch(`/api/banners/${id}`, {
                     method: 'DELETE'
                 })
                 .then(response => {

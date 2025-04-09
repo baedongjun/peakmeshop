@@ -10,8 +10,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ProductBundleRepository extends JpaRepository<ProductBundle, Long> {
 
     // 활성화된 상품 묶음 조회 (페이징)
-    Page<ProductBundle> findByActiveTrue(Pageable pageable);
+    Page<ProductBundle> findByIsActiveTrue(Pageable pageable);
 
     // 활성화된 상품 묶음 조회 (리스트)
-    List<ProductBundle> findByActiveTrue();
+    List<ProductBundle> findByIsActiveTrue();
 }

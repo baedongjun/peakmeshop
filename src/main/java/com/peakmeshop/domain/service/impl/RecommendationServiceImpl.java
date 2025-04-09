@@ -142,7 +142,7 @@ public class RecommendationServiceImpl implements RecommendationService {
     @Transactional(readOnly = true)
     public List<ProductDTO> getNewArrivals(int limit) {
         // 신상품 (최근 등록된 상품)
-        List<Product> newProducts = productRepository.findByActiveTrueOrderByCreatedAtDesc(PageRequest.of(0, limit)).getContent();
+        List<Product> newProducts = productRepository.findByIsActiveTrueOrderByCreatedAtDesc(PageRequest.of(0, limit)).getContent();
 
         return newProducts.stream()
                 .map(this::convertToDTO)
@@ -153,7 +153,7 @@ public class RecommendationServiceImpl implements RecommendationService {
     @Transactional(readOnly = true)
     public List<ProductDTO> getBestSellers(int limit) {
         // 베스트셀러 (판매량 기준)
-        List<Product> bestSellers = productRepository.findByActiveTrueOrderBySalesCountDesc(PageRequest.of(0, limit)).getContent();
+        List<Product> bestSellers = productRepository.findByIsActiveTrueOrderBySalesCountDesc(PageRequest.of(0, limit)).getContent();
 
         return bestSellers.stream()
                 .map(this::convertToDTO)
@@ -164,7 +164,7 @@ public class RecommendationServiceImpl implements RecommendationService {
     @Transactional(readOnly = true)
     public List<ProductDTO> getOnSaleProducts(int limit) {
         // 할인 상품
-        List<Product> onSaleProducts = productRepository.findByActiveTrueAndSalePriceIsNotNullOrderBySalePriceAsc(PageRequest.of(0, limit)).getContent();
+        List<Product> onSaleProducts = productRepository.findByIsActiveTrueAndSalePriceIsNotNullOrderBySalePriceAsc(PageRequest.of(0, limit)).getContent();
 
         return onSaleProducts.stream()
                 .map(this::convertToDTO)
@@ -236,14 +236,14 @@ public class RecommendationServiceImpl implements RecommendationService {
         dto.setPrice(product.getPrice());
         dto.setSalePrice(product.getSalePrice());
         dto.setBrand(product.getBrand());
-        dto.setCategoryId(product.getCategory() != null ? product.getCategory().getId() : null);
-        dto.setCategoryName(product.getCategory() != null ? product.getCategory().getName() : null);
+        dto.setCategory(product.getCategory());
+        dto.setSupplier(product.getSupplier());
         dto.setMainImage(product.getMainImage());
         dto.setImages(product.getImages());
         dto.setStock(product.getStock());
         dto.setStatus(product.getStatus());
-        dto.setActive(product.getActive());
-        dto.setFeatured(product.getFeatured());
+        dto.setIsActive(product.getIsActive());
+        dto.setIsFeatured(product.getIsFeatured());
         dto.setAverageRating(product.getAverageRating());
         dto.setReviewCount(product.getReviewCount());
         dto.setSalesCount(product.getSalesCount());

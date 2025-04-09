@@ -304,7 +304,7 @@
         <script th:inline="javascript">
             // 카테고리 삭제 처리
             document.getElementById('confirmDelete').addEventListener('click', function() {
-                fetch('/api/admin/categories/' + [[${category.id}]], {
+                fetch('/api/categories/' + [[${category.id}]], {
                     method: 'DELETE'
                 }).then(response => {
                     if (response.ok) {

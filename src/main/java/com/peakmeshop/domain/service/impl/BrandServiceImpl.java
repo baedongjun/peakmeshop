@@ -48,11 +48,10 @@ public class BrandServiceImpl implements BrandService {
         brand.setName(brandDTO.name());
         brand.setSlug(brandDTO.slug());
         brand.setDescription(brandDTO.description());
-        brand.setLogoUrl(brandDTO.logo());
+        brand.setLogoUrl(brandDTO.logoUrl());
         brand.setWebsite(brandDTO.website());
         brand.setIsActive(brandDTO.isActive());
         brand.setIsFeatured(brandDTO.isFeatured());
-        brand.setFeatured(brandDTO.isFeatured()); // 중복 필드 동기화
         brand.setUpdatedAt(LocalDateTime.now());
 
         Brand updatedBrand = brandRepository.save(brand);
@@ -153,7 +152,6 @@ public class BrandServiceImpl implements BrandService {
                 .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + id));
 
         brand.setIsFeatured(featured);
-        brand.setFeatured(featured); // 중복 필드 동기화
         brand.setUpdatedAt(LocalDateTime.now());
 
         Brand updatedBrand = brandRepository.save(brand);
@@ -225,6 +223,10 @@ public class BrandServiceImpl implements BrandService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Long> getBrandSummary() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime endOfMonth = now.withDayOfMonth(now.toLocalDate().lengthOfMonth())
+                .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
         Map<String, Long> summary = new HashMap<>();
         summary.put("totalBrands", brandRepository.count());
         summary.put("activeBrands", brandRepository.countByIsActiveTrue());
@@ -232,6 +234,7 @@ public class BrandServiceImpl implements BrandService {
         summary.put("totalProducts", brandRepository.countTotalProducts());
         summary.put("totalSales", brandRepository.calculateTotalSales().longValue());
         summary.put("averageRating", brandRepository.calculateAverageRating().longValue());
+        summary.put("monthlyNewBrands", brandRepository.countMonthlyNewBrands(startOfMonth, endOfMonth));
 
         return summary;
     }
@@ -304,6 +307,7 @@ public class BrandServiceImpl implements BrandService {
         return new BrandDTO(
                 brand.getId(),
                 brand.getName(),
+                brand.getNameEn(),
                 brand.getSlug(),
                 brand.getDescription(),
                 brand.getLogoUrl(),
@@ -324,13 +328,13 @@ public class BrandServiceImpl implements BrandService {
     private Brand mapToEntity(BrandDTO brandDTO) {
         Brand brand = new Brand();
         brand.setName(brandDTO.name());
+        brand.setNameEn(brandDTO.nameEn());
         brand.setSlug(brandDTO.slug());
         brand.setDescription(brandDTO.description());
-        brand.setLogoUrl(brandDTO.logo());
+        brand.setLogoUrl(brandDTO.logoUrl());
         brand.setWebsite(brandDTO.website());
         brand.setIsActive(brandDTO.isActive());
         brand.setIsFeatured(brandDTO.isFeatured());
-        brand.setFeatured(brandDTO.isFeatured()); // 중복 필드 동기화
         return brand;
     }
 }

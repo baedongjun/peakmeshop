@@ -151,7 +151,7 @@
                         </thead>
                         <tbody>
                             <tr th:each="member : ${members}">
-                                <td th:text="${member.memberNumber}"></td>
+                                <td th:text="${member.id}"></td>
                                 <td>
                                     <strong th:text="${member.name}"></strong>
                                     <br>
@@ -189,9 +189,9 @@
                                 <td>
                                     <div class="btn-group">
                                         <button type="button" class="btn btn-sm btn-primary"
-                                                th:onclick="'showMemberDetail(\'' + ${member.memberNumber} + '\')'">상세</button>
+                                                th:onclick="'showMemberDetail(\'' + ${member.id} + '\')'">상세</button>
                                         <button type="button" class="btn btn-sm btn-warning"
-                                                th:onclick="'showStatusModal(\'' + ${member.memberNumber} + '\')'"
+                                                th:onclick="'showStatusModal(\'' + ${member.id} + '\')'"
                                                 th:disabled="${member.status == 'WITHDRAWN'}">상태변경</button>
                                     </div>
                                 </td>
@@ -248,7 +248,7 @@
                 </div>
                 <div class="modal-body">
                     <form id="statusForm">
-                        <input type="hidden" id="statusMemberNumber">
+                        <input type="hidden" id="statusMemberId">
                         <div class="mb-3">
                             <label for="newStatus" class="form-label">변경할 상태</label>
                             <select class="form-select" id="newStatus" required>
@@ -274,39 +274,8 @@
     <!-- 자바스크립트 -->
     <th:block layout:fragment="script">
         <script>
-            $(document).ready(function() {
-                $('#membersTable').DataTable({
-                    order: [[4, 'desc']],
-                    language: {
-                        url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Korean.json'
-                    }
-                });
-            });
-
-            function setDateRange(range) {
-                const today = new Date();
-                let startDate = new Date();
-
-                switch(range) {
-                    case 'today':
-                        break;
-                    case 'week':
-                        startDate.setDate(today.getDate() - 7);
-                        break;
-                    case 'month':
-                        startDate.setMonth(today.getMonth() - 1);
-                        break;
-                    case '3months':
-                        startDate.setMonth(today.getMonth() - 3);
-                        break;
-                }
-
-                document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
-                document.getElementById('endDate').value = today.toISOString().split('T')[0];
-            }
-
-            function showMemberDetail(memberNumber) {
-                fetch(`/api/admin/members/${memberNumber}`)
+            function showMemberDetail(memberId) {
+                fetch(`/api/admin/members/${memberId}`)
                     .then(response => response.json())
                     .then(data => {
                         const detail = document.getElementById('memberDetail');
@@ -317,7 +286,7 @@
                                     <table class="table table-bordered">
                                         <tr>
                                             <th style="width: 35%;">회원번호</th>
-                                            <td>${data.memberNumber}</td>
+                                            <td>${data.memberId}</td>
                                         </tr>
                                         <tr>
                                             <th>이름</th>
@@ -451,18 +420,18 @@
                     });
             }
 
-            function showStatusModal(memberNumber) {
-                document.getElementById('statusMemberNumber').value = memberNumber;
+            function showStatusModal(memberId) {
+                document.getElementById('statusMemberId').value = memberId;
                 const modal = new bootstrap.Modal(document.getElementById('statusModal'));
                 modal.show();
             }
 
             function updateMemberStatus() {
-                const memberNumber = document.getElementById('statusMemberNumber').value;
+                const memberId = document.getElementById('statusMemberId').value;
                 const newStatus = document.getElementById('newStatus').value;
                 const statusNote = document.getElementById('statusNote').value;
 
-                fetch(`/api/admin/members/${memberNumber}/status`, {
+                fetch(`/api/admin/members/${memberId}/status`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'

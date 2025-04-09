@@ -65,7 +65,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="text-muted">대표자명</label>
-                                    <p class="form-control-static" th:text="${supplier.representative}">대표자명</p>
+                                    <p class="form-control-static" th:text="${supplier.representativeName}">대표자명</p>
                                 </div>
                             </div>
                         </div>
@@ -138,7 +138,7 @@
                                 <div class="form-group">
                                     <label class="text-muted">웹사이트</label>
                                     <p class="form-control-static">
-                                        <a th:if="${supplier.website}" th:href="${supplier.website}" target="_blank" 
+                                        <a th:if="${supplier.website}" th:href="${supplier.website}" target="_blank"
                                            th:text="${supplier.website}">웹사이트</a>
                                         <span th:unless="${supplier.website}">-</span>
                                     </p>
@@ -158,7 +158,7 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label class="text-muted">메모</label>
-                                    <p class="form-control-static" th:text="${supplier.memo ?: '-'}">메모</p>
+                                    <p class="form-control-static" th:text="${supplier.description ?: '-'}">메모</p>
                                 </div>
                             </div>
                         </div>
@@ -177,13 +177,13 @@
                             <div class="col-6">
                                 <div class="stats-info">
                                     <h6>총 상품</h6>
-                                    <h4 th:text="${#numbers.formatInteger(supplier.totalProducts, 0, 'COMMA')}">0</h4>
+                                    <h4 th:text="${#numbers.formatInteger(summary.totalProducts, 0, 'COMMA')}">0</h4>
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="stats-info">
                                     <h6>판매중</h6>
-                                    <h4 th:text="${#numbers.formatInteger(supplier.activeProducts, 0, 'COMMA')}">0</h4>
+                                    <h4 th:text="${#numbers.formatInteger(summary.activeProducts, 0, 'COMMA')}">0</h4>
                                 </div>
                             </div>
                         </div>
@@ -191,13 +191,13 @@
                             <div class="col-6">
                                 <div class="stats-info">
                                     <h6>총 주문</h6>
-                                    <h4 th:text="${#numbers.formatInteger(supplier.totalOrders, 0, 'COMMA')}">0</h4>
+                                    <h4 th:text="${#numbers.formatInteger(summary.totalOrders, 0, 'COMMA')}">0</h4>
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="stats-info">
                                     <h6>총 매출</h6>
-                                    <h4 th:text="${#numbers.formatInteger(supplier.totalSales, 0, 'COMMA')} + '원'">0원</h4>
+                                    <h4 th:text="${#numbers.formatInteger(summary.totalSales, 0, 'COMMA')} + '원'">0원</h4>
                                 </div>
                             </div>
                         </div>
@@ -260,36 +260,21 @@
                     </table>
                 </div>
 
-                <!-- 페이지네이션 시작 -->
-                <div th:if="${!#lists.isEmpty(products)}" class="row">
-                    <div class="col-sm-12 col-md-5">
-                        <div class="dataTables_info">
-                            전체 <span th:text="${totalElements}">0</span>개 중
-                            <span th:text="${pageNumber * pageSize + 1}">1</span>-<span th:text="${(pageNumber + 1) * pageSize}">10</span>
-                        </div>
-                    </div>
-                    <div class="col-sm-12 col-md-7">
-                        <div class="dataTables_paginate">
-                            <ul class="pagination justify-content-end">
-                                <li class="paginate_button page-item previous" th:classappend="${pageNumber == 0 ? 'disabled' : ''}">
-                                    <a th:href="@{${#httpServletRequest.requestURI}(page=${pageNumber - 1})}"
-                                       class="page-link">이전</a>
-                                </li>
-                                <li th:each="page : ${#numbers.sequence(0, totalPages - 1)}"
-                                    class="paginate_button page-item"
-                                    th:classappend="${page == pageNumber ? 'active' : ''}">
-                                    <a th:href="@{${#httpServletRequest.requestURI}(page=${page})}"
-                                       class="page-link" th:text="${page + 1}">1</a>
-                                </li>
-                                <li class="paginate_button page-item next" th:classappend="${pageNumber + 1 >= totalPages ? 'disabled' : ''}">
-                                    <a th:href="@{${#httpServletRequest.requestURI}(page=${pageNumber + 1})}"
-                                       class="page-link">다음</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <!-- 페이지네이션 끝 -->
+                <nav aria-label="Page navigation" th:if="${products.totalPages > 0}">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${!products.hasPrevious()} ? disabled">
+                            <a class="page-link" th:href="@{/admin/suppliers/${supplierId}(page=${products.number - 1})}">이전</a>
+                        </li>
+                        <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, products.totalPages - 1)}"
+                            th:classappend="${pageNum == products.number} ? active">
+                            <a class="page-link" th:href="@{/admin/suppliers/${supplierId}(page=${pageNum})}"
+                               th:text="${pageNum + 1}"></a>
+                        </li>
+                        <li class="page-item" th:classappend="${!products.hasNext()} ? disabled">
+                            <a class="page-link" th:href="@{/admin/suppliers${supplierId}(page=${products.number + 1})}">다음</a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         </div>
 
@@ -352,7 +337,7 @@
 
             // 공급사 삭제 처리
             document.getElementById('confirmDelete').addEventListener('click', function() {
-                fetch('/api/admin/suppliers/' + [[${supplier.id}]], {
+                fetch('/api/suppliers/' + [[${supplier.id}]], {
                     method: 'DELETE'
                 }).then(response => {
                     if (response.ok) {

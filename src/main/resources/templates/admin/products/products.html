@@ -162,12 +162,12 @@
                             <tr th:each="product : ${products}">
                                 <td th:text="${product.code}">PRD001</td>
                                 <td>
-                                    <img th:if="${product.thumbnail}" 
-                                         th:src="${product.thumbnail}"
+                                    <img th:if="${product.mainImage}"
+                                         th:src="${product.mainImage}"
                                          alt="상품 이미지"
                                          class="img-thumbnail"
                                          style="width: 50px; height: 50px; object-fit: cover;">
-                                    <span th:unless="${product.thumbnail}" class="text-muted">-</span>
+                                    <span th:unless="${product.mainImage}" class="text-muted">-</span>
                                 </td>
                                 <td>
                                     <a th:href="@{/admin/products/{id}(id=${product.id})}" 

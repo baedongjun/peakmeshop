@@ -29,8 +29,11 @@ public class Supplier {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "contact_name")
-    private String contactName;
+    @Column(name = "business_number")
+    private String businessNumber;
+
+    @Column(name = "representative_name")
+    private String representativeName;
 
     @Column(name = "email")
     private String email;
@@ -38,17 +41,29 @@ public class Supplier {
     @Column(name = "phone")
     private String phone;
 
-    @Column(name = "address")
-    private String address;
+    @Column(name = "zip_code")
+    private String zipCode;
+
+    @Column(name = "address1")
+    private String address1;
+
+    @Column(name = "address2")
+    private String address2;
+
+    @Column(name = "bank_name")
+    private String bankName;
+
+    @Column(name = "account_number")
+    private String accountNumber;
+
+    @Column(name = "account_holder")
+    private String accountHolder;
 
     @Column(name = "city")
     private String city;
 
     @Column(name = "state")
     private String state;
-
-    @Column(name = "zip_code")
-    private String zipCode;
 
     @Column(name = "country")
     private String country;
@@ -69,7 +84,7 @@ public class Supplier {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "supplier")
-    private List<SupplierProduct> supplierProducts = new ArrayList<>();
+    private List<SupplierProduct> products = new ArrayList<>();
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -94,13 +109,13 @@ public class Supplier {
     }
 
     public BigDecimal getTotalSales() {
-        return supplierProducts.stream()
+        return products.stream()
                 .map(SupplierProduct::getTotalSales)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public BigDecimal getTotalRevenue() {
-        return supplierProducts.stream()
+        return products.stream()
                 .map(SupplierProduct::getTotalRevenue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }

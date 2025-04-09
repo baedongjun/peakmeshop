@@ -245,14 +245,14 @@ public class SearchServiceImpl implements SearchService {
         dto.setPrice(product.getPrice());
         dto.setSalePrice(product.getSalePrice());
         dto.setBrand(product.getBrand());
-        dto.setCategoryId(product.getCategory() != null ? product.getCategory().getId() : null);
-        dto.setCategoryName(product.getCategory() != null ? product.getCategory().getName() : null);
+        dto.setCategory(product.getCategory());
+        dto.setSupplier(product.getSupplier());
         dto.setMainImage(product.getMainImage());
         dto.setImages(product.getImages());
         dto.setStock(product.getStock());
         dto.setStatus(product.getStatus());
-        dto.setActive(product.getActive());
-        dto.setFeatured(product.getFeatured());
+        dto.setIsActive(product.getIsActive());
+        dto.setIsFeatured(product.getIsFeatured());
         dto.setAverageRating(product.getAverageRating());
         dto.setReviewCount(product.getReviewCount());
         dto.setSalesCount(product.getSalesCount());

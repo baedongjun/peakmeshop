@@ -94,7 +94,7 @@ public class MemberController {
                 .userRole(member.getUserRole())
                 .status(member.getStatus())
                 .enabled(member.isActive())
-                .emailVerified(member.isEmailVerified())
+                .isEmailVerified(member.isEmailVerified())
                 .providerType(member.getProviderType())
                 .providerId(member.getProviderId())
                 .imageUrl(member.getImageUrl())

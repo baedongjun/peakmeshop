@@ -1,6 +1,7 @@
 package com.peakmeshop.domain.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -166,12 +167,28 @@ public class SupplierServiceImpl implements SupplierService {
 
     @Override
     public Map<String, Long> getSupplierSummary() {
-        return null;
+        // 이번 달 신규 등록 공급사 수
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime endOfMonth = now.withDayOfMonth(now.toLocalDate().lengthOfMonth())
+                .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+        Map<String, Long> summary = new HashMap<>();
+        summary.put("totalSuppliers", supplierRepository.count());
+        summary.put("activeSuppliers", supplierRepository.countActiveSuppliers());
+        summary.put("newSuppliers", supplierRepository.countNewSuppliers(startOfMonth, endOfMonth));
+        summary.put("totalProducts", productRepository.count());
+        summary.put("totalSales", calculateTotalSales());
+        return summary;
     }
 
     @Override
     public Map<String, Long> getSupplierSummary(Long supplierId) {
-        return null;
+        Map<String, Long> summary = new HashMap<>();
+        summary.put("totalProducts", supplierRepository.countProductsBySupplierId(supplierId));
+        summary.put("activeProducts", supplierRepository.countActiveProductsBySupplierId(supplierId));
+        summary.put("totalOrders", supplierRepository.countTotalOrdersBySupplierId(supplierId));
+        summary.put("totalSales", supplierRepository.calculateTotalSalesBySupplierId(supplierId));
+        return summary;
     }
 
     @Override
@@ -195,10 +212,15 @@ public class SupplierServiceImpl implements SupplierService {
         dto.setId(supplier.getId());
         dto.setCode(supplier.getCode());
         dto.setName(supplier.getName());
-        dto.setContactName(supplier.getContactName());
+        dto.setBusinessNumber(supplier.getBusinessNumber());
+        dto.setRepresentativeName(supplier.getRepresentativeName());
         dto.setEmail(supplier.getEmail());
         dto.setPhone(supplier.getPhone());
-        dto.setAddress(supplier.getAddress());
+        dto.setAddress1(supplier.getAddress1());
+        dto.setAddress2(supplier.getAddress2());
+        dto.setBankName(supplier.getBankName());
+        dto.setAccountNumber(supplier.getAccountNumber());
+        dto.setAccountHolder(supplier.getAccountHolder());
         dto.setCity(supplier.getCity());
         dto.setState(supplier.getState());
         dto.setZipCode(supplier.getZipCode());
@@ -208,6 +230,20 @@ public class SupplierServiceImpl implements SupplierService {
         dto.setStatus(supplier.getStatus());
         dto.setCreatedAt(supplier.getCreatedAt());
         dto.setUpdatedAt(supplier.getUpdatedAt());
+
+        // 추가 정보 설정
+        try {
+            // 공급사별 상품 수
+            long productCount = supplierRepository.countProductsBySupplierId(supplier.getId());
+            dto.setProductCount(productCount);
+
+            // 공급사별 총 매출
+            Long totalSales = supplierRepository.calculateTotalSalesBySupplierId(supplier.getId());
+            dto.setTotalSales(totalSales != null ? totalSales : 0L);
+        } catch (Exception e) {
+            log.error("공급사 추가 정보 조회 중 오류 발생: {}", e.getMessage());
+        }
+
         return dto;
     }
 
@@ -220,14 +256,14 @@ public class SupplierServiceImpl implements SupplierService {
                 .price(product.getPrice())
                 .salePrice(product.getSalePrice())
                 .brand(product.getBrand())
-                .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
-                .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
+                .category(product.getCategory())
+                .supplier(product.getSupplier())
                 .mainImage(product.getMainImage())
                 .images(product.getImages())
                 .stock(product.getStock())
                 .status(product.getStatus())
-                .active(product.getActive())
-                .featured(product.getFeatured())
+                .isActive(product.getIsActive())
+                .isFeatured(product.getIsFeatured())
                 .averageRating(product.getAverageRating())
                 .reviewCount(product.getReviewCount())
                 .salesCount(product.getSalesCount())
@@ -249,8 +285,11 @@ public class SupplierServiceImpl implements SupplierService {
         if (dto.getName() != null) {
             supplier.setName(dto.getName());
         }
-        if (dto.getContactName() != null) {
-            supplier.setContactName(dto.getContactName());
+        if (dto.getBusinessNumber() != null) {
+            supplier.setBusinessNumber(dto.getBusinessNumber());
+        }
+        if (dto.getRepresentativeName() != null) {
+            supplier.setRepresentativeName(dto.getRepresentativeName());
         }
         if (dto.getEmail() != null) {
             supplier.setEmail(dto.getEmail());
@@ -258,8 +297,20 @@ public class SupplierServiceImpl implements SupplierService {
         if (dto.getPhone() != null) {
             supplier.setPhone(dto.getPhone());
         }
-        if (dto.getAddress() != null) {
-            supplier.setAddress(dto.getAddress());
+        if (dto.getAddress1() != null) {
+            supplier.setAddress1(dto.getAddress1());
+        }
+        if (dto.getAddress2() != null) {
+            supplier.setAddress2(dto.getAddress2());
+        }
+        if (dto.getBankName() != null) {
+            supplier.setBankName(dto.getBankName());
+        }
+        if (dto.getAccountNumber() != null) {
+            supplier.setAccountNumber(dto.getAccountNumber());
+        }
+        if (dto.getAccountHolder() != null) {
+            supplier.setAccountHolder(dto.getAccountHolder());
         }
         if (dto.getCity() != null) {
             supplier.setCity(dto.getCity());
@@ -290,5 +341,25 @@ public class SupplierServiceImpl implements SupplierService {
         String prefix = name.length() >= 3 ? name.substring(0, 3).toUpperCase() : name.toUpperCase();
         String suffix = String.valueOf(System.currentTimeMillis() % 10000);
         return prefix + "-" + suffix;
+    }
+
+    // 총 매출 계산 메서드
+    private Long calculateTotalSales() {
+        try {
+            List<Object[]> salesData = supplierRepository.calculateTotalSalesBySupplier();
+            if (salesData == null || salesData.isEmpty()) {
+                return 0L;
+            }
+
+            return salesData.stream()
+                    .mapToLong(data -> {
+                        if (data[1] == null) return 0L;
+                        return ((Number) data[1]).longValue();
+                    })
+                    .sum();
+        } catch (Exception e) {
+            log.error("총 매출 계산 중 오류 발생: {}", e.getMessage());
+            return 0L;
+        }
     }
 }

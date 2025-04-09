@@ -132,7 +132,6 @@
                         <thead>
                             <tr>
                                 <th style="width: 40%">카테고리명</th>
-                                <th>코드</th>
                                 <th>상품 수</th>
                                 <th>노출 순서</th>
                                 <th>상태</th>
@@ -150,7 +149,6 @@
                                            th:text="${category.name}">카테고리명</a>
                                     </div>
                                 </td>
-                                <td th:text="${category.code}">CAT001</td>
                                 <td>
                                     <a th:href="@{/admin/products(categoryId=${category.id})}" 
                                        th:text="${#numbers.formatInteger(category.productCount, 0, 'COMMA')}">100</a>
@@ -158,20 +156,18 @@
                                 <td>
                                     <div class="btn-group">
                                         <button type="button" class="btn btn-sm btn-outline-secondary"
-                                                th:onclick="'moveCategory(' + ${category.id} + ', -1)'"
-                                                th:disabled="${category.first}">
+                                                th:onclick="'moveCategory(' + ${category.id} + ', -1)'">
                                             <i class="fas fa-arrow-up"></i>
                                         </button>
                                         <button type="button" class="btn btn-sm btn-outline-secondary"
-                                                th:onclick="'moveCategory(' + ${category.id} + ', 1)'"
-                                                th:disabled="${category.last}">
+                                                th:onclick="'moveCategory(' + ${category.id} + ', 1)'">
                                             <i class="fas fa-arrow-down"></i>
                                         </button>
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge" th:classappend="${category.status == 'ACTIVE' ? 'badge-success' : 'badge-secondary'}"
-                                          th:text="${category.statusText}">활성</span>
+                                    <span class="badge" th:classappend="${category.isActive ? 'badge-success' : 'badge-secondary'}"
+                                          th:text="${category.isActive ? '활성' : '비활성'}">활성</span>
                                 </td>
                                 <td>
                                     <div class="btn-group">
@@ -241,7 +237,7 @@
             }
 
             function confirmDelete() {
-                fetch(`/api/admin/categories/${categoryIdToDelete}`, {
+                fetch(`/api/categories/${categoryIdToDelete}`, {
                     method: 'DELETE'
                 }).then(response => {
                     if (response.ok) {
@@ -257,7 +253,7 @@
             }
 
             function moveCategory(id, direction) {
-                fetch(`/api/admin/categories/${id}/move`, {
+                fetch(`/api/categories/${id}/move`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

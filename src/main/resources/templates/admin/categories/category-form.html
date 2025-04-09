@@ -25,7 +25,7 @@
     <!-- 카테고리 폼 시작 -->
     <div class="card">
         <div class="card-body">
-            <form th:action="${category != null ? '/api/admin/categories/' + category.id : '/api/admin/categories'}"
+            <form th:action="${category != null ? '/api/categories/' + category.id : '/api/categories'}"
                   th:method="${category != null ? 'PUT' : 'POST'}"
                   id="categoryForm"
                   enctype="multipart/form-data">
