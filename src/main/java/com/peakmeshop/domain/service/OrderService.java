@@ -16,6 +16,7 @@ import com.peakmeshop.api.dto.OrderItemDTO;
 import com.peakmeshop.api.dto.OrderRequestDTO;
 import com.peakmeshop.api.dto.RefundDTO;
 import com.peakmeshop.api.dto.CancellationDTO;
+import com.peakmeshop.api.dto.OrderSummaryDTO;
 
 public interface OrderService {
 
@@ -92,4 +93,13 @@ public interface OrderService {
     List<Object[]> getTopCustomers(int limit);
 
     Page<OrderDTO> getCancelledOrders(Pageable pageable);
+
+    /**
+     * 주문 통계 정보 조회
+     * @param period 기간 (daily, weekly, monthly, yearly)
+     * @param startDate 시작일
+     * @param endDate 종료일
+     * @return 주문 통계 정보
+     */
+    OrderSummaryDTO getOrderSummary(String period, String startDate, String endDate);
 }

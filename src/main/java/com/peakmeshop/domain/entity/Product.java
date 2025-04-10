@@ -50,33 +50,30 @@ public class Product {
     @Column(name = "sale_price")
     private BigDecimal salePrice;
 
-    // 브랜드 필드를 String에서 Brand 엔티티로 변경
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "brand_id")
     private Brand brand;
-
-    // 브랜드 이름을 저장하는 필드 추가
-    @Column(name = "brand_name")
-    private String brandName;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @Column
-    private String imageUrl;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "supplier_id")
+    private Supplier supplier;
+
     @Column(name = "main_image")
     private String mainImage;
 
-    @Convert(converter = StringListConverter.class)
-    @Column(columnDefinition = "TEXT")
-    private List<String> images = new ArrayList<>();
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ProductImage> images = new ArrayList<>();
 
     private Integer stock;
 
-    private Integer lowStockThreshold;
-
     private Integer stockAlert;
+
+    private Integer maxPurchaseQuantity;
 
     @Column(columnDefinition = "TEXT")
     private String shortDescription;
@@ -127,10 +124,6 @@ public class Product {
     @Builder.Default
     private List<Tag> tags = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "supplier_id")
-    private Supplier supplier;
-
     @OneToMany(mappedBy = "product")
     private List<OrderItem> orderItems = new ArrayList<>();
 
@@ -146,11 +139,6 @@ public class Product {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-
-    // 브랜드 이름 반환 메서드
-    public String getBrandName() {
-        return brand != null ? brand.getName() : brandName;
     }
 
     // 최종 가격 계산 메서드

@@ -46,67 +46,14 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label class="required">브랜드코드</label>
-                            <input type="text" class="form-control" id="code" name="code" required
-                                   th:value="${brand != null ? brand.code : ''}"
-                                   th:readonly="${brand != null}"
-                                   placeholder="브랜드코드를 입력하세요">
-                            <small class="form-text text-muted">영문, 숫자 조합으로 입력하세요. (예: NIKE)</small>
-                            <div class="invalid-feedback">브랜드코드를 입력해주세요.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
                             <label>영문명</label>
                             <input type="text" class="form-control" id="nameEn" name="nameEn"
                                    th:value="${brand != null ? brand.nameEn : ''}"
                                    placeholder="영문 브랜드명을 입력하세요">
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label>상태</label>
-                            <select class="form-control" id="status" name="status">
-                                <option value="ACTIVE" th:selected="${brand != null && brand.status == 'ACTIVE'}">활성</option>
-                                <option value="INACTIVE" th:selected="${brand != null && brand.status == 'INACTIVE'}">비활성</option>
-                            </select>
-                        </div>
-                    </div>
                 </div>
-
                 <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label>연락처</label>
-                            <input type="tel" class="form-control" id="phone" name="phone"
-                                   th:value="${brand != null ? brand.phone : ''}"
-                                   placeholder="연락처를 입력하세요">
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label>이메일</label>
-                            <input type="email" class="form-control" id="email" name="email"
-                                   th:value="${brand != null ? brand.email : ''}"
-                                   placeholder="이메일을 입력하세요">
-                            <div class="invalid-feedback">올바른 이메일 형식이 아닙니다.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label>웹사이트</label>
-                            <input type="url" class="form-control" id="website" name="website"
-                                   th:value="${brand != null ? brand.website : ''}"
-                                   placeholder="웹사이트 URL을 입력하세요">
-                            <div class="invalid-feedback">올바른 URL 형식이 아닙니다.</div>
-                        </div>
-                    </div>
                     <div class="col-md-6">
                         <div class="form-group">
                             <label>로고</label>
@@ -119,6 +66,26 @@
                                     <label class="custom-control-label" for="removeLogo">로고 삭제</label>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>상태</label>
+                            <select class="form-control" id="status" name="status">
+                                <option value="ACTIVE" th:selected="${brand != null && brand.isActive}">활성</option>
+                                <option value="INACTIVE" th:selected="${brand != null && !brand.isActive}">비활성</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>웹사이트</label>
+                            <input type="url" class="form-control" id="website" name="website"
+                                   th:value="${brand != null ? brand.website : ''}"
+                                   placeholder="웹사이트 URL을 입력하세요">
+                            <div class="invalid-feedback">올바른 URL 형식이 아닙니다.</div>
                         </div>
                     </div>
                 </div>
@@ -185,13 +152,6 @@
                 isValid = false;
             } else {
                 $('#name').removeClass('is-invalid');
-            }
-
-            if (!$('#code').val().trim()) {
-                $('#code').addClass('is-invalid');
-                isValid = false;
-            } else {
-                $('#code').removeClass('is-invalid');
             }
 
             // 이메일 검사
@@ -268,7 +228,6 @@
 
             // 폼 데이터 수집
             formData.append('name', $('#name').val().trim());
-            formData.append('code', $('#code').val().trim());
             formData.append('nameEn', $('#nameEn').val().trim());
             formData.append('status', $('#status').val());
             formData.append('phone', $('#phone').val().trim());

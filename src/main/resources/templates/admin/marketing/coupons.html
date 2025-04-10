@@ -29,45 +29,49 @@
     <!-- 통계 카드 시작 -->
     <div class="row">
         <div class="col-md-3">
-            <div class="card">
+            <div class="card dashboard-card">
                 <div class="card-body">
                     <div class="stats-info">
+                        <i class="fas fa-ticket-alt stats-icon bg-primary"></i>
                         <h6>총 발행 쿠폰</h6>
                         <h4 th:text="${#numbers.formatInteger(summary.totalCoupons, 0, 'COMMA')}">1,234</h4>
-                        <p class="text-muted">전체 발행된 쿠폰 수</p>
+                        <p class="text-muted mb-0">전체 발행된 쿠폰 수</p>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card">
+            <div class="card dashboard-card">
                 <div class="card-body">
                     <div class="stats-info">
+                        <i class="fas fa-check-circle stats-icon bg-success"></i>
                         <h6>사용 가능 쿠폰</h6>
                         <h4 th:text="${#numbers.formatInteger(summary.availableCoupons, 0, 'COMMA')}">500</h4>
-                        <p class="text-muted">현재 사용 가능한 쿠폰 수</p>
+                        <p class="text-muted mb-0">현재 사용 가능한 쿠폰 수</p>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card">
+            <div class="card dashboard-card">
                 <div class="card-body">
                     <div class="stats-info">
+                        <i class="fas fa-chart-line stats-icon bg-info"></i>
                         <h6>이번 달 사용</h6>
                         <h4 th:text="${#numbers.formatInteger(summary.monthlyUsedCoupons, 0, 'COMMA')}">150</h4>
-                        <p class="text-muted">이번 달 사용된 쿠폰 수</p>
+                        <p class="text-muted mb-0">이번 달 사용된 쿠폰 수</p>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card">
+            <div class="card dashboard-card">
                 <div class="card-body">
                     <div class="stats-info">
+                        <i class="fas fa-won-sign stats-icon bg-warning"></i>
                         <h6>총 할인 금액</h6>
                         <h4 th:text="${#numbers.formatInteger(summary.totalDiscountAmount, 0, 'COMMA') + '원'}">1,500,000원</h4>
-                        <p class="text-muted">쿠폰으로 인한 총 할인 금액</p>
+                        <p class="text-muted mb-0">쿠폰으로 인한 총 할인 금액</p>
                     </div>
                 </div>
             </div>
@@ -76,14 +80,14 @@
     <!-- 통계 카드 끝 -->
 
     <!-- 검색 필터 시작 -->
-    <div class="card">
+    <div class="card filter-card">
         <div class="card-body">
-            <form th:action="@{/admin/coupons}" method="get" class="form">
+            <form th:action="@{/admin/coupons}" method="get" class="form" id="searchForm">
                 <div class="row">
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label>쿠폰 유형</label>
-                            <select name="type" class="form-control">
+                            <label><i class="fas fa-tag"></i> 쿠폰 유형</label>
+                            <select name="type" class="form-control select2" onchange="this.form.submit()">
                                 <option value="">전체</option>
                                 <option value="DISCOUNT" th:selected="${param.type == 'DISCOUNT'}">할인 쿠폰</option>
                                 <option value="SHIPPING" th:selected="${param.type == 'SHIPPING'}">배송비 쿠폰</option>
@@ -93,8 +97,8 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label>상태</label>
-                            <select name="status" class="form-control">
+                            <label><i class="fas fa-circle"></i> 상태</label>
+                            <select name="status" class="form-control select2" onchange="this.form.submit()">
                                 <option value="">전체</option>
                                 <option value="READY" th:selected="${param.status == 'READY'}">대기</option>
                                 <option value="ACTIVE" th:selected="${param.status == 'ACTIVE'}">진행중</option>
@@ -105,17 +109,24 @@
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label>검색어</label>
-                            <input type="text" name="keyword" class="form-control" 
-                                   th:value="${param.keyword}"
-                                   placeholder="쿠폰명 또는 쿠폰코드 입력">
+                            <label><i class="fas fa-search"></i> 검색어</label>
+                            <div class="input-group">
+                                <input type="text" name="keyword" class="form-control" 
+                                       th:value="${param.keyword}"
+                                       placeholder="쿠폰명 또는 쿠폰코드 입력">
+                                <div class="input-group-append">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-2">
                         <div class="form-group">
                             <label>&nbsp;</label>
-                            <button type="submit" class="btn btn-primary btn-block">
-                                <i class="fas fa-search"></i> 검색
+                            <button type="button" class="btn btn-secondary btn-block" onclick="resetForm()">
+                                <i class="fas fa-redo"></i> 초기화
                             </button>
                         </div>
                     </div>
@@ -236,6 +247,13 @@
 <!-- 쿠폰 관리 스크립트 -->
 <th:block layout:fragment="script">
     <script th:inline="javascript">
+        // Select2 초기화
+        $(document).ready(function() {
+            $('.select2').select2({
+                theme: 'bootstrap4'
+            });
+        });
+
         let couponIdToDelete;
 
         function deleteCoupon(id) {
@@ -247,21 +265,73 @@
             fetch(`/api/admin/coupons/${couponIdToDelete}`, {
                 method: 'DELETE',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
                 }
-            }).then(response => {
-                if (response.ok) {
-                    window.location.reload();
-                } else {
-                    throw new Error('쿠폰 삭제에 실패했습니다.');
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('삭제 실패');
                 }
-            }).catch(error => {
+                return response.json();
+            })
+            .then(() => {
+                $('#deleteCouponModal').modal('hide');
+                showToast('success', '쿠폰이 삭제되었습니다.');
+                setTimeout(() => location.reload(), 1500);
+            })
+            .catch(error => {
                 console.error('Error:', error);
-                alert(error.message);
+                showToast('error', '쿠폰 삭제 중 오류가 발생했습니다.');
             });
-            $('#deleteCouponModal').modal('hide');
+        }
+
+        function resetForm() {
+            document.getElementById('searchForm').reset();
+            $('.select2').val('').trigger('change');
+            document.getElementById('searchForm').submit();
+        }
+
+        function showToast(type, message) {
+            Swal.fire({
+                icon: type,
+                title: message,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000
+            });
         }
     </script>
+
+    <style>
+        .dashboard-card {
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+        }
+        .stats-icon {
+            float: right;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-bottom: 15px;
+        }
+        .filter-card {
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .select2-container--bootstrap4 .select2-selection {
+            border-radius: 5px;
+        }
+    </style>
 </th:block>
 </body>
 </html> 

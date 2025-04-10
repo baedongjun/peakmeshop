@@ -1,63 +1,57 @@
 package com.peakmeshop.domain.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.Type;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "settings")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Setting {
+
     @Id
-    @Column(nullable = false)
-    private String type;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Column(columnDefinition = "json")
-    private String settings;
+    @Column(name = "setting_key", nullable = false, unique = true)
+    private String key;
 
-    // 기본 설정
-    private String shopName;
-    private String adminEmail;
-    private String customerServicePhone;
-    private String operatingHours;
-    @Column(columnDefinition = "TEXT")
-    private String companyInfo;
-    @Column(columnDefinition = "TEXT")
-    private String termsOfService;
-    @Column(columnDefinition = "TEXT")
-    private String privacyPolicy;
+    @Column(name = "setting_value", columnDefinition = "TEXT")
+    private String value;
 
-    // 결제 설정
-    private Boolean creditCardEnabled = true;
-    private Boolean bankTransferEnabled = true;
-    private Boolean virtualAccountEnabled = true;
-    private Boolean mobilePayEnabled = true;
-    private Integer minimumOrderAmount = 0;
-    private String pgProvider;
-    private String merchantId;
-    private String merchantKey;
+    @Column(name = "setting_group", nullable = false)
+    private String group;  // basic, payment, delivery, point, sms
 
-    // 배송 설정
-    private Integer defaultDeliveryFee = 0;
-    private Integer freeDeliveryThreshold = 0;
-    private String defaultDeliveryCompany;
-    private String returnAddress;
-    private String returnAddressDetail;
-    private String returnZipCode;
+    @Column(name = "setting_label", nullable = false)
+    private String label;  // 화면에 표시될 레이블
 
-    // 포인트 설정
-    private Double pointRate = 0.0;
-    private Integer minimumPointAmount = 0;
-    private Integer signupPoint = 0;
-    private Integer reviewPoint = 0;
+    @Column(name = "setting_type", nullable = false)
+    private String type;  // text, number, email, tel, textarea, checkbox, select
 
-    // SMS 설정
-    private String smsProvider;
-    private String smsApiKey;
-    private String smsApiSecret;
-    private String smsSenderId;
-    private Boolean orderSmsEnabled = false;
-    private Boolean deliverySmsEnabled = false;
+    @Column(name = "setting_description")
+    private String description;
+
+    @Column(name = "is_required")
+    private Boolean isRequired;
+
+    @Column(name = "is_public")
+    private Boolean isPublic;  // 프론트엔드에 노출 여부
+
+    @Column(name = "validation_rules")
+    private String validationRules;  // min, max, pattern 등
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 } 

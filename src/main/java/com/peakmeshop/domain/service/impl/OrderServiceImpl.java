@@ -23,7 +23,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -70,7 +72,7 @@ public class OrderServiceImpl implements OrderService {
                 .totalPrice(orderRequestDTO.getTotalAmount())
                 .discount(orderRequestDTO.getDiscountAmount())
                 .deliveryFee(orderRequestDTO.getShippingCost())
-                .finalPrice(orderRequestDTO.getTotalAmount().subtract(orderRequestDTO.getDiscountAmount()).add(orderRequestDTO.getShippingCost()))
+                .finalPrice(orderRequestDTO.getTotalAmount().doubleValue() - orderRequestDTO.getDiscountAmount().doubleValue() + orderRequestDTO.getShippingCost().doubleValue())
                 .recipientName(orderRequestDTO.getRecipientName())
                 .recipientTel(orderRequestDTO.getRecipientTel())
                 .recipientAddress(orderRequestDTO.getRecipientAddress())
@@ -529,6 +531,81 @@ public class OrderServiceImpl implements OrderService {
                 .memberName(order.getMember().getName())
                 .totalAmount(order.getFinalPrice())
                 .cancelledAt(order.getUpdatedAt())
+                .build();
+    }
+
+    @Override
+    public OrderSummaryDTO getOrderSummary(String period, String startDate, String endDate) {
+        LocalDateTime start;
+        LocalDateTime end;
+
+        // 기간 설정
+        if (startDate != null && endDate != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            start = LocalDate.parse(startDate, formatter).atStartOfDay();
+            end = LocalDate.parse(endDate, formatter).plusDays(1).atStartOfDay();
+        } else {
+            LocalDate now = LocalDate.now();
+            switch (period) {
+                case "daily":
+                    start = now.atStartOfDay();
+                    end = now.plusDays(1).atStartOfDay();
+                    break;
+                case "weekly":
+                    start = now.minusWeeks(1).atStartOfDay();
+                    end = now.plusDays(1).atStartOfDay();
+                    break;
+                case "monthly":
+                    start = now.minusMonths(1).atStartOfDay();
+                    end = now.plusDays(1).atStartOfDay();
+                    break;
+                case "yearly":
+                    start = now.minusYears(1).atStartOfDay();
+                    end = now.plusDays(1).atStartOfDay();
+                    break;
+                default:
+                    start = now.minusMonths(1).atStartOfDay();
+                    end = now.plusDays(1).atStartOfDay();
+            }
+        }
+
+        // 주문 데이터 조회
+        List<Order> orders = orderRepository.findByDateRange(start, end);
+        
+        // 일별/월별 매출 데이터
+        List<Object[]> dailySales = orderRepository.getDailySales(start, end);
+        List<Object[]> monthlySales = orderRepository.getMonthlySales(start, end);
+
+        // 상태별 주문 수
+        Map<OrderStatus, Long> statusCounts = orderRepository.getOrderStatusDistribution();
+
+        return OrderSummaryDTO.builder()
+                .totalOrders((long) orders.size())
+                .monthlyOrders(orders.stream()
+                        .filter(o -> o.getCreatedAt().isAfter(LocalDateTime.now().minusMonths(1)))
+                        .count())
+                .dailyOrders(orders.stream()
+                        .filter(o -> o.getCreatedAt().isAfter(LocalDateTime.now().minusDays(1)))
+                        .count())
+                .totalRevenue(orders.stream()
+                        .mapToDouble(Order::getTotalAmount)
+                        .sum())
+                .monthlyRevenue(orders.stream()
+                        .filter(o -> o.getCreatedAt().isAfter(LocalDateTime.now().minusMonths(1)))
+                        .mapToDouble(Order::getTotalAmount)
+                        .sum())
+                .dailyRevenue(orders.stream()
+                        .filter(o -> o.getCreatedAt().isAfter(LocalDateTime.now().minusDays(1)))
+                        .mapToDouble(Order::getTotalAmount)
+                        .sum())
+                .averageOrderValue(orders.isEmpty() ? 0.0 : orders.stream()
+                        .mapToDouble(order -> order.getTotalAmount().doubleValue())
+                        .average()
+                        .orElse(0.0))
+                .pendingOrders(statusCounts.getOrDefault(OrderStatus.PENDING, 0L))
+                .processingOrders(statusCounts.getOrDefault(OrderStatus.PROCESSING, 0L))
+                .completedOrders(statusCounts.getOrDefault(OrderStatus.COMPLETED, 0L))
+                .cancelledOrders(statusCounts.getOrDefault(OrderStatus.CANCELLED, 0L))
                 .build();
     }
 }

@@ -1,12 +1,15 @@
 package com.peakmeshop.domain.service.impl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.peakmeshop.api.dto.*;
+import com.peakmeshop.domain.repository.PointRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,6 +22,7 @@ import com.peakmeshop.common.exception.BadRequestException;
 import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.repository.MemberRepository;
 import com.peakmeshop.domain.repository.VerificationTokenRepository;
+import com.peakmeshop.domain.repository.OrderRepository;
 import com.peakmeshop.domain.service.EmailService;
 import com.peakmeshop.domain.service.MemberService;
 
@@ -31,9 +35,11 @@ import lombok.extern.slf4j.Slf4j;
 public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
+    private final PointRepository pointRepository;
     private final VerificationTokenRepository verificationTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final OrderRepository orderRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -352,7 +358,75 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public Map<String, Object> getMemberStatistics(String period, String startDate, String endDate) {
-        return null;
+        return Map.of();
+    }
+
+    @Override
+    public MemberSummaryDTO getMemberSummary(String period, String startDate, String endDate) {
+        LocalDateTime start;
+        LocalDateTime end;
+
+        // 기간 설정
+        if (startDate != null && endDate != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            start = LocalDate.parse(startDate, formatter).atStartOfDay();
+            end = LocalDate.parse(endDate, formatter).plusDays(1).atStartOfDay();
+        } else {
+            LocalDate now = LocalDate.now();
+            switch (period) {
+                case "daily":
+                    start = now.atStartOfDay();
+                    end = now.plusDays(1).atStartOfDay();
+                    break;
+                case "weekly":
+                    start = now.minusWeeks(1).atStartOfDay();
+                    end = now.plusDays(1).atStartOfDay();
+                    break;
+                case "monthly":
+                    start = now.minusMonths(1).atStartOfDay();
+                    end = now.plusDays(1).atStartOfDay();
+                    break;
+                case "yearly":
+                    start = now.minusYears(1).atStartOfDay();
+                    end = now.plusDays(1).atStartOfDay();
+                    break;
+                default:
+                    start = now.minusMonths(1).atStartOfDay();
+                    end = now.plusDays(1).atStartOfDay();
+            }
+        }
+
+        // 회원 데이터 조회
+        List<Member> members = memberRepository.findByCreatedAtBetween(start, end);
+        long totalMembers = memberRepository.count();
+        long activeMembers = memberRepository.countByStatus("ACTIVE");
+        long inactiveMembers = memberRepository.countByStatus("INACTIVE");
+
+        // 회원별 주문/매출 통계
+        double totalRevenue = orderRepository.calculateTotalRevenue(start, end);
+        long totalOrders = orderRepository.countByCreatedAtBetween(start, end);
+        double averageOrdersPerMember = totalMembers == 0 ? 0 : (double) totalOrders / totalMembers;
+        double averageRevenuePerMember = totalMembers == 0 ? 0 : totalRevenue / totalMembers;
+
+        // 포인트 통계
+        double totalPoints = pointRepository.calculateTotalPoints(LocalDateTime.now());
+        double averagePoints = totalMembers == 0 ? 0 : totalPoints / totalMembers;
+
+        return MemberSummaryDTO.builder()
+                .totalMembers(totalMembers)
+                .monthlyNewMembers(memberRepository.countByCreatedAtBetween(
+                        LocalDateTime.now().minusMonths(1),
+                        LocalDateTime.now()))
+                .dailyNewMembers(memberRepository.countByCreatedAtBetween(
+                        LocalDateTime.now().minusDays(1),
+                        LocalDateTime.now()))
+                .activeMembers(activeMembers)
+                .inactiveMembers(inactiveMembers)
+                .averageOrdersPerMember(averageOrdersPerMember)
+                .averageRevenuePerMember(averageRevenuePerMember)
+                .totalPoints(totalPoints)
+                .averagePoints(averagePoints)
+                .build();
     }
 
     @Override

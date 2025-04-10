@@ -180,17 +180,11 @@ public class StockNotificationServiceImpl implements StockNotificationService {
     }
 
     private StockNotificationDTO convertToDTO(StockNotification notification) {
-        String imageUrl = null;
-        List<String> images = notification.getProduct().getImages();
-        if (images != null && !images.isEmpty()) {
-            imageUrl = images.get(0); // 첫 번째 이미지 URL 사용
-        }
-
         return new StockNotificationDTO(
                 notification.getId(),
                 notification.getProduct().getId(),
                 notification.getProduct().getName(),
-                imageUrl,
+                notification.getProduct().getMainImage(),
                 notification.getMember().getId(),
                 notification.getMember().getName(),
                 notification.getMember().getEmail(),

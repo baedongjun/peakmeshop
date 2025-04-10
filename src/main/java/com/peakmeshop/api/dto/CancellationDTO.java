@@ -12,7 +12,7 @@ public class CancellationDTO {
     private String orderNumber;
     private Long memberId;
     private String memberName;
-    private BigDecimal totalAmount;
+    private Double totalAmount;
     private String reason;
     private LocalDateTime cancelledAt;
 } 

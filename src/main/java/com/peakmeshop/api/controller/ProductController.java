@@ -62,6 +62,12 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/images/{id}")
+    public ResponseEntity<Void> deleteProductImage(@PathVariable Long id) {
+        productService.deleteProductImage(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/category/{categoryId}")
     public ResponseEntity<Page<ProductDTO>> getProductsByCategory(
             @PathVariable Long categoryId,

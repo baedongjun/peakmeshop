@@ -92,38 +92,18 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT COALESCE(AVG(p.averageRating), 0) FROM Product p WHERE p.averageRating > 0")
     BigDecimal calculateAverageRating();
 
-    @Query("SELECT p.category.name as category, COUNT(p) as count, SUM(p.salePrice) as total " +
-           "FROM Product p WHERE p.createdAt BETWEEN :startDate AND :endDate " +
-           "GROUP BY p.category.name")
-    List<Object[]> findSalesByCategory(@Param("startDate") LocalDateTime startDate, 
-                                     @Param("endDate") LocalDateTime endDate);
-
     @Query("SELECT p.category.name as category, COUNT(p) as count, SUM(p.price) as total " +
            "FROM Product p WHERE p.category.name = :category " +
            "AND p.createdAt BETWEEN :startDate AND :endDate " +
            "GROUP BY p.category.name")
     List<Object[]> findSalesByCategory(String category, LocalDateTime startDate, LocalDateTime endDate);
 
-    @Query("SELECT p FROM Product p " +
-           "WHERE p.createdAt BETWEEN :startDate AND :endDate " +
-           "ORDER BY p.salePrice DESC")
-    Page<Product> findTopProducts(@Param("startDate") LocalDateTime startDate, 
-                                @Param("endDate") LocalDateTime endDate, 
-                                Pageable pageable);
-
-    @Query("SELECT DATE(p.createdAt) as date, COUNT(p) as count, SUM(p.salePrice) as total " +
-           "FROM Product p " +
-           "WHERE p.createdAt BETWEEN :startDate AND :endDate " +
-           "GROUP BY DATE(p.createdAt)")
-    List<Object[]> findSalesTrend(@Param("startDate") LocalDateTime startDate, 
-                                 @Param("endDate") LocalDateTime endDate);
-
     @Query("SELECT p.category.name as category, SUM(p.stock) as totalStock " +
            "FROM Product p " +
            "GROUP BY p.category.name")
     List<Object[]> findStockByCategory();
 
-    @Query("SELECT p FROM Product p WHERE p.stock <= p.lowStockThreshold AND p.stock > 0")
+    @Query("SELECT p FROM Product p WHERE p.stock <= p.stockAlert AND p.stock > 0")
     List<Product> findLowStockProducts();
 
     @Query("SELECT p FROM Product p WHERE p.stock = 0")
@@ -134,4 +114,54 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByIsActiveTrueOrderByNameAsc();
     
     Page<Product> findByIsActiveTrue(Pageable pageable);
+
+    List<Product> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    long countByStatus(String status);
+
+    long countByStockLessThanAndStockGreaterThan(int maxStock, int minStock);
+
+    @Query("SELECT AVG(p.price) FROM Product p WHERE p.isActive = true")
+    double calculateAveragePrice();
+
+    @Query("SELECT SUM(p.stock) FROM Product p WHERE p.isActive = true")
+    long calculateTotalInventory();
+
+    @Query("SELECT (SUM(o.quantity) * 1.0) / AVG(p.stock) " +
+           "FROM OrderItem o JOIN o.product p " +
+           "WHERE o.createdAt BETWEEN :startDate AND :endDate")
+    double calculateInventoryTurnover(@Param("startDate") LocalDateTime startDate,
+                                    @Param("endDate") LocalDateTime endDate);
+
+    long countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    @Query("SELECT COUNT(DISTINCT o.product.id) " +
+           "FROM OrderItem o " +
+           "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+           "GROUP BY o.product.id " +
+           "HAVING COUNT(o) >= 10")
+    long countTopSellers(@Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT p.category.name, COUNT(o), SUM(o.price * o.quantity) " +
+           "FROM OrderItem o JOIN o.product p " +
+           "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+           "GROUP BY p.category.name")
+    List<Object[]> findSalesByCategory(@Param("startDate") LocalDateTime startDate,
+                                      @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT DATE(o.createdAt), COUNT(o), SUM(o.price * o.quantity) " +
+           "FROM OrderItem o " +
+           "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+           "GROUP BY DATE(o.createdAt)")
+    List<Object[]> findSalesTrend(@Param("startDate") LocalDateTime startDate,
+                                 @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT p FROM Product p " +
+           "WHERE EXISTS (SELECT o FROM OrderItem o WHERE o.product = p " +
+           "AND o.createdAt BETWEEN :startDate AND :endDate) " +
+           "ORDER BY p.salesCount DESC")
+    Page<Product> findTopProducts(@Param("startDate") LocalDateTime startDate,
+                                 @Param("endDate") LocalDateTime endDate,
+                                 Pageable pageable);
 }

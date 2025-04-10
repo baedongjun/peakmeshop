@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.peakmeshop.api.dto.CategoryDTO;
+import com.peakmeshop.domain.entity.Category;
 
 public interface CategoryService {
 

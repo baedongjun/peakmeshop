@@ -46,9 +46,5 @@ public class ProductImage {
     @Column(name = "is_thumbnail")
     private boolean thumbnail;
 
-    // 편의 메서드
-    public boolean isMain() {
-        return Boolean.TRUE.equals(isMain);
-    }
 }
 

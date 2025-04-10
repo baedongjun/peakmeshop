@@ -29,8 +29,8 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     List<Long> findFrequentlyBoughtTogetherProductIds(@Param("productId") Long productId, @Param("limit") int limit);
 
     // 인기 상품 조회
-    @Query("SELECT oi.product.id, oi.product.name, oi.product.imageUrl, SUM(oi.quantity), SUM(oi.price * oi.quantity) FROM OrderItem oi " +
-            "GROUP BY oi.product.id, oi.product.name, oi.product.imageUrl " +
+    @Query("SELECT oi.product.id, oi.product.name, oi.product.mainImage, SUM(oi.quantity), SUM(oi.price * oi.quantity) FROM OrderItem oi " +
+            "GROUP BY oi.product.id, oi.product.name, oi.product.mainImage " +
             "ORDER BY SUM(oi.quantity) DESC")
     List<Object[]> findTopSellingProducts(int limit);
 }

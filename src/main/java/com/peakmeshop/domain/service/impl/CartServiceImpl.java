@@ -691,33 +691,23 @@ public class CartServiceImpl implements CartService {
         // 상품 이미지 URL 가져오기 - 수정된 부분
         String thumbnailUrl = null;
         if (!item.getProduct().getImages().isEmpty()) {
-            // 방법 1: 람다 표현식 사용
-            String thumbnailImage = item.getProduct().getImages().stream()
-                    .filter(imageUrl -> imageUrl.contains("thumbnail") || imageUrl.contains("thumb"))
+            ProductImage thumbnail = item.getProduct().getImages().stream()
+                    .map(Images -> {
+                        ProductImage productImage = new ProductImage();
+                        productImage.setUrl(Images.getUrl());
+                        productImage.setThumbnail(Images.isThumbnail());
+                        return productImage;
+                    })
+                    .filter(image -> image.isThumbnail()) // 람다 표현식 사용
                     .findFirst()
-                    .orElse(item.getProduct().getImages().get(0));
+                    .orElseGet(() -> {
+                        ProductImage defaultImage = new ProductImage();
+                        defaultImage.setUrl(item.getProduct().getMainImage());
+                        return defaultImage;
+                    });
 
-            thumbnailUrl = thumbnailImage;
+            thumbnailUrl = thumbnail.getUrl();
 
-            // 또는 방법 2: ProductImage 변환 후 필터링 (필요한 경우)
-        /*
-        ProductImage thumbnail = item.getProduct().getImages().stream()
-                .map(imageUrl -> {
-                    ProductImage productImage = new ProductImage();
-                    productImage.setUrl(imageUrl);
-                    productImage.setThumbnail(imageUrl.contains("thumbnail") || imageUrl.contains("thumb"));
-                    return productImage;
-                })
-                .filter(image -> image.isThumbnail()) // 람다 표현식 사용
-                .findFirst()
-                .orElseGet(() -> {
-                    ProductImage defaultImage = new ProductImage();
-                    defaultImage.setUrl(item.getProduct().getImages().get(0));
-                    return defaultImage;
-                });
-
-        thumbnailUrl = thumbnail.getUrl();
-        */
         }
 
         // 옵션 정보 변환

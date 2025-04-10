@@ -27,26 +27,46 @@
         <div class="card-body">
             <form th:action="${promotion != null ? '/api/admin/promotions/' + promotion.id : '/api/admin/promotions'}"
                   th:method="${promotion != null ? 'PUT' : 'POST'}"
-                  id="promotionForm">
+                  id="promotionForm"
+                  class="needs-validation"
+                  novalidate>
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
                             <label class="required">프로모션명</label>
-                            <input type="text" class="form-control" name="name" required
-                                   th:value="${promotion != null ? promotion.name : ''}"
-                                   placeholder="프로모션명을 입력하세요">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                                </div>
+                                <input type="text" class="form-control" name="name" required
+                                       th:value="${promotion != null ? promotion.name : ''}"
+                                       placeholder="프로모션명을 입력하세요"
+                                       minlength="2"
+                                       maxlength="100">
+                                <div class="invalid-feedback">
+                                    프로모션명을 2자 이상 100자 이하로 입력해주세요.
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
                             <label class="required">프로모션 유형</label>
-                            <select class="form-control" name="type" required onchange="updateBenefitFields()">
-                                <option value="">선택하세요</option>
-                                <option value="DISCOUNT" th:selected="${promotion != null && promotion.type == 'DISCOUNT'}">할인</option>
-                                <option value="GIFT" th:selected="${promotion != null && promotion.type == 'GIFT'}">사은품</option>
-                                <option value="POINT" th:selected="${promotion != null && promotion.type == 'POINT'}">포인트</option>
-                                <option value="FREE_DELIVERY" th:selected="${promotion != null && promotion.type == 'FREE_DELIVERY'}">무료배송</option>
-                            </select>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="fas fa-gift"></i></span>
+                                </div>
+                                <select class="form-control select2" name="type" required onchange="updateBenefitFields()">
+                                    <option value="">선택하세요</option>
+                                    <option value="DISCOUNT" th:selected="${promotion != null && promotion.type == 'DISCOUNT'}">할인</option>
+                                    <option value="GIFT" th:selected="${promotion != null && promotion.type == 'GIFT'}">사은품</option>
+                                    <option value="POINT" th:selected="${promotion != null && promotion.type == 'POINT'}">포인트</option>
+                                    <option value="FREE_DELIVERY" th:selected="${promotion != null && promotion.type == 'FREE_DELIVERY'}">무료배송</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    프로모션 유형을 선택해주세요.
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -150,29 +170,60 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label class="required">시작일</label>
-                            <input type="date" class="form-control" name="startDate" required
-                                   th:value="${promotion != null ? #temporals.format(promotion.startDate, 'yyyy-MM-dd') : ''}">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                </div>
+                                <input type="date" class="form-control datepicker" name="startDate" required
+                                       th:value="${promotion != null ? #temporals.format(promotion.startDate, 'yyyy-MM-dd') : ''}"
+                                       min="${#dates.format(#dates.createNow(), 'yyyy-MM-dd')}">
+                                <div class="invalid-feedback">
+                                    시작일을 선택해주세요.
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
                             <label class="required">종료일</label>
-                            <input type="date" class="form-control" name="endDate" required
-                                   th:value="${promotion != null ? #temporals.format(promotion.endDate, 'yyyy-MM-dd') : ''}">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                </div>
+                                <input type="date" class="form-control datepicker" name="endDate" required
+                                       th:value="${promotion != null ? #temporals.format(promotion.endDate, 'yyyy-MM-dd') : ''}"
+                                       min="${#dates.format(#dates.createNow(), 'yyyy-MM-dd')}">
+                                <div class="invalid-feedback">
+                                    종료일을 선택해주세요.
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>설명</label>
-                    <textarea class="form-control" name="description" rows="4"
-                              th:text="${promotion != null ? promotion.description : ''}"
-                              placeholder="프로모션에 대한 설명을 입력하세요"></textarea>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fas fa-info-circle"></i></span>
+                        </div>
+                        <textarea class="form-control" name="description" rows="4"
+                                  th:text="${promotion != null ? promotion.description : ''}"
+                                  placeholder="프로모션에 대한 설명을 입력하세요"
+                                  maxlength="500"></textarea>
+                        <div class="invalid-feedback">
+                            설명은 500자를 초과할 수 없습니다.
+                        </div>
+                    </div>
                 </div>
 
                 <div class="text-right mt-3">
-                    <a th:href="@{/admin/promotions}" class="btn btn-secondary">취소</a>
-                    <button type="submit" class="btn btn-primary">저장</button>
+                    <a th:href="@{/admin/promotions}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> 취소
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> 저장
+                    </button>
                 </div>
             </form>
         </div>
@@ -183,17 +234,39 @@
 <!-- 프로모션 폼 스크립트 -->
 <th:block layout:fragment="script">
     <script th:inline="javascript">
+        // Select2 초기화
+        $(document).ready(function() {
+            $('.select2').select2({
+                theme: 'bootstrap4',
+                width: '100%'
+            });
+
+            // Datepicker 초기화
+            $('.datepicker').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true,
+                todayHighlight: true,
+                startDate: new Date()
+            });
+        });
+
         // 혜택 필드 업데이트
         function updateBenefitFields() {
             const type = document.querySelector('select[name="type"]').value;
             document.querySelectorAll('.benefit-field').forEach(field => {
                 field.style.display = 'none';
+                field.querySelectorAll('input, select').forEach(input => {
+                    input.required = false;
+                });
             });
 
             if (type) {
                 const targetField = document.querySelector(`.${type.toLowerCase()}-field`);
                 if (targetField) {
                     targetField.style.display = 'block';
+                    targetField.querySelectorAll('input, select').forEach(input => {
+                        input.required = true;
+                    });
                 }
             }
         }
@@ -203,19 +276,38 @@
             const target = document.querySelector('select[name="target"]').value;
             document.querySelectorAll('.target-field').forEach(field => {
                 field.style.display = 'none';
+                field.querySelectorAll('input, select').forEach(input => {
+                    input.required = false;
+                });
             });
 
             if (target && target !== 'ALL') {
                 const targetField = document.querySelector(`.${target.toLowerCase()}-field`);
                 if (targetField) {
                     targetField.style.display = 'block';
+                    targetField.querySelectorAll('input, select').forEach(input => {
+                        input.required = true;
+                    });
                 }
             }
+        }
+
+        // 폼 유효성 검사
+        function validateForm() {
+            const form = document.getElementById('promotionForm');
+            if (form.checkValidity() === false) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+            return form.checkValidity();
         }
 
         // 폼 제출 처리
         document.getElementById('promotionForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            if (!validateForm()) return;
+
             const formData = new FormData(this);
             const data = {};
             formData.forEach((value, key) => {
@@ -225,18 +317,35 @@
             fetch(this.action, {
                 method: this.method,
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
                 },
                 body: JSON.stringify(data)
-            }).then(response => {
-                if (response.ok) {
-                    window.location.href = '/admin/promotions';
-                } else {
+            })
+            .then(response => {
+                if (!response.ok) {
                     throw new Error('프로모션 저장에 실패했습니다.');
                 }
-            }).catch(error => {
+                return response.json();
+            })
+            .then(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: '저장 완료',
+                    text: '프로모션이 성공적으로 저장되었습니다.',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    window.location.href = '/admin/promotions';
+                });
+            })
+            .catch(error => {
                 console.error('Error:', error);
-                alert(error.message);
+                Swal.fire({
+                    icon: 'error',
+                    title: '저장 실패',
+                    text: error.message
+                });
             });
         });
 
@@ -246,6 +355,39 @@
             updateTargetFields();
         });
     </script>
+
+    <style>
+        .required:after {
+            content: " *";
+            color: red;
+        }
+        .input-group-text {
+            background-color: #f8f9fa;
+            border-right: none;
+        }
+        .input-group .form-control {
+            border-left: none;
+        }
+        .input-group .form-control:focus {
+            border-color: #ced4da;
+            box-shadow: none;
+        }
+        .select2-container--bootstrap4 .select2-selection {
+            border-left: none;
+            border-radius: 0 4px 4px 0;
+        }
+        .btn {
+            padding: 8px 20px;
+        }
+        .btn i {
+            margin-right: 5px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+    </style>
 </th:block>
 </body>
+</html> 
 </html> 

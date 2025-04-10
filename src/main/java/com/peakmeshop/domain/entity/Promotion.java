@@ -41,22 +41,31 @@ public class Promotion {
     private double discountValue;
 
     @Column(nullable = false)
+    private String target;
+
+    @Column(nullable = false)
     private LocalDateTime startDate;
 
     @Column(nullable = false)
     private LocalDateTime endDate;
 
     @Column(nullable = false)
-    private boolean active;
+    private boolean isActive;
 
     private String bannerImageUrl;
 
     @Column(unique = true)
     private String promotionCode;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")
     private Category category;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "product_id")
+    private Product product;
+
+    private Double discountRate;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

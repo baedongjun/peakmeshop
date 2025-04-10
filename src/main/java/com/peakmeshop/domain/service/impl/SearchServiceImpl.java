@@ -248,7 +248,6 @@ public class SearchServiceImpl implements SearchService {
         dto.setCategory(product.getCategory());
         dto.setSupplier(product.getSupplier());
         dto.setMainImage(product.getMainImage());
-        dto.setImages(product.getImages());
         dto.setStock(product.getStock());
         dto.setStatus(product.getStatus());
         dto.setIsActive(product.getIsActive());

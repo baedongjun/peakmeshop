@@ -56,7 +56,7 @@ public class AdminProductViewController {
     public String createProduct(Model model) {
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("suppliers", supplierService.getAllSuppliers(Pageable.unpaged()));
-        return "admin/products/form";
+        return "admin/products/product-form";
     }
 
     /**
@@ -68,7 +68,7 @@ public class AdminProductViewController {
         model.addAttribute("product", productService.getProductById(id));
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("suppliers", supplierService.getAllSuppliers(Pageable.unpaged()));
-        return "admin/products/form";
+        return "admin/products/product-form";
     }
 
     /**
@@ -79,7 +79,7 @@ public class AdminProductViewController {
         model.addAttribute("productId", id);
         model.addAttribute("product", productService.getProductById(id));
         model.addAttribute("summary", productService.getProductSummary(id));
-        return "admin/products/detail";
+        return "admin/products/product-detail";
     }
 
     /**

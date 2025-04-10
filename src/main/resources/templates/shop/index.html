@@ -202,7 +202,7 @@
                 <div th:each="brand, stat : ${brands}"
                      class="col-4 col-md-2 mb-4 text-center animate-fade-in" th:classappend="${stat.index > 0 ? 'delay-' + (stat.index % 4 + 1) : ''}">
                     <a th:href="@{'/brand/' + ${brand.slug}}">
-                        <img th:src="${brand.logo != null ? brand.logo : '/placeholder.svg?height=80&width=120'}"
+                        <img th:src="${brand.logoUrl != null ? brand.logoUrl : '/placeholder.svg?height=80&width=120'}"
                              th:alt="${brand.name}" class="img-fluid">
                     </a>
                 </div>

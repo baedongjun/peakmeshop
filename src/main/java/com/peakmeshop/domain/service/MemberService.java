@@ -12,6 +12,7 @@ import com.peakmeshop.api.dto.PasswordResetDTO;
 import com.peakmeshop.api.dto.PasswordResetRequestDTO;
 import com.peakmeshop.api.dto.MemberGradeDTO;
 import com.peakmeshop.api.dto.PointDTO;
+import com.peakmeshop.api.dto.MemberSummaryDTO;
 
 public interface MemberService {
 
@@ -66,4 +67,13 @@ public interface MemberService {
     Page<MemberDTO> getDormantMembers(Pageable pageable);
 
     Page<MemberDTO> getWithdrawnMembers(String startDate, String endDate, Pageable pageable);
+
+    /**
+     * 회원 통계 정보 조회
+     * @param period 기간 (daily, weekly, monthly, yearly)
+     * @param startDate 시작일
+     * @param endDate 종료일
+     * @return 회원 통계 정보
+     */
+    MemberSummaryDTO getMemberSummary(String period, String startDate, String endDate);
 }

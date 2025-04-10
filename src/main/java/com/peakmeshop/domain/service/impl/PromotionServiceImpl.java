@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.peakmeshop.api.dto.PromotionSummaryDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -57,22 +58,22 @@ public class PromotionServiceImpl implements PromotionService {
     @Transactional
     public PromotionDTO createPromotion(PromotionDTO promotionDTO) {
         Promotion promotion = new Promotion();
-        promotion.setName(promotionDTO.name());
-        promotion.setDescription(promotionDTO.description());
-        promotion.setDiscountType(promotionDTO.discountType());
-        promotion.setDiscountValue(promotionDTO.discountValue());
-        promotion.setStartDate(promotionDTO.startDate());
-        promotion.setEndDate(promotionDTO.endDate());
-        promotion.setActive(promotionDTO.isActive());
-        promotion.setBannerImageUrl(promotionDTO.bannerImageUrl());
-        promotion.setPromotionCode(promotionDTO.promotionCode());
+        promotion.setName(promotionDTO.getName());
+        promotion.setDescription(promotionDTO.getDescription());
+        promotion.setDiscountType(promotionDTO.getDiscountType());
+        promotion.setDiscountValue(promotionDTO.getDiscountValue());
+        promotion.setStartDate(promotionDTO.getStartDate());
+        promotion.setEndDate(promotionDTO.getEndDate());
+        promotion.setActive(promotionDTO.getIsActive());
+        promotion.setBannerImageUrl(promotionDTO.getBannerImageUrl());
+        promotion.setPromotionCode(promotionDTO.getPromotionCode());
         promotion.setCreatedAt(LocalDateTime.now());
         promotion.setUpdatedAt(LocalDateTime.now());
 
         // 카테고리 설정
-        if (promotionDTO.categoryId() != null) {
-            Category category = categoryRepository.findById(promotionDTO.categoryId())
-                    .orElseThrow(() -> new ResourceNotFoundException("카테고리를 찾을 수 없습니다. ID: " + promotionDTO.categoryId()));
+        if (promotionDTO.getCategory() != null) {
+            Category category = categoryRepository.findById(promotionDTO.getCategory().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("카테고리를 찾을 수 없습니다. ID: " + promotionDTO.getCategory().getId()));
             promotion.setCategory(category);
         }
 
@@ -86,21 +87,21 @@ public class PromotionServiceImpl implements PromotionService {
         Promotion existingPromotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("프로모션을 찾을 수 없습니다. ID: " + id));
 
-        existingPromotion.setName(promotionDTO.name());
-        existingPromotion.setDescription(promotionDTO.description());
-        existingPromotion.setDiscountType(promotionDTO.discountType());
-        existingPromotion.setDiscountValue(promotionDTO.discountValue());
-        existingPromotion.setStartDate(promotionDTO.startDate());
-        existingPromotion.setEndDate(promotionDTO.endDate());
-        existingPromotion.setActive(promotionDTO.isActive());
-        existingPromotion.setBannerImageUrl(promotionDTO.bannerImageUrl());
-        existingPromotion.setPromotionCode(promotionDTO.promotionCode());
+        existingPromotion.setName(promotionDTO.getName());
+        existingPromotion.setDescription(promotionDTO.getDescription());
+        existingPromotion.setDiscountType(promotionDTO.getDiscountType());
+        existingPromotion.setDiscountValue(promotionDTO.getDiscountValue());
+        existingPromotion.setStartDate(promotionDTO.getStartDate());
+        existingPromotion.setEndDate(promotionDTO.getEndDate());
+        existingPromotion.setActive(promotionDTO.getIsActive());
+        existingPromotion.setBannerImageUrl(promotionDTO.getBannerImageUrl());
+        existingPromotion.setPromotionCode(promotionDTO.getPromotionCode());
         existingPromotion.setUpdatedAt(LocalDateTime.now());
 
         // 카테고리 설정
-        if (promotionDTO.categoryId() != null) {
-            Category category = categoryRepository.findById(promotionDTO.categoryId())
-                    .orElseThrow(() -> new ResourceNotFoundException("카테고리를 찾을 수 없습니다. ID: " + promotionDTO.categoryId()));
+        if (promotionDTO.getCategory() != null) {
+            Category category = categoryRepository.findById(promotionDTO.getCategory().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("카테고리를 찾을 수 없습니다. ID: " + promotionDTO.getCategory().getId()));
             existingPromotion.setCategory(category);
         } else {
             existingPromotion.setCategory(null);
@@ -163,23 +164,60 @@ public class PromotionServiceImpl implements PromotionService {
         return false;
     }
 
+    @Override
+    public Page<PromotionDTO> getPromotions(String type, String status, String keyword, Pageable pageable) {
+        return null;
+    }
+
+    @Override
+    public PromotionSummaryDTO getPromotionSummary() {
+        return null;
+    }
+
+    @Override
+    public Optional<PromotionDTO> getPromotion(Long id) {
+        return Optional.empty();
+    }
+
+    @Override
+    public void startPromotion(Long id) {
+
+    }
+
+    @Override
+    public void endPromotion(Long id) {
+
+    }
+
+    @Override
+    public void suspendPromotion(Long id) {
+
+    }
+
+    @Override
+    public void resumePromotion(Long id) {
+
+    }
+
     // 엔티티를 DTO로 변환
     private PromotionDTO convertToDTO(Promotion promotion) {
-        return new PromotionDTO(
-                promotion.getId(),
-                promotion.getName(),
-                promotion.getDescription(),
-                promotion.getDiscountType(),
-                promotion.getDiscountValue(),
-                promotion.getStartDate(),
-                promotion.getEndDate(),
-                promotion.isActive(),
-                promotion.getBannerImageUrl(),
-                promotion.getPromotionCode(),
-                promotion.getCategory() != null ? promotion.getCategory().getId() : null,
-                promotion.getCategory() != null ? promotion.getCategory().getName() : null,
-                promotion.getCreatedAt(),
-                promotion.getUpdatedAt()
-        );
+        return PromotionDTO.builder()
+                .id(promotion.getId())
+                .name(promotion.getName())
+                .description(promotion.getDescription())
+                .discountType(promotion.getDiscountType())
+                .discountValue(promotion.getDiscountValue())
+                .target(promotion.getTarget())
+                .category(promotion.getCategory())
+                .product(promotion.getProduct())
+                .discountRate(promotion.getDiscountRate())
+                .startDate(promotion.getStartDate())
+                .endDate(promotion.getEndDate())
+                .isActive(promotion.isActive())
+                .bannerImageUrl(promotion.getBannerImageUrl())
+                .promotionCode(promotion.getPromotionCode())
+                .createdAt(promotion.getCreatedAt())
+                .updatedAt(promotion.getUpdatedAt())
+                .build();
     }
 }

@@ -28,4 +28,5 @@ public class PointDTO {
     private String orderNumber;
     private LocalDateTime expiredAt;
     private LocalDateTime createdAt;
+    private LocalDateTime expiryDate;
 }

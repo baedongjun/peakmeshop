@@ -7,9 +7,12 @@ import java.util.Map;
 import java.util.HashMap;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 import com.peakmeshop.api.dto.*;
 import com.peakmeshop.domain.entity.*;
+import com.peakmeshop.domain.repository.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -19,13 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.peakmeshop.common.exception.BadRequestException;
 import com.peakmeshop.common.exception.ResourceNotFoundException;
-import com.peakmeshop.domain.repository.CategoryRepository;
-import com.peakmeshop.domain.repository.ProductRepository;
-import com.peakmeshop.domain.repository.ProductReviewRepository;
-import com.peakmeshop.domain.repository.ProductQnaRepository;
-import com.peakmeshop.domain.repository.ProductOptionRepository;
 import com.peakmeshop.domain.service.ProductService;
-import com.peakmeshop.domain.repository.ProductOptionValueRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +38,8 @@ public class ProductServiceImpl implements ProductService {
     private final ProductQnaRepository qnaRepository;
     private final ProductOptionRepository optionRepository;
     private final ProductOptionValueRepository optionValueRepository;
+    private final ProductImageRepository productImageRepository;
+    private final BrandRepository brandRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -83,7 +82,6 @@ public class ProductServiceImpl implements ProductService {
                 .brand(productDTO.getBrand())
                 .category(category)
                 .mainImage(productDTO.getMainImage())
-                .images(productDTO.getImages())
                 .stock(productDTO.getStock())
                 .status(productDTO.getStatus())
                 .isActive(productDTO.getIsActive())
@@ -138,9 +136,6 @@ public class ProductServiceImpl implements ProductService {
         if (productDTO.getMainImage() != null) {
             product.setMainImage(productDTO.getMainImage());
         }
-        if (productDTO.getImages() != null) {
-            product.setImages(productDTO.getImages());
-        }
         if (productDTO.getStock() != null) {
             product.setStock(productDTO.getStock());
         }
@@ -165,6 +160,14 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("상품을 찾을 수 없습니다."));
         productRepository.delete(product);
+    }
+
+    @Override
+    @Transactional
+    public void deleteProductImage(Long id) {
+        ProductImage productImage = productImageRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("상품 이미지를 찾을 수 없습니다."));
+        productImageRepository.delete(productImage);
     }
 
     @Override
@@ -265,14 +268,17 @@ public class ProductServiceImpl implements ProductService {
                 .name(product.getName())
                 .description(product.getDescription())
                 .price(product.getPrice())
+                .cost(product.getCost())
                 .salePrice(product.getSalePrice())
                 .discountedPrice(product.getSalePrice()) // salePrice를 discountedPrice로도 설정
                 .brand(product.getBrand())
                 .category(product.getCategory())
                 .supplier(product.getSupplier())
                 .mainImage(product.getMainImage())
-                .images(product.getImages())
                 .stock(product.getStock())
+                .stockAlert(product.getStockAlert())
+                .maxPurchaseQuantity(product.getMaxPurchaseQuantity())
+                .shortDescription(product.getShortDescription())
                 .status(product.getStatus())
                 .isActive(product.getIsActive())
                 .isFeatured(product.getIsFeatured())
@@ -494,5 +500,86 @@ public class ProductServiceImpl implements ProductService {
         dto.setCreatedAt(value.getCreatedAt());
         dto.setUpdatedAt(value.getUpdatedAt());
         return dto;
+    }
+
+    @Override
+    public ProductSummaryDTO getProductSummary(String period, String startDate, String endDate) {
+        LocalDateTime start;
+        LocalDateTime end;
+
+        // 기간 설정
+        if (startDate != null && endDate != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            start = LocalDate.parse(startDate, formatter).atStartOfDay();
+            end = LocalDate.parse(endDate, formatter).plusDays(1).atStartOfDay();
+        } else {
+            LocalDate now = LocalDate.now();
+            switch (period) {
+                case "daily":
+                    start = now.atStartOfDay();
+                    end = now.plusDays(1).atStartOfDay();
+                    break;
+                case "weekly":
+                    start = now.minusWeeks(1).atStartOfDay();
+                    end = now.plusDays(1).atStartOfDay();
+                    break;
+                case "monthly":
+                    start = now.minusMonths(1).atStartOfDay();
+                    end = now.plusDays(1).atStartOfDay();
+                    break;
+                case "yearly":
+                    start = now.minusYears(1).atStartOfDay();
+                    end = now.plusDays(1).atStartOfDay();
+                    break;
+                default:
+                    start = now.minusMonths(1).atStartOfDay();
+                    end = now.plusDays(1).atStartOfDay();
+            }
+        }
+
+        // 상품 데이터 조회
+        List<Product> products = productRepository.findByCreatedAtBetween(start, end);
+        long totalProducts = productRepository.count();
+        long activeProducts = productRepository.countByStatus("ACTIVE");
+        long outOfStockProducts = productRepository.countByStockLessThanEqual(0);
+        long lowStockProducts = productRepository.countByStockLessThanAndStockGreaterThan(10, 0);
+
+        // 카테고리/브랜드 통계
+        long totalCategories = categoryRepository.count();
+        long totalBrands = brandRepository.count();
+
+        // 가격/재고 통계
+        double averagePrice = productRepository.calculateAveragePrice();
+        long totalInventory = productRepository.calculateTotalInventory();
+        double monthlyInventoryTurnover = productRepository.calculateInventoryTurnover(
+                LocalDateTime.now().minusMonths(1),
+                LocalDateTime.now());
+
+        // 신규/인기 상품
+        long monthlyNewProducts = productRepository.countByCreatedAtBetween(
+                LocalDateTime.now().minusMonths(1),
+                LocalDateTime.now());
+        long monthlyTopSellers = productRepository.countTopSellers(
+                LocalDateTime.now().minusMonths(1),
+                LocalDateTime.now());
+
+        return ProductSummaryDTO.builder()
+                .totalProducts(totalProducts)
+                .activeProducts(activeProducts)
+                .outOfStockProducts(outOfStockProducts)
+                .lowStockProducts(lowStockProducts)
+                .totalCategories(totalCategories)
+                .totalBrands(totalBrands)
+                .averagePrice(averagePrice)
+                .totalInventory(totalInventory)
+                .monthlyNewProducts(monthlyNewProducts)
+                .monthlyTopSellers(monthlyTopSellers)
+                .monthlyInventoryTurnover(monthlyInventoryTurnover)
+                .build();
+    }
+
+    @Override
+    public List<Product> getProductsByIds(List<Long> ids) {
+        return productRepository.findAllById(ids);
     }
 }

@@ -7,9 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.peakmeshop.domain.entity.Brand;
-import com.peakmeshop.domain.entity.Category;
-import com.peakmeshop.domain.entity.Supplier;
+import com.peakmeshop.domain.entity.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,14 +24,17 @@ public class ProductDTO {
     private String name;
     private String description;
     private BigDecimal price;
+    private BigDecimal cost;
     private BigDecimal salePrice; // 판매가 (할인가)
     private BigDecimal discountedPrice; // 할인가 (다른 이름)
     private Brand brand; // 브랜드
     private Category category;
     private Supplier supplier;
     private String mainImage;
-    private List<String> images;
     private Integer stock;
+    private Integer stockAlert;
+    private Integer maxPurchaseQuantity;
+    private String shortDescription;
     private String status; // 상품 상태 (ACTIVE, INACTIVE, OUT_OF_STOCK 등)
     private Boolean isActive; // 활성화 여부
     private Boolean isFeatured; // 추천 상품 여부
@@ -48,6 +49,15 @@ public class ProductDTO {
 
     @Builder.Default
     private List<ProductOptionDTO> options = new ArrayList<>();
+
+    @Builder.Default
+    private List<ProductVariantDTO> variants = new ArrayList<>();
+
+    @Builder.Default
+    private List<ReviewDTO> reviews = new ArrayList<>();
+
+    @Builder.Default
+    private List<ProductImageDTO> images = new ArrayList<>();
 
     // 할인율 계산
     public BigDecimal getDiscountRate() {

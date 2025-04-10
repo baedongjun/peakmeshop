@@ -10,6 +10,8 @@ import com.peakmeshop.api.dto.ProductDTO;
 import com.peakmeshop.api.dto.ProductReviewDTO;
 import com.peakmeshop.api.dto.ProductQnaDTO;
 import com.peakmeshop.api.dto.ProductOptionDTO;
+import com.peakmeshop.api.dto.ProductSummaryDTO;
+import com.peakmeshop.domain.entity.Product;
 
 public interface ProductService {
 
@@ -27,6 +29,9 @@ public interface ProductService {
 
     // 상품 삭제
     void deleteProduct(Long id);
+
+    // 상품 이미지 삭제
+    void deleteProductImage(Long id);
 
     // 상품 활성화/비활성화
     ProductDTO toggleProductStatus(Long id);
@@ -73,4 +78,20 @@ public interface ProductService {
     List<ProductOptionDTO> getProductOptions(Long productId);
 
     Map<String, Object> getInventoryStatistics();
+
+    /**
+     * 상품 통계 정보 조회
+     * @param period 기간 (daily, weekly, monthly, yearly)
+     * @param startDate 시작일
+     * @param endDate 종료일
+     * @return 상품 통계 정보
+     */
+    ProductSummaryDTO getProductSummary(String period, String startDate, String endDate);
+
+    /**
+     * ID 목록으로 상품 목록 조회
+     * @param ids 상품 ID 목록
+     * @return 상품 목록
+     */
+    List<Product> getProductsByIds(List<Long> ids);
 }

@@ -23,7 +23,7 @@ public class RefundDTO {
     private Long memberId;
     private String memberName;
     private String memberEmail;
-    private BigDecimal totalAmount;
+    private Double totalAmount;
     private LocalDateTime refundedAt;
     private Long orderId;
     private String refundNumber;

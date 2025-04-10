@@ -43,7 +43,7 @@ public class Order extends BaseTimeEntity {
     private BigDecimal deliveryFee;
 
     @Column(precision = 10, scale = 2)
-    private BigDecimal finalPrice;
+    private Double finalPrice;
 
     private String recipientName;
     private String recipientTel;
@@ -101,7 +101,7 @@ public class Order extends BaseTimeEntity {
         return BigDecimal.ZERO;
     }
 
-    public BigDecimal getTotalAmount() {
+    public Double getTotalAmount() {
         return finalPrice;
     }
 

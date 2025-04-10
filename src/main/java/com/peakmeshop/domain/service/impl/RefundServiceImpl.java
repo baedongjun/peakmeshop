@@ -57,7 +57,7 @@ public class RefundServiceImpl implements RefundService {
 
         // 환불 금액 검증
         if (refundRequest.getAmount().compareTo(BigDecimal.ZERO) <= 0 ||
-                refundRequest.getAmount().compareTo(order.getTotalAmount()) > 0) {
+                refundRequest.getAmount().compareTo(BigDecimal.valueOf(order.getTotalAmount())) > 0) {
             throw new IllegalArgumentException("유효하지 않은 환불 금액입니다: " + refundRequest.getAmount());
         }
 
@@ -68,7 +68,7 @@ public class RefundServiceImpl implements RefundService {
                 .map(Refund::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        if (totalRefundedAmount.add(refundRequest.getAmount()).compareTo(order.getTotalAmount()) > 0) {
+        if (totalRefundedAmount.add(refundRequest.getAmount()).compareTo(BigDecimal.valueOf(order.getTotalAmount())) > 0) {
             throw new IllegalArgumentException("총 환불 금액이 주문 금액을 초과합니다.");
         }
 
@@ -129,7 +129,7 @@ public class RefundServiceImpl implements RefundService {
 
         // 주문 상태 업데이트
         Order order = refund.getOrder();
-        if (refund.getAmount().compareTo(order.getTotalAmount()) == 0) {
+        if (refund.getAmount().compareTo(BigDecimal.valueOf(order.getTotalAmount())) == 0) {
             // 전액 환불인 경우
             OrderStatusUpdateDTO statusUpdateDTO = new OrderStatusUpdateDTO();
             statusUpdateDTO.setStatus(OrderStatus.REFUNDED);
@@ -348,7 +348,7 @@ public class RefundServiceImpl implements RefundService {
         // 주문 상태 업데이트
         if (newStatus == RefundStatus.APPROVED || newStatus == RefundStatus.COMPLETED) {
             Order order = refund.getOrder();
-            if (refund.getAmount().compareTo(order.getTotalAmount()) == 0) {
+            if (refund.getAmount().compareTo(BigDecimal.valueOf(order.getTotalAmount())) == 0) {
                 // 전액 환불인 경우
                 OrderStatusUpdateDTO statusUpdateDTO = new OrderStatusUpdateDTO();
                 statusUpdateDTO.setStatus(OrderStatus.REFUNDED);
@@ -412,7 +412,7 @@ public class RefundServiceImpl implements RefundService {
 
             // 주문 상태 업데이트
             Order order = refund.getOrder();
-            if (refund.getAmount().compareTo(order.getTotalAmount()) == 0) {
+            if (refund.getAmount().compareTo(BigDecimal.valueOf(order.getTotalAmount())) == 0) {
                 // 전액 환불인 경우
                 OrderStatusUpdateDTO statusUpdateDTO = new OrderStatusUpdateDTO();
                 statusUpdateDTO.setStatus(OrderStatus.REFUNDED);
@@ -599,7 +599,7 @@ public class RefundServiceImpl implements RefundService {
         if (refund.getShippingAmount() != null) {
             totalAmount = totalAmount.add(refund.getShippingAmount());
         }
-        dto.setTotalAmount(totalAmount);
+        dto.setTotalAmount(totalAmount.doubleValue());
 
         // 트랜잭션 ID
         dto.setTransactionId(refund.getTransactionId());

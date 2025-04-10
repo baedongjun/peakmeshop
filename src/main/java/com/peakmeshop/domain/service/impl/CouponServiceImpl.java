@@ -1,13 +1,11 @@
 package com.peakmeshop.domain.service.impl;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.peakmeshop.api.dto.CouponDTO;
+import com.peakmeshop.api.dto.CouponSummaryDTO;
 import com.peakmeshop.api.dto.MemberCouponDTO;
 import com.peakmeshop.domain.entity.Coupon;
 import com.peakmeshop.domain.entity.Member;
@@ -35,6 +33,21 @@ public class CouponServiceImpl implements CouponService {
     private final CouponRepository couponRepository;
     private final MemberRepository memberRepository;
     private final MemberCouponRepository memberCouponRepository;
+
+    @Override
+    public Page<CouponDTO> getCoupons(String type, String status, String keyword, Pageable pageable) {
+        return null;
+    }
+
+    @Override
+    public CouponSummaryDTO getCouponSummary() {
+        return null;
+    }
+
+    @Override
+    public Optional<CouponDTO> getCoupon(Long id) {
+        return Optional.empty();
+    }
 
     @Override
     @Transactional
@@ -191,6 +204,21 @@ public class CouponServiceImpl implements CouponService {
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("쿠폰을 찾을 수 없습니다."));
         couponRepository.delete(coupon);
+    }
+
+    @Override
+    public void issueCoupon(Long id) {
+
+    }
+
+    @Override
+    public void suspendCoupon(Long id) {
+
+    }
+
+    @Override
+    public void resumeCoupon(Long id) {
+
     }
 
     @Override

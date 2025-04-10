@@ -291,15 +291,6 @@
     <!-- 자바스크립트 -->
     <th:block layout:fragment="script">
         <script>
-            $(document).ready(function() {
-                $('#ordersTable').DataTable({
-                    order: [[1, 'desc']],
-                    language: {
-                        url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Korean.json'
-                    }
-                });
-            });
-
             function setDateRange(range) {
                 const today = new Date();
                 let startDate = new Date();

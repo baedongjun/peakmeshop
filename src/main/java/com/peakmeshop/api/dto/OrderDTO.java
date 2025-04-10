@@ -26,7 +26,7 @@ public class OrderDTO {
     private BigDecimal totalPrice;
     private BigDecimal discount;
     private BigDecimal deliveryFee;
-    private BigDecimal finalPrice;
+    private Double finalPrice;
     private String recipientName;
     private String recipientTel;
     private String recipientAddress;

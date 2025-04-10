@@ -2,28 +2,31 @@ package com.peakmeshop.api.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 상품 요약 정보를 전송하기 위한 DTO
  */
-public record ProductSummaryDTO(
-        Long id,
-        String name,
-        String slug,
-        String thumbnailUrl,
-        BigDecimal price,
-        BigDecimal discountPrice,
-        Boolean isDiscounted,
-        Double discountRate,
-        Integer stockQuantity,
-        Boolean isAvailable,
-        String categoryName,
-        Long categoryId,
-        Double averageRating,
-        Integer reviewCount,
-        Integer orderCount,
-        LocalDateTime createdAt
-) {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProductSummaryDTO {
+    private long totalProducts;
+    private long activeProducts;
+    private long outOfStockProducts;
+    private long lowStockProducts;
+    private long totalCategories;
+    private long totalBrands;
+    private double averagePrice;
+    private long totalInventory;
+    private long monthlyNewProducts;
+    private long monthlyTopSellers;
+    private double monthlyInventoryTurnover;
+
     /**
      * 할인율 계산
      * @param originalPrice 원래 가격

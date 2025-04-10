@@ -49,39 +49,20 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label class="text-muted">브랜드코드</label>
-                                    <p class="form-control-static" th:text="${brand.code}">브랜드코드</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
                                     <label class="text-muted">영문명</label>
                                     <p class="form-control-static" th:text="${brand.nameEn}">영문명</p>
                                 </div>
                             </div>
+                        </div>
+                        <div class="row">
+
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="text-muted">상태</label>
                                     <p class="form-control-static">
-                                        <span th:class="${brand.status == 'ACTIVE' ? 'badge badge-success' : 'badge badge-danger'}"
-                                              th:text="${brand.status == 'ACTIVE' ? '활성' : '비활성'}">상태</span>
+                                        <span th:class="${brand.isActive ? 'badge badge-success' : 'badge badge-danger'}"
+                                              th:text="${brand.isActive ? '활성' : '비활성'}">상태</span>
                                     </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="text-muted">연락처</label>
-                                    <p class="form-control-static" th:text="${brand.phone}">연락처</p>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="text-muted">이메일</label>
-                                    <p class="form-control-static" th:text="${brand.email}">이메일</p>
                                 </div>
                             </div>
                         </div>
