@@ -47,6 +47,7 @@ public class MemberDTO {
     private boolean agreeTerms;
 
     private boolean agreeMarketing;
+    private boolean isWithdrawn;
     private String userRole;
     private boolean enabled;
     private String status;

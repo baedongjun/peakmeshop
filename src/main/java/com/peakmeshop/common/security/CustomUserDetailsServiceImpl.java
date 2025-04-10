@@ -1,7 +1,6 @@
 package com.peakmeshop.common.security;
 
 import com.peakmeshop.domain.entity.Member;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.repository.MemberRepository;
 import com.peakmeshop.common.security.oauth2.user.UserPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +15,7 @@ public class CustomUserDetailsServiceImpl implements CustomUserDetailsService {
 
     private final MemberRepository memberRepository;
 
+
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
@@ -29,7 +29,7 @@ public class CustomUserDetailsServiceImpl implements CustomUserDetailsService {
     @Transactional(readOnly = true)
     public UserDetails loadUserById(Long id) {
         Member member = memberRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + id));
 
         return UserPrincipal.create(member);
     }

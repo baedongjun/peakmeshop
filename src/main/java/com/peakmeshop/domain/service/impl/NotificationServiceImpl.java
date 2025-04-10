@@ -6,13 +6,13 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.peakmeshop.api.dto.NotificationDTO;
 import com.peakmeshop.domain.entity.Member;
 import com.peakmeshop.domain.entity.Notification;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.repository.MemberRepository;
 import com.peakmeshop.domain.repository.NotificationRepository;
 import com.peakmeshop.domain.service.NotificationService;
@@ -30,7 +30,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional(readOnly = true)
     public NotificationDTO getNotificationById(Long id) {
         Notification notification = notificationRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Notification not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Notification not found with id: " + id));
 
         return convertToDTO(notification);
     }
@@ -55,7 +55,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional(readOnly = true)
     public NotificationDTO getNotificationByIdAndMemberId(Long id, Long memberId) {
         Notification notification = notificationRepository.findByIdAndMemberId(id, memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Notification not found with id: " + id + " for member: " + memberId));
+                .orElseThrow(() -> new UsernameNotFoundException("Notification not found with id: " + id + " for member: " + memberId));
 
         return convertToDTO(notification);
     }
@@ -64,7 +64,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional
     public NotificationDTO markAsRead(Long id, Long memberId) {
         Notification notification = notificationRepository.findByIdAndMemberId(id, memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Notification not found with id: " + id + " for member: " + memberId));
+                .orElseThrow(() -> new UsernameNotFoundException("Notification not found with id: " + id + " for member: " + memberId));
 
         notification.setRead(true);
         notification.setReadAt(LocalDateTime.now());
@@ -90,7 +90,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional
     public void deleteNotification(Long id, Long memberId) {
         Notification notification = notificationRepository.findByIdAndMemberId(id, memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Notification not found with id: " + id + " for member: " + memberId));
+                .orElseThrow(() -> new UsernameNotFoundException("Notification not found with id: " + id + " for member: " + memberId));
 
         notificationRepository.delete(notification);
     }
@@ -99,7 +99,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional
     public NotificationDTO createNotification(NotificationDTO notificationDTO) {
         Member member = memberRepository.findById(notificationDTO.getMemberId())
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found with id: " + notificationDTO.getMemberId()));
+                .orElseThrow(() -> new UsernameNotFoundException("Member not found with id: " + notificationDTO.getMemberId()));
 
         Notification notification = Notification.builder()
                 .member(member)

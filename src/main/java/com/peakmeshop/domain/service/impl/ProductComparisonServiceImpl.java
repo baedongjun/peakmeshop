@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,7 +13,6 @@ import com.peakmeshop.api.dto.ProductDTO;
 import com.peakmeshop.domain.entity.Member;
 import com.peakmeshop.domain.entity.Product;
 import com.peakmeshop.domain.entity.ProductComparison;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.repository.MemberRepository;
 import com.peakmeshop.domain.repository.ProductComparisonRepository;
 import com.peakmeshop.domain.repository.ProductRepository;
@@ -39,10 +39,10 @@ public class ProductComparisonServiceImpl implements ProductComparisonService {
     @Transactional
     public void addProductToComparison(Long memberId, Long productId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("상품을 찾을 수 없습니다."));
 
         Optional<ProductComparison> comparisonOpt = comparisonRepository.findByMemberIdAndIsRecentFalse(memberId);
 
@@ -127,10 +127,10 @@ public class ProductComparisonServiceImpl implements ProductComparisonService {
     @Transactional
     public void addToRecentlyCompared(Long memberId, Long productId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("상품을 찾을 수 없습니다."));
 
         Optional<ProductComparison> recentOpt = comparisonRepository.findByMemberIdAndIsRecentTrue(memberId);
 

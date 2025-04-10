@@ -6,12 +6,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import com.peakmeshop.api.dto.*;
 import com.peakmeshop.domain.repository.PointRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.peakmeshop.domain.entity.Member;
 import com.peakmeshop.domain.entity.VerificationToken;
 import com.peakmeshop.common.exception.BadRequestException;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.repository.MemberRepository;
 import com.peakmeshop.domain.repository.VerificationTokenRepository;
 import com.peakmeshop.domain.repository.OrderRepository;
@@ -45,7 +44,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional(readOnly = true)
     public MemberDTO getMemberById(Long id) {
         Member member = memberRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
         return convertToDTO(member);
     }
 
@@ -53,7 +52,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional(readOnly = true)
     public MemberDTO getMemberByEmail(String email) {
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
         return convertToDTO(member);
     }
 
@@ -86,7 +85,9 @@ public class MemberServiceImpl implements MemberService {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .emailVerified(memberDTO.isEmailVerified())
-                .agreeTerms(memberDTO.isAgreeTerms()).agreeMarketing(memberDTO.isAgreeMarketing()).build();
+                .agreeTerms(memberDTO.isAgreeTerms())
+                .agreeMarketing(memberDTO.isAgreeMarketing())
+                .isWithdrawn(memberDTO.isWithdrawn()).build();
 
         Member savedMember = memberRepository.save(member);
 
@@ -110,7 +111,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public MemberDTO updateMember(Long id, MemberDTO memberDTO) {
         Member member = memberRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         // 이메일 중복 확인 (다른 회원과 중복되는지)
         if (!member.getEmail().equals(memberDTO.getEmail()) && memberRepository.existsByEmail(memberDTO.getEmail())) {
@@ -141,7 +142,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public MemberDTO updateMemberProfile(Long id, MemberUpdateDTO memberUpdateDTO) {
         Member member = memberRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         // 이메일 중복 확인 (다른 회원과 중복되는지)
         if (memberUpdateDTO.getEmail() != null && !member.getEmail().equals(memberUpdateDTO.getEmail()) &&
@@ -175,7 +176,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public void changePassword(Long id, String currentPassword, String newPassword) {
         Member member = memberRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         // 현재 비밀번호 확인
         if (!passwordEncoder.matches(currentPassword, member.getPassword())) {
@@ -193,7 +194,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public void deleteMember(Long id) {
         Member member = memberRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         // 인증 토큰 삭제
         verificationTokenRepository.deleteByMemberId(id);
@@ -205,7 +206,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public boolean verifyEmail(String token) {
         VerificationToken verificationToken = verificationTokenRepository.findByToken(token)
-                .orElseThrow(() -> new ResourceNotFoundException("유효하지 않은 토큰입니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("유효하지 않은 토큰입니다."));
 
         // 토큰 만료 확인
         if (verificationToken.getExpiryDate().isBefore(LocalDateTime.now())) {
@@ -229,7 +230,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public void resendVerificationEmail(String email) {
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         // 이미 활성화된 계정인지 확인
         if (member.isEnabled()) {
@@ -257,7 +258,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public void resetPassword(PasswordResetDTO passwordResetDTO) {
         Member member = memberRepository.findByEmail(passwordResetDTO.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         // 임시 비밀번호 생성
         String temporaryPassword = UUID.randomUUID().toString().substring(0, 8);
@@ -299,14 +300,14 @@ public class MemberServiceImpl implements MemberService {
                 .agreeTerms(member.isAgreeTerms())
                 .agreeMarketing(member.isAgreeMarketing())
                 .isEmailVerified(member.isEmailVerified())
-                .build();
+                .isWithdrawn(member.isWithdrawn()).build();
     }
 
     @Override
     @Transactional(readOnly = true)
     public MemberDTO getMemberByUserId(String userId) {
         Member member = memberRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
         return convertToDTO(member);
     }
 
@@ -314,7 +315,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public MemberDTO updateMemberStatus(Long id, String status) {
         Member member = memberRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         // 상태 유효성 검사
         if (!Member.STATUS_ACTIVE.equals(status) &&
@@ -443,7 +444,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public void requestPasswordReset(PasswordResetRequestDTO requestDTO) {
         Member member = memberRepository.findByEmail(requestDTO.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         // 비밀번호 재설정 토큰 생성
         String token = UUID.randomUUID().toString();

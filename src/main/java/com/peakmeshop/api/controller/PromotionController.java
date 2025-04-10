@@ -1,11 +1,11 @@
 package com.peakmeshop.api.controller;
 
 import com.peakmeshop.api.dto.PromotionDTO;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.service.PromotionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -36,7 +36,7 @@ public class PromotionController {
                     PromotionDTO updated = promotionService.updatePromotion(id, promotionDTO);
                     return ResponseEntity.ok(updated);
                 })
-                .orElseThrow(() -> new ResourceNotFoundException("Promotion", "id", id));
+                .orElseThrow(() -> new UsernameNotFoundException("Promotion id : " + id));
     }
 
     @DeleteMapping("/{id}")
@@ -46,7 +46,7 @@ public class PromotionController {
                     promotionService.deletePromotion(id);
                     return ResponseEntity.noContent().<Void>build();
                 })
-                .orElseThrow(() -> new ResourceNotFoundException("Promotion", "id", id));
+                .orElseThrow(() -> new UsernameNotFoundException("Promotion id : " + id));
     }
 
     @PostMapping("/{id}/start")
@@ -56,7 +56,7 @@ public class PromotionController {
                     promotionService.startPromotion(id);
                     return ResponseEntity.ok().<Void>build();
                 })
-                .orElseThrow(() -> new ResourceNotFoundException("Promotion", "id", id));
+                .orElseThrow(() -> new UsernameNotFoundException("Promotion id : " + id));
     }
 
     @PostMapping("/{id}/end")
@@ -66,7 +66,7 @@ public class PromotionController {
                     promotionService.endPromotion(id);
                     return ResponseEntity.ok().<Void>build();
                 })
-                .orElseThrow(() -> new ResourceNotFoundException("Promotion", "id", id));
+                .orElseThrow(() -> new UsernameNotFoundException("Promotion id : " + id));
     }
 
     @PostMapping("/{id}/suspend")
@@ -76,7 +76,7 @@ public class PromotionController {
                     promotionService.suspendPromotion(id);
                     return ResponseEntity.ok().<Void>build();
                 })
-                .orElseThrow(() -> new ResourceNotFoundException("Promotion", "id", id));
+                .orElseThrow(() -> new UsernameNotFoundException("Promotion id : " + id));
     }
 
     @PostMapping("/{id}/resume")
@@ -86,6 +86,6 @@ public class PromotionController {
                     promotionService.resumePromotion(id);
                     return ResponseEntity.ok().<Void>build();
                 })
-                .orElseThrow(() -> new ResourceNotFoundException("Promotion", "id", id));
+                .orElseThrow(() -> new UsernameNotFoundException("Promotion id : " + id));
     }
 } 

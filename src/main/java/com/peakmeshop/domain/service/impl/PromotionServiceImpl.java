@@ -8,13 +8,13 @@ import java.util.stream.Collectors;
 import com.peakmeshop.api.dto.PromotionSummaryDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.peakmeshop.api.dto.PromotionDTO;
 import com.peakmeshop.domain.entity.Category;
 import com.peakmeshop.domain.entity.Promotion;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.repository.CategoryRepository;
 import com.peakmeshop.domain.repository.PromotionRepository;
 import com.peakmeshop.domain.service.PromotionService;
@@ -73,7 +73,7 @@ public class PromotionServiceImpl implements PromotionService {
         // 카테고리 설정
         if (promotionDTO.getCategory() != null) {
             Category category = categoryRepository.findById(promotionDTO.getCategory().getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("카테고리를 찾을 수 없습니다. ID: " + promotionDTO.getCategory().getId()));
+                    .orElseThrow(() -> new UsernameNotFoundException("카테고리를 찾을 수 없습니다. ID: " + promotionDTO.getCategory().getId()));
             promotion.setCategory(category);
         }
 
@@ -85,7 +85,7 @@ public class PromotionServiceImpl implements PromotionService {
     @Transactional
     public PromotionDTO updatePromotion(Long id, PromotionDTO promotionDTO) {
         Promotion existingPromotion = promotionRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("프로모션을 찾을 수 없습니다. ID: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("프로모션을 찾을 수 없습니다. ID: " + id));
 
         existingPromotion.setName(promotionDTO.getName());
         existingPromotion.setDescription(promotionDTO.getDescription());
@@ -101,7 +101,7 @@ public class PromotionServiceImpl implements PromotionService {
         // 카테고리 설정
         if (promotionDTO.getCategory() != null) {
             Category category = categoryRepository.findById(promotionDTO.getCategory().getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("카테고리를 찾을 수 없습니다. ID: " + promotionDTO.getCategory().getId()));
+                    .orElseThrow(() -> new UsernameNotFoundException("카테고리를 찾을 수 없습니다. ID: " + promotionDTO.getCategory().getId()));
             existingPromotion.setCategory(category);
         } else {
             existingPromotion.setCategory(null);

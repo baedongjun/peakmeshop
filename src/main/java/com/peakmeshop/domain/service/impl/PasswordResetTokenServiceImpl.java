@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,7 +13,6 @@ import com.peakmeshop.api.dto.PasswordResetTokenDTO;
 import com.peakmeshop.domain.entity.Member;
 import com.peakmeshop.domain.entity.PasswordResetToken;
 import com.peakmeshop.common.exception.BadRequestException;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.repository.MemberRepository;
 import com.peakmeshop.domain.repository.PasswordResetTokenRepository;
 import com.peakmeshop.domain.service.PasswordResetTokenService;
@@ -32,7 +32,7 @@ public class PasswordResetTokenServiceImpl implements PasswordResetTokenService 
     @Transactional
     public PasswordResetTokenDTO createToken(Long memberId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found with id: " + memberId));
+                .orElseThrow(() -> new UsernameNotFoundException("Member not found with id: " + memberId));
 
         // 기존 토큰 삭제
         tokenRepository.deleteByMemberId(memberId);
@@ -59,7 +59,7 @@ public class PasswordResetTokenServiceImpl implements PasswordResetTokenService 
     @Transactional(readOnly = true)
     public PasswordResetTokenDTO getTokenByToken(String token) {
         PasswordResetToken resetToken = tokenRepository.findByToken(token)
-                .orElseThrow(() -> new ResourceNotFoundException("Token not found: " + token));
+                .orElseThrow(() -> new UsernameNotFoundException("Token not found: " + token));
 
         return PasswordResetTokenDTO.builder()
                 .id(resetToken.getId())
@@ -85,7 +85,7 @@ public class PasswordResetTokenServiceImpl implements PasswordResetTokenService 
     @Transactional
     public void deleteToken(String token) {
         PasswordResetToken resetToken = tokenRepository.findByToken(token)
-                .orElseThrow(() -> new ResourceNotFoundException("Token not found: " + token));
+                .orElseThrow(() -> new UsernameNotFoundException("Token not found: " + token));
 
         tokenRepository.delete(resetToken);
     }

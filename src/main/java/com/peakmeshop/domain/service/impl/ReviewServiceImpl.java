@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,7 +12,6 @@ import com.peakmeshop.api.dto.ReviewDTO;
 import com.peakmeshop.domain.entity.Member;
 import com.peakmeshop.domain.entity.Product;
 import com.peakmeshop.domain.entity.Review;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.repository.MemberRepository;
 import com.peakmeshop.domain.repository.ProductRepository;
 import com.peakmeshop.domain.repository.ReviewRepository;
@@ -32,11 +32,11 @@ public class ReviewServiceImpl implements ReviewService {
     public ReviewDTO createReview(ReviewDTO reviewDTO) {
         // 상품 조회
         Product product = productRepository.findById(reviewDTO.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + reviewDTO.getProductId()));
+                .orElseThrow(() -> new UsernameNotFoundException("Product not found with id: " + reviewDTO.getProductId()));
 
         // 회원 조회
         Member member = memberRepository.findById(reviewDTO.getMemberId())
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found with id: " + reviewDTO.getMemberId()));
+                .orElseThrow(() -> new UsernameNotFoundException("Member not found with id: " + reviewDTO.getMemberId()));
 
         // 리뷰 엔티티 생성
         Review review = Review.builder()
@@ -61,7 +61,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional(readOnly = true)
     public ReviewDTO getReviewById(Long id) {
         Review review = reviewRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Review not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Review not found with id: " + id));
 
         return convertToDTO(review);
     }
@@ -91,7 +91,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional
     public ReviewDTO updateReview(ReviewDTO reviewDTO) {
         Review review = reviewRepository.findById(reviewDTO.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Review not found with id: " + reviewDTO.getId()));
+                .orElseThrow(() -> new UsernameNotFoundException("Review not found with id: " + reviewDTO.getId()));
 
         // 리뷰 정보 업데이트
         review.setRating(reviewDTO.getRating());
@@ -112,7 +112,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional
     public ReviewDTO incrementHelpfulCount(Long id) {
         Review review = reviewRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Review not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Review not found with id: " + id));
 
         review.setHelpfulCount(review.getHelpfulCount() + 1);
         review.setUpdatedAt(LocalDateTime.now());
@@ -125,7 +125,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional
     public ReviewDTO addAdminReply(Long id, String reply) {
         Review review = reviewRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Review not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Review not found with id: " + id));
 
         review.setAdminReplied(true);
         review.setAdminReply(reply);
@@ -140,7 +140,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional
     public void deleteReview(Long id) {
         Review review = reviewRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Review not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Review not found with id: " + id));
 
         reviewRepository.delete(review);
     }

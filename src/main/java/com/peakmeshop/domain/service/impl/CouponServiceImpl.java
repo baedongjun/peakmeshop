@@ -11,7 +11,6 @@ import com.peakmeshop.domain.entity.Coupon;
 import com.peakmeshop.domain.entity.Member;
 import com.peakmeshop.domain.entity.MemberCoupon;
 import com.peakmeshop.common.exception.BadRequestException;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.repository.CouponRepository;
 import com.peakmeshop.domain.repository.MemberCouponRepository;
 import com.peakmeshop.domain.repository.MemberRepository;
@@ -19,6 +18,7 @@ import com.peakmeshop.domain.service.CouponService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -87,7 +87,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional(readOnly = true)
     public CouponDTO getCouponById(Long id) {
         Coupon coupon = couponRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
         return convertToDTO(coupon);
     }
 
@@ -95,7 +95,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional(readOnly = true)
     public CouponDTO getCouponByCode(String code) {
         Coupon coupon = couponRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
         return convertToDTO(coupon);
     }
 
@@ -143,7 +143,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     public CouponDTO updateCoupon(Long id, CouponDTO couponDTO) {
         Coupon coupon = couponRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
 
         // 쿠폰 코드 중복 확인 (변경된 경우)
         if (couponDTO.getCode() != null && !couponDTO.getCode().equals(coupon.getCode())) {
@@ -202,7 +202,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     public void deleteCoupon(Long id) {
         Coupon coupon = couponRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
         couponRepository.delete(coupon);
     }
 
@@ -225,7 +225,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     public CouponDTO toggleCouponStatus(Long id) {
         Coupon coupon = couponRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
 
         if (Coupon.STATUS_ACTIVE.equals(coupon.getStatus())) {
             coupon.setStatus(Coupon.STATUS_INACTIVE);
@@ -242,7 +242,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     public List<MemberCouponDTO> issueCouponToAllMembers(Long couponId) {
         Coupon coupon = couponRepository.findById(couponId)
-                .orElseThrow(() -> new ResourceNotFoundException("쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
 
         if (!Coupon.STATUS_ACTIVE.equals(coupon.getStatus())) {
             throw new BadRequestException("비활성화된 쿠폰은 발급할 수 없습니다.");
@@ -271,10 +271,10 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     public MemberCouponDTO issueCouponToMember(Long couponId, Long memberId) {
         Coupon coupon = couponRepository.findById(couponId)
-                .orElseThrow(() -> new ResourceNotFoundException("쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         if (!Coupon.STATUS_ACTIVE.equals(coupon.getStatus())) {
             throw new BadRequestException("비활성화된 쿠폰은 발급할 수 없습니다.");
@@ -299,10 +299,10 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     public MemberCouponDTO issueCouponByCode(String code, Long memberId) {
         Coupon coupon = couponRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         if (!Coupon.STATUS_ACTIVE.equals(coupon.getStatus())) {
             throw new BadRequestException("비활성화된 쿠폰은 발급할 수 없습니다.");
@@ -327,7 +327,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional(readOnly = true)
     public Page<MemberCouponDTO> getMemberCoupons(Long memberId, Pageable pageable) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         Page<MemberCoupon> memberCouponsPage = memberCouponRepository.findByMemberId(memberId, pageable);
         List<MemberCouponDTO> memberCouponDTOs = memberCouponsPage.getContent().stream()
@@ -341,7 +341,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional(readOnly = true)
     public List<MemberCouponDTO> getMemberCoupons(Long memberId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         List<MemberCoupon> memberCoupons = memberCouponRepository.findByMemberId(memberId);
         return memberCoupons.stream()
@@ -353,7 +353,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional(readOnly = true)
     public Page<MemberCouponDTO> getMemberUnusedCoupons(Long memberId, Pageable pageable) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         LocalDateTime now = LocalDateTime.now();
         Page<MemberCoupon> memberCouponsPage = memberCouponRepository.findByMemberIdAndUsedFalseAndCouponStatusAndCouponEndDateAfter(
@@ -370,7 +370,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional(readOnly = true)
     public List<MemberCouponDTO> getAvailableMemberCoupons(Long memberId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         LocalDateTime now = LocalDateTime.now();
         List<MemberCoupon> memberCoupons = memberCouponRepository.findByMemberIdAndUsedFalseAndCouponStatusAndCouponEndDateAfter(
@@ -385,7 +385,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional(readOnly = true)
     public MemberCouponDTO getMemberCouponById(Long memberCouponId) {
         MemberCoupon memberCoupon = memberCouponRepository.findById(memberCouponId)
-                .orElseThrow(() -> new ResourceNotFoundException("회원 쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원 쿠폰을 찾을 수 없습니다."));
 
         return convertToMemberCouponDTO(memberCoupon);
     }
@@ -394,7 +394,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     public MemberCouponDTO useMemberCoupon(Long memberCouponId) {
         MemberCoupon memberCoupon = memberCouponRepository.findById(memberCouponId)
-                .orElseThrow(() -> new ResourceNotFoundException("회원 쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원 쿠폰을 찾을 수 없습니다."));
 
         if (memberCoupon.isUsed()) {
             throw new BadRequestException("이미 사용된 쿠폰입니다.");
@@ -431,7 +431,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     public MemberCouponDTO cancelMemberCoupon(Long memberCouponId) {
         MemberCoupon memberCoupon = memberCouponRepository.findById(memberCouponId)
-                .orElseThrow(() -> new ResourceNotFoundException("회원 쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원 쿠폰을 찾을 수 없습니다."));
 
         if (!memberCoupon.isUsed()) {
             throw new BadRequestException("사용되지 않은 쿠폰입니다.");
@@ -456,7 +456,7 @@ public class CouponServiceImpl implements CouponService {
 
         try {
             Coupon coupon = couponRepository.findByCode(code)
-                    .orElseThrow(() -> new ResourceNotFoundException("쿠폰을 찾을 수 없습니다."));
+                    .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
 
             LocalDateTime now = LocalDateTime.now();
             boolean isValid = true;
@@ -493,7 +493,7 @@ public class CouponServiceImpl implements CouponService {
             }
 
             return result;
-        } catch (ResourceNotFoundException e) {
+        } catch (UsernameNotFoundException e) {
             result.put("valid", false);
             result.put("message", "존재하지 않는 쿠폰 코드입니다.");
             return result;

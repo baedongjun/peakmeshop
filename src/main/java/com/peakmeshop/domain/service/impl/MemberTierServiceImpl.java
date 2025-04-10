@@ -6,13 +6,13 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.peakmeshop.api.dto.MemberTierDTO;
 import com.peakmeshop.domain.entity.MemberTier;
 import com.peakmeshop.common.exception.BadRequestException;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.repository.MemberTierRepository;
 import com.peakmeshop.domain.service.MemberTierService;
 
@@ -48,7 +48,7 @@ public class MemberTierServiceImpl implements MemberTierService {
     @Transactional(readOnly = true)
     public MemberTierDTO getMemberTierById(Long id) {
         MemberTier memberTier = memberTierRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Member tier not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Member tier not found with id: " + id));
 
         return convertToDTO(memberTier);
     }
@@ -57,7 +57,7 @@ public class MemberTierServiceImpl implements MemberTierService {
     @Transactional(readOnly = true)
     public MemberTierDTO getMemberTierByCode(String code) {
         MemberTier memberTier = memberTierRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Member tier not found with code: " + code));
+                .orElseThrow(() -> new UsernameNotFoundException("Member tier not found with code: " + code));
 
         return convertToDTO(memberTier);
     }
@@ -89,7 +89,7 @@ public class MemberTierServiceImpl implements MemberTierService {
     @Transactional
     public MemberTierDTO updateMemberTier(Long id, MemberTierDTO memberTierDTO) {
         MemberTier memberTier = memberTierRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Member tier not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Member tier not found with id: " + id));
 
         // 코드 변경 시 중복 확인
         if (!memberTier.getCode().equals(memberTierDTO.getCode()) &&
@@ -115,7 +115,7 @@ public class MemberTierServiceImpl implements MemberTierService {
     @Transactional
     public void deleteMemberTier(Long id) {
         MemberTier memberTier = memberTierRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Member tier not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Member tier not found with id: " + id));
 
         // 회원이 사용 중인 등급인지 확인
         if (memberTier.getMembers() != null && !memberTier.getMembers().isEmpty()) {
@@ -129,7 +129,7 @@ public class MemberTierServiceImpl implements MemberTierService {
     @Transactional
     public MemberTierDTO toggleTierStatus(Long id, Boolean active) {
         MemberTier memberTier = memberTierRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Member tier not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Member tier not found with id: " + id));
 
         memberTier.setIsActive(active);
         MemberTier updatedMemberTier = memberTierRepository.save(memberTier);
@@ -144,7 +144,7 @@ public class MemberTierServiceImpl implements MemberTierService {
 
         for (MemberTierDTO tierOrder : tierOrders) {
             MemberTier memberTier = memberTierRepository.findById(tierOrder.getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Member tier not found with id: " + tierOrder.getId()));
+                    .orElseThrow(() -> new UsernameNotFoundException("Member tier not found with id: " + tierOrder.getId()));
 
             memberTier.setOrderIndex(tierOrder.getOrderIndex());
             memberTierRepository.save(memberTier);

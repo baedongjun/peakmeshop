@@ -1,7 +1,6 @@
 package com.peakmeshop.domain.service.impl;
 
 import com.peakmeshop.api.dto.*;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.entity.Member;
 import com.peakmeshop.domain.entity.Order;
 import com.peakmeshop.domain.entity.OrderItem;
@@ -20,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,7 +45,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order getOrderById(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("Order not found"));
         return order;
     }
 
@@ -63,7 +63,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderDTO createOrder(Long memberId, OrderRequestDTO orderRequestDTO) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("Member not found"));
 
         Order order = Order.builder()
                 .member(member)
@@ -85,7 +85,7 @@ public class OrderServiceImpl implements OrderService {
 
         for (OrderItemDTO itemDTO : orderRequestDTO.getItems()) {
             Product product = productRepository.findById(itemDTO.getProductId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+                    .orElseThrow(() -> new UsernameNotFoundException("Product not found"));
 
             if (product.getStock() < itemDTO.getQuantity()) {
                 throw new IllegalArgumentException("Insufficient stock for product: " + product.getName());
@@ -113,7 +113,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderDTO updateOrderStatus(Long orderId, OrderStatusUpdateDTO statusUpdateDTO) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("Order not found"));
 
         order.setStatus(statusUpdateDTO.getStatus());
 
@@ -150,7 +150,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderDTO updateTrackingInfo(Long orderId, String trackingNumber, String shippingCompany) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+                .orElseThrow(() -> new UsernameNotFoundException("Order not found with id: " + orderId));
         order.setTrackingNumber(trackingNumber);
         order.setShippingCompany(shippingCompany);
         return convertToDTO(orderRepository.save(order));
@@ -286,7 +286,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public void deleteOrder(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Order not found with id: " + id));
 
         // 주문 항목 삭제
         orderItemRepository.deleteByOrderId(id);
@@ -411,28 +411,19 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public Map<OrderStatus, Long> getOrderStatusDistribution() {
-        List<Object[]> distribution = orderRepository.findOrderStatusDistribution();
-        Map<OrderStatus, Long> result = new HashMap<>();
-
-        for (Object[] row : distribution) {
-            OrderStatus status = (OrderStatus) row[0];
-            Long count = (Long) row[1];
-            result.put(status, count);
-        }
-
-        return result;
+        return orderRepository.getOrderStatusDistribution();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Object[]> getDailySales(LocalDateTime startDate, LocalDateTime endDate) {
-        return orderRepository.findDailySalesBetween(startDate, endDate);
+        return orderRepository.getDailySales(startDate, endDate);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Object[]> getMonthlySales(LocalDateTime startDate, LocalDateTime endDate) {
-        return orderRepository.findMonthlySalesBetween(startDate, endDate);
+        return orderRepository.getMonthlySales(startDate, endDate);
     }
 
     @Override
@@ -493,7 +484,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public RefundDTO getRefundById(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("환불 정보를 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("환불 정보를 찾을 수 없습니다: " + id));
         return convertToRefundDTO(order);
     }
 
@@ -508,7 +499,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public CancellationDTO getCancellationById(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("취소 정보를 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("취소 정보를 찾을 수 없습니다: " + id));
         return convertToCancellationDTO(order);
     }
 

@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,7 +13,6 @@ import com.peakmeshop.api.dto.QnaDTO;
 import com.peakmeshop.domain.entity.Member;
 import com.peakmeshop.domain.entity.Product;
 import com.peakmeshop.domain.entity.Qna;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.repository.MemberRepository;
 import com.peakmeshop.domain.repository.ProductRepository;
 import com.peakmeshop.domain.repository.QnaRepository;
@@ -71,13 +71,13 @@ public class QnaServiceImpl implements QnaService {
     public QnaDTO createQna(QnaDTO qnaDTO) {
         // 회원 조회
         Member member = memberRepository.findById(qnaDTO.memberId())
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다. ID: " + qnaDTO.memberId()));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다. ID: " + qnaDTO.memberId()));
 
         // 상품 조회
         Product product = null;
         if (qnaDTO.productId() != null) {
             product = productRepository.findById(qnaDTO.productId())
-                    .orElseThrow(() -> new ResourceNotFoundException("상품을 찾을 수 없습니다. ID: " + qnaDTO.productId()));
+                    .orElseThrow(() -> new UsernameNotFoundException("상품을 찾을 수 없습니다. ID: " + qnaDTO.productId()));
         }
 
         // Q&A 생성
@@ -104,7 +104,7 @@ public class QnaServiceImpl implements QnaService {
     @Transactional
     public QnaDTO updateQna(Long id, QnaDTO qnaDTO) {
         Qna existingQna = qnaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Q&A를 찾을 수 없습니다. ID: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Q&A를 찾을 수 없습니다. ID: " + id));
 
         // 작성자 확인
         if (!existingQna.getMember().getId().equals(qnaDTO.memberId())) {
@@ -129,11 +129,11 @@ public class QnaServiceImpl implements QnaService {
     @Transactional
     public QnaDTO answerQna(Long id, String answer, Long adminId) {
         Qna qna = qnaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Q&A를 찾을 수 없습니다. ID: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Q&A를 찾을 수 없습니다. ID: " + id));
 
         // 관리자 확인
         Member admin = memberRepository.findById(adminId)
-                .orElseThrow(() -> new ResourceNotFoundException("관리자를 찾을 수 없습니다. ID: " + adminId));
+                .orElseThrow(() -> new UsernameNotFoundException("관리자를 찾을 수 없습니다. ID: " + adminId));
 
         if (!"ROLE_ADMIN".equals(admin.getUserRole())) {
             throw new IllegalStateException("관리자만 답변을 작성할 수 있습니다.");
@@ -159,11 +159,11 @@ public class QnaServiceImpl implements QnaService {
     @Transactional
     public boolean deleteQna(Long id, Long memberId) {
         Qna qna = qnaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Q&A를 찾을 수 없습니다. ID: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Q&A를 찾을 수 없습니다. ID: " + id));
 
         // 작성자 또는 관리자 확인
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다. ID: " + memberId));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다. ID: " + memberId));
 
         if (!qna.getMember().getId().equals(memberId) && !"ROLE_ADMIN".equals(member.getUserRole())) {
             throw new IllegalStateException("Q&A 작성자 또는 관리자만 삭제할 수 있습니다.");

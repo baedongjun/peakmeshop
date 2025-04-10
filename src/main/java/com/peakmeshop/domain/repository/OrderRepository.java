@@ -1,10 +1,5 @@
 package com.peakmeshop.domain.repository;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import com.peakmeshop.domain.entity.Order;
 import com.peakmeshop.domain.enums.OrderStatus;
 import org.springframework.data.domain.Page;
@@ -14,8 +9,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
+
     Optional<Order> findByOrderNumber(String orderNumber);
 
     List<Order> findByMemberIdOrderByCreatedAtDesc(Long memberId);
@@ -31,36 +32,18 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     long countByStatus(OrderStatus status);
 
     @Query("SELECT o FROM Order o WHERE o.member.id = :memberId AND o.createdAt BETWEEN :startDate AND :endDate")
-    List<Order> findByMemberIdAndDateRange(@Param("memberId") Long memberId, 
-                                         @Param("startDate") LocalDateTime startDate, 
-                                         @Param("endDate") LocalDateTime endDate);
+    List<Order> findByMemberIdAndDateRange(@Param("memberId") Long memberId,
+                                           @Param("startDate") LocalDateTime startDate,
+                                           @Param("endDate") LocalDateTime endDate);
 
     @Query("SELECT o FROM Order o WHERE o.member.id = :memberId AND o.status = :status")
-    Page<Order> findByMemberIdAndStatus(@Param("memberId") Long memberId, 
-                                      @Param("status") OrderStatus status, 
-                                      Pageable pageable);
-
-    @Query("SELECT o.status as status, COUNT(o) as count FROM Order o GROUP BY o.status")
-    List<Object[]> findOrderStatusDistribution();
-
-    @Query("SELECT DATE(o.createdAt) as date, COUNT(o) as count, SUM(o.finalPrice) as total " +
-           "FROM Order o " +
-           "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
-           "GROUP BY DATE(o.createdAt)")
-    List<Object[]> findDailySalesBetween(@Param("startDate") LocalDateTime startDate,
-                                        @Param("endDate") LocalDateTime endDate);
-
-    @Query("SELECT FUNCTION('DATE_FORMAT', o.createdAt, '%Y-%m') as month, " +
-           "COUNT(o) as count, SUM(o.finalPrice) as total " +
-           "FROM Order o " +
-           "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
-           "GROUP BY FUNCTION('DATE_FORMAT', o.createdAt, '%Y-%m')")
-    List<Object[]> findMonthlySalesBetween(@Param("startDate") LocalDateTime startDate,
-                                          @Param("endDate") LocalDateTime endDate);
+    Page<Order> findByMemberIdAndStatus(@Param("memberId") Long memberId,
+                                        @Param("status") OrderStatus status,
+                                        Pageable pageable);
 
     @Query("SELECT o.member.id as memberId, o.member.name as memberName, " +
-           "COUNT(o) as orderCount, SUM(o.finalPrice) as totalAmount " +
-           "FROM Order o GROUP BY o.member.id, o.member.name ORDER BY COUNT(o) DESC")
+            "COUNT(o) as orderCount, SUM(o.finalPrice) as totalAmount " +
+            "FROM Order o GROUP BY o.member.id, o.member.name ORDER BY COUNT(o) DESC")
     List<Object[]> findTopCustomers(Pageable pageable);
 
     Page<Order> findAllByStatus(OrderStatus status, Pageable pageable);
@@ -73,16 +56,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @param endDate 종료일
      * @return [날짜, 주문수, 총액] 형태의 통계 데이터
      */
-    @Query("SELECT DATE(o.createdAt) as date, " +
-           "COUNT(o) as count, " +
-           "SUM(o.totalAmount) as total " +
-           "FROM Order o " +
-           "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
-           "AND o.status != 'CANCELLED' " +
-           "GROUP BY DATE(o.createdAt) " +
-           "ORDER BY date")
+    @Query(value = "SELECT DATE(o.createdAt) as date, " +
+            "COUNT(o) as count, " +
+            "SUM(o.totalAmount) as total " +
+            "FROM orders o " +
+            "WHERE o.created_at BETWEEN :startDate AND :endDate " +
+            "AND o.status != 'CANCELLED' " +
+            "GROUP BY DATE(o.created_at) " +
+            "ORDER BY date", nativeQuery = true)
     List<Object[]> getDailySales(@Param("startDate") LocalDateTime startDate,
-                                @Param("endDate") LocalDateTime endDate);
+                                 @Param("endDate") LocalDateTime endDate);
 
     /**
      * 월별 매출 통계 조회
@@ -90,25 +73,25 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @param endDate 종료일
      * @return [년월, 주문수, 총액] 형태의 통계 데이터
      */
-    @Query("SELECT FUNCTION('DATE_FORMAT', o.createdAt, '%Y-%m') as month, " +
-           "COUNT(o) as count, " +
-           "SUM(o.totalAmount) as total " +
-           "FROM Order o " +
-           "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
-           "AND o.status != 'CANCELLED' " +
-           "GROUP BY FUNCTION('DATE_FORMAT', o.createdAt, '%Y-%m') " +
-           "ORDER BY month")
+    @Query(value = "SELECT TO_CHAR(o.created_at, 'YYYY-MM') as month, " +
+            "COUNT(o) as count, " +
+            "SUM(o.total_amount) as total " +
+            "FROM orders o " +
+            "WHERE o.created_at BETWEEN :startDate AND :endDate " +
+            "AND o.status != 'CANCELLED' " +
+            "GROUP BY TO_CHAR(o.created_at, 'YYYY-MM') " +
+            "ORDER BY month", nativeQuery = true)
     List<Object[]> getMonthlySales(@Param("startDate") LocalDateTime startDate,
-                                  @Param("endDate") LocalDateTime endDate);
+                                   @Param("endDate") LocalDateTime endDate);
 
     /**
      * 주문 상태별 분포 조회
      * @return [상태, 주문수] 형태의 통계 데이터
      */
     @Query("SELECT o.status as status, " +
-           "COUNT(o) as count " +
-           "FROM Order o " +
-           "GROUP BY o.status")
+            "COUNT(o) as count " +
+            "FROM Order o " +
+            "GROUP BY o.status")
     Map<OrderStatus, Long> getOrderStatusDistribution();
 
     /**
@@ -116,16 +99,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      */
     @Query("SELECT o FROM Order o WHERE o.createdAt BETWEEN :startDate AND :endDate")
     List<Order> findByDateRange(@Param("startDate") LocalDateTime startDate,
-                               @Param("endDate") LocalDateTime endDate);
+                                @Param("endDate") LocalDateTime endDate);
 
     /**
      * 특정 기간의 총 매출액 계산
      */
     @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o " +
-           "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
-           "AND o.status != 'CANCELLED'")
-    double calculateTotalRevenue(@Param("startDate") LocalDateTime startDate,
-                               @Param("endDate") LocalDateTime endDate);
+            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+            "AND o.status != 'CANCELLED'")
+    Double calculateTotalRevenue(@Param("startDate") LocalDateTime startDate,
+                                 @Param("endDate") LocalDateTime endDate);
 
     /**
      * 기간별 주문 수 조회

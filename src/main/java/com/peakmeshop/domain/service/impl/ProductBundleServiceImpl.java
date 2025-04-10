@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,7 +15,6 @@ import com.peakmeshop.api.dto.ProductBundleItemDTO;
 import com.peakmeshop.domain.entity.Product;
 import com.peakmeshop.domain.entity.ProductBundle;
 import com.peakmeshop.domain.entity.ProductBundleItem;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.repository.ProductBundleItemRepository;
 import com.peakmeshop.domain.repository.ProductBundleRepository;
 import com.peakmeshop.domain.repository.ProductRepository;
@@ -34,7 +34,7 @@ public class ProductBundleServiceImpl implements ProductBundleService {
     @Transactional(readOnly = true)
     public ProductBundleDTO getBundleById(Long id) {
         ProductBundle bundle = bundleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product bundle not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Product bundle not found with id: " + id));
         return convertToDTO(bundle);
     }
 
@@ -81,7 +81,7 @@ public class ProductBundleServiceImpl implements ProductBundleService {
         if (bundleDTO.getItems() != null) {
             for (ProductBundleItemDTO itemDTO : bundleDTO.getItems()) {
                 Product product = productRepository.findById(itemDTO.getProductId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemDTO.getProductId()));
+                        .orElseThrow(() -> new UsernameNotFoundException("Product not found with id: " + itemDTO.getProductId()));
 
                 ProductBundleItem item = ProductBundleItem.builder()
                         .bundle(savedBundle)
@@ -100,7 +100,7 @@ public class ProductBundleServiceImpl implements ProductBundleService {
     @Transactional
     public ProductBundleDTO updateBundle(Long id, ProductBundleDTO bundleDTO) {
         ProductBundle bundle = bundleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product bundle not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Product bundle not found with id: " + id));
 
         bundle.setName(bundleDTO.getName());
         bundle.setDescription(bundleDTO.getDescription());
@@ -120,7 +120,7 @@ public class ProductBundleServiceImpl implements ProductBundleService {
         if (bundleDTO.getItems() != null) {
             for (ProductBundleItemDTO itemDTO : bundleDTO.getItems()) {
                 Product product = productRepository.findById(itemDTO.getProductId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemDTO.getProductId()));
+                        .orElseThrow(() -> new UsernameNotFoundException("Product not found with id: " + itemDTO.getProductId()));
 
                 ProductBundleItem item = ProductBundleItem.builder()
                         .bundle(bundle)
@@ -139,7 +139,7 @@ public class ProductBundleServiceImpl implements ProductBundleService {
     @Transactional
     public void deleteBundle(Long id) {
         if (!bundleRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Product bundle not found with id: " + id);
+            throw new UsernameNotFoundException("Product bundle not found with id: " + id);
         }
 
         // 번들 아이템 삭제
@@ -153,7 +153,7 @@ public class ProductBundleServiceImpl implements ProductBundleService {
     @Transactional
     public void activateBundle(Long id) {
         ProductBundle bundle = bundleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product bundle not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Product bundle not found with id: " + id));
 
         bundle.setActive(true);
         bundle.setUpdatedAt(LocalDateTime.now());
@@ -165,7 +165,7 @@ public class ProductBundleServiceImpl implements ProductBundleService {
     @Transactional
     public void deactivateBundle(Long id) {
         ProductBundle bundle = bundleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product bundle not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Product bundle not found with id: " + id));
 
         bundle.setActive(false);
         bundle.setUpdatedAt(LocalDateTime.now());

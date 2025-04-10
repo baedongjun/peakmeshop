@@ -1,6 +1,5 @@
 package com.peakmeshop.domain.service.impl;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -10,8 +9,8 @@ import java.util.stream.Collectors;
 import java.util.HashMap;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +18,6 @@ import com.peakmeshop.api.dto.BrandDTO;
 import com.peakmeshop.domain.entity.Brand;
 import com.peakmeshop.domain.repository.BrandRepository;
 import com.peakmeshop.domain.service.BrandService;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -43,7 +41,7 @@ public class BrandServiceImpl implements BrandService {
     @Transactional
     public BrandDTO updateBrand(Long id, BrandDTO brandDTO) {
         Brand brand = brandRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Brand not found with id: " + id));
 
         brand.setName(brandDTO.name());
         brand.setSlug(brandDTO.slug());
@@ -62,7 +60,7 @@ public class BrandServiceImpl implements BrandService {
     @Transactional(readOnly = true)
     public BrandDTO getBrandById(Long id) {
         Brand brand = brandRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Brand not found with id: " + id));
         return mapToDTO(brand);
     }
 
@@ -136,7 +134,7 @@ public class BrandServiceImpl implements BrandService {
     @Transactional
     public BrandDTO updateBrandStatus(Long id, boolean active) {
         Brand brand = brandRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Brand not found with id: " + id));
 
         brand.setIsActive(active);
         brand.setUpdatedAt(LocalDateTime.now());
@@ -149,7 +147,7 @@ public class BrandServiceImpl implements BrandService {
     @Transactional
     public BrandDTO updateBrandFeatured(Long id, boolean featured) {
         Brand brand = brandRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("Brand not found with id: " + id));
 
         brand.setIsFeatured(featured);
         brand.setUpdatedAt(LocalDateTime.now());
@@ -208,7 +206,7 @@ public class BrandServiceImpl implements BrandService {
     @Transactional(readOnly = true)
     public Map<String, Long> getBrandSummary(Long brandId) {
         Brand brand = brandRepository.findById(brandId)
-                .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + brandId));
+                .orElseThrow(() -> new UsernameNotFoundException("Brand not found with id: " + brandId));
 
         Map<String, Long> summary = new HashMap<>();
         summary.put("id", brand.getId());

@@ -1,13 +1,12 @@
 package com.peakmeshop.domain.repository;
 
+import com.peakmeshop.domain.entity.ActivityLog;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import com.peakmeshop.domain.entity.ActivityLog;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,10 +28,10 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> 
     @Query("SELECT a.entityType, COUNT(a) FROM ActivityLog a WHERE a.createdAt BETWEEN :startDate AND :endDate GROUP BY a.entityType")
     List<Object[]> countByEntityTypeAndCreatedAtBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT HOUR(a.createdAt), COUNT(a) FROM ActivityLog a WHERE a.createdAt BETWEEN :startDate AND :endDate GROUP BY HOUR(a.createdAt)")
+    @Query(value = "SELECT EXTRACT(HOUR FROM a.created_at), COUNT(a) FROM activity_log a WHERE a.created_at BETWEEN :startDate AND :endDate GROUP BY EXTRACT(HOUR FROM a.created_at)", nativeQuery = true)
     List<Object[]> countByHourOfDayAndCreatedAtBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT FUNCTION('DAYOFWEEK', a.createdAt), COUNT(a) FROM ActivityLog a WHERE a.createdAt BETWEEN :startDate AND :endDate GROUP BY FUNCTION('DAYOFWEEK', a.createdAt)")
+    @Query(value = "SELECT EXTRACT(DOW FROM a.created_at), COUNT(a) FROM activity_log a WHERE a.created_at BETWEEN :startDate AND :endDate GROUP BY EXTRACT(DOW FROM a.created_at)", nativeQuery = true)
     List<Object[]> countByDayOfWeekAndCreatedAtBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     void deleteByCreatedAtBefore(LocalDateTime cutoffDate);

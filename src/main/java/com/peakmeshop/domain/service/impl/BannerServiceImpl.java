@@ -7,12 +7,12 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.peakmeshop.api.dto.BannerDTO;
 import com.peakmeshop.domain.entity.Banner;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.repository.BannerRepository;
 import com.peakmeshop.domain.service.BannerService;
 import com.peakmeshop.domain.service.FileStorageService;
@@ -75,7 +75,7 @@ public class BannerServiceImpl implements BannerService {
     @Transactional
     public BannerDTO updateBanner(Long id, BannerDTO bannerDTO) {
         Banner existingBanner = bannerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("배너를 찾을 수 없습니다. ID: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("배너를 찾을 수 없습니다. ID: " + id));
 
         existingBanner.setTitle(bannerDTO.title());
         existingBanner.setSubtitle(bannerDTO.subtitle());
@@ -95,7 +95,7 @@ public class BannerServiceImpl implements BannerService {
     @Transactional
     public boolean deleteBanner(Long id) {
         Banner banner = bannerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("배너를 찾을 수 없습니다. ID: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("배너를 찾을 수 없습니다. ID: " + id));
 
         // 이미지 파일 삭제
         if (banner.getImageUrl() != null && !banner.getImageUrl().isEmpty()) {

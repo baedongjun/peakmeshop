@@ -1,11 +1,7 @@
 package com.peakmeshop.admin.controller;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,11 +9,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.peakmeshop.api.dto.CouponDTO;
-import com.peakmeshop.api.dto.PromotionDTO;
 import com.peakmeshop.domain.service.CouponService;
 import com.peakmeshop.domain.service.PromotionService;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.service.CategoryService;
 import com.peakmeshop.domain.service.ProductService;
 import org.springframework.data.web.PageableDefault;
@@ -67,7 +60,7 @@ public class AdminMarketingViewController {
     @GetMapping("/coupons/{id}/edit")
     public String editCoupon(@PathVariable Long id, Model model) {
         model.addAttribute("coupon", couponService.getCoupon(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Coupon", "id", id)));
+                .orElseThrow(() -> new UsernameNotFoundException("Coupon id : "+ id)));
         return "admin/marketing/coupon-form";
     }
 
@@ -77,7 +70,7 @@ public class AdminMarketingViewController {
     @GetMapping("/coupons/{id}")
     public String couponDetail(@PathVariable Long id, Model model) {
         model.addAttribute("coupon", couponService.getCoupon(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Coupon", "id", id)));
+                .orElseThrow(() -> new UsernameNotFoundException("Coupon id: " + id)));
         return "admin/marketing/coupon-detail";
     }
 
@@ -113,7 +106,7 @@ public class AdminMarketingViewController {
     @GetMapping("/promotions/{id}/edit")
     public String editPromotion(@PathVariable Long id, @PageableDefault(size = 10) Pageable pageable, Model model) {
         model.addAttribute("promotion", promotionService.getPromotion(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Promotion", "id", id)));
+                .orElseThrow(() -> new UsernameNotFoundException("Promotion id : " + id)));
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("products", productService.getAllProducts(pageable));
         return "admin/marketing/promotion-form";
@@ -125,7 +118,7 @@ public class AdminMarketingViewController {
     @GetMapping("/promotions/{id}")
     public String promotionDetail(@PathVariable Long id, Model model) {
         var promotion = promotionService.getPromotion(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Promotion", "id", id));
+                .orElseThrow(() -> new UsernameNotFoundException("Promotion id : "+id));
         model.addAttribute("promotion", promotion);
 
         if (promotion.getTarget().equals("CATEGORY")) {

@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +17,6 @@ import com.peakmeshop.domain.entity.Member;
 import com.peakmeshop.domain.entity.Point;
 import com.peakmeshop.domain.entity.PointHistory;
 import com.peakmeshop.common.exception.BadRequestException;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.repository.MemberRepository;
 import com.peakmeshop.domain.repository.PointHistoryRepository;
 import com.peakmeshop.domain.repository.PointRepository;
@@ -43,7 +43,7 @@ public class PointServiceImpl implements PointService {
     @Transactional(readOnly = true)
     public PointDTO getMemberPoint(Long memberId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found with id: " + memberId));
+                .orElseThrow(() -> new UsernameNotFoundException("Member not found with id: " + memberId));
 
         Point point = pointRepository.findByMemberId(memberId)
                 .orElse(Point.builder()
@@ -60,7 +60,7 @@ public class PointServiceImpl implements PointService {
     @Transactional(readOnly = true)
     public Page<PointHistoryDTO> getMemberPointHistory(Long memberId, Pageable pageable) {
         memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found with id: " + memberId));
+                .orElseThrow(() -> new UsernameNotFoundException("Member not found with id: " + memberId));
 
         Page<PointHistory> pointHistories = pointHistoryRepository.findByMemberIdOrderByCreatedAtDesc(memberId, pageable);
         return pointHistories.map(this::convertToHistoryDTO);
@@ -74,7 +74,7 @@ public class PointServiceImpl implements PointService {
         }
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found with id: " + memberId));
+                .orElseThrow(() -> new UsernameNotFoundException("Member not found with id: " + memberId));
 
         Point point = pointRepository.findByMemberId(memberId)
                 .orElse(Point.builder()
@@ -114,10 +114,10 @@ public class PointServiceImpl implements PointService {
         }
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found with id: " + memberId));
+                .orElseThrow(() -> new UsernameNotFoundException("Member not found with id: " + memberId));
 
         Point point = pointRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Point not found for member id: " + memberId));
+                .orElseThrow(() -> new UsernameNotFoundException("Point not found for member id: " + memberId));
 
         // 포인트 차감
         point.setCurrentPoint(point.getCurrentPoint() - amount);
@@ -148,10 +148,10 @@ public class PointServiceImpl implements PointService {
         }
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Member not found with id: " + memberId));
+                .orElseThrow(() -> new UsernameNotFoundException("Member not found with id: " + memberId));
 
         Point point = pointRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("Point not found for member id: " + memberId));
+                .orElseThrow(() -> new UsernameNotFoundException("Point not found for member id: " + memberId));
 
         // 사용 가능한 포인트 확인
         if (point.getCurrentPoint() < amount) {
@@ -198,7 +198,7 @@ public class PointServiceImpl implements PointService {
 
         // 회원 존재 여부 확인
         memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         // 포인트 적립 (기본 유효기간 1년)
         Point point = Point.builder()
@@ -342,7 +342,7 @@ public class PointServiceImpl implements PointService {
                 .averagePointsPerMember(0.0) // TODO: 구현 필요
                 .pointsByType(pointsByTypeList)
                 .dailyStatistics(dailyStatsList)
-                .build();
+                .totalExpiredPoints(0L).build();
     }
 
     @Override

@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +18,6 @@ import com.peakmeshop.domain.entity.Member;
 import com.peakmeshop.domain.entity.Product;
 import com.peakmeshop.domain.entity.Wishlist;
 import com.peakmeshop.domain.entity.WishlistItem;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.repository.MemberRepository;
 import com.peakmeshop.domain.repository.ProductRepository;
 import com.peakmeshop.domain.repository.WishlistItemRepository;
@@ -73,7 +73,7 @@ public class WishlistServiceImpl implements WishlistService {
 
         // 상품 조회
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("상품을 찾을 수 없습니다. ID: " + productId));
+                .orElseThrow(() -> new UsernameNotFoundException("상품을 찾을 수 없습니다. ID: " + productId));
 
         // 이미 위시리스트에 있는 상품인지 확인
         boolean exists = wishlist.getItems().stream()
@@ -191,7 +191,7 @@ public class WishlistServiceImpl implements WishlistService {
     // 새 위시리스트 생성
     private Wishlist createNewWishlist(Long memberId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다. ID: " + memberId));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다. ID: " + memberId));
 
         Wishlist wishlist = new Wishlist();
         wishlist.setMember(member);

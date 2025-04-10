@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import com.peakmeshop.domain.enums.OrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +17,6 @@ import com.peakmeshop.api.dto.OrderStatusUpdateDTO;
 import com.peakmeshop.api.dto.ShippingDTO;
 import com.peakmeshop.domain.entity.Order;
 import com.peakmeshop.domain.entity.Shipping;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.repository.OrderRepository;
 import com.peakmeshop.domain.repository.ShippingRepository;
 import com.peakmeshop.domain.service.EmailService;
@@ -75,7 +75,7 @@ public class ShippingServiceImpl implements ShippingService {
     public ShippingDTO createShipping(ShippingDTO shippingDTO) {
         // 주문 조회
         Order order = orderRepository.findById(shippingDTO.orderId())
-                .orElseThrow(() -> new ResourceNotFoundException("주문을 찾을 수 없습니다. ID: " + shippingDTO.orderId()));
+                .orElseThrow(() -> new UsernameNotFoundException("주문을 찾을 수 없습니다. ID: " + shippingDTO.orderId()));
 
         // 이미 배송 정보가 있는지 확인
         if (shippingRepository.existsByOrderId(shippingDTO.orderId())) {
@@ -123,7 +123,7 @@ public class ShippingServiceImpl implements ShippingService {
     @Transactional
     public ShippingDTO updateShippingStatus(Long id, String status) {
         Shipping shipping = shippingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("배송 정보를 찾을 수 없습니다. ID: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("배송 정보를 찾을 수 없습니다. ID: " + id));
 
         shipping.setStatus(status);
         shipping.setUpdatedAt(LocalDateTime.now());
@@ -156,7 +156,7 @@ public class ShippingServiceImpl implements ShippingService {
     @Transactional
     public ShippingDTO updateTrackingInfo(Long id, String carrier, String trackingNumber) {
         Shipping shipping = shippingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("배송 정보를 찾을 수 없습니다. ID: " + id));
+                .orElseThrow(() -> new UsernameNotFoundException("배송 정보를 찾을 수 없습니다. ID: " + id));
 
         shipping.setCarrier(carrier);
         shipping.setTrackingNumber(trackingNumber);

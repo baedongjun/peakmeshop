@@ -2,17 +2,16 @@ package com.peakmeshop.domain.service.impl;
 
 import com.peakmeshop.api.dto.*;
 import com.peakmeshop.common.exception.BadRequestException;
-import com.peakmeshop.common.exception.ResourceNotFoundException;
 import com.peakmeshop.domain.entity.*;
 import com.peakmeshop.domain.repository.*;
 import com.peakmeshop.domain.service.CartService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -36,7 +35,7 @@ public class CartServiceImpl implements CartService {
     @Transactional(readOnly = true)
     public CartDTO getCartByMemberId(Long memberId) {
         Cart cart = cartRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
         return convertToDTO(cart);
     }
 
@@ -44,7 +43,7 @@ public class CartServiceImpl implements CartService {
     @Transactional(readOnly = true)
     public CartDTO getCartByGuestId(String guestId) {
         Cart cart = cartRepository.findByGuestId(guestId)
-                .orElseThrow(() -> new ResourceNotFoundException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
         return convertToDTO(cart);
     }
 
@@ -58,7 +57,7 @@ public class CartServiceImpl implements CartService {
         }
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         Cart newCart = Cart.builder()
                 .member(member)
@@ -74,7 +73,7 @@ public class CartServiceImpl implements CartService {
     @Transactional(readOnly = true)
     public CartDTO getCartBySessionId(String sessionId) {
         Cart cart = cartRepository.findByGuestId(sessionId)
-                .orElseThrow(() -> new ResourceNotFoundException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
         return convertToDTO(cart);
     }
 
@@ -103,7 +102,7 @@ public class CartServiceImpl implements CartService {
         Cart cart = cartRepository.findByMemberId(memberId)
                 .orElseGet(() -> {
                     Member member = memberRepository.findById(memberId)
-                            .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                            .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
                     Cart newCart = Cart.builder()
                             .member(member)
@@ -136,12 +135,12 @@ public class CartServiceImpl implements CartService {
 
     private CartDTO addItemToCart(Cart cart, CartRequestDTO requestDTO) {
         Product product = productRepository.findById(requestDTO.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("상품을 찾을 수 없습니다."));
 
         ProductVariant variant = null;
         if (requestDTO.getVariantId() != null) {
             variant = productVariantRepository.findById(requestDTO.getVariantId())
-                    .orElseThrow(() -> new ResourceNotFoundException("상품 옵션을 찾을 수 없습니다."));
+                    .orElseThrow(() -> new UsernameNotFoundException("상품 옵션을 찾을 수 없습니다."));
         }
 
         // 재고 확인
@@ -234,7 +233,7 @@ public class CartServiceImpl implements CartService {
             if (requestDTO.getOptions() != null && !requestDTO.getOptions().isEmpty()) {
                 for (CartRequestDTO.CartOptionDTO optionDTO : requestDTO.getOptions()) {
                     ProductOption productOption = productOptionRepository.findById(optionDTO.getOptionId())
-                            .orElseThrow(() -> new ResourceNotFoundException("상품 옵션을 찾을 수 없습니다."));
+                            .orElseThrow(() -> new UsernameNotFoundException("상품 옵션을 찾을 수 없습니다."));
 
                     CartItemOption cartItemOption = CartItemOption.builder()
                             .cartItem(cartItem)
@@ -259,7 +258,7 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartDTO updateCartItem(Long memberId, CartUpdateDTO updateDTO) {
         Cart cart = cartRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
 
         return updateCartItem(cart, updateDTO);
     }
@@ -268,14 +267,14 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartDTO updateGuestCartItem(String guestId, CartUpdateDTO updateDTO) {
         Cart cart = cartRepository.findByGuestId(guestId)
-                .orElseThrow(() -> new ResourceNotFoundException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
 
         return updateCartItem(cart, updateDTO);
     }
 
     private CartDTO updateCartItem(Cart cart, CartUpdateDTO updateDTO) {
         CartItem cartItem = cartItemRepository.findById(updateDTO.getCartItemId())
-                .orElseThrow(() -> new ResourceNotFoundException("장바구니 상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("장바구니 상품을 찾을 수 없습니다."));
 
         if (!cartItem.getCart().getId().equals(cart.getId())) {
             throw new BadRequestException("해당 장바구니에 상품이 존재하지 않습니다.");
@@ -306,7 +305,7 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartDTO removeItemFromCart(Long memberId, Long cartItemId) {
         Cart cart = cartRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
 
         return removeItemFromCart(cart, cartItemId);
     }
@@ -315,14 +314,14 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartDTO removeItemFromGuestCart(String guestId, Long cartItemId) {
         Cart cart = cartRepository.findByGuestId(guestId)
-                .orElseThrow(() -> new ResourceNotFoundException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
 
         return removeItemFromCart(cart, cartItemId);
     }
 
     private CartDTO removeItemFromCart(Cart cart, Long cartItemId) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new ResourceNotFoundException("장바구니 상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("장바구니 상품을 찾을 수 없습니다."));
 
         if (!cartItem.getCart().getId().equals(cart.getId())) {
             throw new BadRequestException("해당 장바구니에 상품이 존재하지 않습니다.");
@@ -345,7 +344,7 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartDTO clearCart(Long memberId) {
         Cart cart = cartRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
 
         return clearCart(cart);
     }
@@ -354,7 +353,7 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartDTO clearGuestCart(String guestId) {
         Cart cart = cartRepository.findByGuestId(guestId)
-                .orElseThrow(() -> new ResourceNotFoundException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
 
         return clearCart(cart);
     }
@@ -382,7 +381,7 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartDTO applyCoupon(Long memberId, String couponCode) {
         Cart cart = cartRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
 
         return applyCoupon(cart, couponCode);
     }
@@ -391,14 +390,14 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartDTO applyGuestCoupon(String guestId, String couponCode) {
         Cart cart = cartRepository.findByGuestId(guestId)
-                .orElseThrow(() -> new ResourceNotFoundException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
 
         return applyCoupon(cart, couponCode);
     }
 
     private CartDTO applyCoupon(Cart cart, String couponCode) {
         Coupon coupon = couponRepository.findByCode(couponCode)
-                .orElseThrow(() -> new ResourceNotFoundException("쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
 
         // 쿠폰 유효성 검사
         LocalDateTime now = LocalDateTime.now();
@@ -435,7 +434,7 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartDTO removeCoupon(Long memberId) {
         Cart cart = cartRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new ResourceNotFoundException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
 
         return removeCoupon(cart);
     }
@@ -444,7 +443,7 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartDTO removeGuestCoupon(String guestId) {
         Cart cart = cartRepository.findByGuestId(guestId)
-                .orElseThrow(() -> new ResourceNotFoundException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
 
         return removeCoupon(cart);
     }
@@ -461,12 +460,12 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartDTO mergeGuestCartWithMemberCart(String guestId, Long memberId) {
         Cart guestCart = cartRepository.findByGuestId(guestId)
-                .orElseThrow(() -> new ResourceNotFoundException("게스트 장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UsernameNotFoundException("게스트 장바구니를 찾을 수 없습니다."));
 
         Cart memberCart = cartRepository.findByMemberId(memberId)
                 .orElseGet(() -> {
                     Member member = memberRepository.findById(memberId)
-                            .orElseThrow(() -> new ResourceNotFoundException("회원을 찾을 수 없습니다."));
+                            .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
                     Cart newCart = Cart.builder()
                             .member(member)
@@ -597,7 +596,7 @@ public class CartServiceImpl implements CartService {
                     BigDecimal discountPercent = new BigDecimal(discountValue);
                     // RoundingMode를 명시적으로 지정
                     BigDecimal hundred = new BigDecimal(100);
-                    discount = subtotal.multiply(discountPercent).divide(hundred, 2, RoundingMode.HALF_UP);
+                    discount = subtotal.multiply(discountPercent).divide(hundred, 2, BigDecimal.ROUND_HALF_UP);
 
                     // 최대 할인 금액 제한
                     if (coupon.getMaxDiscountAmount() != null) {
