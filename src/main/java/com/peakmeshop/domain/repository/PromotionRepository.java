@@ -16,7 +16,7 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
 
     Optional<Promotion> findByPromotionCode(String promotionCode);
 
-    Page<Promotion> findByStartDateBeforeAndEndDateAfterAndActiveTrue(LocalDateTime now, LocalDateTime now2, Pageable pageable);
+    Page<Promotion> findByStartDateBeforeAndEndDateAfterAndIsActiveTrue(LocalDateTime now, LocalDateTime now2, Pageable pageable);
 
-    List<Promotion> findByStartDateBeforeAndEndDateAfterAndActiveTrue(LocalDateTime now, LocalDateTime now2);
+    List<Promotion> findByStartDateBeforeAndEndDateAfterAndIsActiveTrue(LocalDateTime now, LocalDateTime now2);
 }

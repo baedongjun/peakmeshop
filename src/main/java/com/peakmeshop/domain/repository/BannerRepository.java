@@ -10,9 +10,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface BannerRepository extends JpaRepository<Banner, Long> {
 
-    Page<Banner> findByStartDateBeforeAndEndDateAfterAndActiveTrue(LocalDateTime now, LocalDateTime now2, Pageable pageable);
+    Page<Banner> findByStartDateBeforeAndEndDateAfterAndIsActiveTrue(LocalDateTime now, LocalDateTime now2, Pageable pageable);
 
-    List<Banner> findByStartDateBeforeAndEndDateAfterAndActiveTrue(LocalDateTime now, LocalDateTime now2);
+    List<Banner> findByStartDateBeforeAndEndDateAfterAndIsActiveTrue(LocalDateTime now, LocalDateTime now2);
 
-    List<Banner> findByPositionAndStartDateBeforeAndEndDateAfterAndActiveTrue(String position, LocalDateTime now, LocalDateTime now2);
+    List<Banner> findByPositionAndStartDateBeforeAndEndDateAfterAndIsActiveTrue(String position, LocalDateTime now, LocalDateTime now2);
 }

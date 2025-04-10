@@ -41,7 +41,7 @@ public class BannerServiceImpl implements BannerService {
     @Transactional(readOnly = true)
     public Page<BannerDTO> getActiveBanners(Pageable pageable) {
         LocalDateTime now = LocalDateTime.now();
-        return bannerRepository.findByStartDateBeforeAndEndDateAfterAndActiveTrue(now, now, pageable)
+        return bannerRepository.findByStartDateBeforeAndEndDateAfterAndIsActiveTrue(now, now, pageable)
                 .map(this::convertToDTO);
     }
 
@@ -111,7 +111,7 @@ public class BannerServiceImpl implements BannerService {
     @Transactional(readOnly = true)
     public List<BannerDTO> getActiveBannersByPosition(String position) {
         LocalDateTime now = LocalDateTime.now();
-        return bannerRepository.findByPositionAndStartDateBeforeAndEndDateAfterAndActiveTrue(
+        return bannerRepository.findByPositionAndStartDateBeforeAndEndDateAfterAndIsActiveTrue(
                         position, now, now)
                 .stream()
                 .map(this::convertToDTO)

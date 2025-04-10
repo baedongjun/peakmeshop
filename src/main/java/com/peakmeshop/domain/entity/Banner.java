@@ -45,7 +45,7 @@ public class Banner {
     private LocalDateTime endDate;
 
     @Column(nullable = false)
-    private boolean active;
+    private boolean isActive;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

@@ -197,12 +197,12 @@ public class PointServiceImpl implements PointService {
         }
 
         // 회원 존재 여부 확인
-        memberRepository.findById(memberId)
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         // 포인트 적립 (기본 유효기간 1년)
         Point point = Point.builder()
-                .memberId(memberId)
+                .member(member)
                 .amount(amount)
                 .reason(reason)
                 .type("EARN")
@@ -227,9 +227,14 @@ public class PointServiceImpl implements PointService {
             throw new BadRequestException("사용 가능한 포인트가 부족합니다.");
         }
 
+        // 회원 존재 여부 확인
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+
+
         // 포인트 사용
         Point point = Point.builder()
-                .memberId(memberId)
+                .member(member)
                 .amount(-amount)
                 .reason(reason)
                 .type("USE")
@@ -247,9 +252,14 @@ public class PointServiceImpl implements PointService {
             throw new BadRequestException("환불할 포인트는 0보다 커야 합니다.");
         }
 
+        // 회원 존재 여부 확인
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+
+
         // 포인트 환불
         Point point = Point.builder()
-                .memberId(memberId)
+                .member(member)
                 .amount(amount)
                 .reason(reason)
                 .type("REFUND")
@@ -369,7 +379,7 @@ public class PointServiceImpl implements PointService {
     private PointDTO convertToDTO(Point point) {
         return PointDTO.builder()
                 .id(point.getId())
-                .memberId(point.getMemberId())
+                .member(point.getMember())
                 .amount(point.getAmount())
                 .reason(point.getReason())
                 .type(point.getType())

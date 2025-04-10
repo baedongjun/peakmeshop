@@ -33,16 +33,16 @@ public class Order extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
-    @Column(precision = 10, scale = 2)
+    @Column(precision = 10)
     private BigDecimal totalPrice;
 
-    @Column(precision = 10, scale = 2)
+    @Column(precision = 10)
     private BigDecimal discount;
 
-    @Column(precision = 10, scale = 2)
+    @Column(precision = 10)
     private BigDecimal deliveryFee;
 
-    @Column(precision = 10, scale = 2)
+    @Column(precision = 10)
     private Double finalPrice;
 
     private String recipientName;

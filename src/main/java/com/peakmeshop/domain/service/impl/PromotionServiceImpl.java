@@ -43,7 +43,7 @@ public class PromotionServiceImpl implements PromotionService {
     @Transactional(readOnly = true)
     public Page<PromotionDTO> getActivePromotions(Pageable pageable) {
         LocalDateTime now = LocalDateTime.now();
-        return promotionRepository.findByStartDateBeforeAndEndDateAfterAndActiveTrue(now, now, pageable)
+        return promotionRepository.findByStartDateBeforeAndEndDateAfterAndIsActiveTrue(now, now, pageable)
                 .map(this::convertToDTO);
     }
 
@@ -134,7 +134,7 @@ public class PromotionServiceImpl implements PromotionService {
     @Transactional(readOnly = true)
     public List<PromotionDTO> getCurrentPromotions() {
         LocalDateTime now = LocalDateTime.now();
-        return promotionRepository.findByStartDateBeforeAndEndDateAfterAndActiveTrue(now, now)
+        return promotionRepository.findByStartDateBeforeAndEndDateAfterAndIsActiveTrue(now, now)
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());

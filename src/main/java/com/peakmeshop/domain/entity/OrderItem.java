@@ -51,13 +51,13 @@ public class OrderItem {
     private String name;
     private String productImage;
 
-    @Column(precision = 10, scale = 2)
+    @Column(precision = 10)
     private BigDecimal price;
 
-    @Column(precision = 10, scale = 2)
+    @Column(precision = 10)
     private BigDecimal cost;
 
-    @Column(precision = 10, scale = 2)
+    @Column(precision = 10)
     private BigDecimal discount;
 
     private Integer quantity;

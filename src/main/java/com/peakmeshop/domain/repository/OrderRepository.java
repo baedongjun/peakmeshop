@@ -58,7 +58,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      */
     @Query(value = "SELECT DATE(o.createdAt) as date, " +
             "COUNT(o) as count, " +
-            "SUM(o.totalAmount) as total " +
+            "SUM(o.finalPrice) as total " +
             "FROM orders o " +
             "WHERE o.created_at BETWEEN :startDate AND :endDate " +
             "AND o.status != 'CANCELLED' " +
@@ -104,7 +104,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     /**
      * 특정 기간의 총 매출액 계산
      */
-    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o " +
+    @Query("SELECT COALESCE(SUM(o.finalPrice), 0) FROM Order o " +
             "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
             "AND o.status != 'CANCELLED'")
     Double calculateTotalRevenue(@Param("startDate") LocalDateTime startDate,

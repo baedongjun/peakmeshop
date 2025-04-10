@@ -46,9 +46,6 @@ public class Point {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "member_id", nullable = false)
-    private Long memberId;
-
     @Column(nullable = false)
     private Long amount;
 
