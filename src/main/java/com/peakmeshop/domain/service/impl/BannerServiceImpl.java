@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -75,7 +76,7 @@ public class BannerServiceImpl implements BannerService {
     @Transactional
     public BannerDTO updateBanner(Long id, BannerDTO bannerDTO) {
         Banner existingBanner = bannerRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("배너를 찾을 수 없습니다. ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("배너를 찾을 수 없습니다. ID: " + id));
 
         existingBanner.setTitle(bannerDTO.title());
         existingBanner.setSubtitle(bannerDTO.subtitle());
@@ -95,7 +96,7 @@ public class BannerServiceImpl implements BannerService {
     @Transactional
     public boolean deleteBanner(Long id) {
         Banner banner = bannerRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("배너를 찾을 수 없습니다. ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("배너를 찾을 수 없습니다. ID: " + id));
 
         // 이미지 파일 삭제
         if (banner.getImageUrl() != null && !banner.getImageUrl().isEmpty()) {

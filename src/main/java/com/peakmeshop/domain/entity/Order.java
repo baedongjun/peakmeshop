@@ -23,7 +23,7 @@ public class Order extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    @Column(name = "order_number", unique = true)
     private String orderNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -33,40 +33,61 @@ public class Order extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
-    @Column(precision = 10)
+    @Column(name = "total_price", precision = 10)
     private BigDecimal totalPrice;
 
     @Column(precision = 10)
     private BigDecimal discount;
 
-    @Column(precision = 10)
+    @Column(name = "delivery_fee", precision = 10)
     private BigDecimal deliveryFee;
 
-    @Column(precision = 10)
+    @Column(name = "final_price", precision = 10)
     private Double finalPrice;
 
+    @Column(name = "recipient_name")
     private String recipientName;
+    @Column(name = "recipient_tel")
     private String recipientTel;
+    @Column(name = "recipient_address")
     private String recipientAddress;
+    @Column(name = "recipient_detail_address")
     private String recipientDetailAddress;
+    @Column(name = "recipient_message")
     private String recipientMessage;
 
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
 
+    @Column(name = "payment_status")
     private String paymentStatus;
+    @Column(name = "payment_transaction_id")
     private String paymentTransactionId;
+    @Column(name = "shipping_method")
     private String shippingMethod;
+    @Column(name = "tracking_number")
     private String trackingNumber;
+    @Column(name = "shipping_company")
     private String shippingCompany;
+    @Column(name = "cancel_reason")
     private String cancelReason;
+    @Column(name = "refund_reason")
     private String refundReason;
 
+    @Column(name = "paid_at")
     private LocalDateTime paidAt;
+    @Column(name = "shipped_at")
     private LocalDateTime shippedAt;
+    @Column(name = "delivered_at")
     private LocalDateTime deliveredAt;
+    @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
+    @Column(name = "refunded_at")
     private LocalDateTime refundedAt;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();

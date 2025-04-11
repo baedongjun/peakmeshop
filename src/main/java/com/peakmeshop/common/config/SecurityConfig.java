@@ -1,13 +1,17 @@
 package com.peakmeshop.common.config;
 
+import com.peakmeshop.common.event.CustomAuthenticationFailureHandler;
+import com.peakmeshop.common.event.CustomLogoutSuccessHandler;
+import com.peakmeshop.common.security.CustomUserDetailsService;
+import com.peakmeshop.common.security.CustomPersistentTokenRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -15,13 +19,14 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final UserDetailsService userDetailsService;
-
-    public SecurityConfig(UserDetailsService userDetailsService) {
-        this.userDetailsService = userDetailsService;
-    }
+    private final CustomUserDetailsService userDetailsService;
+    private final CustomPersistentTokenRepository tokenRepository;
+    private final CustomAuthenticationFailureHandler authenticationFailureHandler;
+    private final CustomLogoutSuccessHandler logoutSuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -30,6 +35,7 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/mypage/**").authenticated()
                         .requestMatchers("/cart/**").permitAll()
+                        .requestMatchers("/api/**").permitAll()
                         .requestMatchers("/checkout/**").authenticated()
                         .requestMatchers("/**").permitAll()
                 )
@@ -37,22 +43,29 @@ public class SecurityConfig {
                         .loginPage("/login")
                         .loginProcessingUrl("/api/auth/login")
                         .defaultSuccessUrl("/")
-                        .failureUrl("/login?error")
+                        .failureHandler(authenticationFailureHandler)
                         .usernameParameter("userId")
                         .passwordParameter("password")
                         .permitAll()
                 )
-                .rememberMe(remember -> remember  // 로그인 상태 유지 기능 설정
-                        .rememberMeParameter("remember-me")
-                        .tokenValiditySeconds(86400)  // 24시간
-                )
                 .logout(logout -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/api/auth/logout"))
-                        .logoutSuccessUrl("/")
+                        .logoutSuccessHandler(logoutSuccessHandler)
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()
+                )
+                .rememberMe(remember -> remember
+                        .key("uniqueAndSecretKey")
+                        .tokenRepository(tokenRepository)
+                        .tokenValiditySeconds(86400) // 1일
+                        .userDetailsService(userDetailsService)
+                )
+                .sessionManagement(session -> session
+                        .maximumSessions(1)
+                        .maxSessionsPreventsLogin(false)
+                        .expiredUrl("/login?expired=true")
                 )
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/api/**")  // API 전체에 대해 CSRF 비활성화

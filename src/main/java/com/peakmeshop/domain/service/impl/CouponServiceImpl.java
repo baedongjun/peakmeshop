@@ -1,6 +1,9 @@
 package com.peakmeshop.domain.service.impl;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -10,7 +13,6 @@ import com.peakmeshop.api.dto.MemberCouponDTO;
 import com.peakmeshop.domain.entity.Coupon;
 import com.peakmeshop.domain.entity.Member;
 import com.peakmeshop.domain.entity.MemberCoupon;
-import com.peakmeshop.common.exception.BadRequestException;
 import com.peakmeshop.domain.repository.CouponRepository;
 import com.peakmeshop.domain.repository.MemberCouponRepository;
 import com.peakmeshop.domain.repository.MemberRepository;
@@ -18,7 +20,6 @@ import com.peakmeshop.domain.service.CouponService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,18 +36,97 @@ public class CouponServiceImpl implements CouponService {
     private final MemberCouponRepository memberCouponRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public Page<CouponDTO> getCoupons(String type, String status, String keyword, Pageable pageable) {
-        return null;
+        Page<Coupon> coupons;
+        if (keyword != null && !keyword.isEmpty()) {
+            coupons = couponRepository.searchCoupons(keyword, pageable);
+        } else if (status != null && !status.isEmpty()) {
+            coupons = couponRepository.findByStatus(status, pageable);
+        } else if (type != null && !type.isEmpty()) {
+            coupons = couponRepository.findByDiscountType(type, pageable);
+        } else {
+            coupons = couponRepository.findAll(pageable);
+        }
+        return coupons.map(this::convertToDTO);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CouponSummaryDTO getCouponSummary() {
-        return null;
+        long totalCoupons = couponRepository.count();
+        long activeCoupons = couponRepository.countByStatus(Coupon.STATUS_ACTIVE);
+        long expiredCoupons = couponRepository.countByStatus(Coupon.STATUS_EXPIRED);
+        long usedCoupons = couponRepository.countByUsedCountGreaterThan(0);
+
+        return CouponSummaryDTO.builder()
+                .totalCoupons(totalCoupons)
+                .activeCoupons(activeCoupons)
+                .expiredCoupons(expiredCoupons)
+                .usedCoupons(usedCoupons)
+                .build();
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public CouponSummaryDTO getCouponSummary(String period, String startDate, String endDate) {
+        LocalDateTime start = null;
+        LocalDateTime end = null;
+
+        if (startDate != null && endDate != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            LocalDate localStartDate = LocalDate.parse(startDate, formatter);
+            LocalDate localEndDate = LocalDate.parse(endDate, formatter);
+            start = localStartDate.atStartOfDay();
+            end = localEndDate.plusDays(1).atStartOfDay();
+        } else {
+            LocalDateTime now = LocalDateTime.now();
+            if (period != null) {
+                switch (period) {
+                    case "daily":
+                        start = now.toLocalDate().atStartOfDay();
+                        end = now.plusDays(1).toLocalDate().atStartOfDay();
+                        break;
+                    case "weekly":
+                        start = now.minusWeeks(1).toLocalDate().atStartOfDay();
+                        end = now.plusDays(1).toLocalDate().atStartOfDay();
+                        break;
+                    case "monthly":
+                        start = now.minusMonths(1).toLocalDate().atStartOfDay();
+                        end = now.plusDays(1).toLocalDate().atStartOfDay();
+                        break;
+                    case "yearly":
+                        start = now.minusYears(1).toLocalDate().atStartOfDay();
+                        end = now.plusDays(1).toLocalDate().atStartOfDay();
+                        break;
+                    default:
+                        start = now.minusMonths(1).toLocalDate().atStartOfDay();
+                        end = now.plusDays(1).toLocalDate().atStartOfDay();
+                }
+            } else {
+                start = now.minusMonths(1).toLocalDate().atStartOfDay();
+                end = now.plusDays(1).toLocalDate().atStartOfDay();
+            }
+        }
+
+        long totalCoupons = couponRepository.countByCreatedAtBetween(start, end);
+        long activeCoupons = couponRepository.countByStatusAndCreatedAtBetween(Coupon.STATUS_ACTIVE, start, end);
+        long expiredCoupons = couponRepository.countByStatusAndCreatedAtBetween(Coupon.STATUS_EXPIRED, start, end);
+        long usedCoupons = couponRepository.countByUsedCountGreaterThanAndCreatedAtBetween(0, start, end);
+
+        return CouponSummaryDTO.builder()
+                .totalCoupons(totalCoupons)
+                .activeCoupons(activeCoupons)
+                .expiredCoupons(expiredCoupons)
+                .usedCoupons(usedCoupons)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Optional<CouponDTO> getCoupon(Long id) {
-        return Optional.empty();
+        return couponRepository.findById(id)
+                .map(this::convertToDTO);
     }
 
     @Override
@@ -58,7 +138,7 @@ public class CouponServiceImpl implements CouponService {
         } else {
             // 쿠폰 코드 중복 확인
             if (couponRepository.findByCode(couponDTO.getCode()).isPresent()) {
-                throw new BadRequestException("이미 존재하는 쿠폰 코드입니다.");
+                throw new IllegalArgumentException("이미 존재하는 쿠폰 코드입니다.");
             }
         }
 
@@ -84,10 +164,66 @@ public class CouponServiceImpl implements CouponService {
     }
 
     @Override
+    @Transactional
+    public CouponDTO updateCoupon(CouponDTO couponDTO) {
+        if (couponDTO.getId() == null) {
+            throw new IllegalArgumentException("쿠폰 ID가 필요합니다.");
+        }
+        return updateCoupon(couponDTO.getId(), couponDTO);
+    }
+
+    @Override
+    @Transactional
+    public void deleteCoupon(Long id) {
+        couponRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다."));
+        couponRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public void issueCoupon(Long id) {
+        Coupon coupon = couponRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다."));
+
+        if (!Coupon.STATUS_ACTIVE.equals(coupon.getStatus())) {
+            coupon.setStatus(Coupon.STATUS_ACTIVE);
+            coupon.setUpdatedAt(LocalDateTime.now());
+            couponRepository.save(coupon);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void suspendCoupon(Long id) {
+        Coupon coupon = couponRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다."));
+
+        if (!Coupon.STATUS_INACTIVE.equals(coupon.getStatus())) {
+            coupon.setStatus(Coupon.STATUS_INACTIVE);
+            coupon.setUpdatedAt(LocalDateTime.now());
+            couponRepository.save(coupon);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void resumeCoupon(Long id) {
+        Coupon coupon = couponRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다."));
+
+        if (!Coupon.STATUS_ACTIVE.equals(coupon.getStatus())) {
+            coupon.setStatus(Coupon.STATUS_ACTIVE);
+            coupon.setUpdatedAt(LocalDateTime.now());
+            couponRepository.save(coupon);
+        }
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public CouponDTO getCouponById(Long id) {
         Coupon coupon = couponRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다."));
         return convertToDTO(coupon);
     }
 
@@ -95,7 +231,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional(readOnly = true)
     public CouponDTO getCouponByCode(String code) {
         Coupon coupon = couponRepository.findByCode(code)
-                .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다."));
         return convertToDTO(coupon);
     }
 
@@ -143,12 +279,12 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     public CouponDTO updateCoupon(Long id, CouponDTO couponDTO) {
         Coupon coupon = couponRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다."));
 
         // 쿠폰 코드 중복 확인 (변경된 경우)
         if (couponDTO.getCode() != null && !couponDTO.getCode().equals(coupon.getCode())) {
             if (couponRepository.findByCode(couponDTO.getCode()).isPresent()) {
-                throw new BadRequestException("이미 존재하는 쿠폰 코드입니다.");
+                throw new IllegalArgumentException("이미 존재하는 쿠폰 코드입니다.");
             }
             coupon.setCode(couponDTO.getCode());
         }
@@ -191,41 +327,9 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     @Transactional
-    public CouponDTO updateCoupon(CouponDTO couponDTO) {
-        if (couponDTO.getId() == null) {
-            throw new BadRequestException("쿠폰 ID가 필요합니다.");
-        }
-        return updateCoupon(couponDTO.getId(), couponDTO);
-    }
-
-    @Override
-    @Transactional
-    public void deleteCoupon(Long id) {
-        Coupon coupon = couponRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
-        couponRepository.delete(coupon);
-    }
-
-    @Override
-    public void issueCoupon(Long id) {
-
-    }
-
-    @Override
-    public void suspendCoupon(Long id) {
-
-    }
-
-    @Override
-    public void resumeCoupon(Long id) {
-
-    }
-
-    @Override
-    @Transactional
     public CouponDTO toggleCouponStatus(Long id) {
         Coupon coupon = couponRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다."));
 
         if (Coupon.STATUS_ACTIVE.equals(coupon.getStatus())) {
             coupon.setStatus(Coupon.STATUS_INACTIVE);
@@ -242,10 +346,10 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     public List<MemberCouponDTO> issueCouponToAllMembers(Long couponId) {
         Coupon coupon = couponRepository.findById(couponId)
-                .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다."));
 
         if (!Coupon.STATUS_ACTIVE.equals(coupon.getStatus())) {
-            throw new BadRequestException("비활성화된 쿠폰은 발급할 수 없습니다.");
+            throw new IllegalArgumentException("비활성화된 쿠폰은 발급할 수 없습니다.");
         }
 
         List<Member> members = memberRepository.findAll();
@@ -271,17 +375,17 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     public MemberCouponDTO issueCouponToMember(Long couponId, Long memberId) {
         Coupon coupon = couponRepository.findById(couponId)
-                .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다."));
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
         if (!Coupon.STATUS_ACTIVE.equals(coupon.getStatus())) {
-            throw new BadRequestException("비활성화된 쿠폰은 발급할 수 없습니다.");
+            throw new IllegalArgumentException("비활성화된 쿠폰은 발급할 수 없습니다.");
         }
 
         if (memberCouponRepository.existsByMemberIdAndCouponId(memberId, couponId)) {
-            throw new BadRequestException("이미 발급된 쿠폰입니다.");
+            throw new IllegalArgumentException("이미 발급된 쿠폰입니다.");
         }
 
         MemberCoupon memberCoupon = MemberCoupon.builder()
@@ -299,17 +403,17 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     public MemberCouponDTO issueCouponByCode(String code, Long memberId) {
         Coupon coupon = couponRepository.findByCode(code)
-                .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다."));
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
         if (!Coupon.STATUS_ACTIVE.equals(coupon.getStatus())) {
-            throw new BadRequestException("비활성화된 쿠폰은 발급할 수 없습니다.");
+            throw new IllegalArgumentException("비활성화된 쿠폰은 발급할 수 없습니다.");
         }
 
         if (memberCouponRepository.existsByMemberIdAndCouponId(memberId, coupon.getId())) {
-            throw new BadRequestException("이미 발급된 쿠폰입니다.");
+            throw new IllegalArgumentException("이미 발급된 쿠폰입니다.");
         }
 
         MemberCoupon memberCoupon = MemberCoupon.builder()
@@ -326,8 +430,8 @@ public class CouponServiceImpl implements CouponService {
     @Override
     @Transactional(readOnly = true)
     public Page<MemberCouponDTO> getMemberCoupons(Long memberId, Pageable pageable) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+        memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
         Page<MemberCoupon> memberCouponsPage = memberCouponRepository.findByMemberId(memberId, pageable);
         List<MemberCouponDTO> memberCouponDTOs = memberCouponsPage.getContent().stream()
@@ -340,8 +444,8 @@ public class CouponServiceImpl implements CouponService {
     @Override
     @Transactional(readOnly = true)
     public List<MemberCouponDTO> getMemberCoupons(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+        memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
         List<MemberCoupon> memberCoupons = memberCouponRepository.findByMemberId(memberId);
         return memberCoupons.stream()
@@ -352,8 +456,8 @@ public class CouponServiceImpl implements CouponService {
     @Override
     @Transactional(readOnly = true)
     public Page<MemberCouponDTO> getMemberUnusedCoupons(Long memberId, Pageable pageable) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+        memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
         LocalDateTime now = LocalDateTime.now();
         Page<MemberCoupon> memberCouponsPage = memberCouponRepository.findByMemberIdAndUsedFalseAndCouponStatusAndCouponEndDateAfter(
@@ -369,8 +473,8 @@ public class CouponServiceImpl implements CouponService {
     @Override
     @Transactional(readOnly = true)
     public List<MemberCouponDTO> getAvailableMemberCoupons(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+        memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
         LocalDateTime now = LocalDateTime.now();
         List<MemberCoupon> memberCoupons = memberCouponRepository.findByMemberIdAndUsedFalseAndCouponStatusAndCouponEndDateAfter(
@@ -385,7 +489,7 @@ public class CouponServiceImpl implements CouponService {
     @Transactional(readOnly = true)
     public MemberCouponDTO getMemberCouponById(Long memberCouponId) {
         MemberCoupon memberCoupon = memberCouponRepository.findById(memberCouponId)
-                .orElseThrow(() -> new UsernameNotFoundException("회원 쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("회원 쿠폰을 찾을 수 없습니다."));
 
         return convertToMemberCouponDTO(memberCoupon);
     }
@@ -394,19 +498,19 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     public MemberCouponDTO useMemberCoupon(Long memberCouponId) {
         MemberCoupon memberCoupon = memberCouponRepository.findById(memberCouponId)
-                .orElseThrow(() -> new UsernameNotFoundException("회원 쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("회원 쿠폰을 찾을 수 없습니다."));
 
         if (memberCoupon.isUsed()) {
-            throw new BadRequestException("이미 사용된 쿠폰입니다.");
+            throw new IllegalArgumentException("이미 사용된 쿠폰입니다.");
         }
 
         if (!Coupon.STATUS_ACTIVE.equals(memberCoupon.getCoupon().getStatus())) {
-            throw new BadRequestException("비활성화된 쿠폰입니다.");
+            throw new IllegalArgumentException("비활성화된 쿠폰입니다.");
         }
 
         LocalDateTime now = LocalDateTime.now();
         if (memberCoupon.getCoupon().getEndDate() != null && memberCoupon.getCoupon().getEndDate().isBefore(now)) {
-            throw new BadRequestException("만료된 쿠폰입니다.");
+            throw new IllegalArgumentException("만료된 쿠폰입니다.");
         }
 
         memberCoupon.setUsed(true);
@@ -431,10 +535,10 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     public MemberCouponDTO cancelMemberCoupon(Long memberCouponId) {
         MemberCoupon memberCoupon = memberCouponRepository.findById(memberCouponId)
-                .orElseThrow(() -> new UsernameNotFoundException("회원 쿠폰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("회원 쿠폰을 찾을 수 없습니다."));
 
         if (!memberCoupon.isUsed()) {
-            throw new BadRequestException("사용되지 않은 쿠폰입니다.");
+            throw new IllegalArgumentException("사용되지 않은 쿠폰입니다.");
         }
 
         memberCoupon.setUsed(false);
@@ -456,7 +560,7 @@ public class CouponServiceImpl implements CouponService {
 
         try {
             Coupon coupon = couponRepository.findByCode(code)
-                    .orElseThrow(() -> new UsernameNotFoundException("쿠폰을 찾을 수 없습니다."));
+                    .orElseThrow(() -> new IllegalArgumentException("쿠폰을 찾을 수 없습니다."));
 
             LocalDateTime now = LocalDateTime.now();
             boolean isValid = true;
@@ -493,7 +597,7 @@ public class CouponServiceImpl implements CouponService {
             }
 
             return result;
-        } catch (UsernameNotFoundException e) {
+        } catch (IllegalArgumentException e) {
             result.put("valid", false);
             result.put("message", "존재하지 않는 쿠폰 코드입니다.");
             return result;
@@ -508,14 +612,6 @@ public class CouponServiceImpl implements CouponService {
     @Transactional
     public void expireCoupons() {
         LocalDateTime now = LocalDateTime.now();
-
-        // 만료된 회원 쿠폰 처리
-        List<MemberCoupon> expiredMemberCoupons = memberCouponRepository.findByEndDateBeforeAndUsedFalse(now);
-        for (MemberCoupon memberCoupon : expiredMemberCoupons) {
-            memberCoupon.setUsed(true);
-            memberCoupon.setUsedAt(now);
-            memberCouponRepository.save(memberCoupon);
-        }
 
         // 만료된 쿠폰 처리
         List<Coupon> expiredCoupons = couponRepository.findByEndDateBeforeAndStatusNot(now, Coupon.STATUS_EXPIRED);
@@ -537,9 +633,9 @@ public class CouponServiceImpl implements CouponService {
                 .name(coupon.getName())
                 .description(coupon.getDescription())
                 .discountType(coupon.getDiscountType())
-                .discountValue(coupon.getDiscountValue() != null ? new java.math.BigDecimal(coupon.getDiscountValue()) : null)
-                .minOrderAmount(coupon.getMinOrderAmount() != null ? new java.math.BigDecimal(coupon.getMinOrderAmount()) : null)
-                .maxDiscountAmount(coupon.getMaxDiscountAmount() != null ? new java.math.BigDecimal(coupon.getMaxDiscountAmount()) : null)
+                .discountValue(coupon.getDiscountValue() != null ? new BigDecimal(coupon.getDiscountValue()) : null)
+                .minOrderAmount(coupon.getMinOrderAmount() != null ? new BigDecimal(coupon.getMinOrderAmount()) : null)
+                .maxDiscountAmount(coupon.getMaxDiscountAmount() !=  null ? new BigDecimal(coupon.getMaxDiscountAmount()) : null)
                 .startDate(coupon.getStartDate())
                 .endDate(coupon.getEndDate())
                 .usageLimit(coupon.getUsageLimit())

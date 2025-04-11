@@ -1,35 +1,93 @@
 package com.peakmeshop.domain.service;
 
 import com.peakmeshop.api.dto.ActivityLogDTO;
+import com.peakmeshop.domain.entity.ActivityLog;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public interface ActivityLogService {
-    Page<ActivityLogDTO> getAllActivityLogs(Pageable pageable);
-    Optional<ActivityLogDTO> getActivityLogById(Long id);
-    Page<ActivityLogDTO> getMemberActivityLogs(Long memberId, Pageable pageable);
-    Page<ActivityLogDTO> getActivityLogsByActionType(String actionType, Pageable pageable);
-    Page<ActivityLogDTO> getActivityLogsByEntityType(String entityType, Pageable pageable);
-    Page<ActivityLogDTO> getActivityLogsByEntityId(String entityType, Long entityId, Pageable pageable);
-    Page<ActivityLogDTO> getActivityLogsByDateRange(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
-    Page<ActivityLogDTO> searchActivityLogs(String keyword, Pageable pageable);
+    /**
+     * 최근 활동 목록을 조회합니다.
+     * @param limit 조회할 활동 수
+     * @return 최근 활동 목록
+     */
+    List<ActivityLogDTO> getRecentActivities(int limit);
 
-    // 통계 메서드 반환 타입 수정
-    List<Map<String, Object>> getActivityStatsByActionType(LocalDateTime startDate, LocalDateTime endDate);
-    List<Map<String, Object>> getActivityStatsByEntityType(LocalDateTime startDate, LocalDateTime endDate);
-    List<Map<String, Object>> getActivityStatsByHourOfDay(LocalDateTime startDate, LocalDateTime endDate);
-    List<Map<String, Object>> getActivityStatsByDayOfWeek(LocalDateTime startDate, LocalDateTime endDate);
+    /**
+     * 특정 관리자의 활동 목록을 조회합니다.
+     * @param adminId 관리자 ID
+     * @param limit 조회할 활동 수
+     * @return 관리자 활동 목록
+     */
+    List<ActivityLogDTO> getAdminActivities(Long adminId, int limit);
 
-    // 누락된 로깅 메서드 추가
-    ActivityLogDTO logMemberActivity(Long memberId, String actionType, String entityType, Long entityId, String description);
-    ActivityLogDTO logGuestActivity(String ipAddress, String userAgent, String actionType, String entityType, String entityId, Long entityNumericId, String description);
+    /**
+     * ActivityLog 엔티티를 ActivityLogDTO로 변환합니다.
+     * @param activityLog ActivityLog 엔티티
+     * @return ActivityLogDTO
+     */
+    ActivityLogDTO convertToDTO(ActivityLog activityLog);
 
+    /**
+     * 활동 로그 목록을 조회합니다.
+     * @param type 활동 유형
+     * @param startDate 시작 날짜
+     * @param endDate 종료 날짜
+     * @param keyword 검색어
+     * @param pageable 페이징 정보
+     * @return 활동 로그 목록
+     */
+    Page<ActivityLogDTO> getActivityLogs(String type, LocalDateTime startDate, LocalDateTime endDate, String keyword, Pageable pageable);
+
+    /**
+     * 활동 로그를 조회합니다.
+     * @param id 활동 로그 ID
+     * @return 활동 로그
+     */
+    ActivityLogDTO getActivityLog(Long id);
+
+    /**
+     * 활동 로그를 생성합니다.
+     * @param activityLogDTO 활동 로그 DTO
+     * @return 생성된 활동 로그
+     */
     ActivityLogDTO createActivityLog(ActivityLogDTO activityLogDTO);
+
+    /**
+     * 활동 로그를 삭제합니다.
+     * @param id 활동 로그 ID
+     */
     void deleteActivityLog(Long id);
-    void cleanupOldActivityLogs(int days);
+
+    /**
+     * 활동 로그를 일괄 삭제합니다.
+     * @param ids 활동 로그 ID 목록
+     */
+    void deleteActivityLogs(List<Long> ids);
+
+    /**
+     * 활동 유형 목록을 조회합니다.
+     * @return 활동 유형 목록
+     */
+    List<String> getActivityTypes();
+
+    /**
+     * 활동 유형별 통계를 조회합니다.
+     * @param startDate 시작 날짜
+     * @param endDate 종료 날짜
+     * @return 활동 유형별 통계
+     */
+    Map<String, Long> getActivityTypeStats(LocalDateTime startDate, LocalDateTime endDate);
+
+    /**
+     * 일별 활동 통계를 조회합니다.
+     * @param startDate 시작 날짜
+     * @param endDate 종료 날짜
+     * @return 일별 활동 통계
+     */
+    Map<String, Long> getDailyActivityStats(LocalDateTime startDate, LocalDateTime endDate);
 }

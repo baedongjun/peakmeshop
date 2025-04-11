@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import com.peakmeshop.api.dto.*;
 import com.peakmeshop.domain.repository.PointRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -44,7 +45,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional(readOnly = true)
     public MemberDTO getMemberById(Long id) {
         Member member = memberRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
         return convertToDTO(member);
     }
 
@@ -52,7 +53,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional(readOnly = true)
     public MemberDTO getMemberByEmail(String email) {
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
         return convertToDTO(member);
     }
 
@@ -111,7 +112,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public MemberDTO updateMember(Long id, MemberDTO memberDTO) {
         Member member = memberRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
 
         // 이메일 중복 확인 (다른 회원과 중복되는지)
         if (!member.getEmail().equals(memberDTO.getEmail()) && memberRepository.existsByEmail(memberDTO.getEmail())) {
@@ -142,7 +143,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public MemberDTO updateMemberProfile(Long id, MemberUpdateDTO memberUpdateDTO) {
         Member member = memberRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
 
         // 이메일 중복 확인 (다른 회원과 중복되는지)
         if (memberUpdateDTO.getEmail() != null && !member.getEmail().equals(memberUpdateDTO.getEmail()) &&
@@ -176,7 +177,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public void changePassword(Long id, String currentPassword, String newPassword) {
         Member member = memberRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
 
         // 현재 비밀번호 확인
         if (!passwordEncoder.matches(currentPassword, member.getPassword())) {
@@ -194,7 +195,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public void deleteMember(Long id) {
         Member member = memberRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
 
         // 인증 토큰 삭제
         verificationTokenRepository.deleteByMemberId(id);
@@ -206,7 +207,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public boolean verifyEmail(String token) {
         VerificationToken verificationToken = verificationTokenRepository.findByToken(token)
-                .orElseThrow(() -> new UsernameNotFoundException("유효하지 않은 토큰입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("유효하지 않은 토큰입니다."));
 
         // 토큰 만료 확인
         if (verificationToken.getExpiryDate().isBefore(LocalDateTime.now())) {
@@ -230,7 +231,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public void resendVerificationEmail(String email) {
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
 
         // 이미 활성화된 계정인지 확인
         if (member.isEnabled()) {
@@ -258,7 +259,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public void resetPassword(PasswordResetDTO passwordResetDTO) {
         Member member = memberRepository.findByEmail(passwordResetDTO.getEmail())
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
 
         // 임시 비밀번호 생성
         String temporaryPassword = UUID.randomUUID().toString().substring(0, 8);
@@ -374,26 +375,32 @@ public class MemberServiceImpl implements MemberService {
             end = LocalDate.parse(endDate, formatter).plusDays(1).atStartOfDay();
         } else {
             LocalDate now = LocalDate.now();
-            switch (period) {
-                case "daily":
-                    start = now.atStartOfDay();
-                    end = now.plusDays(1).atStartOfDay();
-                    break;
-                case "weekly":
-                    start = now.minusWeeks(1).atStartOfDay();
-                    end = now.plusDays(1).atStartOfDay();
-                    break;
-                case "monthly":
-                    start = now.minusMonths(1).atStartOfDay();
-                    end = now.plusDays(1).atStartOfDay();
-                    break;
-                case "yearly":
-                    start = now.minusYears(1).atStartOfDay();
-                    end = now.plusDays(1).atStartOfDay();
-                    break;
-                default:
-                    start = now.minusMonths(1).atStartOfDay();
-                    end = now.plusDays(1).atStartOfDay();
+            if (period != null) {
+                switch (period) {
+                    case "daily":
+                        start = now.atStartOfDay();
+                        end = now.plusDays(1).atStartOfDay();
+                        break;
+                    case "weekly":
+                        start = now.minusWeeks(1).atStartOfDay();
+                        end = now.plusDays(1).atStartOfDay();
+                        break;
+                    case "monthly":
+                        start = now.minusMonths(1).atStartOfDay();
+                        end = now.plusDays(1).atStartOfDay();
+                        break;
+                    case "yearly":
+                        start = now.minusYears(1).atStartOfDay();
+                        end = now.plusDays(1).atStartOfDay();
+                        break;
+                    default:
+                        start = now.minusMonths(1).atStartOfDay();
+                        end = now.plusDays(1).atStartOfDay();
+                }
+            } else {
+                // period가 null인 경우에 대한 기본 케이스 처리
+                start = now.minusMonths(1).atStartOfDay();
+                end = now.plusDays(1).atStartOfDay();
             }
         }
 

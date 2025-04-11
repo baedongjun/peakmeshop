@@ -12,6 +12,7 @@ import com.peakmeshop.domain.repository.OrderRepository;
 import com.peakmeshop.domain.repository.ProductRepository;
 import com.peakmeshop.domain.service.EmailService;
 import com.peakmeshop.domain.service.OrderService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -45,7 +46,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order getOrderById(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("Order not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
         return order;
     }
 
@@ -527,8 +528,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderSummaryDTO getOrderSummary(String period, String startDate, String endDate) {
-        LocalDateTime start;
-        LocalDateTime end;
+        LocalDateTime start = null;
+        LocalDateTime end = null;
 
         // 기간 설정
         if (startDate != null && endDate != null) {
@@ -537,26 +538,32 @@ public class OrderServiceImpl implements OrderService {
             end = LocalDate.parse(endDate, formatter).plusDays(1).atStartOfDay();
         } else {
             LocalDate now = LocalDate.now();
-            switch (period) {
-                case "daily":
-                    start = now.atStartOfDay();
-                    end = now.plusDays(1).atStartOfDay();
-                    break;
-                case "weekly":
-                    start = now.minusWeeks(1).atStartOfDay();
-                    end = now.plusDays(1).atStartOfDay();
-                    break;
-                case "monthly":
-                    start = now.minusMonths(1).atStartOfDay();
-                    end = now.plusDays(1).atStartOfDay();
-                    break;
-                case "yearly":
-                    start = now.minusYears(1).atStartOfDay();
-                    end = now.plusDays(1).atStartOfDay();
-                    break;
-                default:
-                    start = now.minusMonths(1).atStartOfDay();
-                    end = now.plusDays(1).atStartOfDay();
+            if (period != null) {
+                switch (period) {
+                    case "daily":
+                        start = now.atStartOfDay();
+                        end = now.plusDays(1).atStartOfDay();
+                        break;
+                    case "weekly":
+                        start = now.minusWeeks(1).atStartOfDay();
+                        end = now.plusDays(1).atStartOfDay();
+                        break;
+                    case "monthly":
+                        start = now.minusMonths(1).atStartOfDay();
+                        end = now.plusDays(1).atStartOfDay();
+                        break;
+                    case "yearly":
+                        start = now.minusYears(1).atStartOfDay();
+                        end = now.plusDays(1).atStartOfDay();
+                        break;
+                    default:
+                        start = now.minusMonths(1).atStartOfDay();
+                        end = now.plusDays(1).atStartOfDay();
+                }
+            } else {
+                // period가 null인 경우에 대한 기본 케이스 처리
+                start = now.minusMonths(1).atStartOfDay();
+                end = now.plusDays(1).atStartOfDay();
             }
         }
 

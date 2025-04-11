@@ -3,6 +3,7 @@ package com.peakmeshop.api.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.peakmeshop.domain.entity.Product;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,6 +21,7 @@ public class CategoryDTO {
         private String description;
         private String slug;
         private Long parentId;
+        private List<Product> products;
         private String parentName;
         private String imageUrl;
         private boolean isActive;

@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -43,7 +44,7 @@ public class PointServiceImpl implements PointService {
     @Transactional(readOnly = true)
     public PointDTO getMemberPoint(Long memberId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("Member not found with id: " + memberId));
+                .orElseThrow(() -> new EntityNotFoundException("Member not found with id: " + memberId));
 
         Point point = pointRepository.findByMemberId(memberId)
                 .orElse(Point.builder()
@@ -60,7 +61,7 @@ public class PointServiceImpl implements PointService {
     @Transactional(readOnly = true)
     public Page<PointHistoryDTO> getMemberPointHistory(Long memberId, Pageable pageable) {
         memberRepository.findById(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("Member not found with id: " + memberId));
+                .orElseThrow(() -> new EntityNotFoundException("Member not found with id: " + memberId));
 
         Page<PointHistory> pointHistories = pointHistoryRepository.findByMemberIdOrderByCreatedAtDesc(memberId, pageable);
         return pointHistories.map(this::convertToHistoryDTO);
@@ -74,7 +75,7 @@ public class PointServiceImpl implements PointService {
         }
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("Member not found with id: " + memberId));
+                .orElseThrow(() -> new EntityNotFoundException("Member not found with id: " + memberId));
 
         Point point = pointRepository.findByMemberId(memberId)
                 .orElse(Point.builder()
@@ -114,10 +115,10 @@ public class PointServiceImpl implements PointService {
         }
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("Member not found with id: " + memberId));
+                .orElseThrow(() -> new EntityNotFoundException("Member not found with id: " + memberId));
 
         Point point = pointRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("Point not found for member id: " + memberId));
+                .orElseThrow(() -> new EntityNotFoundException("Point not found for member id: " + memberId));
 
         // 포인트 차감
         point.setCurrentPoint(point.getCurrentPoint() - amount);
@@ -148,10 +149,10 @@ public class PointServiceImpl implements PointService {
         }
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("Member not found with id: " + memberId));
+                .orElseThrow(() -> new EntityNotFoundException("Member not found with id: " + memberId));
 
         Point point = pointRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("Point not found for member id: " + memberId));
+                .orElseThrow(() -> new EntityNotFoundException("Point not found for member id: " + memberId));
 
         // 사용 가능한 포인트 확인
         if (point.getCurrentPoint() < amount) {
@@ -198,7 +199,7 @@ public class PointServiceImpl implements PointService {
 
         // 회원 존재 여부 확인
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
 
         // 포인트 적립 (기본 유효기간 1년)
         Point point = Point.builder()
@@ -229,7 +230,7 @@ public class PointServiceImpl implements PointService {
 
         // 회원 존재 여부 확인
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
 
 
         // 포인트 사용
@@ -254,7 +255,7 @@ public class PointServiceImpl implements PointService {
 
         // 회원 존재 여부 확인
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
 
 
         // 포인트 환불

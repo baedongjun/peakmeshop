@@ -29,7 +29,7 @@ public class OrderSecurity {
             return false;
         }
 
-        return memberRepository.findByEmail(principal.getName())
+        return memberRepository.findByUserId(principal.getName())
                 .flatMap(member -> orderRepository.findById(orderId)
                         .map(order -> order.getMember().getId().equals(member.getId())))
                 .orElse(false);

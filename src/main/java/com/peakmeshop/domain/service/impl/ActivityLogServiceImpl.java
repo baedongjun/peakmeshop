@@ -1,198 +1,112 @@
 package com.peakmeshop.domain.service.impl;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.peakmeshop.api.dto.ActivityLogDTO;
 import com.peakmeshop.domain.entity.ActivityLog;
 import com.peakmeshop.domain.repository.ActivityLogRepository;
 import com.peakmeshop.domain.service.ActivityLogService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class ActivityLogServiceImpl implements ActivityLogService {
 
     private final ActivityLogRepository activityLogRepository;
 
-    public ActivityLogServiceImpl(ActivityLogRepository activityLogRepository) {
-        this.activityLogRepository = activityLogRepository;
+    @Override
+    @Transactional(readOnly = true)
+    public List<ActivityLogDTO> getRecentActivities(int limit) {
+        // DB에서 최근 활동 로그를 가져옵니다.
+        List<ActivityLog> activityLogs = activityLogRepository.findTopByOrderByCreatedAtDesc(limit);
+
+        // DTO로 변환하고 시간순으로 정렬합니다.
+        return activityLogs.stream()
+                .map(this::convertToDTO)
+                .sorted(Comparator.comparing(ActivityLogDTO::getCreatedAt).reversed())
+                .limit(limit)
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ActivityLogDTO> getAllActivityLogs(Pageable pageable) {
-        return activityLogRepository.findAll(pageable)
-                .map(this::convertToDTO);
+    public List<ActivityLogDTO> getAdminActivities(Long adminId, int limit) {
+        // 특정 관리자의 활동 로그를 가져옵니다.
+        List<ActivityLog> activityLogs = activityLogRepository.findByAdminId(adminId, limit);
+
+        // DTO로 변환하고 시간순으로 정렬합니다.
+        return activityLogs.stream()
+                .map(this::convertToDTO)
+                .sorted(Comparator.comparing(ActivityLogDTO::getCreatedAt).reversed())
+                .limit(limit)
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<ActivityLogDTO> getActivityLogById(Long id) {
-        return activityLogRepository.findById(id)
-                .map(this::convertToDTO);
-    }
+    public Page<ActivityLogDTO> getActivityLogs(String type, LocalDateTime startDate, LocalDateTime endDate, String keyword, Pageable pageable) {
+        Page<ActivityLog> activityLogs;
 
-    @Override
-    @Transactional(readOnly = true)
-    public Page<ActivityLogDTO> getMemberActivityLogs(Long memberId, Pageable pageable) {
-        return activityLogRepository.findByMemberId(memberId, pageable)
-                .map(this::convertToDTO);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<ActivityLogDTO> getActivityLogsByActionType(String actionType, Pageable pageable) {
-        return activityLogRepository.findByActionType(actionType, pageable)
-                .map(this::convertToDTO);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<ActivityLogDTO> getActivityLogsByEntityType(String entityType, Pageable pageable) {
-        return activityLogRepository.findByEntityType(entityType, pageable)
-                .map(this::convertToDTO);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<ActivityLogDTO> getActivityLogsByEntityId(String entityType, Long entityId, Pageable pageable) {
-        return activityLogRepository.findByEntityTypeAndEntityId(entityType, entityId, pageable)
-                .map(this::convertToDTO);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<ActivityLogDTO> getActivityLogsByDateRange(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-        return activityLogRepository.findByCreatedAtBetween(startDate, endDate, pageable)
-                .map(this::convertToDTO);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<ActivityLogDTO> searchActivityLogs(String keyword, Pageable pageable) {
-        return activityLogRepository.searchByKeyword(keyword, pageable)
-                .map(this::convertToDTO);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Map<String, Object>> getActivityStatsByActionType(LocalDateTime startDate, LocalDateTime endDate) {
-        List<Object[]> results = activityLogRepository.countByActionTypeAndCreatedAtBetween(startDate, endDate);
-        List<Map<String, Object>> stats = new ArrayList<>();
-
-        for (Object[] result : results) {
-            Map<String, Object> stat = new HashMap<>();
-            stat.put("actionType", result[0]);
-            stat.put("count", result[1]);
-            stats.add(stat);
+        if (type != null && !type.isEmpty() && startDate != null && endDate != null && keyword != null && !keyword.isEmpty()) {
+            activityLogs = activityLogRepository.findByTypeAndCreatedAtBetweenAndDescriptionContainingIgnoreCase(
+                    type, startDate, endDate, keyword, pageable);
+        } else if (type != null && !type.isEmpty() && startDate != null && endDate != null) {
+            activityLogs = activityLogRepository.findByTypeAndCreatedAtBetween(type, startDate, endDate, pageable);
+        } else if (startDate != null && endDate != null && keyword != null && !keyword.isEmpty()) {
+            activityLogs = activityLogRepository.findByCreatedAtBetweenAndDescriptionContainingIgnoreCase(
+                    startDate, endDate, keyword, pageable);
+        } else if (type != null && !type.isEmpty() && keyword != null && !keyword.isEmpty()) {
+            activityLogs = activityLogRepository.findByTypeAndDescriptionContainingIgnoreCase(type, keyword, pageable);
+        } else if (type != null && !type.isEmpty()) {
+            activityLogs = activityLogRepository.findByType(type, pageable);
+        } else if (startDate != null && endDate != null) {
+            activityLogs = activityLogRepository.findByCreatedAtBetween(startDate, endDate, pageable);
+        } else if (keyword != null && !keyword.isEmpty()) {
+            activityLogs = activityLogRepository.findByDescriptionContainingIgnoreCase(keyword, pageable);
+        } else {
+            activityLogs = activityLogRepository.findAll(pageable);
         }
 
-        return stats;
+        List<ActivityLogDTO> activityLogDTOs = activityLogs.getContent().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(activityLogDTOs, pageable, activityLogs.getTotalElements());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> getActivityStatsByEntityType(LocalDateTime startDate, LocalDateTime endDate) {
-        List<Object[]> results = activityLogRepository.countByEntityTypeAndCreatedAtBetween(startDate, endDate);
-        List<Map<String, Object>> stats = new ArrayList<>();
+    public ActivityLogDTO getActivityLog(Long id) {
+        ActivityLog activityLog = activityLogRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("활동 로그를 찾을 수 없습니다."));
 
-        for (Object[] result : results) {
-            Map<String, Object> stat = new HashMap<>();
-            stat.put("entityType", result[0]);
-            stat.put("count", result[1]);
-            stats.add(stat);
-        }
-
-        return stats;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Map<String, Object>> getActivityStatsByHourOfDay(LocalDateTime startDate, LocalDateTime endDate) {
-        List<Object[]> results = activityLogRepository.countByHourOfDayAndCreatedAtBetween(startDate, endDate);
-        List<Map<String, Object>> stats = new ArrayList<>();
-
-        for (Object[] result : results) {
-            Map<String, Object> stat = new HashMap<>();
-            stat.put("hour", result[0]);
-            stat.put("count", result[1]);
-            stats.add(stat);
-        }
-
-        return stats;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Map<String, Object>> getActivityStatsByDayOfWeek(LocalDateTime startDate, LocalDateTime endDate) {
-        List<Object[]> results = activityLogRepository.countByDayOfWeekAndCreatedAtBetween(startDate, endDate);
-        List<Map<String, Object>> stats = new ArrayList<>();
-
-        for (Object[] result : results) {
-            Map<String, Object> stat = new HashMap<>();
-            int dayOfWeekNum = (Integer) result[0];
-            String dayOfWeek = DayOfWeek.of(dayOfWeekNum).name();
-            stat.put("dayOfWeek", dayOfWeek);
-            stat.put("count", result[1]);
-            stats.add(stat);
-        }
-
-        return stats;
-    }
-
-    @Override
-    @Transactional
-    public ActivityLogDTO logMemberActivity(Long memberId, String actionType, String entityType, Long entityId, String description) {
-        ActivityLog activityLog = new ActivityLog();
-        activityLog.setMemberId(memberId);
-        activityLog.setActionType(actionType);
-        activityLog.setEntityType(entityType);
-        activityLog.setEntityId(entityId);
-        activityLog.setDescription(description);
-        activityLog.setCreatedAt(LocalDateTime.now());
-
-        ActivityLog savedLog = activityLogRepository.save(activityLog);
-        return convertToDTO(savedLog);
-    }
-
-    @Override
-    @Transactional
-    public ActivityLogDTO logGuestActivity(String ipAddress, String userAgent, String actionType, String entityType, String entityId, Long entityNumericId, String description) {
-        ActivityLog activityLog = new ActivityLog();
-        activityLog.setIpAddress(ipAddress);
-        activityLog.setUserAgent(userAgent);
-        activityLog.setActionType(actionType);
-        activityLog.setEntityType(entityType);
-        // entityId는 String인데 엔티티는 Long을 저장하므로 entityNumericId 사용
-        activityLog.setEntityId(entityNumericId);
-        activityLog.setDescription(description);
-        activityLog.setCreatedAt(LocalDateTime.now());
-
-        ActivityLog savedLog = activityLogRepository.save(activityLog);
-        return convertToDTO(savedLog);
+        return convertToDTO(activityLog);
     }
 
     @Override
     @Transactional
     public ActivityLogDTO createActivityLog(ActivityLogDTO activityLogDTO) {
-        ActivityLog activityLog = new ActivityLog();
-        activityLog.setMemberId(activityLogDTO.memberId());
-        activityLog.setActionType(activityLogDTO.actionType());
-        activityLog.setEntityType(activityLogDTO.entityType());
-        activityLog.setEntityId(activityLogDTO.entityId());
-        activityLog.setDescription(activityLogDTO.description());
-        activityLog.setIpAddress(activityLogDTO.ipAddress());
-        activityLog.setUserAgent(activityLogDTO.userAgent());
-        activityLog.setCreatedAt(LocalDateTime.now());
+        ActivityLog activityLog = ActivityLog.builder()
+                .type(activityLogDTO.getType())
+                .description(activityLogDTO.getDescription())
+                .referenceId(activityLogDTO.getReferenceId())
+                .referenceType(activityLogDTO.getReferenceType())
+                .createdAt(LocalDateTime.now())
+                .userId(activityLogDTO.getUserId())
+                .memberId(activityLogDTO.getMemberId())
+                .userAgent(activityLogDTO.getUserAgent())
+                .build();
 
         ActivityLog savedActivityLog = activityLogRepository.save(activityLog);
         return convertToDTO(savedActivityLog);
@@ -206,22 +120,153 @@ public class ActivityLogServiceImpl implements ActivityLogService {
 
     @Override
     @Transactional
-    public void cleanupOldActivityLogs(int days) {
-        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(days);
-        activityLogRepository.deleteByCreatedAtBefore(cutoffDate);
+    public void deleteActivityLogs(List<Long> ids) {
+        activityLogRepository.deleteAllById(ids);
     }
 
-    private ActivityLogDTO convertToDTO(ActivityLog activityLog) {
-        return new ActivityLogDTO(
-                activityLog.getId(),
-                activityLog.getMemberId(),
-                activityLog.getActionType(),
-                activityLog.getEntityType(),
-                activityLog.getEntityId(),
-                activityLog.getDescription(),
-                activityLog.getIpAddress(),
-                activityLog.getUserAgent(),
-                activityLog.getCreatedAt()
-        );
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getActivityTypes() {
+        return activityLogRepository.findDistinctTypes();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Long> getActivityTypeStats(LocalDateTime startDate, LocalDateTime endDate) {
+        List<Object[]> stats = activityLogRepository.countByTypeAndCreatedAtBetween(startDate, endDate);
+
+        Map<String, Long> result = new HashMap<>();
+        for (Object[] stat : stats) {
+            String type = (String) stat[0];
+            Long count = ((Number) stat[1]).longValue();
+            result.put(type, count);
+        }
+
+        return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Long> getDailyActivityStats(LocalDateTime startDate, LocalDateTime endDate) {
+        List<Object[]> stats = activityLogRepository.countByDayAndCreatedAtBetween(startDate, endDate);
+
+        Map<String, Long> result = new LinkedHashMap<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        // 모든 날짜에 대해 기본값 0으로 초기화
+        LocalDateTime current = startDate;
+        while (!current.isAfter(endDate)) {
+            String day = current.format(formatter);
+            result.put(day, 0L);
+            current = current.plusDays(1);
+        }
+
+        // 실제 데이터로 업데이트
+        for (Object[] stat : stats) {
+            String day = (String) stat[0];
+            Long count = ((Number) stat[1]).longValue();
+            result.put(day, count);
+        }
+
+        return result;
+    }
+
+    @Override
+    public ActivityLogDTO convertToDTO(ActivityLog activityLog) {
+        LocalDateTime now = LocalDateTime.now();
+
+        // 활동 유형에 따라 아이콘과 색상을 설정합니다.
+        String icon = "fa-info-circle";
+        String iconColor = "text-primary";
+
+        switch (activityLog.getType()) {
+            case "MEMBER_JOIN":
+                icon = "fa-user-plus";
+                iconColor = "text-success";
+                break;
+            case "NEW_ORDER":
+                icon = "fa-shopping-cart";
+                iconColor = "text-primary";
+                break;
+            case "LOW_STOCK":
+                icon = "fa-box";
+                iconColor = "text-warning";
+                break;
+            case "SHIPPING_START":
+                icon = "fa-truck";
+                iconColor = "text-info";
+                break;
+            case "NEW_REVIEW":
+                icon = "fa-star";
+                iconColor = "text-warning";
+                break;
+            case "ORDER_STATUS_CHANGE":
+                icon = "fa-exchange-alt";
+                iconColor = "text-info";
+                break;
+            case "PRODUCT_UPDATE":
+                icon = "fa-edit";
+                iconColor = "text-primary";
+                break;
+            case "COUPON_CREATED":
+                icon = "fa-ticket-alt";
+                iconColor = "text-success";
+                break;
+            case "PROMOTION_STARTED":
+                icon = "fa-bullhorn";
+                iconColor = "text-danger";
+                break;
+        }
+
+        return ActivityLogDTO.builder()
+                .id(activityLog.getId())
+                .type(activityLog.getType())
+                .description(activityLog.getDescription())
+                .referenceId(activityLog.getReferenceId())
+                .referenceType(activityLog.getReferenceType())
+                .ipAddress(activityLog.getIpAddress())
+                .additionalData(activityLog.getAdditionalData())
+                .userId(activityLog.getUserId())
+                .memberId(activityLog.getMemberId())
+                .userAgent(activityLog.getUserAgent())
+                .createdAt(activityLog.getCreatedAt())
+                .build();
+    }
+
+    /**
+     * 주어진 시간과 현재 시간의 차이를 문자열로 반환합니다.
+     * @param dateTime 비교할 시간
+     * @param now 현재 시간
+     * @return 시간 차이 문자열 (예: "10분 전", "2시간 전")
+     */
+    private String getTimeAgo(LocalDateTime dateTime, LocalDateTime now) {
+        Duration duration = Duration.between(dateTime, now);
+
+        long seconds = duration.getSeconds();
+        if (seconds < 60) {
+            return seconds + "초 전";
+        }
+
+        long minutes = duration.toMinutes();
+        if (minutes < 60) {
+            return minutes + "분 전";
+        }
+
+        long hours = duration.toHours();
+        if (hours < 24) {
+            return hours + "시간 전";
+        }
+
+        long days = duration.toDays();
+        if (days < 30) {
+            return days + "일 전";
+        }
+
+        long months = days / 30;
+        if (months < 12) {
+            return months + "개월 전";
+        }
+
+        return (months / 12) + "년 전";
     }
 }

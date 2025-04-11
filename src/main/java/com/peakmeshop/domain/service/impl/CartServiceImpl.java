@@ -5,6 +5,7 @@ import com.peakmeshop.common.exception.BadRequestException;
 import com.peakmeshop.domain.entity.*;
 import com.peakmeshop.domain.repository.*;
 import com.peakmeshop.domain.service.CartService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -35,7 +36,7 @@ public class CartServiceImpl implements CartService {
     @Transactional(readOnly = true)
     public CartDTO getCartByMemberId(Long memberId) {
         Cart cart = cartRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("장바구니를 찾을 수 없습니다."));
         return convertToDTO(cart);
     }
 
@@ -43,7 +44,7 @@ public class CartServiceImpl implements CartService {
     @Transactional(readOnly = true)
     public CartDTO getCartByGuestId(String guestId) {
         Cart cart = cartRepository.findByGuestId(guestId)
-                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("장바구니를 찾을 수 없습니다."));
         return convertToDTO(cart);
     }
 
@@ -57,7 +58,7 @@ public class CartServiceImpl implements CartService {
         }
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
 
         Cart newCart = Cart.builder()
                 .member(member)

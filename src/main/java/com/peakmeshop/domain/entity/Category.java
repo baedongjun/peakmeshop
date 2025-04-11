@@ -51,6 +51,10 @@ public class Category {
     @Builder.Default
     private List<Category> children = new ArrayList<>();
 
+    @OneToMany(mappedBy = "category")
+    @Builder.Default
+    private List<Product> products = new ArrayList<>();
+
     @Column(name = "image_url")
     private String imageUrl;
 

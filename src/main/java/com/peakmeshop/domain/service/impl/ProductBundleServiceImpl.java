@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -34,7 +35,7 @@ public class ProductBundleServiceImpl implements ProductBundleService {
     @Transactional(readOnly = true)
     public ProductBundleDTO getBundleById(Long id) {
         ProductBundle bundle = bundleRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("Product bundle not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Product bundle not found with id: " + id));
         return convertToDTO(bundle);
     }
 
@@ -81,7 +82,7 @@ public class ProductBundleServiceImpl implements ProductBundleService {
         if (bundleDTO.getItems() != null) {
             for (ProductBundleItemDTO itemDTO : bundleDTO.getItems()) {
                 Product product = productRepository.findById(itemDTO.getProductId())
-                        .orElseThrow(() -> new UsernameNotFoundException("Product not found with id: " + itemDTO.getProductId()));
+                        .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + itemDTO.getProductId()));
 
                 ProductBundleItem item = ProductBundleItem.builder()
                         .bundle(savedBundle)

@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.peakmeshop.domain.enums.OrderStatus;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -75,7 +76,7 @@ public class ShippingServiceImpl implements ShippingService {
     public ShippingDTO createShipping(ShippingDTO shippingDTO) {
         // 주문 조회
         Order order = orderRepository.findById(shippingDTO.orderId())
-                .orElseThrow(() -> new UsernameNotFoundException("주문을 찾을 수 없습니다. ID: " + shippingDTO.orderId()));
+                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다. ID: " + shippingDTO.orderId()));
 
         // 이미 배송 정보가 있는지 확인
         if (shippingRepository.existsByOrderId(shippingDTO.orderId())) {
@@ -123,7 +124,7 @@ public class ShippingServiceImpl implements ShippingService {
     @Transactional
     public ShippingDTO updateShippingStatus(Long id, String status) {
         Shipping shipping = shippingRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("배송 정보를 찾을 수 없습니다. ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("배송 정보를 찾을 수 없습니다. ID: " + id));
 
         shipping.setStatus(status);
         shipping.setUpdatedAt(LocalDateTime.now());
@@ -156,7 +157,7 @@ public class ShippingServiceImpl implements ShippingService {
     @Transactional
     public ShippingDTO updateTrackingInfo(Long id, String carrier, String trackingNumber) {
         Shipping shipping = shippingRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("배송 정보를 찾을 수 없습니다. ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("배송 정보를 찾을 수 없습니다. ID: " + id));
 
         shipping.setCarrier(carrier);
         shipping.setTrackingNumber(trackingNumber);

@@ -56,9 +56,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @param endDate 종료일
      * @return [날짜, 주문수, 총액] 형태의 통계 데이터
      */
-    @Query(value = "SELECT DATE(o.createdAt) as date, " +
+    @Query(value = "SELECT DATE(o.created_at) as date, " +
             "COUNT(o) as count, " +
-            "SUM(o.finalPrice) as total " +
+            "SUM(o.final_price) as total " +
             "FROM orders o " +
             "WHERE o.created_at BETWEEN :startDate AND :endDate " +
             "AND o.status != 'CANCELLED' " +
@@ -114,4 +114,48 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * 기간별 주문 수 조회
      */
     long countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    /**
+     * 특정 상태이고 특정 시간 이후에 업데이트된 주문을 조회합니다.
+     * @param status 주문 상태
+     * @param updatedAt 업데이트 시간
+     * @param pageable 페이징 정보
+     * @return 조건에 맞는 주문 목록
+     */
+    Page<Order> findByStatusAndUpdatedAtAfter(String status, LocalDateTime updatedAt, Pageable pageable);
+
+    /**
+     * 특정 상태인 주문을 조회합니다.
+     * @param status 주문 상태
+     * @param pageable 페이징 정보
+     * @return 조건에 맞는 주문 목록
+     */
+    Page<Order> findByStatus(String status, Pageable pageable);
+
+    /**
+     * 특정 회원의 주문을 조회합니다.
+     * @param memberId 회원 ID
+     * @param pageable 페이징 정보
+     * @return 조건에 맞는 주문 목록
+     */
+    Page<Order> findByMemberId(Long memberId, Pageable pageable);
+
+    /**
+     * 특정 기간 내의 주문을 조회합니다.
+     * @param startDate 시작 날짜
+     * @param endDate 종료 날짜
+     * @param pageable 페이징 정보
+     * @return 조건에 맞는 주문 목록
+     */
+    Page<Order> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+
+    /**
+     * 특정 상태이고 특정 기간 내의 주문을 조회합니다.
+     * @param status 주문 상태
+     * @param startDate 시작 날짜
+     * @param endDate 종료 날짜
+     * @param pageable 페이징 정보
+     * @return 조건에 맞는 주문 목록
+     */
+    Page<Order> findByStatusAndCreatedAtBetween(String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 }

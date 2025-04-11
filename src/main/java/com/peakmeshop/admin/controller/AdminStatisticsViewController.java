@@ -10,8 +10,25 @@ import org.springframework.web.bind.annotation.RequestParam;
  * 관리자 통계 관련 뷰 컨트롤러
  */
 @Controller
-@RequestMapping("/admin")
+@RequestMapping("/admin/statistics")
 public class AdminStatisticsViewController {
+
+    /**
+     * 통계 메인 페이지
+     */
+    @GetMapping("/dashboard")
+    public String dashboard(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String period,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            Model model) {
+        model.addAttribute("type", type);
+        model.addAttribute("period", period);
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        return "admin/statistics/dashboard";
+    }
 
     /**
      * 통계 메인 페이지

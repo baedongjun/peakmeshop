@@ -12,6 +12,9 @@ import lombok.NoArgsConstructor;
 public class CouponSummaryDTO {
     private long totalCoupons;
     private long availableCoupons;
+    private long activeCoupons;
+    private long expiredCoupons;
+    private long usedCoupons;
     private long monthlyUsedCoupons;
     private long totalDiscountAmount;
 } 

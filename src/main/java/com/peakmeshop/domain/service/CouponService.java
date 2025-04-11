@@ -101,4 +101,6 @@ public interface CouponService {
 
     // 만료된 쿠폰 처리
     void expireCoupons();
+
+    CouponSummaryDTO getCouponSummary(String period, String startDate, String endDate);
 }

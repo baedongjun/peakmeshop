@@ -13,6 +13,7 @@ import java.time.format.DateTimeFormatter;
 import com.peakmeshop.api.dto.*;
 import com.peakmeshop.domain.entity.*;
 import com.peakmeshop.domain.repository.*;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -52,7 +53,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public ProductDTO getProductById(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
         return convertToDTO(product);
     }
 
@@ -70,7 +71,7 @@ public class ProductServiceImpl implements ProductService {
         Category category = null;
         if (productDTO.getCategory().getId() != null) {
             category = categoryRepository.findById(productDTO.getCategory().getId())
-                    .orElseThrow(() -> new UsernameNotFoundException("카테고리를 찾을 수 없습니다."));
+                    .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다."));
         }
 
         Product product = Product.builder()
@@ -101,7 +102,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductDTO updateProduct(Long id, ProductDTO productDTO) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
 
         // 상품 코드 중복 확인 (변경된 경우)
         if (productDTO.getCode() != null && !productDTO.getCode().equals(product.getCode())) {
@@ -114,7 +115,7 @@ public class ProductServiceImpl implements ProductService {
         // 카테고리 확인 (변경된 경우)
         if (productDTO.getCategory().getId() != null) {
             Category category = categoryRepository.findById(productDTO.getCategory().getId())
-                    .orElseThrow(() -> new UsernameNotFoundException("카테고리를 찾을 수 없습니다."));
+                    .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다."));
             product.setCategory(category);
         }
 
@@ -158,7 +159,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
         productRepository.delete(product);
     }
 
@@ -166,7 +167,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public void deleteProductImage(Long id) {
         ProductImage productImage = productImageRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("상품 이미지를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("상품 이미지를 찾을 수 없습니다."));
         productImageRepository.delete(productImage);
     }
 
@@ -174,7 +175,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductDTO toggleProductStatus(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
 
         product.setIsActive(!product.getIsActive());
         product.setUpdatedAt(LocalDateTime.now());
@@ -296,7 +297,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductDTO updateProductStock(Long id, int stock) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
 
         product.setStock(stock);
         product.setUpdatedAt(LocalDateTime.now());
@@ -316,7 +317,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductDTO updateProductStatus(Long id, String status) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
 
         product.setStatus(status);
         product.setUpdatedAt(LocalDateTime.now());
@@ -514,26 +515,32 @@ public class ProductServiceImpl implements ProductService {
             end = LocalDate.parse(endDate, formatter).plusDays(1).atStartOfDay();
         } else {
             LocalDate now = LocalDate.now();
-            switch (period) {
-                case "daily":
-                    start = now.atStartOfDay();
-                    end = now.plusDays(1).atStartOfDay();
-                    break;
-                case "weekly":
-                    start = now.minusWeeks(1).atStartOfDay();
-                    end = now.plusDays(1).atStartOfDay();
-                    break;
-                case "monthly":
-                    start = now.minusMonths(1).atStartOfDay();
-                    end = now.plusDays(1).atStartOfDay();
-                    break;
-                case "yearly":
-                    start = now.minusYears(1).atStartOfDay();
-                    end = now.plusDays(1).atStartOfDay();
-                    break;
-                default:
-                    start = now.minusMonths(1).atStartOfDay();
-                    end = now.plusDays(1).atStartOfDay();
+            if (period != null) {
+                switch (period) {
+                    case "daily":
+                        start = now.atStartOfDay();
+                        end = now.plusDays(1).atStartOfDay();
+                        break;
+                    case "weekly":
+                        start = now.minusWeeks(1).atStartOfDay();
+                        end = now.plusDays(1).atStartOfDay();
+                        break;
+                    case "monthly":
+                        start = now.minusMonths(1).atStartOfDay();
+                        end = now.plusDays(1).atStartOfDay();
+                        break;
+                    case "yearly":
+                        start = now.minusYears(1).atStartOfDay();
+                        end = now.plusDays(1).atStartOfDay();
+                        break;
+                    default:
+                        start = now.minusMonths(1).atStartOfDay();
+                        end = now.plusDays(1).atStartOfDay();
+                }
+            } else {
+                // period가 null인 경우에 대한 기본 케이스 처리
+                start = now.minusMonths(1).atStartOfDay();
+                end = now.plusDays(1).atStartOfDay();
             }
         }
 

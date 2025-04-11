@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -73,7 +74,7 @@ public class WishlistServiceImpl implements WishlistService {
 
         // 상품 조회
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new UsernameNotFoundException("상품을 찾을 수 없습니다. ID: " + productId));
+                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다. ID: " + productId));
 
         // 이미 위시리스트에 있는 상품인지 확인
         boolean exists = wishlist.getItems().stream()
@@ -191,7 +192,7 @@ public class WishlistServiceImpl implements WishlistService {
     // 새 위시리스트 생성
     private Wishlist createNewWishlist(Long memberId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다. ID: " + memberId));
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다. ID: " + memberId));
 
         Wishlist wishlist = new Wishlist();
         wishlist.setMember(member);

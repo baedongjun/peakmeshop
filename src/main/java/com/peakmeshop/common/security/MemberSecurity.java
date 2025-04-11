@@ -26,7 +26,7 @@ public class MemberSecurity {
             return false;
         }
 
-        return memberRepository.findByEmail(principal.getName())
+        return memberRepository.findByUserId(principal.getName())
                 .map(member -> member.getId().equals(memberId))
                 .orElse(false);
     }

@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.peakmeshop.domain.repository.OrderItemRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -26,6 +28,29 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
+    private final OrderItemRepository orderItemRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Object[]> getCategorySalesData() {
+        // 카테고리별 판매 비율 데이터를 조회합니다.
+        // 반환되는 배열의 각 요소는 [카테고리명, 판매 비율]을 포함합니다.
+        return orderItemRepository.findCategorySalesPercentage();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Object[]> getCategoryProductCounts() {
+        // 카테고리별 상품 수를 조회합니다.
+        return categoryRepository.findCategoryProductCounts();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Object[]> getCategoryRevenue() {
+        // 카테고리별 매출 금액을 조회합니다.
+        return orderItemRepository.findCategoryRevenue();
+    }
 
     @Override
     @Transactional
@@ -34,7 +59,7 @@ public class CategoryServiceImpl implements CategoryService {
         Category parent = null;
         if (categoryDTO.getParentId() != null) {
             parent = categoryRepository.findById(categoryDTO.getParentId())
-                    .orElseThrow(() -> new UsernameNotFoundException("Parent category not found with id: " + categoryDTO.getParentId()));
+                    .orElseThrow(() -> new EntityNotFoundException("Parent category not found with id: " + categoryDTO.getParentId()));
         }
 
         // 카테고리 생성
@@ -60,7 +85,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional(readOnly = true)
     public CategoryDTO getCategoryById(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("Category not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
 
         return convertToDTO(category);
     }
@@ -128,7 +153,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public CategoryDTO updateCategory(Long id, CategoryDTO categoryDTO) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("Category not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
 
         // 부모 카테고리 확인
         Category parent = null;
@@ -139,7 +164,7 @@ public class CategoryServiceImpl implements CategoryService {
             }
 
             parent = categoryRepository.findById(categoryDTO.getParentId())
-                    .orElseThrow(() -> new UsernameNotFoundException("Parent category not found with id: " + categoryDTO.getParentId()));
+                    .orElseThrow(() -> new EntityNotFoundException("Parent category not found with id: " + categoryDTO.getParentId()));
 
             // 순환 참조 방지
             Category current = parent;
@@ -175,7 +200,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public boolean deleteCategory(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("Category not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
 
         // 하위 카테고리가 있는지 확인
         if (categoryRepository.countByParentId(id) > 0) {
@@ -195,7 +220,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public CategoryDTO updateCategoryFilterableAttributes(Long id, List<String> attributes) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("Category not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
 
         // 필터링 가능한 속성 업데이트
         if (attributes != null && !attributes.isEmpty()) {
@@ -214,7 +239,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public CategoryDTO updateCategoryStatus(Long id, boolean active) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("Category not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
 
         category.setActive(active);
         category.setUpdatedAt(LocalDateTime.now());
@@ -227,7 +252,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public CategoryDTO updateCategoryPosition(Long id, int position) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("Category not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
 
         category.setSortOrder(position);
         category.setUpdatedAt(LocalDateTime.now());

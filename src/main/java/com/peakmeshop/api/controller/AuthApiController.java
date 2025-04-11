@@ -23,21 +23,6 @@ public class AuthApiController {
 
     private final AuthService authService;
 
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            Map<String, String> errors = new HashMap<>();
-            bindingResult.getAllErrors().forEach(error -> {
-                String fieldName = ((FieldError) error).getField();
-                String errorMessage = error.getDefaultMessage();
-                errors.put(fieldName, errorMessage);
-            });
-            return ResponseEntity.badRequest().body(errors);
-        }
-
-        return ResponseEntity.ok(authService.login(loginRequest));
-    }
-
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest signupRequest, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {

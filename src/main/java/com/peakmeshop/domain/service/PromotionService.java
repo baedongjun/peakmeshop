@@ -44,4 +44,6 @@ public interface PromotionService {
     void suspendPromotion(Long id);
 
     void resumePromotion(Long id);
+
+    PromotionSummaryDTO getPromotionSummary(String period, String startDate, String endDate);
 }

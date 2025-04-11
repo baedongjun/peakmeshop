@@ -121,13 +121,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     long countByStockLessThanAndStockGreaterThan(int maxStock, int minStock);
 
-    @Query("SELECT AVG(p.price) FROM Product p WHERE p.isActive = true")
+    @Query("SELECT COALESCE(AVG(p.price), 0) FROM Product p WHERE p.isActive = true")
     double calculateAveragePrice();
 
-    @Query("SELECT SUM(p.stock) FROM Product p WHERE p.isActive = true")
+    @Query("SELECT COALESCE(SUM(p.stock), 0) FROM Product p WHERE p.isActive = true")
     long calculateTotalInventory();
 
-    @Query("SELECT (SUM(o.quantity) * 1.0) / AVG(p.stock) " +
+    @Query("SELECT COALESCE((SUM(o.quantity) * 1.0) / AVG(p.stock), 0) " +
            "FROM OrderItem o JOIN o.product p " +
            "WHERE o.createdAt BETWEEN :startDate AND :endDate")
     double calculateInventoryTurnover(@Param("startDate") LocalDateTime startDate,
@@ -135,11 +135,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     long countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
 
-    @Query("SELECT COUNT(DISTINCT o.product.id) " +
-           "FROM OrderItem o " +
-           "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
-           "GROUP BY o.product.id " +
-           "HAVING COUNT(o) >= 10")
+    @Query("SELECT COUNT(DISTINCT p) FROM OrderItem o JOIN o.product p " +
+            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+            "AND (SELECT COUNT(oi) FROM OrderItem oi WHERE oi.product = p) >= 10")
     long countTopSellers(@Param("startDate") LocalDateTime startDate,
                         @Param("endDate") LocalDateTime endDate);
 
@@ -164,4 +162,22 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findTopProducts(@Param("startDate") LocalDateTime startDate,
                                  @Param("endDate") LocalDateTime endDate,
                                  Pageable pageable);
+
+    /**
+     * 재고가 특정 수량 이하인 상품을 조회합니다.
+     * @param stock 재고 수량
+     * @param pageable 페이징 정보
+     * @return 재고가 부족한 상품 목록
+     */
+    Page<Product> findByStockLessThanEqual(int stock, Pageable pageable);
+
+    /**
+     * 재고가 특정 수량 이하이고 활성화된 상품을 조회합니다.
+     * @param stock 재고 수량
+     * @param isActive 활성화 여부
+     * @param pageable 페이징 정보
+     * @return 재고가 부족한 활성화된 상품 목록
+     */
+    Page<Product> findByStockLessThanEqualAndIsActive(int stock, boolean isActive, Pageable pageable);
+
 }
