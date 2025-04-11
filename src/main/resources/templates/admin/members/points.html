@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>포인트 관리 - Peak Me Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">포인트 관리</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/members}">회원 관리</a></li>
+                        <li class="breadcrumb-item active">포인트 관리</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-primary" onclick="showPointModal()">
+                        <i class="fas fa-plus"></i> 포인트 지급/차감
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 필터 영역 시작 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="filterForm" method="get" th:action="@{/admin/points}">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="type">구분</label>
+                                <select class="form-select" id="type" name="type">
+                                    <option value="">전체</option>
+                                    <option value="EARN" th:selected="${type == 'EARN'}">적립</option>
+                                    <option value="USE" th:selected="${type == 'USE'}">사용</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="searchType">검색 유형</label>
+                                <select class="form-select" id="searchType" name="searchType">
+                                    <option value="memberId">회원번호</option>
+                                    <option value="memberName">회원명</option>
+                                    <option value="description">내용</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="searchKeyword">검색어</label>
+                                <input type="text" class="form-control" id="searchKeyword" name="searchKeyword"
+                                       th:value="${param.searchKeyword}">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search"></i> 검색
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 필터 영역 끝 -->
+
+        <!-- 포인트 목록 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>번호</th>
+                                <th>회원정보</th>
+                                <th>구분</th>
+                                <th>포인트</th>
+                                <th>내용</th>
+                                <th>일시</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="point : ${points}">
+                                <td th:text="${point.id}">1</td>
+                                <td>
+                                    <div>
+                                        <a th:href="@{/admin/members/{id}(id=${point.memberId})}" 
+                                           th:text="${point.memberName}" class="text-primary">홍길동</a>
+                                    </div>
+                                    <small class="text-muted" th:text="${'회원번호: ' + point.memberId}">회원번호: 1</small>
+                                </td>
+                                <td>
+                                    <span th:class="${'badge bg-' + (point.type == 'EARN' ? 'success' : 'danger')}"
+                                          th:text="${point.type == 'EARN' ? '적립' : '사용'}">적립</span>
+                                </td>
+                                <td th:text="${(point.type == 'EARN' ? '+' : '-') + #numbers.formatInteger(point.amount, 0, 'COMMA') + 'P'}">+1,000P</td>
+                                <td th:text="${point.description}">구매 적립</td>
+                                <td th:text="${#temporals.format(point.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 00:00</td>
+                                <td>
+                                    <a th:href="@{/admin/points/{id}(id=${point.id})}" class="btn btn-sm btn-primary">
+                                        상세
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(points)}">
+                                <td colspan="7" class="text-center">포인트 내역이 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 페이지네이션 시작 -->
+                <nav th:if="${!#lists.isEmpty(points)}" aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${points.first ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/admin/points(page=${points.number - 1}, type=${type})}" 
+                               tabindex="-1">이전</a>
+                        </li>
+                        <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, points.totalPages - 1)}"
+                            th:classappend="${pageNum == points.number ? 'active' : ''}">
+                            <a class="page-link" th:href="@{/admin/points(page=${pageNum}, type=${type})}" 
+                               th:text="${pageNum + 1}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${points.last ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/admin/points(page=${points.number + 1}, type=${type})}">다음</a>
+                        </li>
+                    </ul>
+                </nav>
+                <!-- 페이지네이션 끝 -->
+            </div>
+        </div>
+        <!-- 포인트 목록 끝 -->
+    </div>
+
+    <!-- 포인트 지급/차감 모달 -->
+    <div class="modal fade" id="pointModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">포인트 지급/차감</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="pointForm" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label for="memberId" class="form-label required">회원번호</label>
+                            <input type="number" class="form-control" id="memberId" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="pointType" class="form-label required">구분</label>
+                            <select class="form-select" id="pointType" required>
+                                <option value="EARN">적립</option>
+                                <option value="USE">차감</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="amount" class="form-label required">포인트</label>
+                            <input type="number" class="form-control" id="amount" required
+                                   min="1" step="1">
+                        </div>
+                        <div class="mb-3">
+                            <label for="pointDescription" class="form-label required">내용</label>
+                            <textarea class="form-control" id="pointDescription" rows="3" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="savePoint()">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="script">
+        <script th:inline="javascript">
+            // 포인트 모달 표시
+            function showPointModal() {
+                const modal = new bootstrap.Modal(document.getElementById('pointModal'));
+                document.getElementById('pointForm').reset();
+                modal.show();
+            }
+
+            // 포인트 저장
+            function savePoint() {
+                const form = document.getElementById('pointForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                const data = {
+                    memberId: parseInt(document.getElementById('memberId').value),
+                    type: document.getElementById('pointType').value,
+                    amount: parseInt(document.getElementById('amount').value),
+                    description: document.getElementById('pointDescription').value
+                };
+
+                fetch('/api/points/admin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('포인트 처리에 실패했습니다.');
+                    return response.json();
+                })
+                .then(() => {
+                    alert('처리되었습니다.');
+                    location.reload();
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
+        </script>
+    </th:block>
+</body>
+</html> 

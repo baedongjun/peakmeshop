@@ -671,7 +671,7 @@
                     }
 
                     const form = document.getElementById(type + 'SettingsForm');
-                    const formData = new FormData(form);
+                const formData = new FormData(form);
                     const settings = {};
 
                     formData.forEach((value, key) => {
@@ -698,7 +698,7 @@
 
                     try {
                         const response = await fetch(`/api/settings/${type}`, {
-                            method: 'PUT',
+                    method: 'PUT',
                             headers: {
                                 'Content-Type': 'application/json'
                             },

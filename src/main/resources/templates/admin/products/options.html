@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>상품 옵션 관리 - Peak Me Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="container-fluid">
+            <h1 class="h3 mb-2 text-gray-800">상품 옵션 관리</h1>
+            <p class="mb-4">상품의 옵션을 관리할 수 있습니다.</p>
+
+            <!-- 상품 정보 카드 -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">상품 정보</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <img th:if="${product.thumbnail}" th:src="${product.thumbnail}" class="img-fluid" alt="상품 이미지">
+                            <div th:unless="${product.thumbnail}" class="text-center p-3 bg-light">이미지 없음</div>
+                        </div>
+                        <div class="col-md-10">
+                            <h5 th:text="${product.name}">상품명</h5>
+                            <p class="text-muted" th:text="${product.code}">상품코드</p>
+                            <p th:text="${product.description}">상품 설명</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 옵션 관리 카드 -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">옵션 목록</h6>
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addOptionModal">
+                        옵션 추가
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>옵션명</th>
+                                    <th>추가금액</th>
+                                    <th>재고수량</th>
+                                    <th>사용여부</th>
+                                    <th>관리</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="option : ${options}">
+                                    <td th:text="${option.name}">옵션명</td>
+                                    <td th:text="${#numbers.formatCurrency(option.additionalPrice)}">추가금액</td>
+                                    <td th:text="${option.stock}">재고수량</td>
+                                    <td>
+                                        <span th:if="${option.isEnabled}" class="badge bg-success">사용</span>
+                                        <span th:unless="${option.isEnabled}" class="badge bg-secondary">미사용</span>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-primary" 
+                                                th:onclick="'editOption(' + ${option.id} + ')'">수정</button>
+                                        <button type="button" class="btn btn-sm btn-danger" 
+                                                th:onclick="'deleteOption(' + ${option.id} + ')'">삭제</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 옵션 추가 모달 -->
+        <div class="modal fade" id="addOptionModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">옵션 추가</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="optionForm">
+                            <div class="mb-3">
+                                <label for="optionName" class="form-label">옵션명</label>
+                                <input type="text" class="form-control" id="optionName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="additionalPrice" class="form-label">추가금액</label>
+                                <input type="number" class="form-control" id="additionalPrice" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="stock" class="form-label">재고수량</label>
+                                <input type="number" class="form-control" id="stock" required>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="isEnabled" checked>
+                                    <label class="form-check-label" for="isEnabled">
+                                        사용 여부
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-primary" onclick="saveOption()">저장</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="script">
+        <script>
+            function editOption(id) {
+                // 옵션 수정 로직
+            }
+
+            function deleteOption(id) {
+                if (confirm('정말 삭제하시겠습니까?')) {
+                    // 옵션 삭제 로직
+                }
+            }
+
+            function saveOption() {
+                // 옵션 저장 로직
+            }
+        </script>
+    </th:block>
+</body>
+</html> 

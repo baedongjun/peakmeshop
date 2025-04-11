@@ -50,7 +50,7 @@ public class AdminMemberViewController {
     @GetMapping("/members/new")
     public String createMember(Model model) {
         model.addAttribute("grades", memberService.getAllGrades());
-        return "admin/members/form";
+        return "admin/members/member-form";
     }
 
     /**
@@ -61,7 +61,7 @@ public class AdminMemberViewController {
         model.addAttribute("memberId", id);
         model.addAttribute("member", memberService.getMemberById(id));
         model.addAttribute("grades", memberService.getAllGrades());
-        return "admin/members/form";
+        return "admin/members/member-form";
     }
 
     /**
@@ -72,7 +72,7 @@ public class AdminMemberViewController {
         model.addAttribute("memberId", id);
         model.addAttribute("member", memberService.getMemberById(id));
         model.addAttribute("summary", memberService.getMemberSummary(id));
-        return "admin/members/detail";
+        return "member-detail_old";
     }
 
     /**

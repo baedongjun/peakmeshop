@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>회원 등급 관리 - Peak Me Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">회원 등급 관리</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/members}">회원 관리</a></li>
+                        <li class="breadcrumb-item active">회원 등급</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-primary" onclick="showGradeModal()">
+                        <i class="fas fa-plus"></i> 등급 추가
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 등급 목록 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>순서</th>
+                                <th>등급명</th>
+                                <th>등급코드</th>
+                                <th>혜택</th>
+                                <th>회원수</th>
+                                <th>상태</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gradeList">
+                            <tr th:each="grade : ${grades}" th:data-id="${grade.id}">
+                                <td>
+                                    <div class="handle" style="cursor: move;">
+                                        <i class="fas fa-grip-vertical"></i>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span th:class="${'badge bg-' + 
+                                        (grade.code == 'DIAMOND' ? 'info' :
+                                        (grade.code == 'PLATINUM' ? 'primary' :
+                                        (grade.code == 'GOLD' ? 'warning' :
+                                        (grade.code == 'SILVER' ? 'secondary' : 'dark'))))}">
+                                        <i class="fas fa-crown me-1"></i>
+                                        <span th:text="${grade.name}">등급명</span>
+                                    </span>
+                                </td>
+                                <td th:text="${grade.code}">BRONZE</td>
+                                <td>
+                                    <div>포인트 적립: <span th:text="${grade.pointRate + '%'}">1%</span></div>
+                                    <div>할인율: <span th:text="${grade.discountRate + '%'}">0%</span></div>
+                                </td>
+                                <td th:text="${grade.memberCount + '명'}">0명</td>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" 
+                                               th:checked="${grade.active}"
+                                               onchange="toggleGradeStatus(this)"
+                                               th:data-id="${grade.id}">
+                                    </div>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary me-1"
+                                            th:onclick="'showGradeModal(' + ${grade.id} + ')'">
+                                        수정
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                            th:onclick="'deleteGrade(' + ${grade.id} + ')'">
+                                        삭제
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(grades)}">
+                                <td colspan="7" class="text-center">등록된 등급이 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- 등급 목록 끝 -->
+    </div>
+
+    <!-- 등급 추가/수정 모달 -->
+    <div class="modal fade" id="gradeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">등급 추가/수정</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="gradeForm" class="needs-validation" novalidate>
+                        <input type="hidden" id="gradeId">
+                        <div class="mb-3">
+                            <label for="name" class="form-label required">등급명</label>
+                            <input type="text" class="form-control" id="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="code" class="form-label required">등급코드</label>
+                            <input type="text" class="form-control" id="code" required
+                                   pattern="^[A-Z][A-Z0-9_]{2,19}$">
+                            <div class="form-text">영문 대문자, 숫자, 언더스코어(_)만 사용 가능합니다.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="pointRate" class="form-label required">포인트 적립률 (%)</label>
+                            <input type="number" class="form-control" id="pointRate" required
+                                   min="0" max="100" step="0.1">
+                        </div>
+                        <div class="mb-3">
+                            <label for="discountRate" class="form-label required">할인율 (%)</label>
+                            <input type="number" class="form-control" id="discountRate" required
+                                   min="0" max="100" step="0.1">
+                        </div>
+                        <div class="mb-3">
+                            <label for="minAmount" class="form-label required">최소 구매금액</label>
+                            <input type="number" class="form-control" id="minAmount" required
+                                   min="0" step="1000">
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">설명</label>
+                            <textarea class="form-control" id="description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="active" checked>
+                                <label class="form-check-label" for="active">활성화</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="saveGrade()">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="script">
+        <!-- Sortable.js -->
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+        <script th:inline="javascript">
+            // 등급 순서 변경
+            new Sortable(document.getElementById('gradeList'), {
+                handle: '.handle',
+                animation: 150,
+                onEnd: function() {
+                    const grades = [];
+                    document.querySelectorAll('#gradeList tr').forEach((row, index) => {
+                        const id = row.dataset.id;
+                        if (id) {
+                            grades.push({
+                                id: parseInt(id),
+                                sortOrder: index + 1
+                            });
+                        }
+                    });
+
+                    fetch('/api/member-tiers/admin/order', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(grades)
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('순서 변경에 실패했습니다.');
+                    })
+                    .catch(error => {
+                        alert(error.message);
+                    });
+                }
+            });
+
+            // 등급 모달 표시
+            function showGradeModal(gradeId) {
+                const modal = new bootstrap.Modal(document.getElementById('gradeModal'));
+                const form = document.getElementById('gradeForm');
+                form.reset();
+
+                if (gradeId) {
+                    // 수정
+                    fetch(`/api/member-tiers/admin/${gradeId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('gradeId').value = data.id;
+                            document.getElementById('name').value = data.name;
+                            document.getElementById('code').value = data.code;
+                            document.getElementById('pointRate').value = data.pointRate;
+                            document.getElementById('discountRate').value = data.discountRate;
+                            document.getElementById('minAmount').value = data.minAmount;
+                            document.getElementById('description').value = data.description;
+                            document.getElementById('active').checked = data.active;
+                            modal.show();
+                        })
+                        .catch(error => {
+                            alert('등급 정보를 불러오는데 실패했습니다.');
+                        });
+                } else {
+                    // 추가
+                    document.getElementById('gradeId').value = '';
+                    modal.show();
+                }
+            }
+
+            // 등급 저장
+            function saveGrade() {
+                const form = document.getElementById('gradeForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                const gradeId = document.getElementById('gradeId').value;
+                const data = {
+                    name: document.getElementById('name').value,
+                    code: document.getElementById('code').value,
+                    pointRate: parseFloat(document.getElementById('pointRate').value),
+                    discountRate: parseFloat(document.getElementById('discountRate').value),
+                    minAmount: parseInt(document.getElementById('minAmount').value),
+                    description: document.getElementById('description').value,
+                    active: document.getElementById('active').checked
+                };
+
+                fetch(gradeId ? `/api/member-tiers/admin/${gradeId}` : '/api/member-tiers/admin', {
+                    method: gradeId ? 'PUT' : 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('저장에 실패했습니다.');
+                    location.reload();
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
+
+            // 등급 삭제
+            function deleteGrade(gradeId) {
+                if (!confirm('정말 삭제하시겠습니까?')) return;
+
+                fetch(`/api/member-tiers/admin/${gradeId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('삭제에 실패했습니다.');
+                    location.reload();
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
+
+            // 등급 상태 변경
+            function toggleGradeStatus(checkbox) {
+                const gradeId = checkbox.dataset.id;
+                const active = checkbox.checked;
+
+                fetch(`/api/member-tiers/admin/${gradeId}/status?active=${active}`, {
+                    method: 'PUT'
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('상태 변경에 실패했습니다.');
+                })
+                .catch(error => {
+                    alert(error.message);
+                    checkbox.checked = !active;
+                });
+            }
+        </script>
+    </th:block>
+</body>
+</html> 

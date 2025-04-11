@@ -19,7 +19,7 @@
             <!-- 검색 및 필터 -->
             <div class="card mb-4">
                 <div class="card-body">
-                    <form th:action="@{/admin/reviews}" method="get" class="row g-3">
+                    <form th:action="@{/templates/admin/reviews}" method="get" class="row g-3">
                         <div class="col-md-3">
                             <label for="searchType" class="form-label">검색 유형</label>
                             <select class="form-select" id="searchType" name="searchType">
@@ -267,17 +267,9 @@
     <!-- 자바스크립트 -->
     <th:block layout:fragment="script">
         <script>
-            $(document).ready(function() {
-                $('#reviewsTable').DataTable({
-                    order: [[6, 'desc']],
-                    language: {
-                        url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Korean.json'
-                    }
-                });
-            });
 
             function showReviewDetail(reviewId) {
-                fetch(`/api/admin/reviews/${reviewId}`)
+                fetch(`/api/reviews/${reviewId}`)
                     .then(response => response.json())
                     .then(data => {
                         const detail = document.getElementById('reviewDetail');
@@ -371,7 +363,7 @@
                     return;
                 }
 
-                fetch(`/api/admin/reviews/${reviewId}/approve`, {
+                fetch(`/api/reviews/${reviewId}/approve`, {
                     method: 'POST'
                 })
                 .then(response => {
@@ -404,7 +396,7 @@
                     return;
                 }
 
-                fetch(`/api/admin/reviews/${reviewId}/reject`, {
+                fetch(`/api/reviews/${reviewId}/reject`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -430,7 +422,7 @@
                     return;
                 }
 
-                fetch(`/api/admin/reviews/${reviewId}`, {
+                fetch(`/api/reviews/${reviewId}`, {
                     method: 'DELETE'
                 })
                 .then(response => {
@@ -449,7 +441,7 @@
 
             function exportReviews() {
                 const searchParams = new URLSearchParams(window.location.search);
-                window.location.href = '/api/admin/reviews/export?' + searchParams.toString();
+                window.location.href = '/api/reviews/export?' + searchParams.toString();
             }
         </script>
     </th:block>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>상품 문의 상세 - Peak Me Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">상품 문의 상세</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/products}">상품 관리</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/products/qnas}">상품 문의</a></li>
+                        <li class="breadcrumb-item active">문의 상세</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-danger" onclick="deleteQna()">
+                        <i class="fas fa-trash"></i> 삭제
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 상품 정보 카드 -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">상품 정보</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2">
+                        <img th:if="${qna.product.thumbnail}" th:src="${qna.product.thumbnail}" 
+                             class="img-fluid rounded" alt="상품 이미지">
+                        <div th:unless="${qna.product.thumbnail}" class="text-center p-3 bg-light">이미지 없음</div>
+                    </div>
+                    <div class="col-md-10">
+                        <h5>
+                            <a th:href="@{/admin/products/{id}(id=${qna.product.id})}" 
+                               th:text="${qna.product.name}" class="text-primary">상품명</a>
+                        </h5>
+                        <p class="text-muted" th:text="${qna.product.code}">상품코드</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 문의 내용 카드 -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">문의 내용</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5 th:text="${qna.title}">문의 제목</h5>
+                    <div class="text-muted small mb-3">
+                        <span th:text="${qna.writer.name}">작성자</span> |
+                        <span th:text="${#temporals.format(qna.createdAt, 'yyyy-MM-dd HH:mm')}">작성일</span> |
+                        <span th:if="${qna.status == 'WAITING'}" class="badge bg-warning">답변 대기</span>
+                        <span th:if="${qna.status == 'COMPLETED'}" class="badge bg-success">답변 완료</span>
+                    </div>
+                    <div class="border rounded p-3 bg-light">
+                        <p th:text="${qna.content}" style="white-space: pre-line;">문의 내용</p>
+                    </div>
+                </div>
+
+                <!-- 문의 답변 폼 -->
+                <div th:if="${qna.status == 'WAITING'}" class="border rounded p-3">
+                    <h6 class="mb-3">답변 작성</h6>
+                    <form id="answerForm">
+                        <input type="hidden" id="qnaId" th:value="${qna.id}">
+                        <div class="form-group">
+                            <textarea class="form-control" id="answer" rows="5" 
+                                      placeholder="답변을 입력해주세요." required></textarea>
+                        </div>
+                        <div class="text-end mt-3">
+                            <button type="button" class="btn btn-primary" onclick="submitAnswer()">
+                                답변 등록
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 답변 내용 -->
+                <div th:if="${qna.status == 'COMPLETED'}" class="mt-4">
+                    <h6 class="mb-3">답변 내용</h6>
+                    <div class="border rounded p-3">
+                        <div class="text-muted small mb-2">
+                            <span th:text="${qna.answerer.name}">답변자</span> |
+                            <span th:text="${#temporals.format(qna.answeredAt, 'yyyy-MM-dd HH:mm')}">답변일</span>
+                        </div>
+                        <p th:text="${qna.answer}" style="white-space: pre-line;">답변 내용</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="script">
+        <script th:inline="javascript">
+            function submitAnswer() {
+                const qnaId = document.getElementById('qnaId').value;
+                const answer = document.getElementById('answer').value;
+
+                if (!answer.trim()) {
+                    alert('답변 내용을 입력해주세요.');
+                    return;
+                }
+
+                fetch(`/api/products/qnas/${qnaId}/answer`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ answer: answer })
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('답변 등록에 실패했습니다.');
+                    return response.json();
+                })
+                .then(() => {
+                    alert('답변이 등록되었습니다.');
+                    location.reload();
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
+
+            function deleteQna() {
+                if (!confirm('정말 삭제하시겠습니까?')) return;
+
+                const qnaId = /*[[${qna.id}]]*/ '';
+
+                fetch(`/api/products/qnas/${qnaId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('문의 삭제에 실패했습니다.');
+                    alert('문의가 삭제되었습니다.');
+                    location.href = '/admin/products/qnas';
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
+        </script>
+    </th:block>
+</body>
+</html> 

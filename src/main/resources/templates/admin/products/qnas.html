@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>상품 문의 관리 - Peak Me Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">상품 문의 관리</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/products}">상품 관리</a></li>
+                        <li class="breadcrumb-item active">상품 문의</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 필터 영역 시작 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="filterForm" method="get" th:action="@{/admin/products/qnas}">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="status">답변 상태</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="">전체</option>
+                                    <option value="WAITING" th:selected="${status == 'WAITING'}">답변 대기</option>
+                                    <option value="COMPLETED" th:selected="${status == 'COMPLETED'}">답변 완료</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search"></i> 검색
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 필터 영역 끝 -->
+
+        <!-- 문의 목록 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>상품</th>
+                                <th>문의 제목</th>
+                                <th>작성자</th>
+                                <th>작성일</th>
+                                <th>상태</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="qna : ${qnas}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img th:if="${qna.product.thumbnail}" th:src="${qna.product.thumbnail}" 
+                                             class="rounded" style="width: 40px; height: 40px; object-fit: cover;" alt="상품 이미지">
+                                        <div class="ms-2">
+                                            <a th:href="@{/admin/products/{id}(id=${qna.product.id})}" 
+                                               th:text="${qna.product.name}" class="text-primary">상품명</a>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a th:href="@{/admin/products/qnas/{id}(id=${qna.id})}" 
+                                       th:text="${qna.title}">문의 제목</a>
+                                </td>
+                                <td th:text="${qna.writer.name}">작성자</td>
+                                <td th:text="${#temporals.format(qna.createdAt, 'yyyy-MM-dd HH:mm')}">작성일</td>
+                                <td>
+                                    <span th:if="${qna.status == 'WAITING'}" class="badge bg-warning">답변 대기</span>
+                                    <span th:if="${qna.status == 'COMPLETED'}" class="badge bg-success">답변 완료</span>
+                                </td>
+                                <td>
+                                    <a th:href="@{/admin/products/qnas/{id}(id=${qna.id})}" 
+                                       class="btn btn-sm btn-primary">상세보기</a>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(qnas)}">
+                                <td colspan="6" class="text-center">등록된 문의가 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 페이지네이션 시작 -->
+                <nav th:if="${!#lists.isEmpty(qnas)}" aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${qnas.first ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/admin/products/qnas(page=${qnas.number - 1}, status=${status})}" 
+                               tabindex="-1">이전</a>
+                        </li>
+                        <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, qnas.totalPages - 1)}"
+                            th:classappend="${pageNum == qnas.number ? 'active' : ''}">
+                            <a class="page-link" th:href="@{/admin/products/qnas(page=${pageNum}, status=${status})}" 
+                               th:text="${pageNum + 1}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${qnas.last ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/admin/products/qnas(page=${qnas.number + 1}, status=${status})}">다음</a>
+                        </li>
+                    </ul>
+                </nav>
+                <!-- 페이지네이션 끝 -->
+            </div>
+        </div>
+        <!-- 문의 목록 끝 -->
+    </div>
+</body>
+</html> 

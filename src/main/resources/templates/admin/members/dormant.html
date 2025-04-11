@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>휴면 회원 관리 - Peak Me Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">휴면 회원 관리</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/members}">회원 관리</a></li>
+                        <li class="breadcrumb-item active">휴면 회원</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-primary" onclick="sendNotification()">
+                        <i class="fas fa-envelope"></i> 휴면 전환 예정 알림
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 필터 영역 시작 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="filterForm" method="get" th:action="@{/admin/members/dormant}">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="status">상태</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="">전체</option>
+                                    <option value="DORMANT" th:selected="${param.status == 'DORMANT'}">휴면</option>
+                                    <option value="DORMANT_PENDING" th:selected="${param.status == 'DORMANT_PENDING'}">휴면 예정</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="searchType">검색 유형</label>
+                                <select class="form-select" id="searchType" name="searchType">
+                                    <option value="id" th:selected="${param.searchType == 'id'}">회원번호</option>
+                                    <option value="name" th:selected="${param.searchType == 'name'}">이름</option>
+                                    <option value="email" th:selected="${param.searchType == 'email'}">이메일</option>
+                                    <option value="phone" th:selected="${param.searchType == 'phone'}">연락처</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="searchKeyword">검색어</label>
+                                <input type="text" class="form-control" id="searchKeyword" name="searchKeyword"
+                                       th:value="${param.searchKeyword}">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search"></i> 검색
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 필터 영역 끝 -->
+
+        <!-- 회원 목록 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" class="form-check-input" id="selectAll"
+                                           onclick="toggleSelectAll()">
+                                </th>
+                                <th>회원번호</th>
+                                <th>이름</th>
+                                <th>이메일</th>
+                                <th>연락처</th>
+                                <th>최근 로그인</th>
+                                <th>휴면 전환일</th>
+                                <th>상태</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="member : ${members}">
+                                <td>
+                                    <input type="checkbox" class="form-check-input member-checkbox"
+                                           th:value="${member.id}">
+                                </td>
+                                <td th:text="${member.id}">1</td>
+                                <td>
+                                    <a th:href="@{/admin/members/{id}(id=${member.id})}" 
+                                       th:text="${member.name}" class="text-primary">
+                                        홍길동
+                                    </a>
+                                </td>
+                                <td th:text="${member.email}">user@example.com</td>
+                                <td th:text="${member.phone}">010-1234-5678</td>
+                                <td th:text="${#temporals.format(member.lastLoginAt, 'yyyy-MM-dd HH:mm')}">
+                                    2024-01-01 00:00
+                                </td>
+                                <td th:text="${member.dormantAt != null ? #temporals.format(member.dormantAt, 'yyyy-MM-dd HH:mm') : '-'}">
+                                    2024-01-01 00:00
+                                </td>
+                                <td>
+                                    <span th:if="${member.status == 'DORMANT'}" class="badge bg-danger">휴면</span>
+                                    <span th:if="${member.status == 'DORMANT_PENDING'}" class="badge bg-warning">휴면 예정</span>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary me-1"
+                                            th:if="${member.status == 'DORMANT'}"
+                                            th:onclick="'reactivateMember(' + ${member.id} + ')'">
+                                        활성화
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-warning"
+                                            th:if="${member.status == 'DORMANT_PENDING'}"
+                                            th:onclick="'sendNotificationToMember(' + ${member.id} + ')'">
+                                        알림
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(members)}">
+                                <td colspan="9" class="text-center">휴면 회원이 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 일괄 처리 버튼 -->
+                <div class="mt-3">
+                    <button type="button" class="btn btn-primary me-2" onclick="sendNotificationToSelected()">
+                        <i class="fas fa-envelope"></i> 선택 회원 알림
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="reactivateSelected()">
+                        <i class="fas fa-user-check"></i> 선택 회원 활성화
+                    </button>
+                </div>
+
+                <!-- 페이지네이션 시작 -->
+                <nav th:if="${!#lists.isEmpty(members)}" aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${members.first ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/admin/members/dormant(page=${members.number - 1})}" 
+                               tabindex="-1">이전</a>
+                        </li>
+                        <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, members.totalPages - 1)}"
+                            th:classappend="${pageNum == members.number ? 'active' : ''}">
+                            <a class="page-link" th:href="@{/admin/members/dormant(page=${pageNum})}" 
+                               th:text="${pageNum + 1}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${members.last ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/admin/members/dormant(page=${members.number + 1})}">다음</a>
+                        </li>
+                    </ul>
+                </nav>
+                <!-- 페이지네이션 끝 -->
+            </div>
+        </div>
+        <!-- 회원 목록 끝 -->
+    </div>
+
+    <th:block layout:fragment="script">
+        <script th:inline="javascript">
+            // 전체 선택/해제
+            function toggleSelectAll() {
+                const selectAll = document.getElementById('selectAll');
+                const checkboxes = document.getElementsByClassName('member-checkbox');
+                Array.from(checkboxes).forEach(checkbox => {
+                    checkbox.checked = selectAll.checked;
+                });
+            }
+
+            // 선택된 회원 ID 배열 반환
+            function getSelectedMemberIds() {
+                const checkboxes = document.getElementsByClassName('member-checkbox');
+                return Array.from(checkboxes)
+                    .filter(checkbox => checkbox.checked)
+                    .map(checkbox => parseInt(checkbox.value));
+            }
+
+            // 휴면 전환 예정 알림 발송
+            function sendNotification() {
+                if (!confirm('휴면 전환 예정인 회원들에게 알림을 발송하시겠습니까?')) return;
+
+                fetch('/api/members/admin/dormant/notify', {
+                    method: 'POST'
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('알림 발송에 실패했습니다.');
+                    return response.json();
+                })
+                .then(data => {
+                    alert(`${data.count}명의 회원에게 알림이 발송되었습니다.`);
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
+
+            // 선택 회원 알림 발송
+            function sendNotificationToSelected() {
+                const memberIds = getSelectedMemberIds();
+                if (memberIds.length === 0) {
+                    alert('알림을 발송할 회원을 선택해주세요.');
+                    return;
+                }
+
+                if (!confirm(`선택한 ${memberIds.length}명의 회원에게 알림을 발송하시겠습니까?`)) return;
+
+                fetch('/api/members/admin/dormant/notify-selected', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(memberIds)
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('알림 발송에 실패했습니다.');
+                    return response.json();
+                })
+                .then(() => {
+                    alert('알림이 발송되었습니다.');
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
+
+            // 개별 회원 알림 발송
+            function sendNotificationToMember(memberId) {
+                if (!confirm('해당 회원에게 알림을 발송하시겠습니까?')) return;
+
+                fetch(`/api/members/admin/${memberId}/dormant/notify`, {
+                    method: 'POST'
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('알림 발송에 실패했습니다.');
+                    return response.json();
+                })
+                .then(() => {
+                    alert('알림이 발송되었습니다.');
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
+
+            // 선택 회원 활성화
+            function reactivateSelected() {
+                const memberIds = getSelectedMemberIds();
+                if (memberIds.length === 0) {
+                    alert('활성화할 회원을 선택해주세요.');
+                    return;
+                }
+
+                if (!confirm(`선택한 ${memberIds.length}명의 회원을 활성화하시겠습니까?`)) return;
+
+                fetch('/api/members/admin/dormant/reactivate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(memberIds)
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('회원 활성화에 실패했습니다.');
+                    return response.json();
+                })
+                .then(() => {
+                    alert('선택한 회원이 활성화되었습니다.');
+                    location.reload();
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
+
+            // 개별 회원 활성화
+            function reactivateMember(memberId) {
+                if (!confirm('해당 회원을 활성화하시겠습니까?')) return;
+
+                fetch(`/api/members/admin/${memberId}/dormant/reactivate`, {
+                    method: 'POST'
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('회원 활성화에 실패했습니다.');
+                    return response.json();
+                })
+                .then(() => {
+                    alert('회원이 활성화되었습니다.');
+                    location.reload();
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
+        </script>
+    </th:block>
+</body>
+</html> 

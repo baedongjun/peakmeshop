@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>상품 통계 - Peak Me Shop 관리자</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">상품 통계</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/products}">상품 관리</a></li>
+                        <li class="breadcrumb-item active">상품 통계</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 필터 영역 시작 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="filterForm" method="get" th:action="@{/admin/products/statistics}">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="period">기간 선택</label>
+                                <select class="form-select" id="period" name="period">
+                                    <option value="day" th:selected="${period == 'day'}">일별</option>
+                                    <option value="week" th:selected="${period == 'week'}">주별</option>
+                                    <option value="month" th:selected="${period == 'month'}">월별</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="startDate">시작일</label>
+                                <input type="text" class="form-control datepicker" id="startDate" name="startDate"
+                                       th:value="${startDate}" placeholder="시작일 선택">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="endDate">종료일</label>
+                                <input type="text" class="form-control datepicker" id="endDate" name="endDate"
+                                       th:value="${endDate}" placeholder="종료일 선택">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="category">카테고리</label>
+                                <select class="form-select" id="category" name="category">
+                                    <option value="">전체</option>
+                                    <option th:each="cat : ${categories}"
+                                            th:value="${cat.id}"
+                                            th:text="${cat.name}"
+                                            th:selected="${category == cat.id}">카테고리명</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> 검색
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 필터 영역 끝 -->
+
+        <!-- 통계 요약 시작 -->
+        <div class="row">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">총 판매액</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" 
+                                     th:text="${#numbers.formatCurrency(statistics.totalSales)}">0원</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-won-sign fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-success shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">판매 수량</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" 
+                                     th:text="${statistics.totalQuantity + '개'}">0개</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">평균 판매가</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" 
+                                     th:text="${#numbers.formatCurrency(statistics.averagePrice)}">0원</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-calculator fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">판매 상품 수</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" 
+                                     th:text="${statistics.totalProducts + '개'}">0개</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-box fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 통계 요약 끝 -->
+
+        <!-- 차트 영역 시작 -->
+        <div class="row">
+            <!-- 판매액 추이 차트 -->
+            <div class="col-xl-8 col-lg-7">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">판매액 추이</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-area">
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 카테고리별 판매 비중 차트 -->
+            <div class="col-xl-4 col-lg-5">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">카테고리별 판매 비중</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-pie">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 차트 영역 끝 -->
+
+        <!-- 베스트 셀러 목록 시작 -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">베스트 셀러 TOP 10</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>순위</th>
+                                <th>상품정보</th>
+                                <th>판매수량</th>
+                                <th>판매금액</th>
+                                <th>판매비중</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="product, stat : ${statistics.bestSellers}">
+                                <td class="text-center" th:text="${stat.count}">1</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img th:if="${product.thumbnail}" th:src="${product.thumbnail}"
+                                             class="rounded" style="width: 40px; height: 40px; object-fit: cover;" 
+                                             alt="상품 이미지">
+                                        <div class="ms-2">
+                                            <a th:href="@{/admin/products/{id}(id=${product.id})}" 
+                                               th:text="${product.name}" class="text-primary">상품명</a>
+                                            <br>
+                                            <small class="text-muted" th:text="${product.code}">상품코드</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-end" th:text="${product.quantity + '개'}">0개</td>
+                                <td class="text-end" th:text="${#numbers.formatCurrency(product.sales)}">0원</td>
+                                <td class="text-end" th:text="${#numbers.formatPercent(product.ratio, 1, 1)}">0%</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(statistics.bestSellers)}">
+                                <td colspan="5" class="text-center">판매 데이터가 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- 베스트 셀러 목록 끝 -->
+    </div>
+
+    <th:block layout:fragment="script">
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script th:inline="javascript">
+            // Flatpickr 초기화
+            flatpickr(".datepicker", {
+                locale: "ko",
+                dateFormat: "Y-m-d",
+                maxDate: "today"
+            });
+
+            // 판매액 추이 차트
+            const salesData = /*[[${statistics.salesTrend}]]*/ [];
+            const salesChart = new Chart(document.getElementById('salesChart'), {
+                type: 'line',
+                data: {
+                    labels: salesData.map(item => item.date),
+                    datasets: [{
+                        label: '판매액',
+                        data: salesData.map(item => item.amount),
+                        borderColor: 'rgb(78, 115, 223)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // 카테고리별 판매 비중 차트
+            const categoryData = /*[[${statistics.categoryRatio}]]*/ [];
+            const categoryChart = new Chart(document.getElementById('categoryChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: categoryData.map(item => item.name),
+                    datasets: [{
+                        data: categoryData.map(item => item.ratio),
+                        backgroundColor: [
+                            '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+                            '#858796', '#5a5c69', '#2e59d9', '#17a673', '#2c9faf'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        </script>
+    </th:block>
+</body>
+</html> 
