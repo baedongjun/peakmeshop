@@ -32,7 +32,7 @@ public class AdminShipmentViewController {
      */
     @GetMapping("/shipments/new")
     public String createShipment() {
-        return "admin/shipments/form";
+        return "admin/shipments/shipments-form";
     }
 
     /**
@@ -41,7 +41,7 @@ public class AdminShipmentViewController {
     @GetMapping("/shipments/{id}")
     public String shipmentDetail(@PathVariable Long id, Model model) {
         model.addAttribute("shipmentId", id);
-        return "admin/shipments/detail";
+        return "admin/shipments/shipments-detail";
     }
 
     /**
@@ -50,7 +50,7 @@ public class AdminShipmentViewController {
     @GetMapping("/shipments/{id}/edit")
     public String editShipment(@PathVariable Long id, Model model) {
         model.addAttribute("shipmentId", id);
-        return "admin/shipments/form";
+        return "admin/shipments/shipments-form";
     }
 
     /**
