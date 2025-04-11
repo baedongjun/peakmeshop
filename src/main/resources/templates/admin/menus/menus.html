@@ -40,27 +40,48 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="card mb-4">
-                        <div class="card-header">
+                        <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">메뉴 구조</h5>
+                            <button type="button" class="btn btn-success btn-sm" onclick="openMenuModal()">
+                                <i class="fas fa-plus"></i> 메뉴 추가
+                            </button>
                         </div>
                         <div class="card-body">
                             <div class="dd" id="menuTree">
                                 <ol class="dd-list">
                                     <li th:each="menu : ${menus}" th:class="'dd-item'" th:data-id="${menu.id}">
                                         <div class="dd-handle">
+                                            <i th:class="${menu.icon}"></i>
                                             <span th:text="${menu.name}"></span>
                                             <span class="float-end">
-                                                <span th:if="${menu.status == 'ACTIVE'}" class="badge bg-success">활성</span>
-                                                <span th:if="${menu.status == 'INACTIVE'}" class="badge bg-secondary">비활성</span>
+                                                <span th:if="${menu.isVisible}" class="badge bg-success">활성</span>
+                                                <span th:unless="${menu.isVisible}" class="badge bg-secondary">비활성</span>
+                                                <button type="button" class="btn btn-sm btn-link text-primary" 
+                                                        th:onclick="'editMenu(' + ${menu.id} + ')'">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-link text-danger" 
+                                                        th:onclick="'deleteMenu(' + ${menu.id} + ')'">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
                                             </span>
                                         </div>
                                         <ol class="dd-list" th:if="${not #lists.isEmpty(menu.children)}">
                                             <li th:each="child : ${menu.children}" th:class="'dd-item'" th:data-id="${child.id}">
                                                 <div class="dd-handle">
+                                                    <i th:class="${child.icon}"></i>
                                                     <span th:text="${child.name}"></span>
                                                     <span class="float-end">
-                                                        <span th:if="${child.status == 'ACTIVE'}" class="badge bg-success">활성</span>
-                                                        <span th:if="${child.status == 'INACTIVE'}" class="badge bg-secondary">비활성</span>
+                                                        <span th:if="${child.isVisible}" class="badge bg-success">활성</span>
+                                                        <span th:unless="${child.isVisible}" class="badge bg-secondary">비활성</span>
+                                                        <button type="button" class="btn btn-sm btn-link text-primary" 
+                                                                th:onclick="'editMenu(' + ${child.id} + ')'">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-link text-danger" 
+                                                                th:onclick="'deleteMenu(' + ${child.id} + ')'">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
                                                     </span>
                                                 </div>
                                             </li>
@@ -116,29 +137,23 @@
                             <input type="text" class="form-control" id="menuUrl" name="url">
                         </div>
                         <div class="mb-3">
-                            <label for="menuTarget" class="form-label">링크 타겟</label>
-                            <select class="form-select" id="menuTarget" name="target">
-                                <option value="_self">현재 창</option>
-                                <option value="_blank">새 창</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
                             <label for="menuIcon" class="form-label">아이콘</label>
-                            <input type="text" class="form-control" id="menuIcon" name="icon" 
-                                   placeholder="fas fa-home">
+                            <input type="text" class="form-control" id="menuIcon" name="icon" placeholder="Font Awesome 클래스명">
                         </div>
                         <div class="mb-3">
-                            <label for="menuStatus" class="form-label">상태</label>
-                            <select class="form-select" id="menuStatus" name="status" required>
-                                <option value="ACTIVE">활성</option>
-                                <option value="INACTIVE">비활성</option>
-                            </select>
+                            <label for="menuOrder" class="form-label">정렬 순서</label>
+                            <input type="number" class="form-control" id="menuOrder" name="sortOrder" value="0">
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="menuVisible" name="isVisible" checked>
+                                <label class="form-check-label" for="menuVisible">활성화</label>
+                            </div>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                    <button type="button" class="btn btn-danger" onclick="deleteMenu()" id="deleteButton" style="display: none;">삭제</button>
                     <button type="button" class="btn btn-primary" onclick="saveMenu()">저장</button>
                 </div>
             </div>
@@ -161,11 +176,8 @@
                 });
 
                 menuTree.on('change', function() {
-                    // 메뉴 구조가 변경될 때마다 호출
-                    updateMenuInfo();
+                    saveMenuOrder();
                 });
-
-                loadMenus();
             });
 
             function loadMenus() {
@@ -177,7 +189,6 @@
                 document.getElementById('modalTitle').textContent = id ? '메뉴 수정' : '메뉴 등록';
                 document.getElementById('menuForm').reset();
                 document.getElementById('menuId').value = '';
-                document.getElementById('deleteButton').style.display = id ? 'block' : 'none';
 
                 if (id) {
                     fetch(`/api/admin/menus/${id}`)
@@ -187,9 +198,9 @@
                             document.getElementById('menuName').value = data.name;
                             document.getElementById('parentMenu').value = data.parentId || '';
                             document.getElementById('menuUrl').value = data.url || '';
-                            document.getElementById('menuTarget').value = data.target || '_self';
                             document.getElementById('menuIcon').value = data.icon || '';
-                            document.getElementById('menuStatus').value = data.status;
+                            document.getElementById('menuOrder').value = data.sortOrder || 0;
+                            document.getElementById('menuVisible').checked = data.isVisible;
                         })
                         .catch(error => {
                             console.error('Error:', error);
@@ -208,16 +219,26 @@
                 }
 
                 const formData = new FormData(form);
-                const menuType = document.getElementById('menuType').value;
-                formData.append('type', menuType);
+                const menuData = {
+                    id: formData.get('id') || null,
+                    name: formData.get('name'),
+                    parentId: formData.get('parentId') || null,
+                    url: formData.get('url'),
+                    icon: formData.get('icon'),
+                    sortOrder: parseInt(formData.get('sortOrder')),
+                    isVisible: formData.get('isVisible') === 'on'
+                };
 
-                const id = formData.get('id');
+                const id = menuData.id;
                 const method = id ? 'PUT' : 'POST';
                 const url = id ? `/api/admin/menus/${id}` : '/api/admin/menus';
 
                 fetch(url, {
                     method: method,
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(menuData)
                 })
                 .then(response => {
                     if (!response.ok) throw new Error('메뉴 저장에 실패했습니다.');
@@ -230,22 +251,36 @@
             }
 
             function saveMenuOrder() {
-                const menuType = document.getElementById('menuType').value;
                 const structure = menuTree.nestable('serialize');
+                const menuData = [];
+
+                function processItem(item, parentId = null, order = 0) {
+                    menuData.push({
+                        id: item.id,
+                        parentId: parentId,
+                        sortOrder: order
+                    });
+
+                    if (item.children) {
+                        item.children.forEach((child, index) => {
+                            processItem(child, item.id, index);
+                        });
+                    }
+                }
+
+                structure.forEach((item, index) => {
+                    processItem(item, null, index);
+                });
 
                 fetch('/api/admin/menus/order', {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        type: menuType,
-                        structure: structure
-                    })
+                    body: JSON.stringify(menuData)
                 })
                 .then(response => {
                     if (!response.ok) throw new Error('메뉴 순서 저장에 실패했습니다.');
-                    alert('메뉴 순서가 저장되었습니다.');
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -253,10 +288,9 @@
                 });
             }
 
-            function deleteMenu() {
+            function deleteMenu(id) {
                 if (!confirm('정말 삭제하시겠습니까?\n하위 메뉴가 있는 경우 함께 삭제됩니다.')) return;
 
-                const id = document.getElementById('menuId').value;
                 fetch(`/api/admin/menus/${id}`, {
                     method: 'DELETE'
                 })
@@ -295,13 +329,10 @@
                                     
                                     <dt class="col-sm-4">상태</dt>
                                     <dd class="col-sm-8">
-                                        <span class="badge ${data.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary'}">
-                                            ${data.status === 'ACTIVE' ? '활성' : '비활성'}
+                                        <span class="badge ${data.isVisible ? 'bg-success' : 'bg-secondary'}">
+                                            ${data.isVisible ? '활성' : '비활성'}
                                         </span>
                                     </dd>
-                                    
-                                    <dt class="col-sm-4">링크 타겟</dt>
-                                    <dd class="col-sm-8">${data.target === '_blank' ? '새 창' : '현재 창'}</dd>
                                     
                                     <dt class="col-sm-4">아이콘</dt>
                                     <dd class="col-sm-8">

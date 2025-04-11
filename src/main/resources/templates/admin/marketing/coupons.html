@@ -196,27 +196,22 @@
                 </table>
             </div>
 
-            <!-- 페이지네이션 시작 -->
-            <nav th:if="${!#lists.isEmpty(coupons)}" aria-label="Page navigation" class="mt-3">
+            <!-- 페이지네이션 -->
+            <nav aria-label="Page navigation" th:if="${coupons.totalPages > 0}">
                 <ul class="pagination justify-content-center">
-                    <li class="page-item" th:classappend="${page.first} ? 'disabled'">
-                        <a class="page-link" th:href="@{/admin/coupons(page=${page.number - 1}, size=${page.size}, type=${param.type}, status=${param.status}, keyword=${param.keyword})}">
-                            <span aria-hidden="true">&laquo;</span>
-                        </a>
+                    <li class="page-item" th:classappend="${!coupons.hasPrevious()} ? disabled">
+                        <a class="page-link" th:href="@{/admin/coupons(page=${coupons.number - 1})}">이전</a>
                     </li>
-                    <li class="page-item" th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
-                        th:classappend="${page.number == i} ? 'active'">
-                        <a class="page-link" th:href="@{/admin/coupons(page=${i}, size=${page.size}, type=${param.type}, status=${param.status}, keyword=${param.keyword})}"
-                           th:text="${i + 1}">1</a>
+                    <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, coupons.totalPages - 1)}"
+                        th:classappend="${pageNum == coupons.number} ? active">
+                        <a class="page-link" th:href="@{/admin/coupons(page=${pageNum})}"
+                           th:text="${pageNum + 1}"></a>
                     </li>
-                    <li class="page-item" th:classappend="${page.last} ? 'disabled'">
-                        <a class="page-link" th:href="@{/admin/coupons(page=${page.number + 1}, size=${page.size}, type=${param.type}, status=${param.status}, keyword=${param.keyword})}">
-                            <span aria-hidden="true">&raquo;</span>
-                        </a>
+                    <li class="page-item" th:classappend="${!coupons.hasNext()} ? disabled">
+                        <a class="page-link" th:href="@{/admin/coupons(page=${coupons.number + 1})}">다음</a>
                     </li>
                 </ul>
             </nav>
-            <!-- 페이지네이션 끝 -->
         </div>
     </div>
     <!-- 쿠폰 목록 끝 -->
@@ -262,7 +257,7 @@
         }
 
         function confirmDelete() {
-            fetch(`/api/admin/coupons/${couponIdToDelete}`, {
+            fetch(`/api/coupons/${couponIdToDelete}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

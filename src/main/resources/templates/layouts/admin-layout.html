@@ -4,450 +4,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Layout</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
-    <link rel="stylesheet" href="//cdn.datatables.net/2.2.2/css/dataTables.dataTables.min.css">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" th:href="@{/css/admin.css}">
-    <!-- jQuery, Bootstrap 5 Bundle (includes Popper) -->
-    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="//cdn.datatables.net/2.2.2/js/dataTables.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/locale/ko.js"></script>
-    <script src="/js/set-date-range.js"></script>
-    <style>
-        body {
-            font-size: .875rem;
-        }
-
-        .sidebar {
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            z-index: 100; /* Behind the navbar */
-            padding: 48px 0 0; /* Height of navbar */
-            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
-        }
-
-        .sidebar-sticky {
-            position: -webkit-sticky;
-            position: sticky;
-            top: 48px; /* Height of navbar */
-            height: calc(100vh - 48px);
-            padding-top: .5rem;
-            overflow-x: hidden;
-            overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
-        }
-
-        .sidebar .nav-link {
-            font-weight: 500;
-            color: #333;
-        }
-
-        .sidebar .nav-link .feather {
-            margin-right: 4px;
-            color: #727272;
-        }
-
-        .sidebar .nav-link.active {
-            color: #007bff;
-        }
-
-        .sidebar .nav-link:hover .feather,
-        .sidebar .nav-link.active .feather {
-            color: inherit;
-        }
-
-        .sidebar-heading {
-            font-size: .75rem;
-            text-transform: uppercase;
-        }
-
-        [role="main"] {
-            padding-top: 48px; /* Space for fixed top navbar */
-        }
-
-        /* Sidebar Styles */
-        .wrapper {
-            display: flex;
-            width: 100%;
-        }
-
-        #sidebar {
-            width: 250px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            background: #f8f9fa;
-            color: #495057;
-            transition: all 0.3s;
-        }
-
-        #sidebar.active {
-            margin-left: -250px;
-        }
-
-        #sidebar .sidebar-header {
-            padding: 20px;
-            background: #f8f9fa;
-        }
-
-        #sidebar ul.components {
-            padding: 20px 0;
-            border-bottom: 1px solid #47748b;
-        }
-
-        #sidebar ul li a {
-            padding: 10px;
-            font-size: 1.1em;
-            display: block;
-        }
-
-        #sidebar ul li a:hover {
-            color: #7386D5;
-            background: #fff;
-        }
-
-        #sidebar ul li a i {
-            margin-right: 10px;
-        }
-
-        #sidebar ul li.active>a,
-        a[aria-expanded="true"] {
-            color: #fff;
-            background: #6d7fcc;
-        }
-
-        a[data-toggle="collapse"] {
-            position: relative;
-        }
-
-        .dropdown-toggle::after {
-            display: block;
-            position: absolute;
-            top: 50%;
-            right: 20px;
-            transform: translateY(-50%);
-        }
-
-        ul ul a {
-            font-size: 0.9em !important;
-            padding-left: 30px !important;
-            background: #f8f9fa;
-        }
-
-        #content {
-            width: 100%;
-            padding: 20px;
-            min-height: 100vh;
-            transition: all 0.3s;
-            margin-left: 250px;
-        }
-
-        #content.active {
-            margin-left: 0;
-        }
-
-        /* Responsive Styles */
-        @media (max-width: 768px) {
-            #sidebar {
-                margin-left: -250px;
-            }
-
-            #sidebar.active {
-                margin-left: 0;
-            }
-
-            #content {
-                margin-left: 0;
-            }
-
-            #content.active {
-                margin-left: 250px;
-            }
-        }
-        /* 알림 스타일 */
-        .notification-badge {
-            position: absolute;
-            top: 0;
-            right: 0;
-            font-size: 0.6rem;
-        }
-
-        .notification-dropdown {
-            width: 320px;
-            padding: 0;
-        }
-
-        .notification-item {
-            display: flex;
-            padding: 8px 0;
-        }
-
-        .notification-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 10px;
-        }
-
-        .notification-content {
-            flex: 1;
-        }
-
-        .notification-title {
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-
-        .notification-text {
-            font-size: 0.8rem;
-            color: #6c757d;
-        }
-
-        .notification-time {
-            font-size: 0.7rem;
-            color: #adb5bd;
-        }
-
-        /* 반응형 스타일 */
-        @media (max-width: 768px) {
-            .notification-dropdown {
-                width: 280px;
-            }
-        }
-    </style>
+    <title layout:title-pattern="$CONTENT_TITLE - Peak Me Shop 관리자"></title>
+    
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/admin.css" rel="stylesheet">
+    
+    <!-- 추가 CSS -->
+    <th:block layout:fragment="css"></th:block>
 </head>
-<body>
-<div class="wrapper">
-    <!-- Sidebar -->
-    <nav id="sidebar">
-        <div class="sidebar-header">
-            <h3>Admin Panel</h3>
-        </div>
+<body class="admin-body">
+    <div class="wrapper">
+        <!-- 사이드바 -->
+        <nav id="sidebar">
+            <div class="sidebar-header">
+                <img src="/images/logo-light.png" alt="Peak Me Shop" class="logo">
+                <h3>관리자</h3>
+            </div>
 
-        <ul class="list-unstyled components">
-            <li>
-                <a th:href="@{/admin/dashboard}" th:classappend="${#req.isPath('/admin/dashboard') ? 'active' : ''}">
-                    <i class="fas fa-tachometer-alt"></i> 대시보드
-                </a>
-            </li>
-            <li>
-                <a th:href="@{/admin/profile}" th:classappend="${#req.isPath('/admin/profile') ? 'active' : ''}">
-                    <i class="fas fa-user-cog"></i> 프로필 관리
-                </a>
-            </li>
-            <li>
-                <a th:href="@{/admin/members}" th:classappend="${#req.isPath('/admin/members') ? 'active' : ''}">
-                    <i class="fas fa-users"></i> 회원 관리
-                </a>
-            </li>
-            <li>
-                <a th:href="@{/admin/categories}" th:classappend="${#req.startsWith('/admin/categories') ? 'active' : ''}">
-                    <i class="fas fa-folder"></i> 카테고리 관리
-                </a>
-            </li>
-            <li>
-                <a th:href="@{/admin/brands}" th:classappend="${#req.startsWith('/admin/brands') ? 'active' : ''}">
-                    <i class="fas fa-copyright"></i> 브랜드 관리
-                </a>
-            </li>
-            <li>
-                <a th:href="@{/admin/products}" th:classappend="${#req.startsWith('/admin/products') ? 'active' : ''}">
-                    <i class="fas fa-box"></i> 상품 관리
-                </a>
-            </li>
-            <li>
-                <a th:href="@{/admin/orders}" th:classappend="${#req.startsWith('/admin/orders') ? 'active' : ''}">
-                    <i class="fas fa-shopping-cart"></i> 주문 관리
-                </a>
-            </li>
-            <li>
-                <a th:href="@{/admin/shipments}" th:classappend="${#req.isPath('/admin/shipments') ? 'active' : ''}">
-                    <i class="fas fa-shipping-fast"></i> 배송 관리
-                </a>
-            </li>
-            <li>
-                <a th:href="@{/admin/content/notices}" th:classappend="${#req.startsWith('/admin/content') ? 'active' : ''}">
-                    <i class="fas fa-file-alt"></i> 콘텐츠 관리
-                </a>
-            </li>
-            <li>
-                <a th:href="@{/admin/suppliers}" th:classappend="${#req.isPath('/admin/suppliers') ? 'active' : ''}">
-                    <i class="fas fa-truck"></i> 공급업체 관리
-                </a>
-            </li>
-
-            <li>
-                <a th:href="@{/admin/marketing/coupons}" th:classappend="${#req.startsWith('/admin/marketing') ? 'active' : ''}">
-                    <i class="fas fa-tags"></i> 마케팅 관리
-                </a>
-            </li>
-            <li>
-                <a th:href="@{/admin/statistics/dashboard}" th:classappend="${#req.startsWith('/admin/statistics') ? 'active' : ''}">
-                    <i class="fas fa-chart-bar"></i> 통계 관리
-                </a>
-            </li>
-
-            <li>
-                <a th:href="@{/admin/emails/templates}" th:classappend="${#req.startsWith('/admin/emails') ? 'active' : ''}">
-                    <i class="fas fa-envelope"></i> 이메일 관리
-                </a>
-            </li>
-            <li>
-                <a th:href="@{/admin/settings}" th:classappend="${#req.isPath('/admin/settings') ? 'active' : ''}">
-                    <i class="fas fa-cog"></i> 설정
-                </a>
-            </li>
-            <li>
-                <a th:href="@{/}" target="_blank">
-                    <i class="fas fa-external-link-alt"></i> 쇼핑몰 보기
-                </a>
-            </li>
-        </ul>
-    </nav>
-
-    <!-- Page Content -->
-    <div id="content">
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <div class="container-fluid">
-                <!-- 사이드바 토글 버튼 -->
-                <button type="button" id="sidebarCollapse" class="btn btn-info">
-                    <i class="fas fa-align-left"></i>
-                    <span>Toggle Sidebar</span>
-                </button>
-
-                <!-- 검색창 -->
-                <div class="ml-3 position-relative d-none d-md-block">
-                    <form class="form-inline my-2 my-lg-0">
-                        <div class="input-group">
-                            <input class="form-control" type="search" placeholder="검색어를 입력하세요" aria-label="Search">
-                            <div class="input-group-append">
-                                <button class="btn btn-outline-secondary" type="submit">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav ml-auto">
-                        <!-- 빠른 액션 버튼 -->
-                        <li class="nav-item dropdown mx-1">
-                            <a class="nav-link" href="#" id="quickActionsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-bolt"></i>
-                                <span class="d-none d-md-inline-block ml-1">빠른 액션</span>
+            <ul class="list-unstyled components">
+                <li th:each="menu : ${adminMenus}" th:if="${menu.parentId == null}" th:class="${not menu.children.isEmpty() ? 'has-submenu' : ''}">
+                    <!-- 상위 메뉴 -->
+                    <a th:if="${menu.children.isEmpty()}" 
+                       th:href="${menu.url}" 
+                       th:class="${#req.startsWith(menu.url) ? 'active' : ''}">
+                        <i th:class="${menu.icon}"></i>
+                        <span th:text="${menu.name}"></span>
+                    </a>
+                    
+                    <!-- 하위 메뉴가 있는 경우 -->
+                    <a th:if="${not menu.children.isEmpty()}" 
+                       href="#" 
+                       th:data-toggle="collapse" 
+                       th:data-target="'#submenu-' + ${menu.id}" 
+                       th:class="${#req.startsWith(menu.url) ? 'active' : ''}"
+                       aria-expanded="false" 
+                       class="dropdown-toggle">
+                        <i th:class="${menu.icon}"></i>
+                        <span th:text="${menu.name}"></span>
+                    </a>
+                    
+                    <!-- 하위 메뉴 목록 -->
+                    <ul th:if="${not menu.children.isEmpty()}" 
+                        class="collapse list-unstyled" 
+                        th:id="'submenu-' + ${menu.id}">
+                        <li th:each="submenu : ${menu.children}">
+                            <a th:href="${submenu.url}" 
+                               th:class="${#req.startsWith(submenu.url) ? 'active' : ''}">
+                                <i th:class="${submenu.icon}"></i>
+                                <span th:text="${submenu.name}"></span>
                             </a>
-                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="quickActionsDropdown">
-                                <a class="dropdown-item" href="#"><i class="fas fa-plus-circle mr-2"></i>새 상품 등록</a>
-                                <a class="dropdown-item" href="#"><i class="fas fa-shopping-cart mr-2"></i>새 주문 확인</a>
-                                <a class="dropdown-item" href="#"><i class="fas fa-tag mr-2"></i>할인 쿠폰 생성</a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="#"><i class="fas fa-cog mr-2"></i>시스템 설정</a>
-                            </div>
-                        </li>
-
-                        <!-- 알림 센터 -->
-                        <li class="nav-item dropdown mx-1">
-                            <a class="nav-link position-relative" href="#" id="notificationsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-bell"></i>
-                                <span class="badge badge-danger badge-pill notification-badge">5</span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-right notification-dropdown" aria-labelledby="notificationsDropdown">
-                                <h6 class="dropdown-header">알림 센터</h6>
-                                <a class="dropdown-item" href="#">
-                                    <div class="notification-item">
-                                        <div class="notification-icon bg-primary">
-                                            <i class="fas fa-shopping-cart text-white"></i>
-                                        </div>
-                                        <div class="notification-content">
-                                            <div class="notification-title">새로운 주문이 접수되었습니다</div>
-                                            <div class="notification-text">주문번호: #12345</div>
-                                            <div class="notification-time">10분 전</div>
-                                        </div>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item" href="#">
-                                    <div class="notification-item">
-                                        <div class="notification-icon bg-warning">
-                                            <i class="fas fa-exclamation-triangle text-white"></i>
-                                        </div>
-                                        <div class="notification-content">
-                                            <div class="notification-title">재고 부족 알림</div>
-                                            <div class="notification-text">상품 'A123'의 재고가 5개 미만입니다</div>
-                                            <div class="notification-time">1시간 전</div>
-                                        </div>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item" href="#">
-                                    <div class="notification-item">
-                                        <div class="notification-icon bg-success">
-                                            <i class="fas fa-user-plus text-white"></i>
-                                        </div>
-                                        <div class="notification-content">
-                                            <div class="notification-title">새 회원 가입</div>
-                                            <div class="notification-text">홍길동님이 가입했습니다</div>
-                                            <div class="notification-time">3시간 전</div>
-                                        </div>
-                                    </div>
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item text-center" href="#">모든 알림 보기</a>
-                            </div>
-                        </li>
-
-                        <!-- 관리자 프로필 -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-user-circle fa-fw fa-lg mr-1"></i>
-                                <span class="d-none d-md-inline-block">관리자</span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
-                                <a class="dropdown-item" href="#"><i class="fas fa-user mr-2"></i>내 프로필</a>
-                                <a class="dropdown-item" href="#"><i class="fas fa-cog mr-2"></i>설정</a>
-                                <a class="dropdown-item" href="#"><i class="fas fa-list mr-2"></i>활동 기록</a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt mr-2"></i>로그아웃</a>
-                            </div>
                         </li>
                     </ul>
-                </div>
-            </div>
+                </li>
+            </ul>
         </nav>
 
-        <div layout:fragment="content">
-            <!-- Content will be injected here -->
+        <!-- 메인 컨텐츠 -->
+        <div id="content">
+            <!-- 상단 네비게이션 -->
+            <nav class="navbar navbar-expand-lg">
+                <div class="container-fluid">
+                    <button type="button" id="sidebarToggle" class="btn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+
+                    <div class="collapse navbar-collapse">
+                        <ul class="navbar-nav ms-auto">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" 
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-bell"></i>
+                                    <span class="badge bg-danger">3</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                    <li><a class="dropdown-item" href="#">새로운 주문 3건</a></li>
+                                    <li><a class="dropdown-item" href="#">문의사항 2건</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="#">모든 알림 보기</a></li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user-circle"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li><a class="dropdown-item" href="#">프로필</a></li>
+                                    <li><a class="dropdown-item" href="#">설정</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="/logout">로그아웃</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- 메인 컨텐츠 영역 -->
+            <div class="content-wrapper">
+                <th:block layout:fragment="content"></th:block>
+            </div>
         </div>
     </div>
-</div>
 
-
-
-<script>
-    $(document).ready(function () {
-        $('#sidebarCollapse').on('click', function () {
-            $('#sidebar').toggleClass('active');
-            $('#content').toggleClass('active');
-        });
-    });
-</script>
-<!-- 추가 스크립트 -->
-<th:block layout:fragment="script"></th:block>
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/js/admin.js"></script>
+    
+    <!-- 추가 JavaScript -->
+    <th:block layout:fragment="script"></th:block>
 </body>
 </html>
 

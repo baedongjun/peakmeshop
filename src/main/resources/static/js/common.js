@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * 툴팁 초기화
+ * 툴크 초기화
  */
 function initTooltips() {
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -361,19 +361,44 @@ function formatCurrency(amount) {
 
 /**
  * 날짜 형식화
- * @param {string} dateString - 날짜 문자열
+ * @param {string|Date} date - 날짜 문자열 또는 Date 객체
  * @param {string} format - 형식 (기본: 'YYYY-MM-DD')
+ * @param {string} locale - 로케일 (기본: 'ko-KR')
  * @returns {string} 형식화된 날짜
  */
-function formatDate(dateString, format = 'YYYY-MM-DD') {
-    const date = new Date(dateString);
+function formatDate(date, format = 'YYYY-MM-DD', locale = 'ko-KR') {
+    if (!date) return '';
 
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
+    const d = date instanceof Date ? date : new Date(date);
+    if (isNaN(d.getTime())) return '';
+
+    if (format === 'relative') {
+        return formatRelativeDate(d, locale);
+    }
+
+    const options = {};
+    if (format === 'full') {
+        options.year = 'numeric';
+        options.month = 'long';
+        options.day = 'numeric';
+        options.hour = '2-digit';
+        options.minute = '2-digit';
+        return d.toLocaleDateString(locale, options);
+    }
+
+    if (format === 'short') {
+        options.year = 'numeric';
+        options.month = 'short';
+        options.day = 'numeric';
+        return d.toLocaleDateString(locale, options);
+    }
+
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const seconds = String(d.getSeconds()).padStart(2, '0');
 
     return format
         .replace('YYYY', year)
@@ -382,6 +407,71 @@ function formatDate(dateString, format = 'YYYY-MM-DD') {
         .replace('HH', hours)
         .replace('mm', minutes)
         .replace('ss', seconds);
+}
+
+/**
+ * 상대적 날짜 형식화 (예: '3일 전', '방금 전')
+ * @param {Date} date - Date 객체
+ * @param {string} locale - 로케일
+ * @returns {string} 상대적 날짜 문자열
+ */
+function formatRelativeDate(date, locale = 'ko-KR') {
+    const now = new Date();
+    const diff = now - date;
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    const months = Math.floor(days / 30);
+    const years = Math.floor(months / 12);
+
+    if (seconds < 60) return '방금 전';
+    if (minutes < 60) return `${minutes}분 전`;
+    if (hours < 24) return `${hours}시간 전`;
+    if (days < 30) return `${days}일 전`;
+    if (months < 12) return `${months}개월 전`;
+    return `${years}년 전`;
+}
+
+/**
+ * 날짜 범위 설정
+ * @param {string} range - 범위 ('today', 'week', 'month', '3months', '6months', 'year')
+ * @param {string} startDateId - 시작일 입력 요소 ID
+ * @param {string} endDateId - 종료일 입력 요소 ID
+ */
+function setDateRange(range, startDateId = 'startDate', endDateId = 'endDate') {
+    const today = new Date();
+    const startDate = new Date();
+
+    switch (range) {
+        case 'today':
+            break;
+        case 'yesterday':
+            startDate.setDate(today.getDate() - 1);
+            today.setDate(today.getDate() - 1);
+            break;
+        case 'week':
+            startDate.setDate(today.getDate() - 7);
+            break;
+        case 'month':
+            startDate.setMonth(today.getMonth() - 1);
+            break;
+        case '3months':
+            startDate.setMonth(today.getMonth() - 3);
+            break;
+        case '6months':
+            startDate.setMonth(today.getMonth() - 6);
+            break;
+        case 'year':
+            startDate.setFullYear(today.getFullYear() - 1);
+            break;
+        default:
+            console.error('유효하지 않은 날짜 범위입니다.');
+            return;
+    }
+
+    document.getElementById(startDateId).value = formatDate(startDate);
+    document.getElementById(endDateId).value = formatDate(today);
 }
 
 /**

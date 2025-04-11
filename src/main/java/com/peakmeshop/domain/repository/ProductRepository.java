@@ -127,8 +127,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT COALESCE(SUM(p.stock), 0) FROM Product p WHERE p.isActive = true")
     long calculateTotalInventory();
 
-    @Query("SELECT COALESCE((SUM(o.quantity) * 1.0) / AVG(p.stock), 0) " +
-           "FROM OrderItem o JOIN o.product p " +
+    @Query("SELECT COALESCE(CAST(SUM(o.quantity) AS double) / " +
+           "NULLIF(AVG(p.stock), 0), 0) " +
+           "FROM OrderItem o " +
+           "JOIN o.product p " +
            "WHERE o.createdAt BETWEEN :startDate AND :endDate")
     double calculateInventoryTurnover(@Param("startDate") LocalDateTime startDate,
                                     @Param("endDate") LocalDateTime endDate);
@@ -141,17 +143,24 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     long countTopSellers(@Param("startDate") LocalDateTime startDate,
                         @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT p.category.name, COUNT(o), SUM(o.price * o.quantity) " +
-           "FROM OrderItem o JOIN o.product p " +
+    @Query("SELECT p.category.name, " +
+           "COUNT(o) as count, " +
+           "COALESCE(SUM(o.price * o.quantity), 0) as total " +
+           "FROM OrderItem o " +
+           "JOIN o.product p " +
            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
-           "GROUP BY p.category.name")
+           "GROUP BY p.category.name " +
+           "ORDER BY total DESC")
     List<Object[]> findSalesByCategory(@Param("startDate") LocalDateTime startDate,
-                                      @Param("endDate") LocalDateTime endDate);
+                                     @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT DATE(o.createdAt), COUNT(o), SUM(o.price * o.quantity) " +
+    @Query("SELECT cast(o.createdAt as date) as date, " +
+           "COUNT(o) as count, " +
+           "COALESCE(SUM(o.price * o.quantity), 0) as total " +
            "FROM OrderItem o " +
            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
-           "GROUP BY DATE(o.createdAt)")
+           "GROUP BY cast(o.createdAt as date) " +
+           "ORDER BY date")
     List<Object[]> findSalesTrend(@Param("startDate") LocalDateTime startDate,
                                  @Param("endDate") LocalDateTime endDate);
 

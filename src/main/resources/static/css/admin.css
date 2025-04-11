@@ -1,34 +1,45 @@
-/* General Styles */
-body {
-    font-family: 'Arial', sans-serif;
-    color: #333;
-    background-color: #f8f9fa;
+/* 전역 스타일 */
+:root {
+    --primary-bg: #1a1d21;
+    --secondary-bg: #22262a;
+    --sidebar-bg: #2a2e32;
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --accent-color: #3699ff;
+    --border-color: #32363a;
+    --danger-color: #f64e60;
+    --success-color: #0bb783;
+    --warning-color: #ffa800;
 }
 
-a {
-    color: #007bff;
-    text-decoration: none;
+/* 기본 스타일 */
+.admin-body {
+    background-color: var(--primary-bg);
+    color: var(--text-primary);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-a:hover {
-    color: #0056b3;
-}
-
-/* Wrapper */
 .wrapper {
     display: flex;
     width: 100%;
+    align-items: stretch;
 }
 
-/* Sidebar */
+/* 사이드바 스타일 */
 #sidebar {
-    width: 250px;
+    min-width: 250px;
+    max-width: 250px;
+    background: var(--sidebar-bg);
+    color: var(--text-primary);
     position: fixed;
     top: 0;
     left: 0;
     height: 100vh;
     z-index: 999;
     transition: all 0.3s;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
 }
 
 #sidebar.collapsed {
@@ -36,93 +47,215 @@ a:hover {
 }
 
 #sidebar .sidebar-header {
-    background: #fff;
+    padding: 20px;
+    background: var(--secondary-bg);
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
-#sidebar .sidebar-header a.logo {
-    color: #333;
-    font-size: 1.5rem;
-    text-decoration: none;
+#sidebar .sidebar-header .logo {
+    max-width: 120px;
+    margin-bottom: 10px;
+}
+
+#sidebar .sidebar-header h3 {
+    color: var(--text-primary);
+    margin: 0;
+    font-size: 1.2rem;
 }
 
 #sidebar ul.components {
     padding: 20px 0;
+    overflow-y: auto;
+    flex-grow: 1;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-color) var(--secondary-bg);
+}
+
+/* 스크롤바 스타일 (Webkit 브라우저용) */
+#sidebar ul.components::-webkit-scrollbar {
+    width: 6px;
+}
+
+#sidebar ul.components::-webkit-scrollbar-track {
+    background: var(--secondary-bg);
+}
+
+#sidebar ul.components::-webkit-scrollbar-thumb {
+    background-color: var(--accent-color);
+    border-radius: 3px;
 }
 
 #sidebar ul li a {
-    padding: 10px;
-    font-size: 1.1em;
+    padding: 12px 20px;
+    font-size: 1rem;
     display: block;
-    color: #333;
+    color: var(--text-secondary);
     text-decoration: none;
+    transition: all 0.3s;
+    border-left: 4px solid transparent;
 }
 
 #sidebar ul li a:hover {
-    color: #7386D5;
-    background: #fff;
+    color: var(--text-primary);
+    background: var(--secondary-bg);
+    border-left-color: var(--accent-color);
+}
+
+#sidebar ul li a.active {
+    color: var(--text-primary);
+    background: var(--secondary-bg);
+    border-left-color: var(--accent-color);
 }
 
 #sidebar ul li a i {
-    margin-right: 0.5rem;
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
 }
 
-#sidebar ul li a[aria-expanded="true"] {
-    color: #fff;
-    background: #6d7fcc;
+/* 하위 메뉴 스타일 */
+#sidebar ul.collapse {
+    background: var(--secondary-bg);
 }
 
-#sidebar ul li a[data-bs-toggle="collapse"] {
-    position: relative;
+#sidebar ul.collapse li a {
+    padding-left: 50px;
+    font-size: 0.9rem;
 }
 
-#sidebar .dropdown-toggle::after {
-    display: block;
-    position: absolute;
-    top: 50%;
-    right: 20px;
-    transform: translateY(-50%);
-}
-
-#sidebar ul ul a {
-    font-size: 0.9em !important;
-    padding-left: 30px !important;
-    background: #6d7fcc;
-}
-
-/* Page Content */
+/* 메인 컨텐츠 스타일 */
 #content {
     width: 100%;
-    padding: 0;
+    padding: 20px;
     min-height: 100vh;
     transition: all 0.3s;
+    background-color: var(--primary-bg);
     margin-left: 250px; /* Sidebar width */
 }
 
 #content .navbar {
-    padding: 1.5rem;
+    padding: 15px 20px;
+    background: var(--secondary-bg);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 20px;
 }
 
 #content .navbar-brand {
     font-size: 1.5rem;
 }
 
-/* Dashboard */
-.icon-box {
-    font-size: 2rem;
+/* 드롭다운 메뉴 스타일 */
+.dropdown-menu {
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
 }
 
-/* Responsive */
+.dropdown-menu .dropdown-item {
+    color: var(--text-secondary);
+    padding: 8px 20px;
+}
+
+.dropdown-menu .dropdown-item:hover {
+    background: var(--sidebar-bg);
+    color: var(--text-primary);
+}
+
+.dropdown-menu .dropdown-divider {
+    border-top: 1px solid var(--border-color);
+}
+
+/* 배지 스타일 */
+.badge {
+    padding: 0.25em 0.6em;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* 카드 스타일 */
+.card {
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background: var(--sidebar-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 15px 20px;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* 테이블 스타일 */
+.table {
+    color: var(--text-primary);
+}
+
+.table thead th {
+    background: var(--sidebar-bg);
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.table td, .table th {
+    border-top: 1px solid var(--border-color);
+    padding: 12px;
+    vertical-align: middle;
+}
+
+/* 버튼 스타일 */
+.btn-primary {
+    background: var(--accent-color);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: darken(var(--accent-color), 10%);
+}
+
+/* 폼 스타일 */
+.form-control {
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.form-control:focus {
+    background: var(--primary-bg);
+    border-color: var(--accent-color);
+    color: var(--text-primary);
+    box-shadow: none;
+}
+
+/* 컨텐츠 래퍼 스타일 */
+.content-wrapper {
+    padding: 20px;
+    background: var(--secondary-bg);
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+/* 반응형 스타일 */
 @media (max-width: 768px) {
     #sidebar {
         margin-left: -250px;
     }
-    #sidebar.collapsed {
+    
+    #sidebar.active {
         margin-left: 0;
     }
+    
     #content {
         margin-left: 0;
     }
-    #content .navbar {
-        padding: 1rem;
+    
+    #content.active {
+        margin-left: 250px;
     }
 }

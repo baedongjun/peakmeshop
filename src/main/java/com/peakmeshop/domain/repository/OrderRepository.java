@@ -56,16 +56,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @param endDate 종료일
      * @return [날짜, 주문수, 총액] 형태의 통계 데이터
      */
-    @Query(value = "SELECT DATE(o.created_at) as date, " +
-            "COUNT(o) as count, " +
-            "SUM(o.final_price) as total " +
-            "FROM orders o " +
-            "WHERE o.created_at BETWEEN :startDate AND :endDate " +
-            "AND o.status != 'CANCELLED' " +
-            "GROUP BY DATE(o.created_at) " +
-            "ORDER BY date", nativeQuery = true)
+    @Query("SELECT cast(o.createdAt as date) as date, " +
+           "COUNT(o) as count, " +
+           "COALESCE(SUM(o.finalPrice), 0) as total " +
+           "FROM Order o " +
+           "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+           "AND o.status != 'CANCELLED' " +
+           "GROUP BY cast(o.createdAt as date) " +
+           "ORDER BY date")
     List<Object[]> getDailySales(@Param("startDate") LocalDateTime startDate,
-                                 @Param("endDate") LocalDateTime endDate);
+                                @Param("endDate") LocalDateTime endDate);
 
     /**
      * 월별 매출 통계 조회
@@ -73,25 +73,25 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @param endDate 종료일
      * @return [년월, 주문수, 총액] 형태의 통계 데이터
      */
-    @Query(value = "SELECT TO_CHAR(o.created_at, 'YYYY-MM') as month, " +
-            "COUNT(o) as count, " +
-            "SUM(o.total_amount) as total " +
-            "FROM orders o " +
-            "WHERE o.created_at BETWEEN :startDate AND :endDate " +
-            "AND o.status != 'CANCELLED' " +
-            "GROUP BY TO_CHAR(o.created_at, 'YYYY-MM') " +
-            "ORDER BY month", nativeQuery = true)
+    @Query("SELECT to_char(o.createdAt, 'YYYY-MM') as month, " +
+           "COUNT(o) as count, " +
+           "COALESCE(SUM(o.finalPrice), 0) as total " +
+           "FROM Order o " +
+           "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+           "AND o.status != 'CANCELLED' " +
+           "GROUP BY to_char(o.createdAt, 'YYYY-MM') " +
+           "ORDER BY month")
     List<Object[]> getMonthlySales(@Param("startDate") LocalDateTime startDate,
-                                   @Param("endDate") LocalDateTime endDate);
+                                  @Param("endDate") LocalDateTime endDate);
 
     /**
      * 주문 상태별 분포 조회
      * @return [상태, 주문수] 형태의 통계 데이터
      */
-    @Query("SELECT o.status as status, " +
-            "COUNT(o) as count " +
-            "FROM Order o " +
-            "GROUP BY o.status")
+    @Query("SELECT o.status as status, COUNT(o) as count " +
+           "FROM Order o " +
+           "GROUP BY o.status " +
+           "ORDER BY o.status")
     Map<OrderStatus, Long> getOrderStatusDistribution();
 
     /**
@@ -104,11 +104,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     /**
      * 특정 기간의 총 매출액 계산
      */
-    @Query("SELECT COALESCE(SUM(o.finalPrice), 0) FROM Order o " +
-            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
-            "AND o.status != 'CANCELLED'")
-    Double calculateTotalRevenue(@Param("startDate") LocalDateTime startDate,
-                                 @Param("endDate") LocalDateTime endDate);
+    @Query("SELECT COALESCE(SUM(o.finalPrice), 0) " +
+           "FROM Order o " +
+           "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+           "AND o.status != 'CANCELLED'")
+    double calculateTotalRevenue(@Param("startDate") LocalDateTime startDate,
+                               @Param("endDate") LocalDateTime endDate);
 
     /**
      * 기간별 주문 수 조회

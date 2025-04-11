@@ -51,7 +51,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     @Query("SELECT cast(m.createdAt as date) as date, COUNT(m) as count " +
             "FROM Member m " +
             "WHERE m.createdAt BETWEEN :startDate AND :endDate " +
-            "GROUP BY cast(m.createdAt as date)")
+            "GROUP BY cast(m.createdAt as date) " +
+            "ORDER BY date")
     List<Object[]> findDailySignups(@Param("startDate") LocalDateTime startDate,
                                    @Param("endDate") LocalDateTime endDate);
 
@@ -59,7 +60,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
             "COUNT(m) as count " +
             "FROM Member m " +
             "WHERE m.createdAt BETWEEN :startDate AND :endDate " +
-            "GROUP BY to_char(m.createdAt, 'YYYY-MM')")
+            "GROUP BY to_char(m.createdAt, 'YYYY-MM') " +
+            "ORDER BY month")
     List<Object[]> findMonthlySignups(@Param("startDate") LocalDateTime startDate,
                                      @Param("endDate") LocalDateTime endDate);
 }
