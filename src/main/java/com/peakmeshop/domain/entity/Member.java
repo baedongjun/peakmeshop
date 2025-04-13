@@ -29,6 +29,7 @@ public class Member {
     public static final String STATUS_ACTIVE = "ACTIVE";
     public static final String STATUS_INACTIVE = "INACTIVE";
     public static final String STATUS_BLOCKED = "BLOCKED";
+    public static final String STATUS_DORMANT = "DORMANT";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -103,8 +104,14 @@ public class Member {
     @Column(name = "reset_token_expiry")
     private LocalDateTime resetTokenExpiry;
 
-    @Column(name = "is_withdrawn")
-    private boolean isWithdrawn;
+    @Column(nullable = false)
+    private boolean isWithdrawn = false;
+
+    @Column
+    private LocalDateTime lastOrderDate;
+
+    @Column
+    private String originalStatus;
 
     @Column(name = "withdrawn_at")
     private LocalDateTime withdrawnAt;
@@ -120,19 +127,6 @@ public class Member {
 
     @OneToMany(mappedBy = "member")
     private List<MemberCoupon> coupons = new ArrayList<>();
-
-    @ManyToOne
-    @JoinColumn(name = "member_tier_id")
-    private MemberTier memberTier;
-
-    // getter와 setter 추가
-    public MemberTier getMemberTier() {
-        return memberTier;
-    }
-
-    public void setMemberTier(MemberTier memberTier) {
-        this.memberTier = memberTier;
-    }
 
     public boolean isActive() {
         return STATUS_ACTIVE.equals(status);

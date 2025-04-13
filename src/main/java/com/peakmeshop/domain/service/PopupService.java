@@ -12,4 +12,5 @@ public interface PopupService {
     PopupDTO createPopup(PopupDTO popupDTO);
     PopupDTO updatePopup(Long id, PopupDTO popupDTO);
     void deletePopup(Long id);
+    void togglePopupStatus(Long id);
 } 

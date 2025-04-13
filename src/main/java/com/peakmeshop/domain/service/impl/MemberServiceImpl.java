@@ -6,6 +6,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.time.ZoneOffset;
 
 import com.peakmeshop.api.dto.*;
 import com.peakmeshop.domain.repository.PointRepository;
@@ -339,28 +342,87 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<MemberGradeDTO> getAllGrades() {
-        return null;
+        return memberRepository.findAllGrades().stream()
+                .map(grade -> MemberGradeDTO.builder()
+                        .id(grade.getId())
+                        .name(grade.getName())
+                        .conditionType(grade.getConditionType())
+                        .conditionValue(grade.getConditionValue())
+                        .benefitType(grade.getBenefitType())
+                        .benefitValue(grade.getBenefitValue())
+                        .isFreeShipping(grade.isFreeShipping())
+                        .isActive(grade.isActive())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public MemberGradeDTO getGradeById(Long id) {
-        return null;
+        return memberRepository.findGradeById(id)
+                .map(grade -> MemberGradeDTO.builder()
+                        .id(grade.getId())
+                        .name(grade.getName())
+                        .conditionType(grade.getConditionType())
+                        .conditionValue(grade.getConditionValue())
+                        .benefitType(grade.getBenefitType())
+                        .benefitValue(grade.getBenefitValue())
+                        .isFreeShipping(grade.isFreeShipping())
+                        .isActive(grade.isActive())
+                        .build())
+                .orElseThrow(() -> new EntityNotFoundException("등급을 찾을 수 없습니다."));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<String, Long> getMemberSummary() {
-        return null;
+        return Map.of(
+            "total", memberRepository.count(),
+            "active", memberRepository.countByStatus(Member.STATUS_ACTIVE),
+            "inactive", memberRepository.countByStatus(Member.STATUS_INACTIVE),
+            "blocked", memberRepository.countByStatus(Member.STATUS_BLOCKED),
+            "dormant", memberRepository.countByStatus(Member.STATUS_DORMANT)
+        );
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<String, Long> getMemberSummary(Long memberId) {
-        return null;
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
+
+        return Map.of(
+            "totalPoints", pointRepository.sumPointsByMemberId(memberId),
+            "totalOrders", orderRepository.countByMemberId(memberId),
+            "totalSpent", orderRepository.sumTotalAmountByMemberId(memberId),
+            "lastOrderDate", member.getLastOrderDate() != null ? 
+                member.getLastOrderDate().toEpochSecond(ZoneOffset.UTC) : 0L
+        );
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<String, Object> getMemberStatistics(String period, String startDate, String endDate) {
-        return Map.of();
+        LocalDateTime start = LocalDateTime.parse(startDate, DateTimeFormatter.ISO_DATE_TIME);
+        LocalDateTime end = LocalDateTime.parse(endDate, DateTimeFormatter.ISO_DATE_TIME);
+
+        Map<String, Object> statistics = new HashMap<>();
+        
+        // 기간별 회원 등록 통계
+        statistics.put("registrations", memberRepository.countByCreatedAtBetween(start, end));
+        
+        // 기간별 회원 상태 변경 통계
+        statistics.put("statusChanges", memberRepository.countStatusChangesBetween(start, end));
+        
+        // 기간별 포인트 적립/사용 통계
+        statistics.put("points", pointRepository.sumPointsByDateRange(start, end));
+        
+        // 기간별 주문 통계
+        statistics.put("orders", orderRepository.countByCreatedAtBetween(start, end));
+        
+        return statistics;
     }
 
     @Override
@@ -438,13 +500,32 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<PointDTO> getPoints(Pageable pageable) {
-        return null;
+        return pointRepository.findAll(pageable)
+                .map(point -> PointDTO.builder()
+                        .id(point.getId())
+                        .member(point.getMember())
+                        .memberName(point.getMember().getName())
+                        .type(point.getType())
+                        .amount(point.getAmount())
+                        .createdAt(point.getCreatedAt())
+                        .build());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PointDTO getPointById(Long id) {
-        return null;
+        return pointRepository.findById(id)
+                .map(point -> PointDTO.builder()
+                        .id(point.getId())
+                        .member(point.getMember())
+                        .memberName(point.getMember().getName())
+                        .type(point.getType())
+                        .amount(point.getAmount())
+                        .createdAt(point.getCreatedAt())
+                        .build())
+                .orElseThrow(() -> new EntityNotFoundException("포인트 내역을 찾을 수 없습니다."));
     }
 
     @Override
@@ -482,8 +563,8 @@ public class MemberServiceImpl implements MemberService {
     @Override
     @Transactional(readOnly = true)
     public Page<MemberDTO> getDormantMembers(Pageable pageable) {
-        LocalDateTime threeMonthsAgo = LocalDateTime.now().minusMonths(3);
-        Page<Member> members = memberRepository.findByLastLoginAtBeforeAndIsWithdrawnFalse(threeMonthsAgo, pageable);
-        return members.map(this::convertToDTO);
+        LocalDateTime threshold = LocalDateTime.now().minusMonths(12);
+        return memberRepository.findDormantMembers(threshold, pageable)
+                .map(this::convertToDTO);
     }
 }

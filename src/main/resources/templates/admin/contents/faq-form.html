@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>FAQ 관리 | PeakMe Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">FAQ 관리</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/contents/faqs}">FAQ 관리</a></li>
+                        <li class="breadcrumb-item active" th:text="${faq != null ? 'FAQ 수정' : 'FAQ 추가'}">FAQ 추가</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- FAQ 폼 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <form id="faqForm" class="needs-validation" novalidate>
+                    <input type="hidden" id="faqId" th:value="${faq?.id}">
+                    
+                    <div class="form-group mb-3">
+                        <label for="categoryId" class="form-label">카테고리 <span class="text-danger">*</span></label>
+                        <select class="form-select" id="categoryId" name="categoryId" required>
+                            <option value="">카테고리를 선택하세요</option>
+                            <option th:each="category : ${categories}"
+                                    th:value="${category.id}"
+                                    th:text="${category.name}"
+                                    th:selected="${faq?.categoryId == category.id}">
+                                카테고리명
+                            </option>
+                        </select>
+                        <div class="invalid-feedback">카테고리를 선택해주세요.</div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="question" class="form-label">질문 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="question" name="question" 
+                               th:value="${faq?.question}" required>
+                        <div class="invalid-feedback">질문을 입력해주세요.</div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="answer" class="form-label">답변 <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="answer" name="answer" rows="5" required
+                                  th:text="${faq?.answer}">답변 내용</textarea>
+                        <div class="invalid-feedback">답변을 입력해주세요.</div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="sortOrder" class="form-label">순서 <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="sortOrder" name="sortOrder" 
+                               th:value="${faq?.sortOrder}" required min="1">
+                        <div class="invalid-feedback">순서를 입력해주세요.</div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isActive" name="isActive" 
+                                   th:checked="${faq?.isActive}">
+                            <label class="form-check-label" for="isActive">활성화</label>
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <a th:href="@{/admin/contents/faqs}" class="btn btn-secondary me-2">취소</a>
+                        <button type="button" class="btn btn-primary" onclick="saveFaq()">저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- FAQ 폼 끝 -->
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            function saveFaq() {
+                const form = document.getElementById('faqForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                const faqId = document.getElementById('faqId').value;
+                const url = faqId ? `/api/contents/faqs/${faqId}` : '/api/contents/faqs';
+                const method = faqId ? 'PUT' : 'POST';
+
+                const formData = new FormData(form);
+                const data = {};
+                formData.forEach((value, key) => {
+                    if (key === 'isActive') {
+                        data[key] = formData.get(key) === 'on';
+                    } else if (value) {
+                        data[key] = value;
+                    }
+                });
+
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/admin/contents/faqs';
+                    } else {
+                        throw new Error('FAQ 저장에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+            }
+        </script>
+    </th:block>
+</body>
+</html> 

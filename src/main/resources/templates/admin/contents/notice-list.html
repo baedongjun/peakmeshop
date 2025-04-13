@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>공지사항 관리 | PeakMe Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">공지사항 관리</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item active">공지사항 관리</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a th:href="@{/admin/contents/notices/form}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> 공지사항 추가
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 검색 및 필터 시작 -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <form id="searchForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">상태</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">전체</option>
+                            <option value="ACTIVE">활성화</option>
+                            <option value="INACTIVE">비활성화</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="isImportant" class="form-label">중요 공지</label>
+                        <select class="form-select" id="isImportant" name="isImportant">
+                            <option value="">전체</option>
+                            <option value="true">중요 공지</option>
+                            <option value="false">일반 공지</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="keyword" class="form-label">검색어</label>
+                        <input type="text" class="form-control" id="keyword" name="keyword" 
+                               placeholder="제목 또는 내용을 입력하세요">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-primary w-100" onclick="searchNotices()">
+                            <i class="fas fa-search me-1"></i> 검색
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 검색 및 필터 끝 -->
+
+        <!-- 공지사항 목록 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>제목</th>
+                                <th>시작일</th>
+                                <th>종료일</th>
+                                <th>중요</th>
+                                <th>상태</th>
+                                <th>작업</th>
+                            </tr>
+                        </thead>
+                        <tbody id="noticeList">
+                            <tr th:each="notice : ${notices}">
+                                <td>
+                                    <span th:text="${notice.title}">제목</span>
+                                    <span class="badge bg-danger ms-1" th:if="${notice.isImportant}">중요</span>
+                                </td>
+                                <td th:text="${#temporals.format(notice.startDate, 'yyyy-MM-dd')}">2024-01-01</td>
+                                <td th:text="${#temporals.format(notice.endDate, 'yyyy-MM-dd')}">2024-12-31</td>
+                                <td>
+                                    <span class="badge" th:classappend="${notice.isImportant ? 'bg-danger' : 'bg-secondary'}"
+                                          th:text="${notice.isImportant ? '중요' : '일반'}">일반</span>
+                                </td>
+                                <td>
+                                    <span class="badge" th:classappend="${notice.isActive ? 'bg-success' : 'bg-secondary'}"
+                                          th:text="${notice.isActive ? '활성화' : '비활성화'}">활성화</span>
+                                </td>
+                                <td>
+                                    <a th:href="@{/admin/contents/notices/form(id=${notice.id})}" 
+                                       class="btn btn-sm btn-outline-primary me-1">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            th:onclick="'deleteNotice(' + ${notice.id} + ')'">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- 공지사항 목록 끝 -->
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            // 공지사항 검색
+            function searchNotices() {
+                const formData = new FormData(document.getElementById('searchForm'));
+                const params = new URLSearchParams();
+                formData.forEach((value, key) => {
+                    if (value) params.append(key, value);
+                });
+
+                fetch(`/api/contents/notices?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('noticeList');
+                    tbody.innerHTML = data.map(notice => `
+                        <tr>
+                            <td>
+                                ${notice.title}
+                                ${notice.isImportant ? '<span class="badge bg-danger ms-1">중요</span>' : ''}
+                            </td>
+                            <td>${new Date(notice.startDate).toISOString().split('T')[0]}</td>
+                            <td>${new Date(notice.endDate).toISOString().split('T')[0]}</td>
+                            <td>
+                                <span class="badge ${notice.isImportant ? 'bg-danger' : 'bg-secondary'}">
+                                    ${notice.isImportant ? '중요' : '일반'}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge ${notice.isActive ? 'bg-success' : 'bg-secondary'}">
+                                    ${notice.isActive ? '활성화' : '비활성화'}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="/admin/contents/notices/form?id=${notice.id}" 
+                                   class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                        onclick="deleteNotice(${notice.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('공지사항 목록을 불러오는데 실패했습니다.');
+                });
+            }
+
+            // 공지사항 삭제
+            function deleteNotice(id) {
+                if (confirm('정말로 이 공지사항을 삭제하시겠습니까?')) {
+                    fetch(`/api/contents/notices/${id}`, {
+                        method: 'DELETE'
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            window.location.reload();
+                        } else {
+                            throw new Error('공지사항 삭제에 실패했습니다.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert(error.message);
+                    });
+                }
+            }
+
+            // 엔터 키로 검색
+            document.getElementById('keyword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchNotices();
+                }
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

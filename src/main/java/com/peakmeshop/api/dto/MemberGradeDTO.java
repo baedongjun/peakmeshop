@@ -13,13 +13,12 @@ import java.time.LocalDateTime;
 public class MemberGradeDTO {
     private Long id;
     private String name;
-    private String description;
-    private Integer level;
-    private Double discountRate;
-    private Integer pointRate;
-    private Long minAmount;
-    private Long maxAmount;
-    private Boolean isDefault;
+    private String conditionType;
+    private int conditionValue;
+    private String benefitType;
+    private int benefitValue;
+    private boolean isFreeShipping;
+    private boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 } 

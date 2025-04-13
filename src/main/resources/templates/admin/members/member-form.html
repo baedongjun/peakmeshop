@@ -4,7 +4,7 @@
       layout:decorate="~{layouts/admin-layout}">
 
 <head>
-    <title th:text="${member != null ? '회원 수정' : '회원 등록'} + ' - Peak Me Shop 관리자'">회원 등록 - Peak Me Shop 관리자</title>
+    <title>회원 등록/수정 | PeakMe Shop 관리자</title>
 </head>
 
 <body>
@@ -13,11 +13,11 @@
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title" th:text="${member != null ? '회원 수정' : '회원 등록'}">회원 등록</h3>
+                    <h3 class="page-title">회원 등록/수정</h3>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
                         <li class="breadcrumb-item"><a th:href="@{/admin/members}">회원 관리</a></li>
-                        <li class="breadcrumb-item active" th:text="${member != null ? '회원 수정' : '회원 등록'}">회원 등록</li>
+                        <li class="breadcrumb-item active">회원 등록/수정</li>
                     </ul>
                 </div>
             </div>
@@ -27,157 +27,89 @@
         <!-- 회원 폼 시작 -->
         <div class="card">
             <div class="card-body">
-                <form id="memberForm" th:action="${member != null ? '/api/members/' + member.id : '/api/members'}" 
-                      th:method="${member != null ? 'PUT' : 'POST'}" class="needs-validation" novalidate>
-                    
-                    <!-- 기본 정보 -->
-                    <div class="row mb-4">
+                <form id="memberForm" class="needs-validation" novalidate>
+                    <input type="hidden" id="memberId" th:value="${member?.id}">
+
+                    <!-- 회원 정보 -->
+                    <div class="row mb-3">
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="userId" class="required">아이디</label>
-                                <input type="text" class="form-control" id="userId" name="userId" 
-                                       th:value="${member?.userId}" required
-                                       pattern="^[a-zA-Z0-9]{4,20}$">
-                                <div class="invalid-feedback">
-                                    4~20자의 영문 대소문자와 숫자만 사용 가능합니다.
-                                </div>
-                            </div>
+                            <label for="grade" class="form-label">등급 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="grade" required>
+                                <option value="">선택하세요</option>
+                                <option value="BRONZE" th:selected="${member?.grade == 'BRONZE'}">브론즈</option>
+                                <option value="SILVER" th:selected="${member?.grade == 'SILVER'}">실버</option>
+                                <option value="GOLD" th:selected="${member?.grade == 'GOLD'}">골드</option>
+                                <option value="PLATINUM" th:selected="${member?.grade == 'PLATINUM'}">플래티넘</option>
+                            </select>
+                            <div class="invalid-feedback">등급을 선택해주세요.</div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="password" th:class="${member == null ? 'required' : ''}">비밀번호</label>
-                                <input type="password" class="form-control" id="password" name="password"
-                                       th:required="${member == null}"
-                                       pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$">
-                                <div class="invalid-feedback">
-                                    8자 이상의 영문자, 숫자, 특수문자를 포함해야 합니다.
-                                </div>
-                                <small class="form-text text-muted" th:if="${member != null}">
-                                    변경하지 않으려면 비워두세요.
-                                </small>
-                            </div>
+                            <label for="status" class="form-label">상태 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="status" required>
+                                <option value="">선택하세요</option>
+                                <option value="ACTIVE" th:selected="${member?.status == 'ACTIVE'}">활성</option>
+                                <option value="INACTIVE" th:selected="${member?.status == 'INACTIVE'}">비활성</option>
+                                <option value="WITHDRAWN" th:selected="${member?.status == 'WITHDRAWN'}">탈퇴</option>
+                            </select>
+                            <div class="invalid-feedback">상태를 선택해주세요.</div>
                         </div>
                     </div>
 
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="name" class="required">이름</label>
-                                <input type="text" class="form-control" id="name" name="name" 
-                                       th:value="${member?.name}" required>
+                    <!-- 이름 -->
+                    <div class="mb-3">
+                        <label for="name" class="form-label">이름 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" th:value="${member?.name}" required>
+                        <div class="invalid-feedback">이름을 입력해주세요.</div>
+                    </div>
+
+                    <!-- 이메일 -->
+                    <div class="mb-3">
+                        <label for="email" class="form-label">이메일 <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" th:value="${member?.email}" required>
+                        <div class="invalid-feedback">유효한 이메일을 입력해주세요.</div>
+                    </div>
+
+                    <!-- 전화번호 -->
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">전화번호 <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control" id="phone" th:value="${member?.phone}" 
+                               pattern="[0-9]{3}-[0-9]{4}-[0-9]{4}" placeholder="010-0000-0000" required>
+                        <div class="invalid-feedback">전화번호를 올바른 형식으로 입력해주세요. (예: 010-0000-0000)</div>
+                    </div>
+
+                    <!-- 주소 -->
+                    <div class="row mb-3">
+                        <div class="col-md-2">
+                            <label for="postalCode" class="form-label">우편번호</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="postalCode" th:value="${member?.postalCode}">
+                                <button type="button" class="btn btn-outline-secondary" onclick="searchPostalCode()">
+                                    <i class="fas fa-search"></i>
+                                </button>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="email" class="required">이메일</label>
-                                <input type="email" class="form-control" id="email" name="email" 
-                                       th:value="${member?.email}" required>
-                            </div>
+                        <div class="col-md-10">
+                            <label for="address" class="form-label">주소</label>
+                            <input type="text" class="form-control" id="address" th:value="${member?.address}">
+                        </div>
+                        <div class="col-12">
+                            <label for="detailAddress" class="form-label">상세주소</label>
+                            <input type="text" class="form-control" id="detailAddress" th:value="${member?.detailAddress}">
                         </div>
                     </div>
 
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="phone" class="required">연락처</label>
-                                <input type="tel" class="form-control" id="phone" name="phone" 
-                                       th:value="${member?.phone}" required
-                                       pattern="^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$">
-                                <div class="invalid-feedback">
-                                    올바른 휴대폰 번호 형식이 아닙니다.
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="birthDate">생년월일</label>
-                                <input type="date" class="form-control" id="birthDate" name="birthDate" 
-                                       th:value="${member?.birthDate}">
-                            </div>
-                        </div>
+                    <!-- 비밀번호 -->
+                    <div class="mb-3">
+                        <label for="password" class="form-label">비밀번호</label>
+                        <input type="password" class="form-control" id="password" 
+                               pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$" 
+                               placeholder="영문과 숫자를 포함한 8자 이상">
+                        <div class="invalid-feedback">비밀번호는 영문과 숫자를 포함한 8자 이상이어야 합니다.</div>
                     </div>
 
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="grade" class="required">회원등급</label>
-                                <select class="form-select" id="grade" name="grade" required>
-                                    <option value="">선택하세요</option>
-                                    <option th:each="grade : ${grades}"
-                                            th:value="${grade.code}"
-                                            th:text="${grade.name}"
-                                            th:selected="${member != null && member.grade == grade.code}">
-                                        등급명
-                                    </option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="status" class="required">상태</label>
-                                <select class="form-select" id="status" name="status" required>
-                                    <option value="ACTIVE" th:selected="${member != null && member.status == 'ACTIVE'}">정상</option>
-                                    <option value="INACTIVE" th:selected="${member != null && member.status == 'INACTIVE'}">비활성</option>
-                                    <option value="SUSPENDED" th:selected="${member != null && member.status == 'SUSPENDED'}">정지</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 주소 정보 -->
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="zipCode">우편번호</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="zipCode" name="zipCode" 
-                                           th:value="${member?.zipCode}" readonly>
-                                    <button type="button" class="btn btn-secondary" onclick="searchAddress()">
-                                        주소 검색
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="form-group">
-                                <label for="address1">기본주소</label>
-                                <input type="text" class="form-control" id="address1" name="address1" 
-                                       th:value="${member?.address1}" readonly>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row mb-4">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label for="address2">상세주소</label>
-                                <input type="text" class="form-control" id="address2" name="address2" 
-                                       th:value="${member?.address2}">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 수신 동의 -->
-                    <div class="row mb-4">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <div class="form-check form-check-inline">
-                                    <input type="checkbox" class="form-check-input" id="emailAgreed" name="emailAgreed"
-                                           th:checked="${member?.emailAgreed}">
-                                    <label class="form-check-label" for="emailAgreed">이메일 수신 동의</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input type="checkbox" class="form-check-input" id="smsAgreed" name="smsAgreed"
-                                           th:checked="${member?.smsAgreed}">
-                                    <label class="form-check-label" for="smsAgreed">SMS 수신 동의</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 버튼 영역 -->
+                    <!-- 버튼 -->
                     <div class="text-end">
-                        <a th:href="@{/admin/members}" class="btn btn-secondary">취소</a>
+                        <a th:href="@{/admin/members}" class="btn btn-secondary me-2">취소</a>
                         <button type="submit" class="btn btn-primary">저장</button>
                     </div>
                 </form>
@@ -186,73 +118,85 @@
         <!-- 회원 폼 끝 -->
     </div>
 
-    <th:block layout:fragment="script">
-        <!-- 다음 우편번호 서비스 -->
+    <th:block layout:fragment="scripts">
         <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-        <script th:inline="javascript">
-            // 폼 유효성 검사
-            (function () {
-                'use strict'
-                var forms = document.querySelectorAll('.needs-validation')
-                Array.prototype.slice.call(forms).forEach(function (form) {
-                    form.addEventListener('submit', function (event) {
-                        if (!form.checkValidity()) {
-                            event.preventDefault()
-                            event.stopPropagation()
-                        }
-                        form.classList.add('was-validated')
-                    }, false)
-                })
-            })()
-
-            // 주소 검색
-            function searchAddress() {
+        <script>
+            // 우편번호 검색
+            function searchPostalCode() {
                 new daum.Postcode({
                     oncomplete: function(data) {
-                        document.getElementById('zipCode').value = data.zonecode;
-                        document.getElementById('address1').value = data.address;
-                        document.getElementById('address2').focus();
+                        document.getElementById('postalCode').value = data.zonecode;
+                        document.getElementById('address').value = data.address;
+                        document.getElementById('detailAddress').focus();
                     }
                 }).open();
             }
 
-            // 폼 제출
+            // 폼 제출 처리
             document.getElementById('memberForm').addEventListener('submit', function(e) {
                 e.preventDefault();
 
-                const formData = new FormData(this);
-                const data = {};
-                formData.forEach((value, key) => {
-                    if (key === 'emailAgreed' || key === 'smsAgreed') {
-                        data[key] = value === 'on';
-                    } else {
-                        data[key] = value;
-                    }
-                });
-
-                // 비밀번호가 비어있으면 제외
-                if (!data.password) {
-                    delete data.password;
+                if (!this.checkValidity()) {
+                    e.stopPropagation();
+                    this.classList.add('was-validated');
+                    return;
                 }
 
-                fetch(this.action, {
-                    method: this.method,
+                const memberId = document.getElementById('memberId').value;
+                const url = memberId ? `/api/members/${memberId}` : '/api/members';
+                const method = memberId ? 'PUT' : 'POST';
+
+                const formData = {
+                    grade: document.getElementById('grade').value,
+                    status: document.getElementById('status').value,
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    phone: document.getElementById('phone').value,
+                    postalCode: document.getElementById('postalCode').value,
+                    address: document.getElementById('address').value,
+                    detailAddress: document.getElementById('detailAddress').value,
+                    password: document.getElementById('password').value || null
+                };
+
+                fetch(url, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(formData)
                 })
                 .then(response => {
-                    if (!response.ok) throw new Error('저장에 실패했습니다.');
-                    return response.json();
-                })
-                .then(() => {
-                    alert('저장되었습니다.');
+                    if (!response.ok) {
+                        throw new Error('회원 저장에 실패했습니다.');
+                    }
                     window.location.href = '/admin/members';
                 })
                 .catch(error => {
                     alert(error.message);
                 });
+            });
+
+            // 페이지 로드 시 기존 데이터 로드
+            document.addEventListener('DOMContentLoaded', function() {
+                const memberId = document.getElementById('memberId').value;
+                if (memberId) {
+                    fetch(`/api/members/${memberId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('grade').value = data.grade;
+                            document.getElementById('status').value = data.status;
+                            document.getElementById('name').value = data.name;
+                            document.getElementById('email').value = data.email;
+                            document.getElementById('phone').value = data.phone;
+                            document.getElementById('postalCode').value = data.postalCode;
+                            document.getElementById('address').value = data.address;
+                            document.getElementById('detailAddress').value = data.detailAddress;
+                        })
+                        .catch(error => {
+                            console.error('회원을 불러오는데 실패했습니다:', error);
+                            alert('회원을 불러오는데 실패했습니다.');
+                        });
+                }
             });
         </script>
     </th:block>

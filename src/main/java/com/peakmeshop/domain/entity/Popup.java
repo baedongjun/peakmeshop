@@ -1,5 +1,6 @@
 package com.peakmeshop.domain.entity;
 
+import com.peakmeshop.domain.entity.base.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,7 +10,7 @@ import java.time.LocalDateTime;
 @Table(name = "popups")
 @Getter
 @Setter
-public class Popup {
+public class Popup extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,28 +25,49 @@ public class Popup {
 
     private String linkUrl;
 
-    private String target;
-
+    private Integer sunser;
     private Integer width;
 
     private Integer height;
 
-    private String position;
+    private Integer positionX;
 
-    @Column(name = "popup_order")
-    private Integer order;
+    private Integer positionY;
 
-    @Column(nullable = false)
     private LocalDateTime startDateTime;
 
-    @Column(nullable = false)
     private LocalDateTime endDateTime;
 
-    @Column(nullable = false)
-    private Boolean isActive = true;
+    private boolean isActive;
 
-    @Column(nullable = false)
-    private String deviceType;
+    private boolean newWindow;
 
-    private Boolean showTodayClose = true;
+    private boolean scrollable;
+
+    private boolean resizable;
+
+    private boolean draggable;
+
+    private String backgroundColor;
+
+    private String textColor;
+
+    private String borderColor;
+
+    private Integer borderWidth;
+
+    private Integer borderRadius;
+
+    private String shadowColor;
+
+    private Integer shadowBlur;
+
+    private Integer shadowSpread;
+
+    private Integer shadowX;
+
+    private Integer shadowY;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 } 

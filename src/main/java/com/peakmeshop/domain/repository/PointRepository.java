@@ -83,4 +83,10 @@ public interface PointRepository extends JpaRepository<Point, Long> {
     int calculateTotalPointsByType(@Param("type") String type,
                                  @Param("startDate") LocalDateTime startDate,
                                  @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Point p WHERE p.member.id = :memberId")
+    long sumPointsByMemberId(@Param("memberId") Long memberId);
+    
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Point p WHERE p.createdAt BETWEEN :start AND :end")
+    long sumPointsByDateRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

@@ -159,4 +159,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @return 조건에 맞는 주문 목록
      */
     Page<Order> findByStatusAndCreatedAtBetween(String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.member.id = :memberId")
+    long countByMemberId(@Param("memberId") Long memberId);
+    
+    @Query("SELECT COALESCE(SUM(o.totalPrice), 0) FROM Order o WHERE o.member.id = :memberId")
+    long sumTotalAmountByMemberId(@Param("memberId") Long memberId);
+
 }

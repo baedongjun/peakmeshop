@@ -1,10 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <title>활동 로그 | PeakMe Shop</title>
 </head>
 <body>
+<div layout:fragment="content">
+    <div class="container-fluid">
+        <h1 class="h2 mb-4">활동 로그</h1>
 
+        <!-- 검색 및 필터 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form th:action="@{/admin/activity-logs}" method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="searchType" class="form-label">검색 유형</label>
+                        <select class="form-select" id="searchType" name="searchType">
+                            <option value="username">사용자</option>
+                            <option value="action">작업</option>
+                            <option value="ip">IP 주소</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="searchKeyword" class="form-label">검색어</label>
+                        <input type="text" class="form-control" id="searchKeyword" name="searchKeyword">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="dateRange" class="form-label">기간</label>
+                        <div class="input-group">
+                            <input type="date" class="form-control" id="startDate" name="startDate">
+                            <span class="input-group-text">~</span>
+                            <input type="date" class="form-control" id="endDate" name="endDate">
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">검색</button>
+                        <button type="reset" class="btn btn-secondary">초기화</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 활동 로그 목록 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">활동 로그 목록</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>시간</th>
+                                <th>사용자</th>
+                                <th>작업</th>
+                                <th>상세 정보</th>
+                                <th>IP 주소</th>
+                                <th>상태</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="log : ${activityLogs.content}">
+                                <td th:text="${#temporals.format(log.createdAt, 'yyyy-MM-dd HH:mm:ss')}">2023-01-01 12:00:00</td>
+                                <td th:text="${log.username}">admin</td>
+                                <td th:text="${log.action}">로그인</td>
+                                <td th:text="${log.details}">성공적으로 로그인했습니다.</td>
+                                <td th:text="${log.ipAddress}">127.0.0.1</td>
+                                <td>
+                                    <span th:class="${'badge bg-' + (log.status == 'SUCCESS' ? 'success' : 'danger')}"
+                                          th:text="${log.status}">SUCCESS</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 페이지네이션 -->
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${activityLogs.first} ? 'disabled'">
+                            <a class="page-link" th:href="@{/admin/activity-logs(page=${activityLogs.number - 1})}">이전</a>
+                        </li>
+                        <li class="page-item" th:each="page : ${#numbers.sequence(1, activityLogs.totalPages)}"
+                            th:classappend="${page == activityLogs.number + 1} ? 'active'">
+                            <a class="page-link" th:href="@{/admin/activity-logs(page=${page - 1})}" th:text="${page}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${activityLogs.last} ? 'disabled'">
+                            <a class="page-link" th:href="@{/admin/activity-logs(page=${activityLogs.number + 1})}">다음</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block layout:fragment="script">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 날짜 범위 초기화
+            const today = new Date();
+            const oneMonthAgo = new Date();
+            oneMonthAgo.setMonth(today.getMonth() - 1);
+
+            document.getElementById('startDate').value = oneMonthAgo.toISOString().split('T')[0];
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+        });
+    </script>
+</th:block>
 </body>
 </html>

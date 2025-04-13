@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>배송 등록/수정 | PeakMe Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">배송 등록/수정</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/shipments}">배송 관리</a></li>
+                        <li class="breadcrumb-item active">배송 등록/수정</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 배송 폼 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <form id="shipmentForm" class="needs-validation" novalidate>
+                    <input type="hidden" id="shipmentId" th:value="${shipmentId}">
+
+                    <!-- 주문 정보 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="orderId" class="form-label">주문번호 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="orderId" required>
+                            <div class="invalid-feedback">주문번호를 입력해주세요.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="status" class="form-label">배송 상태 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="status" required>
+                                <option value="">선택하세요</option>
+                                <option value="PENDING">배송준비중</option>
+                                <option value="SHIPPED">배송중</option>
+                                <option value="DELIVERED">배송완료</option>
+                                <option value="CANCELLED">배송취소</option>
+                                <option value="RETURNED">반품</option>
+                            </select>
+                            <div class="invalid-feedback">배송 상태를 선택해주세요.</div>
+                        </div>
+                    </div>
+
+                    <!-- 배송 정보 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="carrier" class="form-label">택배사 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="carrier" required>
+                                <option value="">선택하세요</option>
+                                <option value="CJ">CJ대한통운</option>
+                                <option value="LOGEN">로젠택배</option>
+                                <option value="HANJIN">한진택배</option>
+                                <option value="LOTTE">롯데택배</option>
+                                <option value="KGB">KGB택배</option>
+                                <option value="CU">CU편의점택배</option>
+                                <option value="GS">GS편의점택배</option>
+                            </select>
+                            <div class="invalid-feedback">택배사를 선택해주세요.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="trackingNumber" class="form-label">운송장번호 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="trackingNumber" required>
+                            <div class="invalid-feedback">운송장번호를 입력해주세요.</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="shippingMethod" class="form-label">배송방법 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="shippingMethod" required>
+                                <option value="">선택하세요</option>
+                                <option value="STANDARD">일반배송</option>
+                                <option value="EXPRESS">퀵배송</option>
+                                <option value="COLD">냉장배송</option>
+                                <option value="FROZEN">냉동배송</option>
+                            </select>
+                            <div class="invalid-feedback">배송방법을 선택해주세요.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="estimatedDeliveryDate" class="form-label">예상배송일</label>
+                            <input type="date" class="form-control" id="estimatedDeliveryDate">
+                        </div>
+                    </div>
+
+                    <!-- 수취인 정보 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="recipientName" class="form-label">수취인 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="recipientName" required>
+                            <div class="invalid-feedback">수취인을 입력해주세요.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="recipientPhone" class="form-label">연락처 <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="recipientPhone" 
+                                   pattern="[0-9]{3}-[0-9]{4}-[0-9]{4}" placeholder="010-0000-0000" required>
+                            <div class="invalid-feedback">연락처를 올바른 형식으로 입력해주세요.</div>
+                        </div>
+                    </div>
+
+                    <!-- 배송지 정보 -->
+                    <div class="row mb-3">
+                        <div class="col-md-2">
+                            <label for="shippingZipCode" class="form-label">우편번호 <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="shippingZipCode" required>
+                                <button type="button" class="btn btn-outline-secondary" onclick="searchPostalCode()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div class="invalid-feedback">우편번호를 입력해주세요.</div>
+                        </div>
+                        <div class="col-md-10">
+                            <label for="shippingAddress" class="form-label">주소 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="shippingAddress" required>
+                            <div class="invalid-feedback">주소를 입력해주세요.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="shippingCity" class="form-label">시/군/구 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="shippingCity" required>
+                            <div class="invalid-feedback">시/군/구를 입력해주세요.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="shippingState" class="form-label">도/특별시/광역시 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="shippingState" required>
+                            <div class="invalid-feedback">도/특별시/광역시를 입력해주세요.</div>
+                        </div>
+                    </div>
+
+                    <!-- 메모 -->
+                    <div class="mb-3">
+                        <label for="memo" class="form-label">메모</label>
+                        <textarea class="form-control" id="memo" rows="3"></textarea>
+                    </div>
+
+                    <!-- 버튼 -->
+                    <div class="text-end">
+                        <a th:href="@{/admin/shipments}" class="btn btn-secondary me-2">목록</a>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 배송 폼 끝 -->
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+        <script>
+            // 우편번호 검색
+            function searchPostalCode() {
+                new daum.Postcode({
+                    oncomplete: function(data) {
+                        document.getElementById('shippingZipCode').value = data.zonecode;
+                        document.getElementById('shippingAddress').value = data.address;
+                        document.getElementById('shippingCity').value = data.sigungu;
+                        document.getElementById('shippingState').value = data.sido;
+                        document.getElementById('shippingCity').focus();
+                    }
+                }).open();
+            }
+
+            // 폼 제출 처리
+            document.getElementById('shipmentForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                if (!this.checkValidity()) {
+                    e.stopPropagation();
+                    this.classList.add('was-validated');
+                    return;
+                }
+
+                const shipmentId = document.getElementById('shipmentId').value;
+                const url = shipmentId ? `/api/shipments/${shipmentId}` : '/api/shipments';
+                const method = shipmentId ? 'PUT' : 'POST';
+
+                const formData = {
+                    orderId: document.getElementById('orderId').value,
+                    status: document.getElementById('status').value,
+                    carrier: document.getElementById('carrier').value,
+                    trackingNumber: document.getElementById('trackingNumber').value,
+                    shippingMethod: document.getElementById('shippingMethod').value,
+                    estimatedDeliveryDate: document.getElementById('estimatedDeliveryDate').value,
+                    recipientName: document.getElementById('recipientName').value,
+                    recipientPhone: document.getElementById('recipientPhone').value,
+                    shippingZipCode: document.getElementById('shippingZipCode').value,
+                    shippingAddress: document.getElementById('shippingAddress').value,
+                    shippingCity: document.getElementById('shippingCity').value,
+                    shippingState: document.getElementById('shippingState').value,
+                    memo: document.getElementById('memo').value
+                };
+
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('배송 정보 저장에 실패했습니다.');
+                    }
+                    window.location.href = '/admin/shipments';
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            });
+
+            // 페이지 로드 시 기존 데이터 로드
+            document.addEventListener('DOMContentLoaded', function() {
+                const shipmentId = document.getElementById('shipmentId').value;
+                if (shipmentId) {
+                    fetch(`/api/shipments/${shipmentId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('orderId').value = data.orderId;
+                            document.getElementById('status').value = data.status;
+                            document.getElementById('carrier').value = data.carrier;
+                            document.getElementById('trackingNumber').value = data.trackingNumber;
+                            document.getElementById('shippingMethod').value = data.shippingMethod;
+                            document.getElementById('estimatedDeliveryDate').value = data.estimatedDeliveryDate;
+                            document.getElementById('recipientName').value = data.recipientName;
+                            document.getElementById('recipientPhone').value = data.recipientPhone;
+                            document.getElementById('shippingZipCode').value = data.shippingZipCode;
+                            document.getElementById('shippingAddress').value = data.shippingAddress;
+                            document.getElementById('shippingCity').value = data.shippingCity;
+                            document.getElementById('shippingState').value = data.shippingState;
+                            document.getElementById('memo').value = data.memo;
+                        })
+                        .catch(error => {
+                            console.error('배송 정보를 불러오는데 실패했습니다:', error);
+                            alert('배송 정보를 불러오는데 실패했습니다.');
+                        });
+                }
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

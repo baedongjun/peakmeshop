@@ -1,1 +1,184 @@
- 
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>프로모션 관리 | PeakMe Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">프로모션 관리</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item active">프로모션 관리</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a th:href="@{/admin/marketing/promotions/new}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> 프로모션 추가
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 필터 영역 시작 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="filterForm" method="get" th:action="@{/admin/marketing/promotions}">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="type">프로모션 종류</label>
+                                <select class="form-select" id="type" name="type">
+                                    <option value="">전체</option>
+                                    <option value="DISCOUNT" th:selected="${type == 'DISCOUNT'}">할인</option>
+                                    <option value="GIFT" th:selected="${type == 'GIFT'}">사은품</option>
+                                    <option value="POINT" th:selected="${type == 'POINT'}">포인트</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="status">상태</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="">전체</option>
+                                    <option value="ACTIVE" th:selected="${status == 'ACTIVE'}">진행중</option>
+                                    <option value="SCHEDULED" th:selected="${status == 'SCHEDULED'}">예정</option>
+                                    <option value="ENDED" th:selected="${status == 'ENDED'}">종료</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="searchKeyword">검색어</label>
+                                <input type="text" class="form-control" id="searchKeyword" name="searchKeyword"
+                                       th:value="${param.searchKeyword}">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search"></i> 검색
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 필터 영역 끝 -->
+
+        <!-- 프로모션 목록 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>번호</th>
+                                <th>프로모션명</th>
+                                <th>종류</th>
+                                <th>기간</th>
+                                <th>상태</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="promotion : ${promotions}">
+                                <td th:text="${promotion.id}">1</td>
+                                <td>
+                                    <a th:href="@{/admin/marketing/promotions/{id}(id=${promotion.id})}" 
+                                       th:text="${promotion.name}" class="text-primary">프로모션명</a>
+                                </td>
+                                <td>
+                                    <span th:switch="${promotion.type}">
+                                        <span th:case="'DISCOUNT'">할인</span>
+                                        <span th:case="'GIFT'">사은품</span>
+                                        <span th:case="'POINT'">포인트</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:text="${#temporals.format(promotion.startDate, 'yyyy-MM-dd')}">2024-01-01</span>
+                                    ~
+                                    <span th:text="${#temporals.format(promotion.endDate, 'yyyy-MM-dd')}">2024-01-31</span>
+                                </td>
+                                <td>
+                                    <span th:class="${'badge bg-' + 
+                                        (promotion.status == 'ACTIVE' ? 'success' : 
+                                         promotion.status == 'SCHEDULED' ? 'info' : 'secondary')}"
+                                          th:text="${promotion.status == 'ACTIVE' ? '진행중' : 
+                                                   promotion.status == 'SCHEDULED' ? '예정' : '종료'}">
+                                        진행중
+                                    </span>
+                                </td>
+                                <td>
+                                    <a th:href="@{/admin/marketing/promotions/{id}/edit(id=${promotion.id})}" 
+                                       class="btn btn-sm btn-primary me-1">
+                                        수정
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                            th:onclick="'deletePromotion(' + ${promotion.id} + ')'"
+                                            th:disabled="${promotion.status == 'ACTIVE'}">
+                                        삭제
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(promotions)}">
+                                <td colspan="6" class="text-center">프로모션이 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 페이지네이션 -->
+                <nav aria-label="Page navigation" th:if="${promotions.totalPages > 0}">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${!promotions.hasPrevious()} ? disabled">
+                            <a class="page-link" th:href="@{/admin/marketing/promotions(page=${promotions.number - 1})}">이전</a>
+                        </li>
+                        <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, promotions.totalPages - 1)}"
+                            th:classappend="${pageNum == promotions.number} ? active">
+                            <a class="page-link" th:href="@{/admin/marketing/promotions(page=${pageNum})}"
+                               th:text="${pageNum + 1}"></a>
+                        </li>
+                        <li class="page-item" th:classappend="${!promotions.hasNext()} ? disabled">
+                            <a class="page-link" th:href="@{/admin/marketing/promotions(page=${promotions.number + 1})}">다음</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        <!-- 프로모션 목록 끝 -->
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script th:inline="javascript">
+            function deletePromotion(id) {
+                if (confirm('정말로 삭제하시겠습니까?')) {
+                    fetch('/api/marketing/promotions/' + id, {
+                        method: 'DELETE'
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            alert('프로모션 삭제에 실패했습니다.');
+                        }
+                    })
+                    .catch(error => {
+                        alert('프로모션 삭제에 실패했습니다.');
+                    });
+                }
+            }
+        </script>
+    </th:block>
+</body>
+</html> 

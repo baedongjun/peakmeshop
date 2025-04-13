@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>FAQ 카테고리 관리 | PeakMe Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">FAQ 카테고리 관리</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/contents/faqs}">FAQ 관리</a></li>
+                        <li class="breadcrumb-item active">FAQ 카테고리 관리</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#categoryModal">
+                        <i class="fas fa-plus me-1"></i> 카테고리 추가
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- FAQ 카테고리 목록 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>카테고리명</th>
+                                <th>순서</th>
+                                <th>상태</th>
+                                <th>작업</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="category : ${categories}">
+                                <td th:text="${category.name}">카테고리명</td>
+                                <td th:text="${category.sortOrder}">1</td>
+                                <td>
+                                    <span class="badge" th:classappend="${category.isActive ? 'bg-success' : 'bg-secondary'}"
+                                          th:text="${category.isActive ? '활성화' : '비활성화'}">활성화</span>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline-primary me-1" 
+                                            th:onclick="'editCategory(' + ${category.id} + ')'">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            th:onclick="'deleteCategory(' + ${category.id} + ')'">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- FAQ 카테고리 목록 끝 -->
+
+        <!-- 카테고리 모달 시작 -->
+        <div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="categoryModalLabel">FAQ 카테고리</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="categoryForm" class="needs-validation" novalidate>
+                            <input type="hidden" id="categoryId">
+                            <div class="form-group mb-3">
+                                <label for="name" class="form-label">카테고리명 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                                <div class="invalid-feedback">카테고리명을 입력해주세요.</div>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="sortOrder" class="form-label">순서 <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="sortOrder" name="sortOrder" required min="1">
+                                <div class="invalid-feedback">순서를 입력해주세요.</div>
+                            </div>
+                            <div class="form-group mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="isActive" name="isActive" checked>
+                                    <label class="form-check-label" for="isActive">활성화</label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-primary" onclick="saveCategory()">저장</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 카테고리 모달 끝 -->
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            // 카테고리 수정
+            function editCategory(id) {
+                fetch(`/api/contents/faq-categories/${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('categoryId').value = data.id;
+                    document.getElementById('name').value = data.name;
+                    document.getElementById('sortOrder').value = data.sortOrder;
+                    document.getElementById('isActive').checked = data.isActive;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('카테고리 정보를 불러오는데 실패했습니다.');
+                });
+            }
+
+            // 카테고리 삭제
+            function deleteCategory(id) {
+                if (confirm('정말로 이 카테고리를 삭제하시겠습니까?')) {
+                    fetch(`/api/contents/faq-categories/${id}`, {
+                        method: 'DELETE'
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            window.location.reload();
+                        } else {
+                            throw new Error('카테고리 삭제에 실패했습니다.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert(error.message);
+                    });
+                }
+            }
+
+            // 카테고리 저장
+            function saveCategory() {
+                const form = document.getElementById('categoryForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                const categoryId = document.getElementById('categoryId').value;
+                const url = categoryId ? `/api/contents/faq-categories/${categoryId}` : '/api/contents/faq-categories';
+                const method = categoryId ? 'PUT' : 'POST';
+
+                const formData = new FormData(form);
+                const data = {};
+                formData.forEach((value, key) => {
+                    if (key === 'isActive') {
+                        data[key] = formData.get(key) === 'on';
+                    } else if (value) {
+                        data[key] = value;
+                    }
+                });
+
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        throw new Error('카테고리 저장에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+            }
+
+            // 모달 닫을 때 폼 초기화
+            document.getElementById('categoryModal').addEventListener('hidden.bs.modal', function () {
+                document.getElementById('categoryForm').reset();
+                document.getElementById('categoryId').value = '';
+                document.getElementById('categoryForm').classList.remove('was-validated');
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

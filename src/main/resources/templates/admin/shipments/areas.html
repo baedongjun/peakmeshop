@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>배송 지역 설정 | PeakMe Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">배송 지역 설정</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/shipments}">배송 관리</a></li>
+                        <li class="breadcrumb-item active">배송 지역 설정</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 배송 지역 설정 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <form id="shippingAreaForm" class="needs-validation" novalidate>
+                    <!-- 기본 배송 지역 -->
+                    <div class="mb-4">
+                        <h5 class="card-title">기본 배송 지역</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="defaultArea" class="form-label">기본 배송 가능 지역 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="defaultArea" required>
+                                    <option value="">선택하세요</option>
+                                    <option value="ALL">전국</option>
+                                    <option value="MAINLAND">본토</option>
+                                    <option value="SPECIFIC">특정 지역</option>
+                                </select>
+                                <div class="invalid-feedback">기본 배송 가능 지역을 선택해주세요.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 특정 지역 설정 -->
+                    <div class="mb-4" id="specificAreasSection" style="display: none;">
+                        <h5 class="card-title">특정 지역 설정</h5>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>지역</th>
+                                        <th>배송 가능 여부</th>
+                                        <th>관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="specificAreas">
+                                    <!-- 특정 지역 설정이 여기에 동적으로 로드됩니다 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addSpecificAreaModal">
+                            지역 추가
+                        </button>
+                    </div>
+
+                    <!-- 버튼 -->
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 배송 지역 설정 끝 -->
+
+        <!-- 특정 지역 추가 모달 -->
+        <div class="modal fade" id="addSpecificAreaModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">특정 지역 추가</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="specificAreaForm">
+                            <div class="mb-3">
+                                <label for="area" class="form-label">지역 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="area" required>
+                                    <option value="">선택하세요</option>
+                                    <option value="SEOUL">서울특별시</option>
+                                    <option value="BUSAN">부산광역시</option>
+                                    <option value="DAEGU">대구광역시</option>
+                                    <option value="INCHEON">인천광역시</option>
+                                    <option value="GWANGJU">광주광역시</option>
+                                    <option value="DAEJEON">대전광역시</option>
+                                    <option value="ULSAN">울산광역시</option>
+                                    <option value="SEJONG">세종특별자치시</option>
+                                    <option value="GYEONGGI">경기도</option>
+                                    <option value="GANGWON">강원도</option>
+                                    <option value="CHUNGBUK">충청북도</option>
+                                    <option value="CHUNGNAM">충청남도</option>
+                                    <option value="JEONBUK">전라북도</option>
+                                    <option value="JEONNAM">전라남도</option>
+                                    <option value="GYEONGBUK">경상북도</option>
+                                    <option value="GYEONGNAM">경상남도</option>
+                                    <option value="JEJU">제주특별자치도</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="isAvailable" checked>
+                                    <label class="form-check-label" for="isAvailable">
+                                        배송 가능
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-primary" id="saveSpecificAreaBtn">저장</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            // 특정 지역 설정 섹션 표시/숨김
+            document.getElementById('defaultArea').addEventListener('change', function() {
+                const specificAreasSection = document.getElementById('specificAreasSection');
+                specificAreasSection.style.display = this.value === 'SPECIFIC' ? 'block' : 'none';
+            });
+
+            // 특정 지역 설정 렌더링
+            function renderSpecificAreas(areas) {
+                const tbody = document.getElementById('specificAreas');
+                tbody.innerHTML = '';
+
+                if (areas.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="3" class="text-center">특정 지역 설정이 없습니다.</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                areas.forEach(area => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${getAreaText(area.area)}</td>
+                        <td>
+                            <span class="badge ${area.isAvailable ? 'bg-success' : 'bg-danger'}">
+                                ${area.isAvailable ? '배송 가능' : '배송 불가'}
+                            </span>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-specific-area" data-id="${area.id}">
+                                삭제
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // 삭제 버튼 이벤트 리스너 추가
+                document.querySelectorAll('.delete-specific-area').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = this.dataset.id;
+                        if (confirm('이 지역 설정을 삭제하시겠습니까?')) {
+                            deleteSpecificArea(id);
+                        }
+                    });
+                });
+            }
+
+            // 지역 텍스트 반환
+            function getAreaText(area) {
+                switch (area) {
+                    case 'SEOUL': return '서울특별시';
+                    case 'BUSAN': return '부산광역시';
+                    case 'DAEGU': return '대구광역시';
+                    case 'INCHEON': return '인천광역시';
+                    case 'GWANGJU': return '광주광역시';
+                    case 'DAEJEON': return '대전광역시';
+                    case 'ULSAN': return '울산광역시';
+                    case 'SEJONG': return '세종특별자치시';
+                    case 'GYEONGGI': return '경기도';
+                    case 'GANGWON': return '강원도';
+                    case 'CHUNGBUK': return '충청북도';
+                    case 'CHUNGNAM': return '충청남도';
+                    case 'JEONBUK': return '전라북도';
+                    case 'JEONNAM': return '전라남도';
+                    case 'GYEONGBUK': return '경상북도';
+                    case 'GYEONGNAM': return '경상남도';
+                    case 'JEJU': return '제주특별자치도';
+                    default: return area;
+                }
+            }
+
+            // 특정 지역 설정 삭제
+            function deleteSpecificArea(id) {
+                fetch(`/api/shipments/areas/specific/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('특정 지역 설정 삭제에 실패했습니다.');
+                    }
+                    loadShippingAreas();
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
+
+            // 배송 지역 정보 로드
+            function loadShippingAreas() {
+                fetch('/api/shipments/areas')
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('defaultArea').value = data.defaultArea;
+                        const specificAreasSection = document.getElementById('specificAreasSection');
+                        specificAreasSection.style.display = data.defaultArea === 'SPECIFIC' ? 'block' : 'none';
+                        renderSpecificAreas(data.specificAreas || []);
+                    })
+                    .catch(error => {
+                        console.error('배송 지역 정보를 불러오는데 실패했습니다:', error);
+                        alert('배송 지역 정보를 불러오는데 실패했습니다.');
+                    });
+            }
+
+            // 폼 제출 처리
+            document.getElementById('shippingAreaForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                if (!this.checkValidity()) {
+                    e.stopPropagation();
+                    this.classList.add('was-validated');
+                    return;
+                }
+
+                const formData = {
+                    defaultArea: document.getElementById('defaultArea').value
+                };
+
+                fetch('/api/shipments/areas', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('배송 지역 설정 저장에 실패했습니다.');
+                    }
+                    alert('배송 지역 설정이 저장되었습니다.');
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            });
+
+            // 특정 지역 설정 저장
+            document.getElementById('saveSpecificAreaBtn').addEventListener('click', function() {
+                const form = document.getElementById('specificAreaForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                const formData = {
+                    area: document.getElementById('area').value,
+                    isAvailable: document.getElementById('isAvailable').checked
+                };
+
+                fetch('/api/shipments/areas/specific', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('특정 지역 설정 저장에 실패했습니다.');
+                    }
+                    $('#addSpecificAreaModal').modal('hide');
+                    form.reset();
+                    loadShippingAreas();
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            });
+
+            // 페이지 로드 시 데이터 로드
+            document.addEventListener('DOMContentLoaded', function() {
+                loadShippingAreas();
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

@@ -186,13 +186,6 @@
             let distributionChart = null;
 
             $(document).ready(function() {
-                $('#statisticsTable').DataTable({
-                    order: [[0, 'desc']],
-                    language: {
-                        url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Korean.json'
-                    }
-                });
-
                 setDefaultDateRange();
                 loadStatistics();
             });

@@ -201,7 +201,25 @@
     </div>
 
     <script th:inline="javascript">
+        // 모달 인스턴스 생성
+        let updateStatusModal;
+        let addTrackingModal;
+        
         document.addEventListener('DOMContentLoaded', function() {
+            // 배송 상태 업데이트 모달
+            const updateStatusModalElement = document.getElementById('updateStatusModal');
+            updateStatusModal = new bootstrap.Modal(updateStatusModalElement, {
+                backdrop: 'static',
+                keyboard: false
+            });
+
+            // 운송장 추가 모달
+            const addTrackingModalElement = document.getElementById('addTrackingModal');
+            addTrackingModal = new bootstrap.Modal(addTrackingModalElement, {
+                backdrop: 'static',
+                keyboard: false
+            });
+
             // 페이지 로드 시 배송 목록 가져오기
             loadShipments(0);
 
@@ -252,12 +270,12 @@
 
             // 배송 상태 변경 버튼 클릭 이벤트
             document.getElementById('updateStatusBtn').addEventListener('click', function() {
-                updateShipmentStatus();
+                updateStatus();
             });
 
             // 배송 추적 이벤트 추가 버튼 클릭 이벤트
             document.getElementById('addTrackingBtn').addEventListener('click', function() {
-                addTrackingEvent();
+                addTrackingNumber();
             });
         });
 
@@ -384,9 +402,7 @@
             document.querySelectorAll('.update-status-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const shipmentId = this.getAttribute('data-id');
-                    document.getElementById('shipmentId').value = shipmentId;
-                    const modal = new bootstrap.Modal(document.getElementById('updateStatusModal'));
-                    modal.show();
+                    showUpdateStatusModal(shipmentId);
                 });
             });
 
@@ -402,9 +418,7 @@
             document.querySelectorAll('.add-tracking-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const shipmentId = this.getAttribute('data-id');
-                    document.getElementById('trackingShipmentId').value = shipmentId;
-                    const modal = new bootstrap.Modal(document.getElementById('addTrackingModal'));
-                    modal.show();
+                    showAddTrackingModal(shipmentId);
                 });
             });
 
@@ -445,81 +459,68 @@
             pagination.appendChild(nextLi);
         }
 
-        // 배송 상태 업데이트 함수
-        function updateShipmentStatus() {
-            const shipmentId = document.getElementById('shipmentId').value;
-            const newStatus = document.getElementById('newStatus').value;
-
-            if (!newStatus) {
-                alert('새 배송 상태를 선택해주세요.');
+        // 배송 상태 업데이트
+        function updateStatus() {
+            const form = document.getElementById('updateStatusForm');
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
                 return;
             }
 
-            fetch(`/api/shipments/${shipmentId}/status?status=${encodeURIComponent(newStatus)}`, {
+            const shipmentId = document.getElementById('shipmentId').value;
+            const status = document.getElementById('newStatus').value;
+            const memo = document.getElementById('memo').value;
+
+            fetch(`/api/shipments/${shipmentId}/status`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
-                }
+                },
+                body: JSON.stringify({
+                    status: status,
+                    memo: memo
+                })
             })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('배송 상태 업데이트에 실패했습니다.');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    alert('배송 상태가 성공적으로 업데이트되었습니다.');
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('updateStatusModal'));
-                    modal.hide();
-                    loadShipments(0); // 목록 새로고침
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('배송 상태 업데이트에 실패했습니다.');
-                });
+            .then(response => {
+                if (!response.ok) throw new Error('상태 업데이트에 실패했습니다.');
+                updateStatusModal.hide();
+                location.reload();
+            })
+            .catch(error => {
+                alert(error.message);
+            });
         }
 
-        // 배송 추적 이벤트 추가 함수
-        function addTrackingEvent() {
-            const shipmentId = document.getElementById('trackingShipmentId').value;
-            const status = document.getElementById('trackingStatus').value;
-            const location = document.getElementById('trackingLocation').value;
-            const description = document.getElementById('trackingDescription').value;
-
-            if (!status || !location || !description) {
-                alert('모든 필드를 입력해주세요.');
+        // 운송장 번호 추가
+        function addTrackingNumber() {
+            const form = document.getElementById('trackingForm');
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
                 return;
             }
 
-            const trackingData = {
-                status: status,
-                location: location,
-                description: description
-            };
+            const shipmentId = document.getElementById('trackingShipmentId').value;
+            const trackingNumber = document.getElementById('trackingNumber').value;
+            const carrier = document.getElementById('carrier').value;
 
             fetch(`/api/shipments/${shipmentId}/tracking`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(trackingData)
+                body: JSON.stringify({
+                    trackingNumber: trackingNumber,
+                    carrier: carrier
+                })
             })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('배송 추적 이벤트 추가에 실패했습니다.');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    alert('배송 추적 이벤트가 성공적으로 추가되었습니다.');
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('addTrackingModal'));
-                    modal.hide();
-                    document.getElementById('addTrackingForm').reset();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('배송 추적 이벤트 추가에 실패했습니다.');
-                });
+            .then(response => {
+                if (!response.ok) throw new Error('운송장 번호 추가에 실패했습니다.');
+                addTrackingModal.hide();
+                location.reload();
+            })
+            .catch(error => {
+                alert(error.message);
+            });
         }
 
         // 배송 추적 정보 동기화 함수
@@ -590,6 +591,18 @@
             }
 
             window.open(trackingUrl, 'trackingPopup', 'width=800,height=600');
+        }
+
+        // 배송 상태 업데이트 모달 표시
+        function showUpdateStatusModal(shipmentId) {
+            document.getElementById('shipmentId').value = shipmentId;
+            updateStatusModal.show();
+        }
+
+        // 운송장 추가 모달 표시
+        function showAddTrackingModal(shipmentId) {
+            document.getElementById('trackingShipmentId').value = shipmentId;
+            addTrackingModal.show();
         }
     </script>
 </div>

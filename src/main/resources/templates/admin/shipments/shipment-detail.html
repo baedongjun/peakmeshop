@@ -328,6 +328,10 @@
   </div>
 
   <script th:inline="javascript">
+    // 모달 인스턴스 생성
+    let deleteConfirmModal;
+    let addTrackingModal;
+    
     document.addEventListener('DOMContentLoaded', function() {
       // URL에서 배송 ID 가져오기
       const pathParts = window.location.pathname.split('/');
@@ -361,24 +365,36 @@
 
       // 배송 삭제 버튼 클릭 이벤트
       document.getElementById('deleteShipmentBtn').addEventListener('click', function() {
-        const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
-        modal.show();
+        showDeleteConfirmModal();
       });
 
       // 배송 삭제 확인 버튼 클릭 이벤트
       document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
-        deleteShipment(shipmentId);
+        deleteShipment();
       });
 
       // 배송 추적 정보 추가 버튼 클릭 이벤트
       document.getElementById('addTrackingBtn').addEventListener('click', function() {
-        const modal = new bootstrap.Modal(document.getElementById('addTrackingModal'));
-        modal.show();
+        showAddTrackingModal();
       });
 
       // 배송 추적 정보 추가 제출 버튼 클릭 이벤트
       document.getElementById('submitTrackingBtn').addEventListener('click', function() {
         addTrackingEvent(shipmentId);
+      });
+
+      // 삭제 확인 모달
+      const deleteConfirmModalElement = document.getElementById('deleteConfirmModal');
+      deleteConfirmModal = new bootstrap.Modal(deleteConfirmModalElement, {
+        backdrop: 'static',
+        keyboard: false
+      });
+
+      // 운송장 추가 모달
+      const addTrackingModalElement = document.getElementById('addTrackingModal');
+      addTrackingModal = new bootstrap.Modal(addTrackingModalElement, {
+        backdrop: 'static',
+        keyboard: false
       });
     });
 
@@ -624,24 +640,20 @@
     }
 
     // 배송 삭제 함수
-    function deleteShipment(shipmentId) {
+    function deleteShipment() {
+      const shipmentId = document.getElementById('shipmentId').textContent;
+      
       fetch(`/api/shipments/${shipmentId}`, {
         method: 'DELETE'
       })
-              .then(response => {
-                if (!response.ok) {
-                  throw new Error('배송 삭제에 실패했습니다.');
-                }
-                return response;
-              })
-              .then(() => {
-                alert('배송이 성공적으로 삭제되었습니다.');
-                window.location.href = '/admin/shipments';
-              })
-              .catch(error => {
-                console.error('Error:', error);
-                alert('배송 삭제에 실패했습니다.');
-              });
+      .then(response => {
+        if (!response.ok) throw new Error('삭제에 실패했습니다.');
+        deleteConfirmModal.hide();
+        location.href = '/admin/shipments';
+      })
+      .catch(error => {
+        alert(error.message);
+      });
     }
 
     // 배송 추적 이벤트 추가 함수
@@ -708,6 +720,16 @@
       }
 
       window.open(trackingUrl, 'trackingPopup', 'width=800,height=600');
+    }
+
+    // 삭제 확인 모달 표시
+    function showDeleteConfirmModal() {
+      deleteConfirmModal.show();
+    }
+
+    // 운송장 추가 모달 표시
+    function showAddTrackingModal() {
+      addTrackingModal.show();
     }
   </script>
 </div>

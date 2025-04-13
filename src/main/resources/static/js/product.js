@@ -251,77 +251,45 @@ function addToWishlist(productId) {
         })
 }
 
-// 빠른 보기 함수
-async function quickView(productId) {
-    console.log(`상품 ID: ${productId} 빠른 보기`)
+// 모달 인스턴스 생성
+let quickViewModal;
 
-    try {
-        // 상품 상세 정보 가져오기
-        const response = await fetch(`/api/products/${productId}`)
+document.addEventListener('DOMContentLoaded', function() {
+    // 퀵뷰 모달
+    const quickViewModalElement = document.getElementById('quickViewModal');
+    quickViewModal = new bootstrap.Modal(quickViewModalElement, {
+        backdrop: 'static',
+        keyboard: false
+    });
+});
 
-        if (!response.ok) {
-            throw new Error("상품 정보를 불러오는데 실패했습니다.")
-        }
-
-        const product = await response.json()
-
-        // 모달에 상품 정보 설정
-        document.getElementById("quickViewTitle").textContent = product.name
-        document.getElementById("quickViewDescription").textContent = product.description
-        document.getElementById("quickViewImage").src = product.imageUrl || "/placeholder.svg?height=400&width=400"
-        document.getElementById("quickViewImage").alt = product.name
-
-        // 가격 설정
-        const priceElement = document.querySelector("#quickViewModal .product-price")
-        if (product.originalPrice > product.price) {
-            priceElement.innerHTML = `<span class="original-price">₩${product.originalPrice.toLocaleString()}</span> <span>₩${product.price.toLocaleString()}</span>`
-        } else {
-            priceElement.innerHTML = `<span>₩${product.price.toLocaleString()}</span>`
-        }
-
-        // 별점 설정
-        const ratingElement = document.querySelector("#quickViewModal .product-rating")
-        ratingElement.innerHTML = `
-            ${renderRatingStars(product.rating)}
-            <span class="ms-1 text-muted">(${product.rating})</span>
-        `
-
-        // 상세 정보 링크 설정
-        document.getElementById("quickViewDetails").href = `/products/${product.id}`
-
-        // 장바구니 담기 버튼 이벤트
-        document.getElementById("quickViewAddToCart").onclick = () => {
-            const size = document.getElementById("quickViewSize").value
-            const color = document.getElementById("quickViewColor").value
-            const quantity = Number.parseInt(document.getElementById("quickViewQuantity").value)
-
-            if (!size) {
-                alert("사이즈를 선택해주세요.")
-                return
-            }
-
-            if (!color) {
-                alert("색상을 선택해주세요.")
-                return
-            }
-
-            addToCart(product.id, quantity)
-
-            // 모달 닫기
-            const quickViewModalEl = document.getElementById("quickViewModal")
-            const modal = bootstrap.Modal.getInstance(quickViewModalEl)
-            if (modal) {
-                modal.hide()
-            }
-        }
-
-        // 모달 표시
-        const quickViewModal = new bootstrap.Modal(document.getElementById("quickViewModal"))
-        quickViewModal.show()
-    } catch (error) {
-        console.error("빠른 보기 오류:", error)
-        alert("상품 정보를 불러오는데 실패했습니다.")
-    }
+// 퀵뷰 모달 표시
+function showQuickView(productId) {
+    fetch(`/api/products/${productId}`)
+    .then(response => {
+        if (!response.ok) throw new Error('상품 정보를 가져오는데 실패했습니다.');
+        return response.json();
+    })
+    .then(data => {
+        document.getElementById('quickViewTitle').textContent = data.name;
+        document.getElementById('quickViewPrice').textContent = data.price.toLocaleString() + '원';
+        document.getElementById('quickViewDescription').textContent = data.description;
+        
+        const imageContainer = document.getElementById('quickViewImages');
+        imageContainer.innerHTML = '';
+        data.images.forEach(image => {
+            const img = document.createElement('img');
+            img.src = image;
+            img.alt = data.name;
+            img.className = 'img-fluid';
+            imageContainer.appendChild(img);
+        });
+        
+        quickViewModal.show();
+    })
+    .catch(error => {
+        alert(error.message);
+    });
 }
 
 // 페이지 로드 시 실행

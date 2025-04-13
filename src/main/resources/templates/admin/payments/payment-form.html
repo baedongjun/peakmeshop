@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title th:text="${payment != null ? '결제 수정' : '결제 등록'} + ' | PeakMe Shop 관리자'"></title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title" th:text="${payment != null ? '결제 수정' : '결제 등록'}"></h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/payments}">결제 관리</a></li>
+                        <li class="breadcrumb-item active" th:text="${payment != null ? '결제 수정' : '결제 등록'}"></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 결제 정보 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <form id="paymentForm" class="needs-validation" novalidate>
+                    <input type="hidden" id="paymentId" th:value="${payment?.id}">
+                    
+                    <!-- 주문 정보 -->
+                    <h5 class="card-title mb-4">주문 정보</h5>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="orderNumber" class="form-label">주문번호</label>
+                            <input type="text" class="form-control" id="orderNumber" th:value="${payment?.orderNumber}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="memberName" class="form-label">주문자명</label>
+                            <input type="text" class="form-control" id="memberName" th:value="${payment?.memberName}" readonly>
+                        </div>
+                    </div>
+
+                    <!-- 결제 정보 -->
+                    <h5 class="card-title mb-4">결제 정보</h5>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="paymentMethod" class="form-label">결제수단</label>
+                            <select class="form-select" id="paymentMethod" required>
+                                <option value="">선택하세요</option>
+                                <option value="CREDIT_CARD" th:selected="${payment?.paymentMethod == 'CREDIT_CARD'}">신용카드</option>
+                                <option value="BANK_TRANSFER" th:selected="${payment?.paymentMethod == 'BANK_TRANSFER'}">계좌이체</option>
+                                <option value="VIRTUAL_ACCOUNT" th:selected="${payment?.paymentMethod == 'VIRTUAL_ACCOUNT'}">가상계좌</option>
+                                <option value="MOBILE" th:selected="${payment?.paymentMethod == 'MOBILE'}">휴대폰결제</option>
+                            </select>
+                            <div class="invalid-feedback">결제수단을 선택해주세요.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="amount" class="form-label">결제금액</label>
+                            <input type="number" class="form-control" id="amount" th:value="${payment?.amount}" readonly>
+                        </div>
+                    </div>
+
+                    <!-- 결제 상세 정보 -->
+                    <h5 class="card-title mb-4">결제 상세 정보</h5>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="paymentDate" class="form-label">결제일</label>
+                            <input type="datetime-local" class="form-control" id="paymentDate" 
+                                   th:value="${payment?.paymentDate != null ? #temporals.format(payment.paymentDate, 'yyyy-MM-dd\'T\'HH:mm') : ''}" required>
+                            <div class="invalid-feedback">결제일을 입력해주세요.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="status" class="form-label">결제 상태</label>
+                            <select class="form-select" id="status" required>
+                                <option value="">선택하세요</option>
+                                <option value="PENDING" th:selected="${payment?.status == 'PENDING'}">결제대기</option>
+                                <option value="COMPLETED" th:selected="${payment?.status == 'COMPLETED'}">결제완료</option>
+                                <option value="FAILED" th:selected="${payment?.status == 'FAILED'}">결제실패</option>
+                                <option value="CANCELLED" th:selected="${payment?.status == 'CANCELLED'}">결제취소</option>
+                                <option value="REFUNDED" th:selected="${payment?.status == 'REFUNDED'}">환불완료</option>
+                            </select>
+                            <div class="invalid-feedback">결제 상태를 선택해주세요.</div>
+                        </div>
+                    </div>
+
+                    <!-- 결제 실패/취소/환불 정보 -->
+                    <div id="failureInfo" class="row mb-4" style="display: none;">
+                        <div class="col-md-12">
+                            <label for="failureReason" class="form-label">실패/취소/환불 사유</label>
+                            <textarea class="form-control" id="failureReason" rows="3" 
+                                      th:text="${payment?.failureReason}"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 버튼 -->
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-save"></i> 저장
+                        </button>
+                        <a th:href="@{/admin/payments}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> 취소
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 결제 정보 끝 -->
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            // 결제 상태 변경 시 실패/취소/환불 정보 표시
+            document.getElementById('status').addEventListener('change', function() {
+                const failureInfo = document.getElementById('failureInfo');
+                const status = this.value;
+                if (status === 'FAILED' || status === 'CANCELLED' || status === 'REFUNDED') {
+                    failureInfo.style.display = 'block';
+                } else {
+                    failureInfo.style.display = 'none';
+                }
+            });
+
+            // 폼 제출 처리
+            document.getElementById('paymentForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!this.checkValidity()) {
+                    e.stopPropagation();
+                    this.classList.add('was-validated');
+                    return;
+                }
+
+                const paymentId = document.getElementById('paymentId').value;
+                const url = paymentId ? `/api/payments/${paymentId}` : '/api/payments';
+                const method = paymentId ? 'PUT' : 'POST';
+
+                const formData = {
+                    paymentMethod: document.getElementById('paymentMethod').value,
+                    paymentDate: document.getElementById('paymentDate').value,
+                    status: document.getElementById('status').value,
+                    failureReason: document.getElementById('failureReason').value
+                };
+
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('결제 정보 저장에 실패했습니다.');
+                    }
+                    window.location.href = '/admin/payments';
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            });
+
+            // 페이지 로드 시 초기 상태 설정
+            document.addEventListener('DOMContentLoaded', function() {
+                const status = document.getElementById('status').value;
+                const failureInfo = document.getElementById('failureInfo');
+                if (status === 'FAILED' || status === 'CANCELLED' || status === 'REFUNDED') {
+                    failureInfo.style.display = 'block';
+                }
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

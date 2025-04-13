@@ -206,40 +206,47 @@
 
     <th:block layout:fragment="script">
         <script th:inline="javascript">
+            // 모달 인스턴스 생성
+            let cancelModal;
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                // 포인트 취소 모달
+                const cancelModalElement = document.getElementById('cancelModal');
+                cancelModal = new bootstrap.Modal(cancelModalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            });
+
             // 포인트 취소 모달 표시
-            function cancelPoint() {
-                if (confirm('정말 이 포인트를 취소하시겠습니까?')) {
-                    const modal = new bootstrap.Modal(document.getElementById('cancelModal'));
-                    document.getElementById('cancelForm').reset();
-                    modal.show();
-                }
+            function showCancelModal(pointId) {
+                document.getElementById('pointId').value = pointId;
+                cancelModal.show();
             }
 
-            // 포인트 취소 제출
-            function submitCancel() {
+            // 포인트 취소
+            function cancelPoint() {
                 const form = document.getElementById('cancelForm');
                 if (!form.checkValidity()) {
                     form.classList.add('was-validated');
                     return;
                 }
 
-                const data = {
-                    reason: document.getElementById('cancelReason').value
-                };
+                const pointId = document.getElementById('pointId').value;
+                const reason = document.getElementById('cancelReason').value;
 
-                fetch(`/api/points/admin/${/*[${point.id}]*/0}/cancel`, {
+                fetch(`/api/points/${pointId}/cancel`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify({
+                        reason: reason
+                    })
                 })
                 .then(response => {
                     if (!response.ok) throw new Error('포인트 취소에 실패했습니다.');
-                    return response.json();
-                })
-                .then(() => {
-                    alert('포인트가 취소되었습니다.');
+                    cancelModal.hide();
                     location.reload();
                 })
                 .catch(error => {

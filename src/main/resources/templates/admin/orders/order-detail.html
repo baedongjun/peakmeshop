@@ -301,30 +301,52 @@
 
     <!-- 자바스크립트 -->
     <th:block layout:fragment="script">
-        <script>
+        <script th:inline="javascript">
+            // 모달 인스턴스 생성
+            let statusModal;
+            let refundModal;
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                // 주문 상태 변경 모달
+                const statusModalElement = document.getElementById('statusModal');
+                statusModal = new bootstrap.Modal(statusModalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+
+                // 환불 처리 모달
+                const refundModalElement = document.getElementById('refundModal');
+                refundModal = new bootstrap.Modal(refundModalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            });
+
+            // 주문 상태 변경 모달 표시
             function showStatusModal(orderId) {
                 document.getElementById('orderId').value = orderId;
-                const modal = new bootstrap.Modal(document.getElementById('statusModal'));
-                modal.show();
+                statusModal.show();
             }
 
+            // 환불 처리 모달 표시
             function showRefundModal() {
-                const modal = new bootstrap.Modal(document.getElementById('refundModal'));
-                modal.show();
+                refundModal.show();
             }
 
+            // 주문 상태 변경
             function updateOrderStatus() {
-                const orderId = document.getElementById('orderId').value;
-                const newStatus = document.getElementById('newStatus').value;
-                const trackingNumber = document.getElementById('trackingNumber').value;
-                const reason = document.getElementById('statusReason').value;
-
-                if (!newStatus || !reason) {
-                    alert('모든 필수 필드를 입력해주세요.');
+                const form = document.getElementById('statusForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
                     return;
                 }
 
-                if (newStatus === 'SHIPPING' && !trackingNumber) {
+                const orderId = document.getElementById('orderId').value;
+                const status = document.getElementById('newStatus').value;
+                const trackingNumber = document.getElementById('trackingNumber').value;
+                const reason = document.getElementById('statusReason').value;
+
+                if (status === 'SHIPPING' && !trackingNumber) {
                     alert('배송중 상태로 변경 시 운송장 번호를 입력해주세요.');
                     return;
                 }
@@ -335,25 +357,22 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        status: newStatus,
+                        status: status,
                         trackingNumber: trackingNumber,
                         reason: reason
                     })
                 })
                 .then(response => {
-                    if (response.ok) {
-                        alert('주문 상태가 변경되었습니다.');
-                        location.reload();
-                    } else {
-                        alert('주문 상태 변경에 실패했습니다.');
-                    }
+                    if (!response.ok) throw new Error('주문 상태 변경에 실패했습니다.');
+                    statusModal.hide();
+                    location.reload();
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    alert('주문 상태 변경 중 오류가 발생했습니다.');
+                    alert(error.message);
                 });
             }
 
+            // 주문 취소
             function cancelOrder() {
                 if (!confirm('주문을 취소하시겠습니까?')) {
                     return;
@@ -381,15 +400,17 @@
                 });
             }
 
+            // 환불 처리
             function processRefund() {
-                const orderId = document.getElementById('orderId').value;
-                const amount = document.getElementById('refundAmount').value;
-                const reason = document.getElementById('refundReason').value;
-
-                if (!amount || !reason) {
-                    alert('모든 필수 필드를 입력해주세요.');
+                const form = document.getElementById('refundForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
                     return;
                 }
+
+                const orderId = document.getElementById('orderId').value;
+                const amount = parseInt(document.getElementById('refundAmount').value);
+                const reason = document.getElementById('refundReason').value;
 
                 fetch(`/api/admin/orders/${orderId}/refund`, {
                     method: 'POST',
@@ -397,21 +418,17 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        amount: parseInt(amount),
+                        amount: amount,
                         reason: reason
                     })
                 })
                 .then(response => {
-                    if (response.ok) {
-                        alert('환불이 처리되었습니다.');
-                        location.reload();
-                    } else {
-                        alert('환불 처리에 실패했습니다.');
-                    }
+                    if (!response.ok) throw new Error('환불 처리에 실패했습니다.');
+                    refundModal.hide();
+                    location.reload();
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    alert('환불 처리 중 오류가 발생했습니다.');
+                    alert(error.message);
                 });
             }
         </script>

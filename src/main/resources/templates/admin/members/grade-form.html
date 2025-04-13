@@ -4,7 +4,7 @@
       layout:decorate="~{layouts/admin-layout}">
 
 <head>
-    <title th:text="${grade != null ? '회원 등급 수정' : '회원 등급 등록'} + ' - Peak Me Shop 관리자'">회원 등급 등록 - Peak Me Shop 관리자</title>
+    <title th:text="${grade == null ? '회원 등급 등록' : '회원 등급 수정'} + ' | PeakMe Shop 관리자'">회원 등급 등록 | PeakMe Shop 관리자</title>
 </head>
 
 <body>
@@ -13,166 +13,151 @@
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title" th:text="${grade != null ? '회원 등급 수정' : '회원 등급 등록'}">회원 등급 등록</h3>
+                    <h3 class="page-title" th:text="${grade == null ? '회원 등급 등록' : '회원 등급 수정'}">회원 등급 등록</h3>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
-                        <li class="breadcrumb-item"><a th:href="@{/admin/members}">회원 관리</a></li>
-                        <li class="breadcrumb-item"><a th:href="@{/admin/member-grades}">회원 등급</a></li>
-                        <li class="breadcrumb-item active" th:text="${grade != null ? '등급 수정' : '등급 등록'}">등급 등록</li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/members/grades}">회원 등급 관리</a></li>
+                        <li class="breadcrumb-item active" th:text="${grade == null ? '회원 등급 등록' : '회원 등급 수정'}">회원 등급 등록</li>
                     </ul>
                 </div>
             </div>
         </div>
         <!-- 페이지 헤더 끝 -->
 
-        <!-- 등급 폼 시작 -->
+        <!-- 회원 등급 폼 시작 -->
         <div class="card">
             <div class="card-body">
-                <form id="gradeForm" th:action="${grade != null ? '/api/member-tiers/admin/' + grade.id : '/api/member-tiers/admin'}"
-                      th:method="${grade != null ? 'PUT' : 'POST'}" class="needs-validation" novalidate>
+                <form id="gradeForm" class="needs-validation" novalidate>
+                    <input type="hidden" id="gradeId" th:value="${grade?.id}">
                     
-                    <!-- 기본 정보 -->
-                    <div class="row mb-4">
+                    <div class="row">
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="name" class="required">등급명</label>
+                            <div class="form-group mb-3">
+                                <label for="name" class="form-label">등급명 <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="name" name="name" 
                                        th:value="${grade?.name}" required>
                                 <div class="invalid-feedback">등급명을 입력해주세요.</div>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="code" class="required">등급코드</label>
+                            <div class="form-group mb-3">
+                                <label for="code" class="form-label">등급코드 <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="code" name="code" 
                                        th:value="${grade?.code}" required
                                        pattern="^[A-Z][A-Z0-9_]{2,19}$"
                                        th:readonly="${grade != null}">
-                                <div class="invalid-feedback">
-                                    영문 대문자, 숫자, 언더스코어(_)만 사용 가능합니다.
-                                </div>
+                                <div class="invalid-feedback">영문 대문자, 숫자, 언더스코어(_)만 사용 가능합니다.</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 혜택 정보 -->
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="pointRate" class="required">포인트 적립률 (%)</label>
-                                <input type="number" class="form-control" id="pointRate" name="pointRate" 
-                                       th:value="${grade?.pointRate}" required
-                                       min="0" max="100" step="0.1">
-                                <div class="invalid-feedback">0~100 사이의 값을 입력해주세요.</div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="minPoints" class="form-label">최소 포인트 <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="minPoints" name="minPoints"
+                                       th:value="${grade?.minPoints}" required min="0">
+                                <div class="invalid-feedback">최소 포인트를 입력해주세요.</div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="discountRate" class="required">할인율 (%)</label>
-                                <input type="number" class="form-control" id="discountRate" name="discountRate" 
-                                       th:value="${grade?.discountRate}" required
-                                       min="0" max="100" step="0.1">
-                                <div class="invalid-feedback">0~100 사이의 값을 입력해주세요.</div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="minAmount" class="required">최소 구매금액</label>
-                                <input type="number" class="form-control" id="minAmount" name="minAmount" 
-                                       th:value="${grade?.minAmount}" required
-                                       min="0" step="1000">
-                                <div class="invalid-feedback">0 이상의 값을 입력해주세요.</div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="maxPoints" class="form-label">최대 포인트</label>
+                                <input type="number" class="form-control" id="maxPoints" name="maxPoints"
+                                       th:value="${grade?.maxPoints}" min="0">
+                                <div class="invalid-feedback">최대 포인트를 입력해주세요.</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 추가 정보 -->
-                    <div class="row mb-4">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label for="description">설명</label>
-                                <textarea class="form-control" id="description" name="description" rows="3"
-                                          th:text="${grade?.description}"></textarea>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="discountRate" class="form-label">할인율 (%) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="discountRate" name="discountRate"
+                                       th:value="${grade?.discountRate}" required min="0" max="100" step="0.1">
+                                <div class="invalid-feedback">할인율을 입력해주세요. (0-100%)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="pointAccumulationRate" class="form-label">포인트 적립율 (%) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="pointAccumulationRate" name="pointAccumulationRate"
+                                       th:value="${grade?.pointAccumulationRate}" required min="0" max="100" step="0.1">
+                                <div class="invalid-feedback">포인트 적립율을 입력해주세요. (0-100%)</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 상태 -->
-                    <div class="row mb-4">
-                        <div class="col-md-12">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="active" name="active"
-                                       th:checked="${grade == null || grade.active}">
-                                <label class="form-check-label" for="active">활성화</label>
-                            </div>
+                    <div class="form-group mb-3">
+                        <label for="description" class="form-label">설명</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"
+                                  th:text="${grade?.description}"></textarea>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isActive" name="isActive"
+                                   th:checked="${grade == null || grade.isActive}">
+                            <label class="form-check-label" for="isActive">활성화</label>
                         </div>
                     </div>
 
-                    <!-- 버튼 영역 -->
                     <div class="text-end">
-                        <a th:href="@{/admin/member-grades}" class="btn btn-secondary">취소</a>
-                        <button type="submit" class="btn btn-primary">저장</button>
+                        <a th:href="@{/admin/members/grades}" class="btn btn-secondary me-2">취소</a>
+                        <button type="button" class="btn btn-primary" onclick="saveGrade()">
+                            <span th:text="${grade == null ? '등록' : '수정'}">등록</span>
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
-        <!-- 등급 폼 끝 -->
+        <!-- 회원 등급 폼 끝 -->
     </div>
 
-    <th:block layout:fragment="script">
-        <script th:inline="javascript">
-            // 폼 유효성 검사
-            (function () {
-                'use strict'
-                var forms = document.querySelectorAll('.needs-validation')
-                Array.prototype.slice.call(forms).forEach(function (form) {
-                    form.addEventListener('submit', function (event) {
-                        if (!form.checkValidity()) {
-                            event.preventDefault()
-                            event.stopPropagation()
-                        }
-                        form.classList.add('was-validated')
-                    }, false)
-                })
-            })()
+    <th:block layout:fragment="scripts">
+        <script>
+            // 회원 등급 저장
+            function saveGrade() {
+                const form = document.getElementById('gradeForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
 
-            // 폼 제출
-            document.getElementById('gradeForm').addEventListener('submit', function(e) {
-                e.preventDefault();
+                const gradeId = document.getElementById('gradeId').value;
+                const url = gradeId ? `/api/members/grades/${gradeId}` : '/api/members/grades';
+                const method = gradeId ? 'PUT' : 'POST';
 
-                const formData = new FormData(this);
+                const formData = new FormData(form);
                 const data = {};
                 formData.forEach((value, key) => {
-                    if (key === 'active') {
-                        data[key] = value === 'on';
-                    } else if (key === 'pointRate' || key === 'discountRate') {
-                        data[key] = parseFloat(value);
-                    } else if (key === 'minAmount') {
-                        data[key] = parseInt(value);
-                    } else {
+                    if (key === 'isActive') {
+                        data[key] = formData.get(key) === 'on';
+                    } else if (value) {
                         data[key] = value;
                     }
                 });
 
-                fetch(this.action, {
-                    method: this.method,
+                fetch(url, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(data)
                 })
                 .then(response => {
-                    if (!response.ok) throw new Error('저장에 실패했습니다.');
-                    return response.json();
-                })
-                .then(() => {
-                    alert('저장되었습니다.');
-                    window.location.href = '/admin/member-grades';
+                    if (response.ok) {
+                        window.location.href = '/admin/members/grades';
+                    } else {
+                        throw new Error('회원 등급 저장에 실패했습니다.');
+                    }
                 })
                 .catch(error => {
+                    console.error('Error:', error);
                     alert(error.message);
                 });
-            });
+            }
         </script>
     </th:block>
 </body>

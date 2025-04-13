@@ -121,87 +121,94 @@
                     팝업 목록
                 </div>
                 <div class="card-body">
-                    <table id="popupsTable" class="table table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>팝업번호</th>
-                                <th>팝업정보</th>
-                                <th>표시정보</th>
-                                <th>노출정보</th>
-                                <th>노출기간</th>
-                                <th>상태</th>
-                                <th>관리</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="popup : ${popups}">
-                                <td th:text="${popup.popupNumber}"></td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <img th:src="${popup.imageUrl}" 
-                                             alt="팝업 이미지" 
-                                             style="width: 100px; height: 50px; object-fit: cover;"
-                                             class="me-2">
-                                        <div>
-                                            <strong th:text="${popup.title}"></strong>
-                                            <br>
-                                            <small class="text-muted" th:text="${popup.description}"></small>
+                    <div class="table-responsive">
+                        <table id="popupsTable" class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>팝업번호</th>
+                                    <th>팝업정보</th>
+                                    <th>표시정보</th>
+                                    <th>노출정보</th>
+                                    <th>노출기간</th>
+                                    <th>상태</th>
+                                    <th>관리</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="popup : ${popups.content}">
+                                    <td th:text="${popup.id}"></td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img th:src="${popup.imageUrl}" 
+                                                 alt="팝업 이미지" 
+                                                 style="width: 100px; height: 50px; object-fit: cover;"
+                                                 class="me-2">
+                                            <div>
+                                                <strong th:text="${popup.title}"></strong>
+                                                <br>
+                                                <small class="text-muted" th:text="${popup.description}"></small>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div th:text="${popup.displayType}"></div>
-                                    <small class="text-muted">크기: <span th:text="${popup.width + 'x' + popup.height}"></span></small>
-                                    <br>
-                                    <small class="text-muted">우선순위: <span th:text="${popup.priority}"></span></small>
-                                </td>
-                                <td>
-                                    <div>노출수: <span th:text="${popup.impressions}">0</span></div>
-                                    <div>닫기수: <span th:text="${popup.closes}">0</span></div>
-                                    <div>오늘보지않기: <span th:text="${popup.hideTodays}">0</span></div>
-                                </td>
-                                <td>
-                                    <div th:text="${#temporals.format(popup.startDate, 'yyyy-MM-dd')}"></div>
-                                    <div>~</div>
-                                    <div th:text="${#temporals.format(popup.endDate, 'yyyy-MM-dd')}"></div>
-                                </td>
-                                <td>
-                                    <span th:class="${'badge bg-' + 
-                                        (popup.status == 'ACTIVE' ? 'success' : 
-                                        (popup.status == 'SCHEDULED' ? 'warning' : 'secondary'))}"
-                                          th:text="${popup.status}">
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="btn-group">
-                                        <button type="button" class="btn btn-sm btn-info"
-                                                th:onclick="'previewPopup(\'' + ${popup.popupNumber} + '\')'">미리보기</button>
-                                        <button type="button" class="btn btn-sm btn-primary"
-                                                th:onclick="'showEditModal(\'' + ${popup.popupNumber} + '\')'">수정</button>
-                                        <button type="button" class="btn btn-sm btn-danger"
-                                                th:onclick="'deletePopup(\'' + ${popup.popupNumber} + '\')'">삭제</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                    </td>
+                                    <td>
+                                        <div th:text="${popup.displayType}"></div>
+                                        <small class="text-muted">크기: <span th:text="${popup.width + 'x' + popup.height}"></span></small>
+                                        <br>
+                                        <small class="text-muted">우선순위: <span th:text="${popup.priority}"></span></small>
+                                    </td>
+                                    <td>
+                                        <div>노출수: <span th:text="${popup.impressions}">0</span></div>
+                                        <div>닫기수: <span th:text="${popup.closes}">0</span></div>
+                                        <div>오늘보지않기: <span th:text="${popup.hideTodays}">0</span></div>
+                                    </td>
+                                    <td>
+                                        <div th:text="${#temporals.format(popup.startDate, 'yyyy-MM-dd HH:mm')}"></div>
+                                        <div>~</div>
+                                        <div th:text="${#temporals.format(popup.endDate, 'yyyy-MM-dd HH:mm')}"></div>
+                                    </td>
+                                    <td>
+                                        <span th:class="${'badge bg-' + 
+                                            (popup.status == 'ACTIVE' ? 'success' : 
+                                            (popup.status == 'SCHEDULED' ? 'warning' : 'secondary'))}"
+                                              th:text="${popup.status}">
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a th:href="@{/admin/popups/{id}/preview(id=${popup.id})}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-external-link-alt"></i>
+                                            </a>
+                                            <a th:href="@{/admin/popups/{id}/edit(id=${popup.id})}" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a th:href="@{/admin/popups/{id}/delete(id=${popup.id})}" class="btn btn-sm btn-danger"
+                                               th:onclick="'return confirm(\'정말 삭제하시겠습니까?\')'">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
                     <!-- 페이지네이션 -->
-                    <nav aria-label="Page navigation" th:if="${popups.totalPages > 0}">
-                        <ul class="pagination justify-content-center">
-                            <li class="page-item" th:classappend="${!popups.hasPrevious()} ? disabled">
-                                <a class="page-link" th:href="@{/admin/popups(page=${popups.number - 1})}">이전</a>
-                            </li>
-                            <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, popups.totalPages - 1)}"
-                                th:classappend="${pageNum == popups.number} ? active">
-                                <a class="page-link" th:href="@{/admin/popups(page=${pageNum})}" 
-                                   th:text="${pageNum + 1}"></a>
-                            </li>
-                            <li class="page-item" th:classappend="${!popups.hasNext()} ? disabled">
-                                <a class="page-link" th:href="@{/admin/popups(page=${popups.number + 1})}">다음</a>
-                            </li>
-                        </ul>
-                    </nav>
+                    <div class="d-flex justify-content-center">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination">
+                                <li class="page-item" th:classappend="${popups.first} ? 'disabled'">
+                                    <a class="page-link" th:href="@{/admin/popups(page=${popups.number - 1})}">이전</a>
+                                </li>
+                                <li class="page-item" th:each="page : ${#numbers.sequence(1, popups.totalPages)}"
+                                    th:classappend="${page == popups.number + 1} ? 'active'">
+                                    <a class="page-link" th:href="@{/admin/popups(page=${page - 1})}" th:text="${page}"></a>
+                                </li>
+                                <li class="page-item" th:classappend="${popups.last} ? 'disabled'">
+                                    <a class="page-link" th:href="@{/admin/popups(page=${popups.number + 1})}">다음</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
                 </div>
             </div>
         </div>
@@ -378,14 +385,15 @@
                 document.getElementById('popupNumber').value = '';
                 document.getElementById('imagePreview').src = '/images/no-image.png';
                 
-                const modal = new bootstrap.Modal(document.getElementById('popupModal'));
+                const modalElement = document.getElementById('popupModal');
+                const modal = new bootstrap.Modal(modalElement);
                 modal.show();
             }
 
             function showEditModal(popupNumber) {
                 document.getElementById('modalTitle').textContent = '팝업 수정';
                 
-                fetch(`/api/admin/popups/${popupNumber}`)
+                fetch(`/api/popups/${popupNumber}`)
                     .then(response => response.json())
                     .then(data => {
                         document.getElementById('popupNumber').value = data.popupNumber;
@@ -404,7 +412,8 @@
                         document.getElementById('showTodayCheck').checked = data.showTodayCheck;
                         document.getElementById('showCloseButton').checked = data.showCloseButton;
 
-                        const modal = new bootstrap.Modal(document.getElementById('popupModal'));
+                        const modalElement = document.getElementById('popupModal');
+                        const modal = new bootstrap.Modal(modalElement);
                         modal.show();
                     })
                     .catch(error => {
@@ -414,7 +423,7 @@
             }
 
             function previewPopup(popupNumber) {
-                fetch(`/api/admin/popups/${popupNumber}`)
+                fetch(`/api/popups/${popupNumber}`)
                     .then(response => response.json())
                     .then(data => {
                         const preview = document.getElementById('popupPreview');
@@ -437,7 +446,8 @@
                         `;
                         preview.innerHTML = html;
 
-                        const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+                        const modalElement = document.getElementById('previewModal');
+                        const modal = new bootstrap.Modal(modalElement);
                         modal.show();
                     })
                     .catch(error => {
@@ -450,7 +460,7 @@
                 const formData = new FormData(document.getElementById('popupForm'));
                 const popupNumber = document.getElementById('popupNumber').value;
                 const method = popupNumber ? 'PUT' : 'POST';
-                const url = popupNumber ? `/api/admin/popups/${popupNumber}` : '/api/admin/popups';
+                const url = popupNumber ? `/api/popups/${popupNumber}` : '/api/popups';
 
                 fetch(url, {
                     method: method,
@@ -475,7 +485,7 @@
                     return;
                 }
 
-                fetch(`/api/admin/popups/${popupNumber}`, {
+                fetch(`/api/popups/${popupNumber}`, {
                     method: 'DELETE'
                 })
                 .then(response => {

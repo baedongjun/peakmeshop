@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>FAQ 관리 | PeakMe Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">FAQ 관리</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item active">FAQ 관리</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a th:href="@{/admin/faqs/form}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> FAQ 등록
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 검색 폼 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <form id="searchForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="keyword" class="form-label">검색어</label>
+                        <input type="text" class="form-control" id="keyword" placeholder="질문 또는 답변">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="category" class="form-label">카테고리</label>
+                        <select class="form-select" id="category">
+                            <option value="">전체</option>
+                            <option value="ORDER">주문/결제</option>
+                            <option value="DELIVERY">배송</option>
+                            <option value="RETURN">반품/교환</option>
+                            <option value="PRODUCT">상품</option>
+                            <option value="MEMBER">회원</option>
+                            <option value="ETC">기타</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">상태</label>
+                        <select class="form-select" id="status">
+                            <option value="">전체</option>
+                            <option value="ACTIVE">활성</option>
+                            <option value="INACTIVE">비활성</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sort" class="form-label">정렬</label>
+                        <select class="form-select" id="sort">
+                            <option value="createdAt,desc">최신순</option>
+                            <option value="createdAt,asc">오래된순</option>
+                            <option value="sortOrder,asc">정렬순</option>
+                        </select>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="button" class="btn btn-secondary me-2" onclick="resetSearch()">
+                            <i class="fas fa-undo"></i> 초기화
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> 검색
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 검색 폼 끝 -->
+
+        <!-- FAQ 목록 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">번호</th>
+                                <th>카테고리</th>
+                                <th>질문</th>
+                                <th style="width: 100px;">정렬순서</th>
+                                <th style="width: 100px;">상태</th>
+                                <th style="width: 150px;">등록일</th>
+                                <th style="width: 120px;">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="faqList">
+                            <!-- FAQ 목록이 여기에 동적으로 추가됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 페이지네이션 -->
+                <nav aria-label="FAQ 목록 페이지네이션">
+                    <ul class="pagination justify-content-center" id="pagination">
+                        <!-- 페이지네이션이 여기에 동적으로 추가됩니다 -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        <!-- FAQ 목록 끝 -->
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            let currentPage = 1;
+            const pageSize = 10;
+
+            // FAQ 목록 로드
+            function loadFaqs(page = 1) {
+                currentPage = page;
+                const params = new URLSearchParams({
+                    page: page,
+                    size: pageSize,
+                    keyword: document.getElementById('keyword').value,
+                    category: document.getElementById('category').value,
+                    status: document.getElementById('status').value,
+                    sort: document.getElementById('sort').value
+                });
+
+                fetch(`/api/faqs?${params}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        renderFaqList(data.content);
+                        renderPagination(data.totalPages, page);
+                    })
+                    .catch(error => {
+                        console.error('FAQ 목록을 불러오는데 실패했습니다:', error);
+                        alert('FAQ 목록을 불러오는데 실패했습니다.');
+                    });
+            }
+
+            // FAQ 목록 렌더링
+            function renderFaqList(faqs) {
+                const tbody = document.getElementById('faqList');
+                tbody.innerHTML = '';
+
+                if (faqs.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center">등록된 FAQ가 없습니다.</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                faqs.forEach(faq => {
+                    const category = getCategoryLabel(faq.category);
+                    const statusBadge = getStatusBadge(faq.status);
+                    
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${faq.id}</td>
+                            <td>${category}</td>
+                            <td>${faq.question}</td>
+                            <td>${faq.sortOrder}</td>
+                            <td>${statusBadge}</td>
+                            <td>${new Date(faq.createdAt).toLocaleDateString()}</td>
+                            <td>
+                                <a href="/admin/faqs/${faq.id}" class="btn btn-sm btn-info me-1">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-danger" onclick="deleteFaq(${faq.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // 카테고리 라벨 생성
+            function getCategoryLabel(category) {
+                const categories = {
+                    'ORDER': '주문/결제',
+                    'DELIVERY': '배송',
+                    'RETURN': '반품/교환',
+                    'PRODUCT': '상품',
+                    'MEMBER': '회원',
+                    'ETC': '기타'
+                };
+                return categories[category] || category;
+            }
+
+            // 상태 뱃지 생성
+            function getStatusBadge(status) {
+                const badges = {
+                    'ACTIVE': '<span class="badge bg-success">활성</span>',
+                    'INACTIVE': '<span class="badge bg-secondary">비활성</span>'
+                };
+                return badges[status] || '';
+            }
+
+            // 페이지네이션 렌더링
+            function renderPagination(totalPages, currentPage) {
+                const pagination = document.getElementById('pagination');
+                pagination.innerHTML = '';
+
+                // 이전 페이지 버튼
+                pagination.innerHTML += `
+                    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="loadFaqs(${currentPage - 1})">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                `;
+
+                // 페이지 번호
+                for (let i = 1; i <= totalPages; i++) {
+                    pagination.innerHTML += `
+                        <li class="page-item ${i === currentPage ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="loadFaqs(${i})">${i}</a>
+                        </li>
+                    `;
+                }
+
+                // 다음 페이지 버튼
+                pagination.innerHTML += `
+                    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="loadFaqs(${currentPage + 1})">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                `;
+            }
+
+            // FAQ 삭제
+            function deleteFaq(faqId) {
+                if (!confirm('정말로 이 FAQ를 삭제하시겠습니까?')) {
+                    return;
+                }
+
+                fetch(`/api/faqs/${faqId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('FAQ 삭제에 실패했습니다.');
+                    }
+                    loadFaqs(currentPage);
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
+
+            // 검색 초기화
+            function resetSearch() {
+                document.getElementById('searchForm').reset();
+                loadFaqs(1);
+            }
+
+            // 검색 폼 제출
+            document.getElementById('searchForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                loadFaqs(1);
+            });
+
+            // 페이지 로드 시 FAQ 목록 로드
+            document.addEventListener('DOMContentLoaded', function() {
+                loadFaqs(1);
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

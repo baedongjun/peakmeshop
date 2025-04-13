@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>팝업 미리보기</title>
+    <th:block th:replace="~{fragments/admin/head :: head}"></th:block>
+    <style>
+        .popup-preview {
+            position: fixed;
+            z-index: 9999;
+            background-color: v-bind(popup.backgroundColor);
+            color: v-bind(popup.textColor);
+            border: v-bind(popup.borderWidth + 'px solid ' + popup.borderColor);
+            border-radius: v-bind(popup.borderRadius);
+            box-shadow: v-bind(popup.shadowX + 'px ' + popup.shadowY + 'px ' + popup.shadowBlur + 'px ' + popup.shadowSpread + 'px ' + popup.shadowColor);
+            width: v-bind(popup.width + 'px');
+            height: v-bind(popup.height + 'px');
+            left: v-bind(popup.positionX + 'px');
+            top: v-bind(popup.positionY + 'px');
+            overflow: v-bind(popup.isScrollable ? 'auto' : 'hidden');
+            resize: v-bind(popup.isResizable ? 'both' : 'none');
+        }
+        .popup-header {
+            padding: 10px;
+            background-color: rgba(0,0,0,0.1);
+            cursor: v-bind(popup.isDraggable ? 'move' : 'default');
+        }
+        .popup-content {
+            padding: 15px;
+        }
+        .popup-close {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="popup-preview" th:style="'width: ' + ${popup.width} + 'px; height: ' + ${popup.height} + 'px; left: ' + ${popup.positionX} + 'px; top: ' + ${popup.positionY} + 'px; background-color: ' + ${popup.backgroundColor} + '; color: ' + ${popup.textColor} + '; border: ' + ${popup.borderWidth} + 'px solid ' + ${popup.borderColor} + '; border-radius: ' + ${popup.borderRadius} + '; box-shadow: ' + ${popup.shadowX} + 'px ' + ${popup.shadowY} + 'px ' + ${popup.shadowBlur} + 'px ' + ${popup.shadowSpread} + 'px ' + ${popup.shadowColor} + '; overflow: ' + (${popup.isScrollable} ? 'auto' : 'hidden') + '; resize: ' + (${popup.isResizable} ? 'both' : 'none') + ';'">
+        <div class="popup-header" th:style="'cursor: ' + (${popup.isDraggable} ? 'move' : 'default')">
+            <h5 th:text="${popup.title}"></h5>
+            <span class="popup-close" onclick="window.close()">×</span>
+        </div>
+        <div class="popup-content">
+            <div th:if="${popup.imageUrl}">
+                <img th:src="${popup.imageUrl}" class="img-fluid" alt="팝업 이미지">
+            </div>
+            <div th:utext="${popup.content}"></div>
+            <div th:if="${popup.linkUrl}" class="mt-3">
+                <a th:href="${popup.linkUrl}" 
+                   th:target="${popup.isNewWindow} ? '_blank' : '_self'"
+                   class="btn btn-primary">자세히 보기</a>
+            </div>
+        </div>
+    </div>
+
+    <th:block th:replace="~{fragments/admin/scripts :: scripts}"></th:block>
+    <script th:if="${popup.isDraggable}">
+        document.addEventListener('DOMContentLoaded', function() {
+            const popup = document.querySelector('.popup-preview');
+            const header = document.querySelector('.popup-header');
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let initialX;
+            let initialY;
+            let xOffset = 0;
+            let yOffset = 0;
+
+            header.addEventListener('mousedown', dragStart);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', dragEnd);
+
+            function dragStart(e) {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+
+                if (e.target === header) {
+                    isDragging = true;
+                }
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+
+                    xOffset = currentX;
+                    yOffset = currentY;
+
+                    setTranslate(currentX, currentY, popup);
+                }
+            }
+
+            function dragEnd(e) {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+            }
+
+            function setTranslate(xPos, yPos, el) {
+                el.style.transform = 'translate3d(' + xPos + 'px, ' + yPos + 'px, 0)';
+            }
+        });
+    </script>
+</body>
+</html> 

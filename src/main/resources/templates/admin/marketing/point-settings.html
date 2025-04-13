@@ -2,187 +2,128 @@
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/admin-layout}">
+
 <head>
-    <title>포인트/마일리지 설정 - Peak Me Shop 관리자</title>
+    <title>포인트 설정 | PeakMe Shop 관리자</title>
 </head>
+
 <body>
-<div layout:fragment="content">
-    <!-- 페이지 헤더 시작 -->
-    <div class="page-header">
-        <div class="row align-items-center">
-            <div class="col">
-                <h3 class="page-title">포인트/마일리지 설정</h3>
-                <ul class="breadcrumb">
-                    <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
-                    <li class="breadcrumb-item"><a th:href="@{/admin/points}">포인트/마일리지 관리</a></li>
-                    <li class="breadcrumb-item active">포인트/마일리지 설정</li>
-                </ul>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">포인트 설정</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/marketing/points}">포인트 관리</a></li>
+                        <li class="breadcrumb-item active">포인트 설정</li>
+                    </ul>
+                </div>
             </div>
         </div>
-    </div>
-    <!-- 페이지 헤더 끝 -->
+        <!-- 페이지 헤더 끝 -->
 
-    <!-- 포인트 설정 폼 시작 -->
-    <div class="card">
-        <div class="card-header">
-            <h5 class="card-title">기본 설정</h5>
+        <!-- 포인트 설정 폼 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <form id="pointSettingsForm" class="needs-validation" novalidate>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="earnRate" class="form-label">적립율 (%) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="earnRate" name="earnRate"
+                                       th:value="${settings?.earnRate}" required min="0" max="100" step="0.1">
+                                <div class="invalid-feedback">적립율을 0-100% 사이로 입력해주세요.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="minEarnAmount" class="form-label">최소 적립 금액 <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="minEarnAmount" name="minEarnAmount"
+                                       th:value="${settings?.minEarnAmount}" required min="0">
+                                <div class="invalid-feedback">최소 적립 금액을 입력해주세요.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="maxEarnAmount" class="form-label">최대 적립 금액 <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="maxEarnAmount" name="maxEarnAmount"
+                                       th:value="${settings?.maxEarnAmount}" required min="0">
+                                <div class="invalid-feedback">최대 적립 금액을 입력해주세요.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="expiryMonths" class="form-label">유효기간 (개월) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="expiryMonths" name="expiryMonths"
+                                       th:value="${settings?.expiryMonths}" required min="1" max="36">
+                                <div class="invalid-feedback">유효기간을 1-36개월 사이로 입력해주세요.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isActive" name="isActive"
+                                   th:checked="${settings == null || settings.isActive}">
+                            <label class="form-check-label" for="isActive">활성화</label>
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <a th:href="@{/admin/marketing/points}" class="btn btn-secondary me-2">취소</a>
+                        <button type="button" class="btn btn-primary" onclick="savePointSettings()">저장</button>
+                    </div>
+                </form>
+            </div>
         </div>
-        <div class="card-body">
-            <form id="pointSettingsForm" th:action="@{/api/admin/points/settings}" method="POST">
-                <!-- 적립 설정 -->
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="required">구매 적립률 (%)</label>
-                            <input type="number" class="form-control" name="purchasePointRate" required
-                                   th:value="${settings.purchasePointRate}"
-                                   min="0" max="100" step="0.1">
-                            <small class="form-text text-muted">상품 구매 시 적립되는 포인트 비율</small>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="required">리뷰 작성 포인트</label>
-                            <input type="number" class="form-control" name="reviewPoint" required
-                                   th:value="${settings.reviewPoint}"
-                                   min="0">
-                            <small class="form-text text-muted">상품 리뷰 작성 시 지급되는 포인트</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="required">회원가입 포인트</label>
-                            <input type="number" class="form-control" name="signupPoint" required
-                                   th:value="${settings.signupPoint}"
-                                   min="0">
-                            <small class="form-text text-muted">신규 회원가입 시 지급되는 포인트</small>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="required">추천인 포인트</label>
-                            <input type="number" class="form-control" name="referralPoint" required
-                                   th:value="${settings.referralPoint}"
-                                   min="0">
-                            <small class="form-text text-muted">추천인 등록 시 지급되는 포인트</small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 사용 설정 -->
-                <h5 class="mt-4">사용 설정</h5>
-                <hr>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="required">최소 사용 포인트</label>
-                            <input type="number" class="form-control" name="minimumUsePoint" required
-                                   th:value="${settings.minimumUsePoint}"
-                                   min="0">
-                            <small class="form-text text-muted">포인트 사용이 가능한 최소 금액</small>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="required">최대 사용 비율 (%)</label>
-                            <input type="number" class="form-control" name="maximumUseRate" required
-                                   th:value="${settings.maximumUseRate}"
-                                   min="0" max="100">
-                            <small class="form-text text-muted">주문 금액 대비 최대 사용 가능 비율</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="required">사용 단위</label>
-                            <input type="number" class="form-control" name="useUnit" required
-                                   th:value="${settings.useUnit}"
-                                   min="1">
-                            <small class="form-text text-muted">포인트 사용 가능한 단위 (예: 100)</small>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="required">최소 주문 금액</label>
-                            <input type="number" class="form-control" name="minimumOrderAmount" required
-                                   th:value="${settings.minimumOrderAmount}"
-                                   min="0">
-                            <small class="form-text text-muted">포인트 사용이 가능한 최소 주문 금액</small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 유효기간 설정 -->
-                <h5 class="mt-4">유효기간 설정</h5>
-                <hr>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="required">포인트 유효기간 (개월)</label>
-                            <input type="number" class="form-control" name="expiryMonths" required
-                                   th:value="${settings.expiryMonths}"
-                                   min="0">
-                            <small class="form-text text-muted">0 입력 시 유효기간 없음</small>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label>소멸 예정 알림 (일)</label>
-                            <input type="number" class="form-control" name="expiryNotifyDays"
-                                   th:value="${settings.expiryNotifyDays}"
-                                   min="0">
-                            <small class="form-text text-muted">소멸 예정 포인트 알림 발송 기준일</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-right mt-4">
-                    <a th:href="@{/admin/points}" class="btn btn-secondary">취소</a>
-                    <button type="submit" class="btn btn-primary">저장</button>
-                </div>
-            </form>
-        </div>
+        <!-- 포인트 설정 폼 끝 -->
     </div>
-    <!-- 포인트 설정 폼 끝 -->
-</div>
 
-<!-- 포인트 설정 스크립트 -->
-<th:block layout:fragment="script">
-    <script th:inline="javascript">
-        document.getElementById('pointSettingsForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const data = {};
-            formData.forEach((value, key) => {
-                data[key] = value;
-            });
-
-            fetch(this.action, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            }).then(response => {
-                if (response.ok) {
-                    alert('설정이 저장되었습니다.');
-                    window.location.href = '/admin/points';
-                } else {
-                    throw new Error('설정 저장에 실패했습니다.');
+    <th:block layout:fragment="scripts">
+        <script>
+            // 포인트 설정 저장
+            function savePointSettings() {
+                const form = document.getElementById('pointSettingsForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
                 }
-            }).catch(error => {
-                console.error('Error:', error);
-                alert(error.message);
-            });
-        });
-    </script>
-</th:block>
+
+                const formData = new FormData(form);
+                const data = {};
+                formData.forEach((value, key) => {
+                    if (key === 'isActive') {
+                        data[key] = formData.get(key) === 'on';
+                    } else if (value) {
+                        data[key] = value;
+                    }
+                });
+
+                fetch('/api/marketing/points/settings', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/admin/marketing/points';
+                    } else {
+                        throw new Error('포인트 설정 저장에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+            }
+        </script>
+    </th:block>
 </body>
 </html> 

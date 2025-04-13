@@ -15,13 +15,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class PopupServiceImpl implements PopupService {
 
     private final PopupRepository popupRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public Page<PopupDTO> getAllPopups(Pageable pageable) {
         return popupRepository.findAll(pageable)
                 .map(this::convertToDTO);
@@ -36,87 +37,107 @@ public class PopupServiceImpl implements PopupService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PopupDTO getPopupById(Long id) {
         return popupRepository.findById(id)
                 .map(this::convertToDTO)
-                .orElseThrow(() -> new RuntimeException("Popup not found"));
+                .orElseThrow(() -> new RuntimeException("Popup not found with id: " + id));
     }
 
     @Override
-    @Transactional
     public PopupDTO createPopup(PopupDTO popupDTO) {
         Popup popup = convertToEntity(popupDTO);
-        popup = popupRepository.save(popup);
-        return convertToDTO(popup);
+        return convertToDTO(popupRepository.save(popup));
     }
 
     @Override
-    @Transactional
     public PopupDTO updatePopup(Long id, PopupDTO popupDTO) {
-        Popup popup = popupRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Popup not found"));
+        Popup existingPopup = popupRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Popup not found with id: " + id));
 
-        popup.setTitle(popupDTO.getTitle());
-        popup.setContent(popupDTO.getContent());
-        popup.setImageUrl(popupDTO.getImageUrl());
-        popup.setLinkUrl(popupDTO.getLinkUrl());
-        popup.setTarget(popupDTO.getTarget());
-        popup.setWidth(popupDTO.getWidth());
-        popup.setHeight(popupDTO.getHeight());
-        popup.setPosition(popupDTO.getPosition());
-        popup.setOrder(popupDTO.getOrder());
-        popup.setStartDateTime(popupDTO.getStartDateTime());
-        popup.setEndDateTime(popupDTO.getEndDateTime());
-        popup.setIsActive(popupDTO.getIsActive());
-        popup.setDeviceType(popupDTO.getDeviceType());
-        popup.setShowTodayClose(popupDTO.getShowTodayClose());
-
-        popup = popupRepository.save(popup);
-        return convertToDTO(popup);
+        updateEntityFromDTO(existingPopup, popupDTO);
+        return convertToDTO(popupRepository.save(existingPopup));
     }
 
     @Override
-    @Transactional
     public void deletePopup(Long id) {
         popupRepository.deleteById(id);
     }
 
+    @Override
+    public void togglePopupStatus(Long id) {
+        Popup popup = popupRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Popup not found with id: " + id));
+        popup.setActive(!popup.isActive());
+        popupRepository.save(popup);
+    }
+
     private PopupDTO convertToDTO(Popup popup) {
-        PopupDTO dto = new PopupDTO();
-        dto.setId(popup.getId());
-        dto.setTitle(popup.getTitle());
-        dto.setContent(popup.getContent());
-        dto.setImageUrl(popup.getImageUrl());
-        dto.setLinkUrl(popup.getLinkUrl());
-        dto.setTarget(popup.getTarget());
-        dto.setWidth(popup.getWidth());
-        dto.setHeight(popup.getHeight());
-        dto.setPosition(popup.getPosition());
-        dto.setOrder(popup.getOrder());
-        dto.setStartDateTime(popup.getStartDateTime());
-        dto.setEndDateTime(popup.getEndDateTime());
-        dto.setIsActive(popup.getIsActive());
-        dto.setDeviceType(popup.getDeviceType());
-        dto.setShowTodayClose(popup.getShowTodayClose());
-        return dto;
+        return PopupDTO.builder()
+                .id(popup.getId())
+                .title(popup.getTitle())
+                .content(popup.getContent())
+                .imageUrl(popup.getImageUrl())
+                .linkUrl(popup.getLinkUrl())
+                .sunser(popup.getSunser())
+                .width(popup.getWidth())
+                .height(popup.getHeight())
+                .positionX(popup.getPositionX())
+                .positionY(popup.getPositionY())
+                .startDateTime(popup.getStartDateTime())
+                .endDateTime(popup.getEndDateTime())
+                .isActive(popup.isActive())
+                .isNewWindow(popup.isNewWindow())
+                .isScrollable(popup.isScrollable())
+                .isResizable(popup.isResizable())
+                .isDraggable(popup.isDraggable())
+                .backgroundColor(popup.getBackgroundColor())
+                .textColor(popup.getTextColor())
+                .borderColor(popup.getBorderColor())
+                .borderWidth(popup.getBorderWidth())
+                .borderRadius(popup.getBorderRadius())
+                .shadowColor(popup.getShadowColor())
+                .shadowBlur(popup.getShadowBlur())
+                .shadowSpread(popup.getShadowSpread())
+                .shadowX(popup.getShadowX())
+                .shadowY(popup.getShadowY())
+                .createdAt(popup.getCreatedAt())
+                .updatedAt(popup.getUpdatedAt())
+                .build();
     }
 
     private Popup convertToEntity(PopupDTO dto) {
         Popup popup = new Popup();
+        updateEntityFromDTO(popup, dto);
+        return popup;
+    }
+
+    private void updateEntityFromDTO(Popup popup, PopupDTO dto) {
         popup.setTitle(dto.getTitle());
         popup.setContent(dto.getContent());
         popup.setImageUrl(dto.getImageUrl());
         popup.setLinkUrl(dto.getLinkUrl());
-        popup.setTarget(dto.getTarget());
+        popup.setSunser(dto.getSunser());
         popup.setWidth(dto.getWidth());
         popup.setHeight(dto.getHeight());
-        popup.setPosition(dto.getPosition());
-        popup.setOrder(dto.getOrder());
+        popup.setPositionX(dto.getPositionX());
+        popup.setPositionY(dto.getPositionY());
         popup.setStartDateTime(dto.getStartDateTime());
         popup.setEndDateTime(dto.getEndDateTime());
-        popup.setIsActive(dto.getIsActive());
-        popup.setDeviceType(dto.getDeviceType());
-        popup.setShowTodayClose(dto.getShowTodayClose());
-        return popup;
+        popup.setActive(dto.isActive());
+        popup.setNewWindow(dto.isNewWindow());
+        popup.setScrollable(dto.isScrollable());
+        popup.setResizable(dto.isResizable());
+        popup.setDraggable(dto.isDraggable());
+        popup.setBackgroundColor(dto.getBackgroundColor());
+        popup.setTextColor(dto.getTextColor());
+        popup.setBorderColor(dto.getBorderColor());
+        popup.setBorderWidth(dto.getBorderWidth());
+        popup.setBorderRadius(dto.getBorderRadius());
+        popup.setShadowColor(dto.getShadowColor());
+        popup.setShadowBlur(dto.getShadowBlur());
+        popup.setShadowSpread(dto.getShadowSpread());
+        popup.setShadowX(dto.getShadowX());
+        popup.setShadowY(dto.getShadowY());
     }
 } 

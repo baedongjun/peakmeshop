@@ -163,13 +163,88 @@
     <!-- 자바스크립트 -->
     <th:block layout:fragment="script">
         <script src="https://cdn.jsdelivr.net/npm/nestable2/jquery.nestable.min.js"></script>
-        <script>
-            let menuModal = null;
+        <script th:inline="javascript">
+            // 모달 인스턴스 생성
+            let menuModal;
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                // 메뉴 등록/수정 모달
+                const menuModalElement = document.getElementById('menuModal');
+                menuModal = new bootstrap.Modal(menuModalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            });
+
+            // 메뉴 등록/수정 모달 표시
+            function showMenuModal(menuId) {
+                const form = document.getElementById('menuForm');
+                form.reset();
+                form.classList.remove('was-validated');
+
+                if (menuId) {
+                    fetch(`/api/menus/${menuId}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('메뉴 정보를 가져오는데 실패했습니다.');
+                        return response.json();
+                    })
+                    .then(data => {
+                        document.getElementById('menuId').value = data.id;
+                        document.getElementById('name').value = data.name;
+                        document.getElementById('url').value = data.url;
+                        document.getElementById('order').value = data.order;
+                        document.getElementById('isActive').checked = data.isActive;
+                        
+                        menuModal.show();
+                    })
+                    .catch(error => {
+                        alert(error.message);
+                    });
+                } else {
+                    document.getElementById('menuId').value = '';
+                    menuModal.show();
+                }
+            }
+
+            // 메뉴 저장
+            function saveMenu() {
+                const form = document.getElementById('menuForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                const menuId = document.getElementById('menuId').value;
+                const data = {
+                    name: document.getElementById('name').value,
+                    url: document.getElementById('url').value,
+                    order: parseInt(document.getElementById('order').value),
+                    isActive: document.getElementById('isActive').checked
+                };
+
+                const url = menuId ? `/api/menus/${menuId}` : '/api/menus';
+                const method = menuId ? 'PUT' : 'POST';
+
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('메뉴 저장에 실패했습니다.');
+                    menuModal.hide();
+                    location.reload();
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
+
             let menuTree = null;
 
             $(document).ready(function() {
-                menuModal = new bootstrap.Modal(document.getElementById('menuModal'));
-                
                 menuTree = $('#menuTree').nestable({
                     group: 1,
                     maxDepth: 2
@@ -209,45 +284,6 @@
                 }
 
                 menuModal.show();
-            }
-
-            function saveMenu() {
-                const form = document.getElementById('menuForm');
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
-
-                const formData = new FormData(form);
-                const menuData = {
-                    id: formData.get('id') || null,
-                    name: formData.get('name'),
-                    parentId: formData.get('parentId') || null,
-                    url: formData.get('url'),
-                    icon: formData.get('icon'),
-                    sortOrder: parseInt(formData.get('sortOrder')),
-                    isVisible: formData.get('isVisible') === 'on'
-                };
-
-                const id = menuData.id;
-                const method = id ? 'PUT' : 'POST';
-                const url = id ? `/api/admin/menus/${id}` : '/api/admin/menus';
-
-                fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(menuData)
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error('메뉴 저장에 실패했습니다.');
-                    location.reload();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert(error.message);
-                });
             }
 
             function saveMenuOrder() {

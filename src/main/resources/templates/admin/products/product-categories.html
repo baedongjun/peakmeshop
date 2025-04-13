@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>상품 카테고리 관리 | PeakMe Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">상품 카테고리 관리</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/products}">상품 관리</a></li>
+                        <li class="breadcrumb-item active">상품 카테고리 관리</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a th:href="@{/admin/products/categories/new}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> 카테고리 등록
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 검색 폼 시작 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="searchForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="keyword" class="form-label">검색어</label>
+                        <input type="text" class="form-control" id="keyword" name="keyword" 
+                               placeholder="카테고리명 또는 코드">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="parentId" class="form-label">상위 카테고리</label>
+                        <select class="form-select" id="parentId" name="parentId">
+                            <option value="">전체</option>
+                            <!-- AJAX로 상위 카테고리 목록 로드 -->
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">상태</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">전체</option>
+                            <option value="ACTIVE">활성화</option>
+                            <option value="INACTIVE">비활성화</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-search"></i> 검색
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="resetSearch()">
+                            <i class="fas fa-undo"></i> 초기화
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 검색 폼 끝 -->
+
+        <!-- 카테고리 목록 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>카테고리명</th>
+                                <th>코드</th>
+                                <th>상위 카테고리</th>
+                                <th>정렬 순서</th>
+                                <th>상태</th>
+                                <th>등록일</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoryList">
+                            <!-- AJAX로 데이터 로드 -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 페이지네이션 -->
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center" id="pagination">
+                        <!-- AJAX로 페이지네이션 로드 -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        <!-- 카테고리 목록 끝 -->
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            let currentPage = 1;
+            const pageSize = 10;
+
+            // 페이지 로드 시 카테고리 목록 조회
+            document.addEventListener('DOMContentLoaded', function() {
+                loadParentCategories();
+                loadCategories();
+            });
+
+            // 검색 폼 제출 처리
+            document.getElementById('searchForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                currentPage = 1;
+                loadCategories();
+            });
+
+            // 상위 카테고리 목록 조회
+            function loadParentCategories() {
+                fetch('/api/products/categories/parents')
+                    .then(response => response.json())
+                    .then(categories => {
+                        const select = document.getElementById('parentId');
+                        categories.forEach(category => {
+                            const option = document.createElement('option');
+                            option.value = category.id;
+                            option.textContent = category.name;
+                            select.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('상위 카테고리 목록을 불러오는데 실패했습니다.');
+                    });
+            }
+
+            // 카테고리 목록 조회
+            function loadCategories() {
+                const keyword = document.getElementById('keyword').value;
+                const parentId = document.getElementById('parentId').value;
+                const status = document.getElementById('status').value;
+
+                const params = new URLSearchParams({
+                    page: currentPage - 1,
+                    size: pageSize,
+                    keyword: keyword,
+                    parentId: parentId,
+                    status: status
+                });
+
+                fetch(`/api/products/categories?${params}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        renderCategoryList(data.content);
+                        renderPagination(data);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('카테고리 목록을 불러오는데 실패했습니다.');
+                    });
+            }
+
+            // 카테고리 목록 렌더링
+            function renderCategoryList(categories) {
+                const tbody = document.getElementById('categoryList');
+                tbody.innerHTML = '';
+
+                if (categories.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center">등록된 카테고리가 없습니다.</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                categories.forEach(category => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${category.name}</td>
+                        <td>${category.code}</td>
+                        <td>${category.parentName || '-'}</td>
+                        <td>${category.sortOrder}</td>
+                        <td>
+                            <span class="badge ${category.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary'}">
+                                ${category.status === 'ACTIVE' ? '활성화' : '비활성화'}
+                            </span>
+                        </td>
+                        <td>${new Date(category.createdAt).toLocaleDateString()}</td>
+                        <td>
+                            <a href="/admin/products/categories/${category.id}/edit" class="btn btn-sm btn-primary me-1">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-danger" 
+                                    onclick="deleteCategory(${category.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // 페이지네이션 렌더링
+            function renderPagination(data) {
+                const pagination = document.getElementById('pagination');
+                pagination.innerHTML = '';
+
+                const totalPages = data.totalPages;
+                const startPage = Math.max(1, currentPage - 2);
+                const endPage = Math.min(totalPages, currentPage + 2);
+
+                // 이전 페이지 버튼
+                if (currentPage > 1) {
+                    pagination.innerHTML += `
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                    `;
+                }
+
+                // 페이지 번호
+                for (let i = startPage; i <= endPage; i++) {
+                    pagination.innerHTML += `
+                        <li class="page-item ${i === currentPage ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                        </li>
+                    `;
+                }
+
+                // 다음 페이지 버튼
+                if (currentPage < totalPages) {
+                    pagination.innerHTML += `
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    `;
+                }
+            }
+
+            // 페이지 변경
+            function changePage(page) {
+                currentPage = page;
+                loadCategories();
+            }
+
+            // 검색 초기화
+            function resetSearch() {
+                document.getElementById('keyword').value = '';
+                document.getElementById('parentId').value = '';
+                document.getElementById('status').value = '';
+                currentPage = 1;
+                loadCategories();
+            }
+
+            // 카테고리 삭제
+            function deleteCategory(id) {
+                if (!confirm('정말 삭제하시겠습니까?')) {
+                    return;
+                }
+
+                fetch(`/api/products/categories/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        loadCategories();
+                    } else {
+                        throw new Error('카테고리 삭제에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+            }
+        </script>
+    </th:block>
+</body>
+</html> 

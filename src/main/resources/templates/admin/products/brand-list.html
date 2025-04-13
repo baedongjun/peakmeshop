@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>브랜드 관리 | PeakMe Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">브랜드 관리</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/products}">상품 관리</a></li>
+                        <li class="breadcrumb-item active">브랜드 관리</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a th:href="@{/admin/products/brands/new}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> 브랜드 등록
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 검색 폼 시작 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="searchForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="keyword" class="form-label">검색어</label>
+                        <input type="text" class="form-control" id="keyword" name="keyword" 
+                               placeholder="브랜드명 또는 코드">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">상태</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">전체</option>
+                            <option value="ACTIVE">활성화</option>
+                            <option value="INACTIVE">비활성화</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-search"></i> 검색
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="resetSearch()">
+                            <i class="fas fa-undo"></i> 초기화
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 검색 폼 끝 -->
+
+        <!-- 브랜드 목록 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>브랜드명</th>
+                                <th>코드</th>
+                                <th>설명</th>
+                                <th>상태</th>
+                                <th>등록일</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="brandList">
+                            <!-- AJAX로 데이터 로드 -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 페이지네이션 -->
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center" id="pagination">
+                        <!-- AJAX로 페이지네이션 로드 -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        <!-- 브랜드 목록 끝 -->
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            let currentPage = 1;
+            const pageSize = 10;
+
+            // 페이지 로드 시 브랜드 목록 조회
+            document.addEventListener('DOMContentLoaded', function() {
+                loadBrands();
+            });
+
+            // 검색 폼 제출 처리
+            document.getElementById('searchForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                currentPage = 1;
+                loadBrands();
+            });
+
+            // 브랜드 목록 조회
+            function loadBrands() {
+                const keyword = document.getElementById('keyword').value;
+                const status = document.getElementById('status').value;
+
+                const params = new URLSearchParams({
+                    page: currentPage - 1,
+                    size: pageSize,
+                    keyword: keyword,
+                    status: status
+                });
+
+                fetch(`/api/products/brands?${params}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        renderBrandList(data.content);
+                        renderPagination(data);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('브랜드 목록을 불러오는데 실패했습니다.');
+                    });
+            }
+
+            // 브랜드 목록 렌더링
+            function renderBrandList(brands) {
+                const tbody = document.getElementById('brandList');
+                tbody.innerHTML = '';
+
+                if (brands.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center">등록된 브랜드가 없습니다.</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                brands.forEach(brand => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${brand.name}</td>
+                        <td>${brand.code}</td>
+                        <td>${brand.description || '-'}</td>
+                        <td>
+                            <span class="badge ${brand.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary'}">
+                                ${brand.status === 'ACTIVE' ? '활성화' : '비활성화'}
+                            </span>
+                        </td>
+                        <td>${new Date(brand.createdAt).toLocaleDateString()}</td>
+                        <td>
+                            <a href="/admin/products/brands/${brand.id}/edit" class="btn btn-sm btn-primary me-1">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-danger" 
+                                    onclick="deleteBrand(${brand.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // 페이지네이션 렌더링
+            function renderPagination(data) {
+                const pagination = document.getElementById('pagination');
+                pagination.innerHTML = '';
+
+                const totalPages = data.totalPages;
+                const startPage = Math.max(1, currentPage - 2);
+                const endPage = Math.min(totalPages, currentPage + 2);
+
+                // 이전 페이지 버튼
+                if (currentPage > 1) {
+                    pagination.innerHTML += `
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                    `;
+                }
+
+                // 페이지 번호
+                for (let i = startPage; i <= endPage; i++) {
+                    pagination.innerHTML += `
+                        <li class="page-item ${i === currentPage ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                        </li>
+                    `;
+                }
+
+                // 다음 페이지 버튼
+                if (currentPage < totalPages) {
+                    pagination.innerHTML += `
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    `;
+                }
+            }
+
+            // 페이지 변경
+            function changePage(page) {
+                currentPage = page;
+                loadBrands();
+            }
+
+            // 검색 초기화
+            function resetSearch() {
+                document.getElementById('keyword').value = '';
+                document.getElementById('status').value = '';
+                currentPage = 1;
+                loadBrands();
+            }
+
+            // 브랜드 삭제
+            function deleteBrand(id) {
+                if (!confirm('정말 삭제하시겠습니까?')) {
+                    return;
+                }
+
+                fetch(`/api/products/brands/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        loadBrands();
+                    } else {
+                        throw new Error('브랜드 삭제에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+            }
+        </script>
+    </th:block>
+</body>
+</html> 

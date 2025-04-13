@@ -256,25 +256,24 @@
 
     <!-- 자바스크립트 -->
     <th:block layout:fragment="script">
-        <script>
-            let bannerModal = null;
-            let previewModal = null;
-
-            $(document).ready(function() {
-                $('#bannerTable').DataTable({
-                    order: [[0, 'desc']],
-                    language: {
-                        url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Korean.json'
-                    }
+        <script th:inline="javascript">
+            // 모달 인스턴스 생성
+            let bannerModal;
+            let previewModal;
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                const bannerModalElement = document.getElementById('bannerModal');
+                const previewModalElement = document.getElementById('previewModal');
+                
+                bannerModal = new bootstrap.Modal(bannerModalElement, {
+                    backdrop: 'static',
+                    keyboard: false
                 });
-
-                bannerModal = new bootstrap.Modal(document.getElementById('bannerModal'));
-                previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
-
-                // 시작일/종료일 최소값 설정
-                const today = new Date().toISOString().split('T')[0];
-                document.getElementById('startDate').min = today;
-                document.getElementById('endDate').min = today;
+                
+                previewModal = new bootstrap.Modal(previewModalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
             });
 
             function searchBanners() {
@@ -288,7 +287,7 @@
                 document.getElementById('modalTitle').textContent = '배너 등록';
                 document.getElementById('bannerForm').reset();
                 document.getElementById('bannerId').value = '';
-                document.getElementById('imagePreview').innerHTML = '';
+                document.getElementById('imagePreview').style.display = 'none';
                 bannerModal.show();
             }
 

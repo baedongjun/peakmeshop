@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>반품/교환 상세 | PeakMe Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">반품/교환 상세</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/shipments}">배송 관리</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/shipments/returns}">반품/교환 관리</a></li>
+                        <li class="breadcrumb-item active">반품/교환 상세</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 반품/교환 상세 정보 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <form id="returnDetailForm">
+                    <input type="hidden" id="returnId" th:value="${id}">
+                    
+                    <!-- 기본 정보 -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">기본 정보</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">주문번호</label>
+                                    <p class="form-control-static" id="orderNumber"></p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">회원명</label>
+                                    <p class="form-control-static" id="memberName"></p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">유형</label>
+                                    <p class="form-control-static" id="returnType"></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">요청일</label>
+                                    <p class="form-control-static" id="requestedAt"></p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">상태</label>
+                                    <p class="form-control-static" id="returnStatus"></p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">처리일</label>
+                                    <p class="form-control-static" id="processedAt"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 상품 정보 -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">상품 정보</h5>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>상품명</th>
+                                        <th>수량</th>
+                                        <th>반품/교환 사유</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="returnItems">
+                                    <!-- 반품/교환 상품이 여기에 동적으로 로드됩니다 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 처리 정보 -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">처리 정보</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">상태 <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="status" required>
+                                        <option value="">선택하세요</option>
+                                        <option value="APPROVED">승인</option>
+                                        <option value="REJECTED">거절</option>
+                                        <option value="IN_PROGRESS">처리중</option>
+                                        <option value="COMPLETED">완료</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="memo" class="form-label">메모</label>
+                                    <textarea class="form-control" id="memo" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 처리 내역 -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">처리 내역</h5>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>처리일</th>
+                                        <th>처리자</th>
+                                        <th>상태</th>
+                                        <th>메모</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="returnHistory">
+                                    <!-- 처리 내역이 여기에 동적으로 로드됩니다 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" onclick="history.back()">목록</button>
+                        <button type="button" class="btn btn-primary" id="saveReturnBtn">저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 반품/교환 상세 정보 끝 -->
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            // 상태 뱃지 클래스 반환
+            function getStatusBadgeClass(status) {
+                switch (status) {
+                    case 'REQUESTED': return 'bg-secondary';
+                    case 'APPROVED': return 'bg-primary';
+                    case 'REJECTED': return 'bg-danger';
+                    case 'IN_PROGRESS': return 'bg-warning';
+                    case 'COMPLETED': return 'bg-success';
+                    case 'CANCELLED': return 'bg-dark';
+                    default: return 'bg-secondary';
+                }
+            }
+
+            // 상태 텍스트 반환
+            function getStatusText(status) {
+                switch (status) {
+                    case 'REQUESTED': return '요청';
+                    case 'APPROVED': return '승인';
+                    case 'REJECTED': return '거절';
+                    case 'IN_PROGRESS': return '처리중';
+                    case 'COMPLETED': return '완료';
+                    case 'CANCELLED': return '취소';
+                    default: return status;
+                }
+            }
+
+            // 날짜 포맷팅
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            // 반품/교환 상세 정보 로드
+            function loadReturnDetail() {
+                const id = document.getElementById('returnId').value;
+                fetch(`/api/shipments/returns/${id}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('orderNumber').textContent = data.orderNumber;
+                        document.getElementById('memberName').textContent = data.memberName;
+                        document.getElementById('returnType').textContent = data.type === 'RETURN' ? '반품' : '교환';
+                        document.getElementById('requestedAt').textContent = formatDate(data.requestedAt);
+                        document.getElementById('returnStatus').textContent = getStatusText(data.status);
+                        document.getElementById('processedAt').textContent = data.processedAt ? formatDate(data.processedAt) : '-';
+                        document.getElementById('status').value = data.status;
+                        document.getElementById('memo').value = data.memo || '';
+
+                        // 반품/교환 상품 렌더링
+                        const tbody = document.getElementById('returnItems');
+                        tbody.innerHTML = '';
+                        data.items.forEach(item => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${item.productName}</td>
+                                <td>${item.quantity}</td>
+                                <td>${item.reason}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+
+                        // 처리 내역 렌더링
+                        const historyTbody = document.getElementById('returnHistory');
+                        historyTbody.innerHTML = '';
+                        data.history.forEach(item => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${formatDate(item.processedAt)}</td>
+                                <td>${item.processorName}</td>
+                                <td>
+                                    <span class="badge ${getStatusBadgeClass(item.status)}">
+                                        ${getStatusText(item.status)}
+                                    </span>
+                                </td>
+                                <td>${item.memo || '-'}</td>
+                            `;
+                            historyTbody.appendChild(tr);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('반품/교환 상세 정보를 불러오는데 실패했습니다:', error);
+                        alert('반품/교환 상세 정보를 불러오는데 실패했습니다.');
+                    });
+            }
+
+            // 반품/교환 상태 업데이트
+            document.getElementById('saveReturnBtn').addEventListener('click', function() {
+                const form = document.getElementById('returnDetailForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                const formData = {
+                    id: document.getElementById('returnId').value,
+                    status: document.getElementById('status').value,
+                    memo: document.getElementById('memo').value
+                };
+
+                fetch(`/api/shipments/returns/${formData.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('반품/교환 상태 업데이트에 실패했습니다.');
+                    }
+                    alert('반품/교환 상태가 업데이트되었습니다.');
+                    loadReturnDetail();
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            });
+
+            // 페이지 로드 시 초기 데이터 로드
+            document.addEventListener('DOMContentLoaded', function() {
+                loadReturnDetail();
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

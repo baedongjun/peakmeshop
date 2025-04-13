@@ -290,7 +290,26 @@
 
     <!-- 자바스크립트 -->
     <th:block layout:fragment="script">
-        <script>
+        <script th:inline="javascript">
+            // 모달 인스턴스 생성
+            let orderDetailModal;
+            let statusModal;
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                const orderDetailModalElement = document.getElementById('orderDetailModal');
+                const statusModalElement = document.getElementById('statusModal');
+                
+                orderDetailModal = new bootstrap.Modal(orderDetailModalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+                
+                statusModal = new bootstrap.Modal(statusModalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            });
+
             function setDateRange(range) {
                 const today = new Date();
                 let startDate = new Date();
@@ -313,184 +332,50 @@
                 document.getElementById('endDate').value = today.toISOString().split('T')[0];
             }
 
-            function showOrderDetail(orderNumber) {
-                fetch(`/api/admin/orders/${orderNumber}`)
+            // 주문 상세 모달 표시
+            function showOrderDetail(orderId) {
+                fetch(`/api/orders/${orderId}`)
                     .then(response => response.json())
                     .then(data => {
-                        const detail = document.getElementById('orderDetail');
-                        detail.innerHTML = `
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <h6>주문 정보</h6>
-                                    <table class="table table-bordered">
-                                        <tr>
-                                            <th style="width: 35%;">주문번호</th>
-                                            <td>${data.orderNumber}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>주문일시</th>
-                                            <td>${data.orderDate}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>주문상태</th>
-                                            <td>
-                                                <span class="badge bg-${
-                                                    data.status === 'PAID' ? 'success' : 
-                                                    data.status === 'SHIPPING' ? 'warning' : 
-                                                    data.status === 'REFUND_REQUESTED' ? 'danger' : 'secondary'
-                                                }">${data.status}</span>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </div>
-                                <div class="col-md-6">
-                                    <h6>주문자 정보</h6>
-                                    <table class="table table-bordered">
-                                        <tr>
-                                            <th style="width: 35%;">주문자명</th>
-                                            <td>${data.memberName}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>연락처</th>
-                                            <td>${data.memberPhone}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>이메일</th>
-                                            <td>${data.memberEmail}</td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
-                            <div class="row mb-4">
-                                <div class="col-12">
-                                    <h6>배송 정보</h6>
-                                    <table class="table table-bordered">
-                                        <tr>
-                                            <th style="width: 20%;">받는사람</th>
-                                            <td>${data.recipientName}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>연락처</th>
-                                            <td>${data.recipientPhone}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>주소</th>
-                                            <td>
-                                                [${data.recipientZipCode}]
-                                                ${data.recipientAddress} ${data.recipientDetailAddress}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th>배송요청사항</th>
-                                            <td>${data.deliveryMessage || '-'}</td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
-                            <div class="row mb-4">
-                                <div class="col-12">
-                                    <h6>주문 상품</h6>
-                                    <table class="table table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <th>상품정보</th>
-                                                <th>옵션</th>
-                                                <th>수량</th>
-                                                <th>상품금액</th>
-                                                <th>합계</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            ${data.orderItems.map(item => `
-                                                <tr>
-                                                    <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <img src="${item.productImage}" 
-                                                                 alt="상품 이미지" 
-                                                                 style="width: 50px; height: 50px; object-fit: cover;"
-                                                                 class="me-2">
-                                                            <div>${item.productName}</div>
-                                                        </div>
-                                                    </td>
-                                                    <td>${item.optionName}</td>
-                                                    <td>${item.quantity}개</td>
-                                                    <td>${item.price.toLocaleString()}원</td>
-                                                    <td>${(item.price * item.quantity).toLocaleString()}원</td>
-                                                </tr>
-                                            `).join('')}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-12">
-                                    <h6>결제 정보</h6>
-                                    <table class="table table-bordered">
-                                        <tr>
-                                            <th style="width: 20%;">상품금액</th>
-                                            <td>${data.productAmount.toLocaleString()}원</td>
-                                        </tr>
-                                        <tr>
-                                            <th>배송비</th>
-                                            <td>${data.deliveryFee.toLocaleString()}원</td>
-                                        </tr>
-                                        <tr>
-                                            <th>할인금액</th>
-                                            <td>-${data.discountAmount.toLocaleString()}원</td>
-                                        </tr>
-                                        <tr>
-                                            <th>결제금액</th>
-                                            <td>
-                                                <strong>${data.totalAmount.toLocaleString()}원</strong>
-                                                <br>
-                                                <small class="text-muted">${data.paymentMethod}</small>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
-                            ${data.statusHistory ? `
-                                <div class="row">
-                                    <div class="col-12">
-                                        <h6>처리 이력</h6>
-                                        <table class="table table-bordered">
-                                            <thead>
-                                                <tr>
-                                                    <th>처리일시</th>
-                                                    <th>처리내용</th>
-                                                    <th>처리자</th>
-                                                    <th>처리메모</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                ${data.statusHistory.map(history => `
-                                                    <tr>
-                                                        <td>${history.processedAt}</td>
-                                                        <td>${history.status}</td>
-                                                        <td>${history.processor}</td>
-                                                        <td>${history.note || '-'}</td>
-                                                    </tr>
-                                                `).join('')}
-                                            </tbody>
-                                        </table>
+                        // 모달 내용 채우기
+                        document.getElementById('orderId').textContent = data.id;
+                        document.getElementById('orderDate').textContent = new Date(data.orderDate).toLocaleString();
+                        document.getElementById('orderStatus').textContent = data.status;
+                        document.getElementById('paymentMethod').textContent = data.paymentMethod;
+                        document.getElementById('paymentAmount').textContent = data.paymentAmount.toLocaleString() + '원';
+                        
+                        // 주문 상품 목록 채우기
+                        const itemsList = document.getElementById('orderItems');
+                        itemsList.innerHTML = '';
+                        data.items.forEach(item => {
+                            const li = document.createElement('li');
+                            li.className = 'list-group-item';
+                            li.innerHTML = `
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="mb-1">${item.productName}</h6>
+                                        <small>수량: ${item.quantity}개</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div>${item.price.toLocaleString()}원</div>
+                                        <small class="text-muted">${item.totalPrice.toLocaleString()}원</small>
                                     </div>
                                 </div>
-                            ` : ''}
-                        `;
-
-                        const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
-                        modal.show();
+                            `;
+                            itemsList.appendChild(li);
+                        });
+                        
+                        orderDetailModal.show();
                     })
                     .catch(error => {
-                        console.error('Error:', error);
                         alert('주문 정보를 불러오는데 실패했습니다.');
                     });
             }
 
-            function showStatusModal(orderNumber) {
-                document.getElementById('statusOrderNumber').value = orderNumber;
-                const modal = new bootstrap.Modal(document.getElementById('statusModal'));
-                modal.show();
+            // 주문 상태 변경 모달 표시
+            function showStatusModal(orderId) {
+                document.getElementById('statusOrderId').value = orderId;
+                statusModal.show();
             }
 
             function updateOrderStatus() {

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>공지사항 등록/수정 | PeakMe Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">공지사항 등록/수정</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/notices}">공지사항 관리</a></li>
+                        <li class="breadcrumb-item active">공지사항 등록/수정</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 공지사항 폼 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <form id="noticeForm" class="needs-validation" novalidate>
+                    <input type="hidden" id="noticeId" th:value="${notice?.id}">
+
+                    <!-- 공지사항 정보 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="type" class="form-label">유형 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="type" required>
+                                <option value="">선택하세요</option>
+                                <option value="NOTICE" th:selected="${notice?.type == 'NOTICE'}">일반</option>
+                                <option value="EVENT" th:selected="${notice?.type == 'EVENT'}">이벤트</option>
+                                <option value="MAINTENANCE" th:selected="${notice?.type == 'MAINTENANCE'}">점검</option>
+                            </select>
+                            <div class="invalid-feedback">유형을 선택해주세요.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="status" class="form-label">상태 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="status" required>
+                                <option value="">선택하세요</option>
+                                <option value="ACTIVE" th:selected="${notice?.status == 'ACTIVE'}">활성</option>
+                                <option value="INACTIVE" th:selected="${notice?.status == 'INACTIVE'}">비활성</option>
+                            </select>
+                            <div class="invalid-feedback">상태를 선택해주세요.</div>
+                        </div>
+                    </div>
+
+                    <!-- 제목 -->
+                    <div class="mb-3">
+                        <label for="title" class="form-label">제목 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" th:value="${notice?.title}" required>
+                        <div class="invalid-feedback">제목을 입력해주세요.</div>
+                    </div>
+
+                    <!-- 내용 -->
+                    <div class="mb-3">
+                        <label for="content" class="form-label">내용 <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="content" rows="10" required th:text="${notice?.content}"></textarea>
+                        <div class="invalid-feedback">내용을 입력해주세요.</div>
+                    </div>
+
+                    <!-- 버튼 -->
+                    <div class="text-end">
+                        <a th:href="@{/admin/notices}" class="btn btn-secondary me-2">취소</a>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 공지사항 폼 끝 -->
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            // 폼 제출 처리
+            document.getElementById('noticeForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                if (!this.checkValidity()) {
+                    e.stopPropagation();
+                    this.classList.add('was-validated');
+                    return;
+                }
+
+                const noticeId = document.getElementById('noticeId').value;
+                const url = noticeId ? `/api/notices/${noticeId}` : '/api/notices';
+                const method = noticeId ? 'PUT' : 'POST';
+
+                const formData = {
+                    type: document.getElementById('type').value,
+                    status: document.getElementById('status').value,
+                    title: document.getElementById('title').value,
+                    content: document.getElementById('content').value
+                };
+
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('공지사항 저장에 실패했습니다.');
+                    }
+                    window.location.href = '/admin/notices';
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            });
+
+            // 페이지 로드 시 기존 데이터 로드
+            document.addEventListener('DOMContentLoaded', function() {
+                const noticeId = document.getElementById('noticeId').value;
+                if (noticeId) {
+                    fetch(`/api/notices/${noticeId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('type').value = data.type;
+                            document.getElementById('status').value = data.status;
+                            document.getElementById('title').value = data.title;
+                            document.getElementById('content').value = data.content;
+                        })
+                        .catch(error => {
+                            console.error('공지사항을 불러오는데 실패했습니다:', error);
+                            alert('공지사항을 불러오는데 실패했습니다.');
+                        });
+                }
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

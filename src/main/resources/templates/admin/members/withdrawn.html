@@ -227,15 +227,71 @@
                     .map(checkbox => parseInt(checkbox.value));
             }
 
-            // 상세 사유 모달 표시
-            function showDetailModal(detail) {
-                document.getElementById('withdrawalDetail').textContent = detail;
-                new bootstrap.Modal(document.getElementById('detailModal')).show();
+            // 모달 인스턴스 생성
+            let detailModal;
+            let deleteModal;
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                // 상세 정보 모달
+                const detailModalElement = document.getElementById('detailModal');
+                detailModal = new bootstrap.Modal(detailModalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+
+                // 삭제 확인 모달
+                const deleteModalElement = document.getElementById('deleteModal');
+                deleteModal = new bootstrap.Modal(deleteModalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            });
+
+            // 상세 정보 모달 표시
+            function showDetailModal(memberId) {
+                fetch(`/api/members/${memberId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('회원 정보를 가져오는데 실패했습니다.');
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('memberId').value = data.id;
+                    document.getElementById('memberName').textContent = data.name;
+                    document.getElementById('memberEmail').textContent = data.email;
+                    document.getElementById('memberPhone').textContent = data.phone;
+                    document.getElementById('memberStatus').textContent = data.status;
+                    document.getElementById('memberGrade').textContent = data.grade;
+                    document.getElementById('memberPoints').textContent = data.points;
+                    document.getElementById('memberCreatedAt').textContent = data.createdAt;
+                    
+                    detailModal.show();
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
             }
 
-            // 일괄 삭제 모달 표시
-            function showDeleteModal() {
-                new bootstrap.Modal(document.getElementById('deleteModal')).show();
+            // 삭제 확인 모달 표시
+            function showDeleteModal(memberId) {
+                document.getElementById('deleteMemberId').value = memberId;
+                deleteModal.show();
+            }
+
+            // 회원 삭제
+            function deleteMember() {
+                const memberId = document.getElementById('deleteMemberId').value;
+                
+                fetch(`/api/members/${memberId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('회원 삭제에 실패했습니다.');
+                    deleteModal.hide();
+                    location.reload();
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
             }
 
             // 개인정보 일괄 삭제

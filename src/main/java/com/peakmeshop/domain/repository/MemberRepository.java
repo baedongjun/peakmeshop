@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.peakmeshop.domain.entity.Member;
+import com.peakmeshop.domain.entity.MemberGrade;
 
 @Repository
 public interface MemberRepository extends JpaRepository<Member, Long> {
@@ -30,9 +31,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     List<Member> findByEmailContainingOrNameContaining(String email, String name);
 
     Page<Member> findByEmailContainingOrNameContaining(String email, String name, Pageable pageable);
-
-    // 특정 기간 동안 가입한 회원 수 계산
-    long countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
 
     Page<Member> findByIsWithdrawnTrue(Pageable pageable);
 
@@ -64,4 +62,19 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
             "ORDER BY month")
     List<Object[]> findMonthlySignups(@Param("startDate") LocalDateTime startDate,
                                      @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT m FROM Member m WHERE m.lastLoginAt < :threshold AND m.isWithdrawn = false")
+    Page<Member> findDormantMembers(@Param("threshold") LocalDateTime threshold, Pageable pageable);
+
+    @Query("SELECT g FROM MemberGrade g WHERE g.isActive = true")
+    List<MemberGrade> findAllGrades();
+
+    @Query("SELECT g FROM MemberGrade g WHERE g.id = :id")
+    Optional<MemberGrade> findGradeById(@Param("id") Long id);
+
+    @Query("SELECT COUNT(m) FROM Member m WHERE m.createdAt BETWEEN :start AND :end")
+    long countByCreatedAtBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT COUNT(m) FROM Member m WHERE m.status != m.originalStatus AND m.updatedAt BETWEEN :start AND :end")
+    long countStatusChangesBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

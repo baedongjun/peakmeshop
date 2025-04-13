@@ -617,6 +617,47 @@ function switchTab(tabId) {
     document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add("active")
 }
 
+// 모달 인스턴스 생성
+let quickViewModal;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // 퀵뷰 모달
+    const quickViewModalElement = document.getElementById('quickViewModal');
+    quickViewModal = new bootstrap.Modal(quickViewModalElement, {
+        backdrop: 'static',
+        keyboard: false
+    });
+});
+
+// 퀵뷰 모달 표시
+function showQuickView(productId) {
+    fetch(`/api/products/${productId}`)
+    .then(response => {
+        if (!response.ok) throw new Error('상품 정보를 가져오는데 실패했습니다.');
+        return response.json();
+    })
+    .then(data => {
+        document.getElementById('quickViewTitle').textContent = data.name;
+        document.getElementById('quickViewPrice').textContent = data.price.toLocaleString() + '원';
+        document.getElementById('quickViewDescription').textContent = data.description;
+        
+        const imageContainer = document.getElementById('quickViewImages');
+        imageContainer.innerHTML = '';
+        data.images.forEach(image => {
+            const img = document.createElement('img');
+            img.src = image;
+            img.alt = data.name;
+            img.className = 'img-fluid';
+            imageContainer.appendChild(img);
+        });
+        
+        quickViewModal.show();
+    })
+    .catch(error => {
+        alert(error.message);
+    });
+}
+
 // 페이지 로드 시 실행
 document.addEventListener("DOMContentLoaded", async () => {
     // URL에서 상품 ID 추출

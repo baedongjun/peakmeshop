@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>쿠폰 등록/수정 | PeakMe Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">쿠폰 등록/수정</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/coupons}">쿠폰 관리</a></li>
+                        <li class="breadcrumb-item active">쿠폰 등록/수정</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 쿠폰 폼 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <form id="couponForm" class="needs-validation" novalidate>
+                    <input type="hidden" id="couponId" th:value="${coupon?.id}">
+
+                    <!-- 쿠폰 정보 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="type" class="form-label">유형 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="type" required onchange="updateDiscountField()">
+                                <option value="">선택하세요</option>
+                                <option value="FIXED" th:selected="${coupon?.type == 'FIXED'}">정액할인</option>
+                                <option value="PERCENTAGE" th:selected="${coupon?.type == 'PERCENTAGE'}">정률할인</option>
+                                <option value="FREE_SHIPPING" th:selected="${coupon?.type == 'FREE_SHIPPING'}">무료배송</option>
+                            </select>
+                            <div class="invalid-feedback">유형을 선택해주세요.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="status" class="form-label">상태 <span class="text-danger">*</span></label>
+                            <select class="form-select" id="status" required>
+                                <option value="">선택하세요</option>
+                                <option value="ACTIVE" th:selected="${coupon?.status == 'ACTIVE'}">활성</option>
+                                <option value="INACTIVE" th:selected="${coupon?.status == 'INACTIVE'}">비활성</option>
+                            </select>
+                            <div class="invalid-feedback">상태를 선택해주세요.</div>
+                        </div>
+                    </div>
+
+                    <!-- 쿠폰명 -->
+                    <div class="mb-3">
+                        <label for="name" class="form-label">쿠폰명 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" th:value="${coupon?.name}" required>
+                        <div class="invalid-feedback">쿠폰명을 입력해주세요.</div>
+                    </div>
+
+                    <!-- 쿠폰 코드 -->
+                    <div class="mb-3">
+                        <label for="code" class="form-label">쿠폰 코드 <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="code" th:value="${coupon?.code}" required
+                                   pattern="[A-Z0-9]{6,20}" placeholder="대문자와 숫자만 입력 가능 (6-20자)">
+                            <button type="button" class="btn btn-outline-secondary" onclick="generateCode()">
+                                <i class="fas fa-random"></i> 생성
+                            </button>
+                        </div>
+                        <div class="invalid-feedback">쿠폰 코드를 입력해주세요. (대문자와 숫자만 입력 가능, 6-20자)</div>
+                    </div>
+
+                    <!-- 할인값 -->
+                    <div class="mb-3" id="discountValueContainer">
+                        <label for="discountValue" class="form-label">할인액/율 <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="discountValue" th:value="${coupon?.discountValue}" 
+                                   min="0" step="1" required>
+                            <span class="input-group-text" id="discountUnit">원</span>
+                        </div>
+                        <div class="invalid-feedback">할인액/율을 입력해주세요.</div>
+                    </div>
+
+                    <!-- 최소 주문 금액 -->
+                    <div class="mb-3">
+                        <label for="minOrderAmount" class="form-label">최소 주문 금액</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="minOrderAmount" th:value="${coupon?.minOrderAmount}" 
+                                   min="0" step="1000">
+                            <span class="input-group-text">원</span>
+                        </div>
+                    </div>
+
+                    <!-- 유효기간 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="startDate" class="form-label">시작일 <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="startDate" th:value="${coupon?.startDate}" required>
+                            <div class="invalid-feedback">시작일을 선택해주세요.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="endDate" class="form-label">종료일 <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="endDate" th:value="${coupon?.endDate}" required>
+                            <div class="invalid-feedback">종료일을 선택해주세요.</div>
+                        </div>
+                    </div>
+
+                    <!-- 사용 제한 -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="usageLimit" class="form-label">사용 제한 횟수</label>
+                            <input type="number" class="form-control" id="usageLimit" th:value="${coupon?.usageLimit}" 
+                                   min="0" step="1">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="userLimit" class="form-label">회원당 사용 제한</label>
+                            <input type="number" class="form-control" id="userLimit" th:value="${coupon?.userLimit}" 
+                                   min="0" step="1">
+                        </div>
+                    </div>
+
+                    <!-- 버튼 -->
+                    <div class="text-end">
+                        <a th:href="@{/admin/coupons}" class="btn btn-secondary me-2">취소</a>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 쿠폰 폼 끝 -->
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            // 쿠폰 코드 생성
+            function generateCode() {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let code = '';
+                for (let i = 0; i < 10; i++) {
+                    code += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                document.getElementById('code').value = code;
+            }
+
+            // 할인값 필드 업데이트
+            function updateDiscountField() {
+                const type = document.getElementById('type').value;
+                const container = document.getElementById('discountValueContainer');
+                const input = document.getElementById('discountValue');
+                const unit = document.getElementById('discountUnit');
+
+                if (type === 'FREE_SHIPPING') {
+                    container.style.display = 'none';
+                    input.value = '0';
+                } else {
+                    container.style.display = 'block';
+                    if (type === 'FIXED') {
+                        unit.textContent = '원';
+                        input.step = '1000';
+                    } else {
+                        unit.textContent = '%';
+                        input.step = '1';
+                    }
+                }
+            }
+
+            // 폼 제출 처리
+            document.getElementById('couponForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                if (!this.checkValidity()) {
+                    e.stopPropagation();
+                    this.classList.add('was-validated');
+                    return;
+                }
+
+                const couponId = document.getElementById('couponId').value;
+                const url = couponId ? `/api/coupons/${couponId}` : '/api/coupons';
+                const method = couponId ? 'PUT' : 'POST';
+
+                const formData = {
+                    type: document.getElementById('type').value,
+                    status: document.getElementById('status').value,
+                    name: document.getElementById('name').value,
+                    code: document.getElementById('code').value,
+                    discountValue: document.getElementById('discountValue').value,
+                    minOrderAmount: document.getElementById('minOrderAmount').value || null,
+                    startDate: document.getElementById('startDate').value,
+                    endDate: document.getElementById('endDate').value,
+                    usageLimit: document.getElementById('usageLimit').value || null,
+                    userLimit: document.getElementById('userLimit').value || null
+                };
+
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('쿠폰 저장에 실패했습니다.');
+                    }
+                    window.location.href = '/admin/coupons';
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            });
+
+            // 페이지 로드 시 기존 데이터 로드
+            document.addEventListener('DOMContentLoaded', function() {
+                const couponId = document.getElementById('couponId').value;
+                if (couponId) {
+                    fetch(`/api/coupons/${couponId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('type').value = data.type;
+                            document.getElementById('status').value = data.status;
+                            document.getElementById('name').value = data.name;
+                            document.getElementById('code').value = data.code;
+                            document.getElementById('discountValue').value = data.discountValue;
+                            document.getElementById('minOrderAmount').value = data.minOrderAmount;
+                            document.getElementById('startDate').value = data.startDate;
+                            document.getElementById('endDate').value = data.endDate;
+                            document.getElementById('usageLimit').value = data.usageLimit;
+                            document.getElementById('userLimit').value = data.userLimit;
+                            updateDiscountField();
+                        })
+                        .catch(error => {
+                            console.error('쿠폰을 불러오는데 실패했습니다:', error);
+                            alert('쿠폰을 불러오는데 실패했습니다.');
+                        });
+                } else {
+                    updateDiscountField();
+                }
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

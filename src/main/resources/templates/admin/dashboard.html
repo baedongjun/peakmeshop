@@ -65,7 +65,7 @@
                         </p>
                     </div>
                     <div class="bg-light p-3 rounded">
-                        <i class="fas fa-shopping-cart fa-2x text-primary"></i>
+                        <i class="fas fa-cart-shopping fa-2x text-primary"></i>
                     </div>
                 </div>
             </div>
@@ -113,7 +113,7 @@
                         </p>
                     </div>
                     <div class="bg-light p-3 rounded">
-                        <i class="fas fa-box fa-2x text-warning"></i>
+                        <i class="fas fa-boxes-stacked fa-2x text-warning"></i>
                     </div>
                 </div>
             </div>
@@ -249,46 +249,35 @@
         </div>
     </div>
 
-    <!-- 최근 주문 및 활동 -->
+    <!-- 최근 활동 -->
     <div class="row">
         <div class="col-md-6 mb-3">
             <div class="admin-card">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">최근 주문</h5>
-                    <a th:href="@{/admin/orders}" class="btn btn-sm btn-outline-primary">모두 보기</a>
-                </div>
+                <h5 class="mb-3">최근 주문</h5>
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
-                        <tr>
-                            <th>주문번호</th>
-                            <th>고객</th>
-                            <th>금액</th>
-                            <th>상태</th>
-                            <th>날짜</th>
-                        </tr>
+                            <tr>
+                                <th>주문번호</th>
+                                <th>고객</th>
+                                <th>금액</th>
+                                <th>상태</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        <!-- 실제 데이터로 대체될 부분 -->
-                        <tr th:each="order : ${recentOrders}" th:if="${recentOrders != null}">
-                            <td th:text="${order.orderNumber}">#ORD-1234</td>
-                            <td th:text="${order.memberName}">홍길동</td>
-                            <td th:text="${'₩' + #numbers.formatInteger(order.finalPrice, 0, 'COMMA')}">₩123,000</td>
-                            <td>
-                                <span th:class="${'badge ' +
-                                    (order.status == 'COMPLETED' ? 'bg-success' :
-                                    (order.status == 'SHIPPING' ? 'bg-warning' :
-                                    (order.status == 'PAID' ? 'bg-info' :
-                                    (order.status == 'PREPARING' ? 'bg-primary' : 'bg-secondary'))))}">
-                                    <span th:text="${order.statusName}">배송완료</span>
-                                </span>
-                            </td>
-                            <td th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd')}">2023-11-15</td>
-                        </tr>
-                        <!-- 데이터가 없을 경우 표시할 내용 -->
-                        <tr th:if="${recentOrders == null || recentOrders.isEmpty()}">
-                            <td colspan="5" class="text-center">최근 주문 내역이 없습니다.</td>
-                        </tr>
+                            <tr th:each="order : ${recentOrders}">
+                                <td th:text="${order.orderNumber}">ORD-12345</td>
+                                <td th:text="${order.customerName}">홍길동</td>
+                                <td th:text="${'₩' + #numbers.formatInteger(order.amount, 0, 'COMMA')}">₩45,000</td>
+                                <td>
+                                    <span th:class="${'badge bg-' + 
+                                        (order.status == 'PENDING' ? 'warning' : 
+                                        (order.status == 'PROCESSING' ? 'info' : 
+                                        (order.status == 'COMPLETED' ? 'success' : 'danger')))}"
+                                          th:text="${order.status}">
+                                    </span>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -296,105 +285,89 @@
         </div>
         <div class="col-md-6 mb-3">
             <div class="admin-card">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">최근 활동</h5>
-                    <a href="#" class="btn btn-sm btn-outline-primary">모두 보기</a>
+                <h5 class="mb-3">최근 회원</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>아이디</th>
+                                <th>이름</th>
+                                <th>가입일</th>
+                                <th>상태</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="member : ${recentMembers}">
+                                <td th:text="${member.username}">user123</td>
+                                <td th:text="${member.name}">홍길동</td>
+                                <td th:text="${#temporals.format(member.joinDate, 'yyyy-MM-dd')}">2023-01-01</td>
+                                <td>
+                                    <span th:class="${'badge bg-' + (member.active ? 'success' : 'secondary')}"
+                                          th:text="${member.active ? '활성' : '비활성'}">
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <ul class="list-group list-group-flush">
-                    <!-- 실제 데이터로 대체될 부분 -->
-                    <li class="list-group-item d-flex justify-content-between align-items-center" th:each="activity : ${recentActivities}" th:if="${recentActivities != null}">
-                        <div>
-                            <span th:utext="${activity.description}">활동 내용</span>
-                        </div>
-                        <span class="text-muted small" th:text="${#temporals.format(activity.createdAt, 'yyyy-MM-dd')}">2025-04-01</span>
-                    </li>
-                    <!-- 데이터가 없을 경우 표시할 내용 -->
-                    <li class="list-group-item text-center" th:if="${recentActivities == null || recentActivities.isEmpty()}">
-                        최근 활동 내역이 없습니다.
-                    </li>
-                </ul>
             </div>
         </div>
     </div>
 </div>
 
-<!-- 페이지별 스크립트 -->
 <th:block layout:fragment="script">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script th:inline="javascript">
-        // 기간 선택 필터 스크립트
+    <script>
+        // 기간 선택 필터 동작
         document.getElementById('period').addEventListener('change', function() {
-            const customPeriod = this.value === 'custom';
-            document.getElementById('dateRangeContainer').style.display = customPeriod ? 'block' : 'none';
-            document.getElementById('dateRangeContainer2').style.display = customPeriod ? 'block' : 'none';
-            document.getElementById('dateRangeButton').style.display = customPeriod ? 'block' : 'none';
-
-            if (!customPeriod) {
-                this.form.submit();
-            }
+            const isCustom = this.value === 'custom';
+            document.getElementById('dateRangeContainer').style.display = isCustom ? 'block' : 'none';
+            document.getElementById('dateRangeContainer2').style.display = isCustom ? 'block' : 'none';
+            document.getElementById('dateRangeButton').style.display = isCustom ? 'block' : 'none';
         });
 
-        // 월별 매출 차트 데이터
-        const salesData = /*[[${monthlySalesData}]]*/ [1200, 1900, 1500, 2000, 2200, 2700, 2400, 2800, 3100, 3300, 3500, 3800];
-        const monthLabels = /*[[${monthLabels}]]*/ ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
-
-        // 월별 매출 차트
-        const salesCtx = document.getElementById('salesChart').getContext('2d');
-        const salesChart = new Chart(salesCtx, {
-            type: 'line',
-            data: {
-                labels: monthLabels,
-                datasets: [{
-                    label: '월별 매출 (만원)',
-                    data: salesData,
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 2,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+        // 차트 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            // 매출 차트
+            const salesCtx = document.getElementById('salesChart').getContext('2d');
+            new Chart(salesCtx, {
+                type: 'line',
+                data: {
+                    labels: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
+                    datasets: [{
+                        label: '매출',
+                        data: [12000000, 19000000, 3000000, 5000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000],
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
                 }
-            }
-        });
+            });
 
-        // 카테고리별 판매 비율 데이터
-        const categoryData = /*[[${categorySalesData}]]*/ [35, 25, 15, 15, 10];
-        const categoryLabels = /*[[${categoryLabels}]]*/ ['의류', '신발', '액세서리', '스포츠용품', '아웃도어'];
-
-        // 카테고리별 판매 비율 차트
-        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-        const categoryChart = new Chart(categoryCtx, {
-            type: 'doughnut',
-            data: {
-                labels: categoryLabels,
-                datasets: [{
-                    data: categoryData,
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.7)',
-                        'rgba(54, 162, 235, 0.7)',
-                        'rgba(255, 206, 86, 0.7)',
-                        'rgba(75, 192, 192, 0.7)',
-                        'rgba(153, 102, 255, 0.7)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right'
-                    }
+            // 카테고리 차트
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['의류', '신발', '가방', '악세서리', '기타'],
+                    datasets: [{
+                        data: [30, 25, 20, 15, 10],
+                        backgroundColor: [
+                            'rgb(255, 99, 132)',
+                            'rgb(54, 162, 235)',
+                            'rgb(255, 205, 86)',
+                            'rgb(75, 192, 192)',
+                            'rgb(153, 102, 255)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
                 }
-            }
+            });
         });
     </script>
 </th:block>

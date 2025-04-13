@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title th:text="${faq != null ? 'FAQ 수정' : 'FAQ 등록'} + ' | PeakMe Shop 관리자'"></title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title" th:text="${faq != null ? 'FAQ 수정' : 'FAQ 등록'}"></h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/faqs}">FAQ 관리</a></li>
+                        <li class="breadcrumb-item active" th:text="${faq != null ? 'FAQ 수정' : 'FAQ 등록'}"></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- FAQ 정보 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <form id="faqForm" class="needs-validation" novalidate>
+                    <input type="hidden" id="faqId" th:value="${faq?.id}">
+                    
+                    <!-- FAQ 정보 -->
+                    <h5 class="card-title mb-4">FAQ 정보</h5>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="category" class="form-label">카테고리</label>
+                            <select class="form-select" id="category" required>
+                                <option value="">선택하세요</option>
+                                <option value="ORDER" th:selected="${faq?.category == 'ORDER'}">주문/결제</option>
+                                <option value="DELIVERY" th:selected="${faq?.category == 'DELIVERY'}">배송</option>
+                                <option value="RETURN" th:selected="${faq?.category == 'RETURN'}">반품/교환</option>
+                                <option value="PRODUCT" th:selected="${faq?.category == 'PRODUCT'}">상품</option>
+                                <option value="MEMBER" th:selected="${faq?.category == 'MEMBER'}">회원</option>
+                                <option value="ETC" th:selected="${faq?.category == 'ETC'}">기타</option>
+                            </select>
+                            <div class="invalid-feedback">카테고리를 선택해주세요.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="sortOrder" class="form-label">정렬순서</label>
+                            <input type="number" class="form-control" id="sortOrder" th:value="${faq?.sortOrder}" required min="0">
+                            <div class="invalid-feedback">정렬순서를 입력해주세요.</div>
+                        </div>
+                    </div>
+
+                    <!-- 질문 -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <label for="question" class="form-label">질문</label>
+                            <textarea class="form-control" id="question" rows="3" required
+                                      th:text="${faq?.question}"></textarea>
+                            <div class="invalid-feedback">질문을 입력해주세요.</div>
+                        </div>
+                    </div>
+
+                    <!-- 답변 -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <label for="answer" class="form-label">답변</label>
+                            <textarea class="form-control" id="answer" rows="5" required
+                                      th:text="${faq?.answer}"></textarea>
+                            <div class="invalid-feedback">답변을 입력해주세요.</div>
+                        </div>
+                    </div>
+
+                    <!-- 상태 -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="status" class="form-label">상태</label>
+                            <select class="form-select" id="status" required>
+                                <option value="">선택하세요</option>
+                                <option value="ACTIVE" th:selected="${faq?.status == 'ACTIVE'}">활성</option>
+                                <option value="INACTIVE" th:selected="${faq?.status == 'INACTIVE'}">비활성</option>
+                            </select>
+                            <div class="invalid-feedback">상태를 선택해주세요.</div>
+                        </div>
+                    </div>
+
+                    <!-- 버튼 -->
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-save"></i> 저장
+                        </button>
+                        <a th:href="@{/admin/faqs}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> 취소
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- FAQ 정보 끝 -->
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            // 폼 제출 처리
+            document.getElementById('faqForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!this.checkValidity()) {
+                    e.stopPropagation();
+                    this.classList.add('was-validated');
+                    return;
+                }
+
+                const faqId = document.getElementById('faqId').value;
+                const url = faqId ? `/api/faqs/${faqId}` : '/api/faqs';
+                const method = faqId ? 'PUT' : 'POST';
+
+                const formData = {
+                    category: document.getElementById('category').value,
+                    sortOrder: document.getElementById('sortOrder').value,
+                    question: document.getElementById('question').value,
+                    answer: document.getElementById('answer').value,
+                    status: document.getElementById('status').value
+                };
+
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('FAQ 정보 저장에 실패했습니다.');
+                    }
+                    window.location.href = '/admin/faqs';
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

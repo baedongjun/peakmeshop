@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>공지사항 관리 | PeakMe Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">공지사항 관리</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item active">공지사항 관리</li>
+                    </ul>
+                </div>
+                <div class="col-auto">
+                    <a th:href="@{/admin/notices/new}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> 공지사항 등록
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 필터 영역 시작 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="filterForm" method="get" th:action="@{/admin/notices}">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="category">카테고리</label>
+                                <select class="form-select" id="category" name="category">
+                                    <option value="">전체</option>
+                                    <option value="NOTICE" th:selected="${category == 'NOTICE'}">일반</option>
+                                    <option value="EVENT" th:selected="${category == 'EVENT'}">이벤트</option>
+                                    <option value="UPDATE" th:selected="${category == 'UPDATE'}">업데이트</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="status">상태</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="">전체</option>
+                                    <option value="PUBLISHED" th:selected="${status == 'PUBLISHED'}">게시중</option>
+                                    <option value="DRAFT" th:selected="${status == 'DRAFT'}">임시저장</option>
+                                    <option value="EXPIRED" th:selected="${status == 'EXPIRED'}">만료</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="searchKeyword">검색어</label>
+                                <input type="text" class="form-control" id="searchKeyword" name="searchKeyword"
+                                       th:value="${param.searchKeyword}">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search"></i> 검색
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 필터 영역 끝 -->
+
+        <!-- 공지사항 목록 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>번호</th>
+                                <th>제목</th>
+                                <th>카테고리</th>
+                                <th>작성자</th>
+                                <th>조회수</th>
+                                <th>상태</th>
+                                <th>작성일</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="notice : ${notices}">
+                                <td th:text="${notice.id}">1</td>
+                                <td>
+                                    <a th:href="@{/admin/notices/{id}(id=${notice.id})}" 
+                                       th:text="${notice.title}" class="text-primary">공지사항 제목</a>
+                                </td>
+                                <td>
+                                    <span th:class="${'badge bg-' + 
+                                        (notice.category == 'NOTICE' ? 'primary' :
+                                        (notice.category == 'EVENT' ? 'success' : 'info'))}"
+                                          th:text="${notice.category == 'NOTICE' ? '일반' :
+                                                  (notice.category == 'EVENT' ? '이벤트' : '업데이트')}">
+                                        일반
+                                    </span>
+                                </td>
+                                <td th:text="${notice.author}">관리자</td>
+                                <td th:text="${notice.viewCount}">0</td>
+                                <td>
+                                    <span th:class="${'badge bg-' + 
+                                        (notice.status == 'PUBLISHED' ? 'success' :
+                                        (notice.status == 'DRAFT' ? 'warning' : 'secondary'))}"
+                                          th:text="${notice.status == 'PUBLISHED' ? '게시중' :
+                                                  (notice.status == 'DRAFT' ? '임시저장' : '만료')}">
+                                        게시중
+                                    </span>
+                                </td>
+                                <td th:text="${#temporals.format(notice.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 00:00</td>
+                                <td>
+                                    <a th:href="@{/admin/notices/{id}/edit(id=${notice.id})}" 
+                                       class="btn btn-sm btn-primary">
+                                        수정
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(notices)}">
+                                <td colspan="8" class="text-center">공지사항이 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 페이지네이션 -->
+                <nav aria-label="Page navigation" th:if="${notices.totalPages > 0}">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${!notices.hasPrevious()} ? disabled">
+                            <a class="page-link" th:href="@{/admin/notices(page=${notices.number - 1})}">이전</a>
+                        </li>
+                        <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, notices.totalPages - 1)}"
+                            th:classappend="${pageNum == notices.number} ? active">
+                            <a class="page-link" th:href="@{/admin/notices(page=${pageNum})}"
+                               th:text="${pageNum + 1}"></a>
+                        </li>
+                        <li class="page-item" th:classappend="${!notices.hasNext()} ? disabled">
+                            <a class="page-link" th:href="@{/admin/notices(page=${notices.number + 1})}">다음</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        <!-- 공지사항 목록 끝 -->
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            let currentPage = 1;
+            const pageSize = 10;
+
+            // 공지사항 목록 렌더링
+            function renderNoticesList(notices) {
+                const tbody = document.querySelector('tbody');
+                tbody.innerHTML = '';
+
+                if (notices.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center">공지사항이 없습니다.</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                notices.forEach((item, index) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${(currentPage - 1) * pageSize + index + 1}</td>
+                        <td>${item.title}</td>
+                        <td>
+                            <span class="badge ${getCategoryBadgeClass(item.category)}">
+                                ${getCategoryText(item.category)}
+                            </span>
+                        </td>
+                        <td>${item.authorName}</td>
+                        <td>${item.viewCount}</td>
+                        <td>
+                            <span class="badge ${getStatusBadgeClass(item.status)}">
+                                ${getStatusText(item.status)}
+                            </span>
+                        </td>
+                        <td>${formatDate(item.publishedAt)}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-primary view-notice" data-id="${item.id}">
+                                상세
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // 상세 보기 버튼 이벤트 리스너 추가
+                document.querySelectorAll('.view-notice').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = this.dataset.id;
+                        window.location.href = `/admin/notices/${id}/edit`;
+                    });
+                });
+            }
+
+            // 카테고리 뱃지 클래스 반환
+            function getCategoryBadgeClass(category) {
+                switch (category) {
+                    case 'NOTICE': return 'bg-primary';
+                    case 'EVENT': return 'bg-success';
+                    case 'UPDATE': return 'bg-info';
+                    default: return 'bg-secondary';
+                }
+            }
+
+            // 카테고리 텍스트 반환
+            function getCategoryText(category) {
+                switch (category) {
+                    case 'NOTICE': return '일반공지';
+                    case 'EVENT': return '이벤트';
+                    case 'UPDATE': return '업데이트';
+                    default: return category;
+                }
+            }
+
+            // 상태 뱃지 클래스 반환
+            function getStatusBadgeClass(status) {
+                switch (status) {
+                    case 'PUBLISHED': return 'bg-success';
+                    case 'DRAFT': return 'bg-secondary';
+                    case 'EXPIRED': return 'bg-danger';
+                    default: return 'bg-secondary';
+                }
+            }
+
+            // 상태 텍스트 반환
+            function getStatusText(status) {
+                switch (status) {
+                    case 'PUBLISHED': return '게시중';
+                    case 'DRAFT': return '임시저장';
+                    case 'EXPIRED': return '만료';
+                    default: return status;
+                }
+            }
+
+            // 날짜 포맷팅
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            // 페이지네이션 렌더링
+            function renderPagination(totalPages) {
+                const pagination = document.querySelector('.pagination');
+                pagination.innerHTML = '';
+
+                // 이전 페이지 버튼
+                const prevLi = document.createElement('li');
+                prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+                prevLi.innerHTML = `
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                `;
+                prevLi.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (currentPage > 1) {
+                        currentPage--;
+                        loadNoticesList();
+                    }
+                });
+                pagination.appendChild(prevLi);
+
+                // 페이지 번호
+                for (let i = 1; i <= totalPages; i++) {
+                    const li = document.createElement('li');
+                    li.className = `page-item ${currentPage === i ? 'active' : ''}`;
+                    li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                    li.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        currentPage = i;
+                        loadNoticesList();
+                    });
+                    pagination.appendChild(li);
+                }
+
+                // 다음 페이지 버튼
+                const nextLi = document.createElement('li');
+                nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+                nextLi.innerHTML = `
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                `;
+                nextLi.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        loadNoticesList();
+                    }
+                });
+                pagination.appendChild(nextLi);
+            }
+
+            // 공지사항 목록 로드
+            function loadNoticesList() {
+                const formData = new FormData(document.getElementById('filterForm'));
+                const params = new URLSearchParams();
+                for (const [key, value] of formData.entries()) {
+                    if (value) params.append(key, value);
+                }
+                params.append('page', currentPage);
+                params.append('size', pageSize);
+
+                fetch(`/api/contents/notices?${params.toString()}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        renderNoticesList(data.content);
+                        renderPagination(data.totalPages);
+                    })
+                    .catch(error => {
+                        console.error('공지사항 목록을 불러오는데 실패했습니다:', error);
+                        alert('공지사항 목록을 불러오는데 실패했습니다.');
+                    });
+            }
+
+            // 검색 폼 제출
+            document.getElementById('filterForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                currentPage = 1;
+                loadNoticesList();
+            });
+
+            // 페이지 로드 시 초기 데이터 로드
+            document.addEventListener('DOMContentLoaded', function() {
+                loadNoticesList();
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

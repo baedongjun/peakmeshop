@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>1:1 문의 관리 | PeakMe Shop 관리자</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">1:1 문의 관리</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item active">1:1 문의 관리</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 검색 필터 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <form id="searchForm">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="keyword" class="form-label">검색어</label>
+                            <input type="text" class="form-control" id="keyword" placeholder="주문번호 또는 회원명">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="category" class="form-label">카테고리</label>
+                            <select class="form-select" id="category">
+                                <option value="">전체</option>
+                                <option value="ORDER">주문/결제</option>
+                                <option value="DELIVERY">배송</option>
+                                <option value="RETURN">반품/교환</option>
+                                <option value="PRODUCT">상품</option>
+                                <option value="MEMBER">회원</option>
+                                <option value="OTHER">기타</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="status" class="form-label">상태</label>
+                            <select class="form-select" id="status">
+                                <option value="">전체</option>
+                                <option value="PENDING">답변대기</option>
+                                <option value="IN_PROGRESS">처리중</option>
+                                <option value="COMPLETED">답변완료</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col text-end">
+                            <button type="button" class="btn btn-secondary" id="resetBtn">초기화</button>
+                            <button type="submit" class="btn btn-primary">검색</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 검색 필터 끝 -->
+
+        <!-- 문의 목록 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>번호</th>
+                                <th>주문번호</th>
+                                <th>회원명</th>
+                                <th>카테고리</th>
+                                <th>제목</th>
+                                <th>상태</th>
+                                <th>등록일</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inquiriesList">
+                            <!-- 문의 목록이 여기에 동적으로 로드됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 페이지네이션 -->
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center" id="pagination">
+                        <!-- 페이지네이션이 여기에 동적으로 로드됩니다 -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        <!-- 문의 목록 끝 -->
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            let currentPage = 1;
+            const pageSize = 10;
+
+            // 문의 목록 렌더링
+            function renderInquiriesList(inquiries) {
+                const tbody = document.getElementById('inquiriesList');
+                tbody.innerHTML = '';
+
+                if (inquiries.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="text-center">문의가 없습니다.</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                inquiries.forEach((item, index) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${(currentPage - 1) * pageSize + index + 1}</td>
+                        <td>${item.orderNumber || '-'}</td>
+                        <td>${item.memberName}</td>
+                        <td>
+                            <span class="badge ${getCategoryBadgeClass(item.category)}">
+                                ${getCategoryText(item.category)}
+                            </span>
+                        </td>
+                        <td>${item.title}</td>
+                        <td>
+                            <span class="badge ${getStatusBadgeClass(item.status)}">
+                                ${getStatusText(item.status)}
+                            </span>
+                        </td>
+                        <td>${formatDate(item.createdAt)}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-primary view-inquiry" data-id="${item.id}">
+                                상세
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // 상세 보기 버튼 이벤트 리스너 추가
+                document.querySelectorAll('.view-inquiry').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = this.dataset.id;
+                        window.location.href = `/admin/inquiries/${id}`;
+                    });
+                });
+            }
+
+            // 카테고리 뱃지 클래스 반환
+            function getCategoryBadgeClass(category) {
+                switch (category) {
+                    case 'ORDER': return 'bg-primary';
+                    case 'DELIVERY': return 'bg-success';
+                    case 'RETURN': return 'bg-warning';
+                    case 'PRODUCT': return 'bg-info';
+                    case 'MEMBER': return 'bg-secondary';
+                    case 'OTHER': return 'bg-dark';
+                    default: return 'bg-secondary';
+                }
+            }
+
+            // 카테고리 텍스트 반환
+            function getCategoryText(category) {
+                switch (category) {
+                    case 'ORDER': return '주문/결제';
+                    case 'DELIVERY': return '배송';
+                    case 'RETURN': return '반품/교환';
+                    case 'PRODUCT': return '상품';
+                    case 'MEMBER': return '회원';
+                    case 'OTHER': return '기타';
+                    default: return category;
+                }
+            }
+
+            // 상태 뱃지 클래스 반환
+            function getStatusBadgeClass(status) {
+                switch (status) {
+                    case 'PENDING': return 'bg-warning';
+                    case 'IN_PROGRESS': return 'bg-info';
+                    case 'COMPLETED': return 'bg-success';
+                    default: return 'bg-secondary';
+                }
+            }
+
+            // 상태 텍스트 반환
+            function getStatusText(status) {
+                switch (status) {
+                    case 'PENDING': return '답변대기';
+                    case 'IN_PROGRESS': return '처리중';
+                    case 'COMPLETED': return '답변완료';
+                    default: return status;
+                }
+            }
+
+            // 날짜 포맷팅
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            // 페이지네이션 렌더링
+            function renderPagination(totalPages) {
+                const pagination = document.getElementById('pagination');
+                pagination.innerHTML = '';
+
+                // 이전 페이지 버튼
+                const prevLi = document.createElement('li');
+                prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+                prevLi.innerHTML = `
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                `;
+                prevLi.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (currentPage > 1) {
+                        currentPage--;
+                        loadInquiriesList();
+                    }
+                });
+                pagination.appendChild(prevLi);
+
+                // 페이지 번호
+                for (let i = 1; i <= totalPages; i++) {
+                    const li = document.createElement('li');
+                    li.className = `page-item ${currentPage === i ? 'active' : ''}`;
+                    li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                    li.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        currentPage = i;
+                        loadInquiriesList();
+                    });
+                    pagination.appendChild(li);
+                }
+
+                // 다음 페이지 버튼
+                const nextLi = document.createElement('li');
+                nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+                nextLi.innerHTML = `
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                `;
+                nextLi.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        loadInquiriesList();
+                    }
+                });
+                pagination.appendChild(nextLi);
+            }
+
+            // 문의 목록 로드
+            function loadInquiriesList() {
+                const formData = new FormData(document.getElementById('searchForm'));
+                const params = new URLSearchParams();
+                for (const [key, value] of formData.entries()) {
+                    if (value) params.append(key, value);
+                }
+                params.append('page', currentPage);
+                params.append('size', pageSize);
+
+                fetch(`/api/contents/inquiries?${params.toString()}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        renderInquiriesList(data.content);
+                        renderPagination(data.totalPages);
+                    })
+                    .catch(error => {
+                        console.error('문의 목록을 불러오는데 실패했습니다:', error);
+                        alert('문의 목록을 불러오는데 실패했습니다.');
+                    });
+            }
+
+            // 검색 폼 제출
+            document.getElementById('searchForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                currentPage = 1;
+                loadInquiriesList();
+            });
+
+            // 초기화 버튼
+            document.getElementById('resetBtn').addEventListener('click', function() {
+                document.getElementById('searchForm').reset();
+                currentPage = 1;
+                loadInquiriesList();
+            });
+
+            // 페이지 로드 시 초기 데이터 로드
+            document.addEventListener('DOMContentLoaded', function() {
+                loadInquiriesList();
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

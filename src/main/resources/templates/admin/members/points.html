@@ -121,94 +121,202 @@
                     </table>
                 </div>
 
-                <!-- 페이지네이션 시작 -->
-                <nav th:if="${!#lists.isEmpty(points)}" aria-label="Page navigation" class="mt-4">
+                <!-- 페이지네이션 -->
+                <nav aria-label="Page navigation" th:if="${points.totalPages > 0}">
                     <ul class="pagination justify-content-center">
-                        <li class="page-item" th:classappend="${points.first ? 'disabled' : ''}">
-                            <a class="page-link" th:href="@{/admin/points(page=${points.number - 1}, type=${type})}" 
-                               tabindex="-1">이전</a>
+                        <li class="page-item" th:classappend="${!points.hasPrevious()} ? disabled">
+                            <a class="page-link" th:href="@{/admin/points(page=${points.number - 1})}">이전</a>
                         </li>
                         <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, points.totalPages - 1)}"
-                            th:classappend="${pageNum == points.number ? 'active' : ''}">
-                            <a class="page-link" th:href="@{/admin/points(page=${pageNum}, type=${type})}" 
-                               th:text="${pageNum + 1}">1</a>
+                            th:classappend="${pageNum == points.number} ? active">
+                            <a class="page-link" th:href="@{/admin/points(page=${pageNum})}"
+                               th:text="${pageNum + 1}"></a>
                         </li>
-                        <li class="page-item" th:classappend="${points.last ? 'disabled' : ''}">
-                            <a class="page-link" th:href="@{/admin/points(page=${points.number + 1}, type=${type})}">다음</a>
+                        <li class="page-item" th:classappend="${!points.hasNext()} ? disabled">
+                            <a class="page-link" th:href="@{/admin/points(page=${points.number + 1})}">다음</a>
                         </li>
                     </ul>
                 </nav>
-                <!-- 페이지네이션 끝 -->
             </div>
         </div>
         <!-- 포인트 목록 끝 -->
-    </div>
-
-    <!-- 포인트 지급/차감 모달 -->
-    <div class="modal fade" id="pointModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">포인트 지급/차감</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="pointForm" class="needs-validation" novalidate>
-                        <div class="mb-3">
-                            <label for="memberId" class="form-label required">회원번호</label>
-                            <input type="number" class="form-control" id="memberId" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="pointType" class="form-label required">구분</label>
-                            <select class="form-select" id="pointType" required>
-                                <option value="EARN">적립</option>
-                                <option value="USE">차감</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="amount" class="form-label required">포인트</label>
-                            <input type="number" class="form-control" id="amount" required
-                                   min="1" step="1">
-                        </div>
-                        <div class="mb-3">
-                            <label for="pointDescription" class="form-label required">내용</label>
-                            <textarea class="form-control" id="pointDescription" rows="3" required></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                    <button type="button" class="btn btn-primary" onclick="savePoint()">저장</button>
+        <!-- 포인트 지급/차감 모달 -->
+        <div class="modal fade" id="pointModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">포인트 지급/차감</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="pointForm" class="needs-validation" novalidate>
+                            <div class="mb-3">
+                                <label for="memberId" class="form-label required">회원번호</label>
+                                <input type="number" class="form-control" id="memberId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="pointType" class="form-label required">구분</label>
+                                <select class="form-select" id="pointType" required>
+                                    <option value="EARN">적립</option>
+                                    <option value="USE">차감</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="amount" class="form-label required">포인트</label>
+                                <input type="number" class="form-control" id="amount" required
+                                       min="1" step="1">
+                            </div>
+                            <div class="mb-3">
+                                <label for="pointDescription" class="form-label required">내용</label>
+                                <textarea class="form-control" id="pointDescription" rows="3" required></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-primary" onclick="savePoint()">저장</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+
+
     <th:block layout:fragment="script">
         <script th:inline="javascript">
-            // 포인트 모달 표시
-            function showPointModal() {
-                const modal = new bootstrap.Modal(document.getElementById('pointModal'));
-                document.getElementById('pointForm').reset();
-                modal.show();
+            // 모달 인스턴스 생성
+            let pointModal;
+            let cancelModal;
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                // 포인트 등록/수정 모달
+                const pointModalElement = document.getElementById('pointModal');
+                if (pointModalElement) {
+                    pointModal = new bootstrap.Modal(pointModalElement, {
+                        backdrop: 'static',
+                        keyboard: false
+                    });
+                }
+
+                // 포인트 취소 모달
+                const cancelModalElement = document.getElementById('cancelModal');
+                if (cancelModalElement) {
+                    cancelModal = new bootstrap.Modal(cancelModalElement, {
+                        backdrop: 'static',
+                        keyboard: false
+                    });
+                }
+
+                // 모달 닫기 이벤트 리스너
+                if (pointModalElement) {
+                    pointModalElement.addEventListener('hidden.bs.modal', function () {
+                        const form = document.getElementById('pointForm');
+                        if (form) {
+                            form.reset();
+                            form.classList.remove('was-validated');
+                        }
+                    });
+                }
+
+                if (cancelModalElement) {
+                    cancelModalElement.addEventListener('hidden.bs.modal', function () {
+                        const form = document.getElementById('cancelForm');
+                        if (form) {
+                            form.reset();
+                            form.classList.remove('was-validated');
+                        }
+                    });
+                }
+            });
+
+            // 포인트 등록/수정 모달 표시
+            function showPointModal(memberId) {
+                const form = document.getElementById('pointForm');
+                if (form) {
+                    form.reset();
+                    form.classList.remove('was-validated');
+                }
+
+                const memberIdInput = document.getElementById('memberId');
+                if (memberIdInput) {
+                    if (memberId) {
+                        fetch(`/api/members/${memberId}`)
+                        .then(response => {
+                            if (!response.ok) throw new Error('회원 정보를 가져오는데 실패했습니다.');
+                            return response.json();
+                        })
+                        .then(data => {
+                            memberIdInput.value = data.id;
+                            
+                            // 회원 정보 표시 요소들
+                            const memberName = document.getElementById('memberName');
+                            const memberEmail = document.getElementById('memberEmail');
+                            const memberPhone = document.getElementById('memberPhone');
+                            const memberStatus = document.getElementById('memberStatus');
+                            const memberGrade = document.getElementById('memberGrade');
+                            const memberPoints = document.getElementById('memberPoints');
+                            const memberCreatedAt = document.getElementById('memberCreatedAt');
+
+                            if (memberName) memberName.textContent = data.name;
+                            if (memberEmail) memberEmail.textContent = data.email;
+                            if (memberPhone) memberPhone.textContent = data.phone;
+                            if (memberStatus) memberStatus.textContent = data.status;
+                            if (memberGrade) memberGrade.textContent = data.grade;
+                            if (memberPoints) memberPoints.textContent = data.points;
+                            if (memberCreatedAt) memberCreatedAt.textContent = data.createdAt;
+                            
+                            if (pointModal) {
+                                pointModal.show();
+                            }
+                        })
+                        .catch(error => {
+                            alert(error.message);
+                        });
+                    } else {
+                        memberIdInput.value = '';
+                        if (pointModal) {
+                            pointModal.show();
+                        }
+                    }
+                }
+            }
+
+            // 포인트 취소 모달 표시
+            function showCancelModal(pointId) {
+                const form = document.getElementById('cancelForm');
+                if (form) {
+                    form.reset();
+                    form.classList.remove('was-validated');
+                }
+                const pointIdInput = document.getElementById('pointId');
+                if (pointIdInput) {
+                    pointIdInput.value = pointId;
+                }
+                
+                if (cancelModal) {
+                    cancelModal.show();
+                }
             }
 
             // 포인트 저장
             function savePoint() {
                 const form = document.getElementById('pointForm');
-                if (!form.checkValidity()) {
-                    form.classList.add('was-validated');
+                if (!form || !form.checkValidity()) {
+                    if (form) {
+                        form.classList.add('was-validated');
+                    }
                     return;
                 }
 
+                const memberId = document.getElementById('memberId').value;
                 const data = {
-                    memberId: parseInt(document.getElementById('memberId').value),
                     type: document.getElementById('pointType').value,
-                    amount: parseInt(document.getElementById('amount').value),
-                    description: document.getElementById('pointDescription').value
+                    amount: parseInt(document.getElementById('pointAmount').value),
+                    reason: document.getElementById('pointReason').value
                 };
 
-                fetch('/api/points/admin', {
+                fetch(`/api/members/${memberId}/points`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -216,11 +324,44 @@
                     body: JSON.stringify(data)
                 })
                 .then(response => {
-                    if (!response.ok) throw new Error('포인트 처리에 실패했습니다.');
-                    return response.json();
+                    if (!response.ok) throw new Error('포인트 저장에 실패했습니다.');
+                    if (pointModal) {
+                        pointModal.hide();
+                    }
+                    location.reload();
                 })
-                .then(() => {
-                    alert('처리되었습니다.');
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
+
+            // 포인트 취소
+            function cancelPoint() {
+                const form = document.getElementById('cancelForm');
+                if (!form || !form.checkValidity()) {
+                    if (form) {
+                        form.classList.add('was-validated');
+                    }
+                    return;
+                }
+
+                const pointId = document.getElementById('pointId').value;
+                const reason = document.getElementById('cancelReason').value;
+
+                fetch(`/api/points/${pointId}/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        reason: reason
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('포인트 취소에 실패했습니다.');
+                    if (cancelModal) {
+                        cancelModal.hide();
+                    }
                     location.reload();
                 })
                 .catch(error => {

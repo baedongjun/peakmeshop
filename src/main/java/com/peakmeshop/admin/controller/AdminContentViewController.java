@@ -1,5 +1,7 @@
 package com.peakmeshop.admin.controller;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +23,7 @@ public class AdminContentViewController {
     public String notices(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String status,
+            @PageableDefault(size = 10) Pageable pageable,
             Model model) {
         if (category != null) {
             model.addAttribute("category", category);
@@ -28,6 +31,7 @@ public class AdminContentViewController {
         if (status != null) {
             model.addAttribute("status", status);
         }
+        model.addAttribute("pageable", pageable);
         return "admin/contents/notices";
     }
 
@@ -54,10 +58,12 @@ public class AdminContentViewController {
     @GetMapping("/faqs")
     public String faqs(
             @RequestParam(required = false) String category,
+            @PageableDefault(size = 10) Pageable pageable,
             Model model) {
         if (category != null) {
             model.addAttribute("category", category);
         }
+        model.addAttribute("pageable", pageable);
         return "admin/contents/faqs";
     }
 
@@ -92,10 +98,12 @@ public class AdminContentViewController {
     @GetMapping("/inquiries")
     public String inquiries(
             @RequestParam(required = false) String status,
+            @PageableDefault(size = 10) Pageable pageable,
             Model model) {
         if (status != null) {
             model.addAttribute("status", status);
         }
+        model.addAttribute("pageable", pageable);
         return "admin/contents/inquiries";
     }
 

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/admin-layout}">
+
+<head>
+    <title>배송 통계 | PeakMe Shop 관리자</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.css">
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title">배송 통계</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/shipments}">배송 관리</a></li>
+                        <li class="breadcrumb-item active">배송 통계</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- 페이지 헤더 끝 -->
+
+        <!-- 통계 필터 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <form id="statisticsFilterForm">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="period" class="form-label">기간</label>
+                            <select class="form-select" id="period">
+                                <option value="TODAY">오늘</option>
+                                <option value="WEEK">이번 주</option>
+                                <option value="MONTH">이번 달</option>
+                                <option value="YEAR">이번 년</option>
+                                <option value="CUSTOM">사용자 정의</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3" id="customDateRange" style="display: none;">
+                            <label for="startDate" class="form-label">시작일</label>
+                            <input type="date" class="form-control" id="startDate">
+                        </div>
+                        <div class="col-md-3" id="customDateRangeEnd" style="display: none;">
+                            <label for="endDate" class="form-label">종료일</label>
+                            <input type="date" class="form-control" id="endDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="carrier" class="form-label">택배사</label>
+                            <select class="form-select" id="carrier">
+                                <option value="">전체</option>
+                                <!-- 택배사 옵션이 여기에 동적으로 로드됩니다 -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col text-end">
+                            <button type="submit" class="btn btn-primary">조회</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- 통계 필터 끝 -->
+
+        <!-- 통계 카드 시작 -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">총 배송 건수</h5>
+                        <h2 class="mb-0" id="totalShipments">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">배송 완료</h5>
+                        <h2 class="mb-0" id="completedShipments">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">배송 중</h5>
+                        <h2 class="mb-0" id="inProgressShipments">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">배송 지연</h5>
+                        <h2 class="mb-0" id="delayedShipments">0</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 통계 카드 끝 -->
+
+        <!-- 통계 차트 시작 -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">일별 배송 현황</h5>
+                        <canvas id="dailyShipmentsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">택배사별 배송 현황</h5>
+                        <canvas id="carrierShipmentsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 통계 차트 끝 -->
+
+        <!-- 상세 통계 시작 -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">상세 통계</h5>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>날짜</th>
+                                <th>택배사</th>
+                                <th>총 배송</th>
+                                <th>배송 완료</th>
+                                <th>배송 중</th>
+                                <th>배송 지연</th>
+                                <th>평균 배송 시간</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailedStatistics">
+                            <!-- 상세 통계가 여기에 동적으로 로드됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- 상세 통계 끝 -->
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+        <script>
+            let dailyShipmentsChart;
+            let carrierShipmentsChart;
+
+            // 택배사 옵션 로드
+            function loadCarrierOptions() {
+                fetch('/api/shipments/carriers')
+                    .then(response => response.json())
+                    .then(data => {
+                        const select = document.getElementById('carrier');
+                        data.forEach(carrier => {
+                            const option = document.createElement('option');
+                            option.value = carrier.id;
+                            option.textContent = carrier.name;
+                            select.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('택배사 목록을 불러오는데 실패했습니다:', error);
+                    });
+            }
+
+            // 기간 선택 이벤트 처리
+            document.getElementById('period').addEventListener('change', function() {
+                const customDateRange = document.getElementById('customDateRange');
+                const customDateRangeEnd = document.getElementById('customDateRangeEnd');
+                if (this.value === 'CUSTOM') {
+                    customDateRange.style.display = 'block';
+                    customDateRangeEnd.style.display = 'block';
+                } else {
+                    customDateRange.style.display = 'none';
+                    customDateRangeEnd.style.display = 'none';
+                }
+            });
+
+            // 통계 데이터 로드
+            function loadStatistics() {
+                const formData = new FormData(document.getElementById('statisticsFilterForm'));
+                const params = new URLSearchParams();
+                for (const [key, value] of formData.entries()) {
+                    if (value) params.append(key, value);
+                }
+
+                fetch(`/api/shipments/statistics?${params.toString()}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // 통계 카드 업데이트
+                        document.getElementById('totalShipments').textContent = data.totalShipments.toLocaleString();
+                        document.getElementById('completedShipments').textContent = data.completedShipments.toLocaleString();
+                        document.getElementById('inProgressShipments').textContent = data.inProgressShipments.toLocaleString();
+                        document.getElementById('delayedShipments').textContent = data.delayedShipments.toLocaleString();
+
+                        // 일별 배송 현황 차트 업데이트
+                        updateDailyShipmentsChart(data.dailyStatistics);
+
+                        // 택배사별 배송 현황 차트 업데이트
+                        updateCarrierShipmentsChart(data.carrierStatistics);
+
+                        // 상세 통계 테이블 업데이트
+                        renderDetailedStatistics(data.detailedStatistics);
+                    })
+                    .catch(error => {
+                        console.error('통계 데이터를 불러오는데 실패했습니다:', error);
+                        alert('통계 데이터를 불러오는데 실패했습니다.');
+                    });
+            }
+
+            // 일별 배송 현황 차트 업데이트
+            function updateDailyShipmentsChart(data) {
+                const ctx = document.getElementById('dailyShipmentsChart').getContext('2d');
+                
+                if (dailyShipmentsChart) {
+                    dailyShipmentsChart.destroy();
+                }
+
+                dailyShipmentsChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(item => item.date),
+                        datasets: [
+                            {
+                                label: '총 배송',
+                                data: data.map(item => item.total),
+                                borderColor: 'rgb(75, 192, 192)',
+                                tension: 0.1
+                            },
+                            {
+                                label: '배송 완료',
+                                data: data.map(item => item.completed),
+                                borderColor: 'rgb(54, 162, 235)',
+                                tension: 0.1
+                            },
+                            {
+                                label: '배송 중',
+                                data: data.map(item => item.inProgress),
+                                borderColor: 'rgb(255, 205, 86)',
+                                tension: 0.1
+                            },
+                            {
+                                label: '배송 지연',
+                                data: data.map(item => item.delayed),
+                                borderColor: 'rgb(255, 99, 132)',
+                                tension: 0.1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 택배사별 배송 현황 차트 업데이트
+            function updateCarrierShipmentsChart(data) {
+                const ctx = document.getElementById('carrierShipmentsChart').getContext('2d');
+                
+                if (carrierShipmentsChart) {
+                    carrierShipmentsChart.destroy();
+                }
+
+                carrierShipmentsChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(item => item.carrierName),
+                        datasets: [
+                            {
+                                label: '총 배송',
+                                data: data.map(item => item.total),
+                                backgroundColor: 'rgba(75, 192, 192, 0.5)'
+                            },
+                            {
+                                label: '배송 완료',
+                                data: data.map(item => item.completed),
+                                backgroundColor: 'rgba(54, 162, 235, 0.5)'
+                            },
+                            {
+                                label: '배송 중',
+                                data: data.map(item => item.inProgress),
+                                backgroundColor: 'rgba(255, 205, 86, 0.5)'
+                            },
+                            {
+                                label: '배송 지연',
+                                data: data.map(item => item.delayed),
+                                backgroundColor: 'rgba(255, 99, 132, 0.5)'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 상세 통계 테이블 렌더링
+            function renderDetailedStatistics(data) {
+                const tbody = document.getElementById('detailedStatistics');
+                tbody.innerHTML = '';
+
+                if (data.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center">통계 데이터가 없습니다.</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                data.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${item.date}</td>
+                        <td>${item.carrierName}</td>
+                        <td>${item.total.toLocaleString()}</td>
+                        <td>${item.completed.toLocaleString()}</td>
+                        <td>${item.inProgress.toLocaleString()}</td>
+                        <td>${item.delayed.toLocaleString()}</td>
+                        <td>${item.averageDeliveryTime}시간</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // 폼 제출 처리
+            document.getElementById('statisticsFilterForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                loadStatistics();
+            });
+
+            // 페이지 로드 시 초기 데이터 로드
+            document.addEventListener('DOMContentLoaded', function() {
+                loadCarrierOptions();
+                loadStatistics();
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

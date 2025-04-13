@@ -4,399 +4,170 @@
       layout:decorate="~{layouts/admin-layout}">
 
 <head>
-    <title>공급사 등록/수정 - Peak Me Shop 관리자</title>
+    <title th:text="${supplier == null ? '공급사 등록' : '공급사 수정'} + ' | PeakMe Shop 관리자'">공급사 등록 | PeakMe Shop 관리자</title>
 </head>
 
 <body>
-<div layout:fragment="content">
-    <!-- 페이지 헤더 시작 -->
-    <div class="page-header">
-        <div class="row align-items-center">
-            <div class="col">
-                <h3 class="page-title" th:text="${supplier != null ? '공급사 수정' : '공급사 등록'}">공급사 등록</h3>
-                <ul class="breadcrumb">
-                    <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
-                    <li class="breadcrumb-item"><a th:href="@{/admin/suppliers}">공급사 관리</a></li>
-                    <li class="breadcrumb-item active" th:text="${supplier != null ? '공급사 수정' : '공급사 등록'}">공급사 등록</li>
-                </ul>
+    <div layout:fragment="content">
+        <!-- 페이지 헤더 시작 -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="page-title" th:text="${supplier == null ? '공급사 등록' : '공급사 수정'}">공급사 등록</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/suppliers}">공급사 관리</a></li>
+                        <li class="breadcrumb-item active" th:text="${supplier == null ? '공급사 등록' : '공급사 수정'}">공급사 등록</li>
+                    </ul>
+                </div>
             </div>
         </div>
-    </div>
-    <!-- 페이지 헤더 끝 -->
+        <!-- 페이지 헤더 끝 -->
 
-    <!-- 공급사 폼 시작 -->
-    <div class="card">
-        <div class="card-body">
-            <form id="supplierForm">
-                <input type="hidden" id="supplierId" th:value="${supplier != null ? supplier.id : ''}">
-
-                <!-- 기본 정보 -->
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="required">공급사명</label>
-                            <input type="text" class="form-control" id="name" name="name" required
-                                   th:value="${supplier != null ? supplier.name : ''}"
-                                   placeholder="공급사명을 입력하세요">
+        <!-- 공급사 폼 시작 -->
+        <div class="card">
+            <div class="card-body">
+                <form id="supplierForm" class="needs-validation" novalidate>
+                    <input type="hidden" id="supplierId" th:value="${supplier?.id}">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="name" class="form-label">공급사명 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" 
+                                       th:value="${supplier?.name}" required>
+                                <div class="invalid-feedback">공급사명을 입력해주세요.</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="required">공급사코드</label>
-                            <input type="text" class="form-control" id="code" name="code" required
-                                   th:value="${supplier != null ? supplier.code : ''}"
-                                   th:readonly="${supplier != null}"
-                                   placeholder="공급사코드를 입력하세요">
-                            <small class="form-text text-muted">영문, 숫자 조합으로 입력하세요. (예: SUP001)</small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 사업자 정보 -->
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="required">사업자등록번호</label>
-                            <input type="text" class="form-control" id="businessNumber" name="businessNumber" required
-                                   th:value="${supplier != null ? supplier.businessNumber : ''}"
-                                   placeholder="000-00-00000">
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="required">대표자명</label>
-                            <input type="text" class="form-control" id="representativeName" name="representativeName" required
-                                   th:value="${supplier != null ? supplier.representativeName : ''}"
-                                   placeholder="대표자명을 입력하세요">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 연락처 정보 -->
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="required">연락처</label>
-                            <input type="tel" class="form-control" id="phone" name="phone" required
-                                   th:value="${supplier != null ? supplier.phone : ''}"
-                                   placeholder="02-0000-0000">
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label>이메일</label>
-                            <input type="email" class="form-control" id="email" name="email"
-                                   th:value="${supplier != null ? supplier.email : ''}"
-                                   placeholder="example@example.com">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 주소 정보 -->
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label class="required">우편번호</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="zipCode" name="zipCode" required readonly
-                                       th:value="${supplier != null ? supplier.zipCode : ''}"
-                                       placeholder="우편번호">
-                                <div class="input-group-append">
-                                    <button type="button" class="btn btn-secondary" id="searchAddressBtn">
-                                        <i class="fas fa-search"></i> 검색
-                                    </button>
-                                </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="code" class="form-label">공급사코드 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="code" name="code" 
+                                       th:value="${supplier?.code}" required
+                                       pattern="^[A-Z][A-Z0-9_]{2,19}$"
+                                       th:readonly="${supplier != null}">
+                                <div class="invalid-feedback">영문 대문자, 숫자, 언더스코어(_)만 사용 가능합니다.</div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-8">
-                        <div class="form-group">
-                            <label class="required">기본주소</label>
-                            <input type="text" class="form-control" id="address1" name="address1" required readonly
-                                   th:value="${supplier != null ? supplier.address1 : ''}"
-                                   placeholder="기본주소">
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="form-group">
-                            <label class="required">상세주소</label>
-                            <input type="text" class="form-control" id="address2" name="address2" required
-                                   th:value="${supplier != null ? supplier.address2 : ''}"
-                                   placeholder="상세주소를 입력하세요">
-                        </div>
-                    </div>
-                </div>
 
-                <!-- 계좌 정보 -->
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label class="required">은행명</label>
-                            <select class="form-control" id="bankName" name="bankName" required>
-                                <option value="">선택하세요</option>
-                                <option value="KB국민은행" th:selected="${supplier != null && supplier.bankName == 'KB국민은행'}">KB국민은행</option>
-                                <option value="신한은행" th:selected="${supplier != null && supplier.bankName == '신한은행'}">신한은행</option>
-                                <option value="우리은행" th:selected="${supplier != null && supplier.bankName == '우리은행'}">우리은행</option>
-                                <option value="하나은행" th:selected="${supplier != null && supplier.bankName == '하나은행'}">하나은행</option>
-                                <option value="기업은행" th:selected="${supplier != null && supplier.bankName == '기업은행'}">기업은행</option>
-                                <option value="농협은행" th:selected="${supplier != null && supplier.bankName == '농협은행'}">농협은행</option>
-                            </select>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="businessNumber" class="form-label">사업자등록번호 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="businessNumber" name="businessNumber"
+                                       th:value="${supplier?.businessNumber}" required
+                                       pattern="^\d{3}-\d{2}-\d{5}$">
+                                <div class="invalid-feedback">사업자등록번호를 올바른 형식으로 입력해주세요. (예: 123-45-67890)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="representative" class="form-label">대표자명 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="representative" name="representative"
+                                       th:value="${supplier?.representative}" required>
+                                <div class="invalid-feedback">대표자명을 입력해주세요.</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label class="required">계좌번호</label>
-                            <input type="text" class="form-control" id="accountNumber" name="accountNumber" required
-                                   th:value="${supplier != null ? supplier.accountNumber : ''}"
-                                   placeholder="'-' 없이 입력하세요">
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label class="required">예금주</label>
-                            <input type="text" class="form-control" id="accountHolder" name="accountHolder" required
-                                   th:value="${supplier != null ? supplier.accountHolder : ''}"
-                                   placeholder="예금주명을 입력하세요">
-                        </div>
-                    </div>
-                </div>
 
-                <!-- 추가 정보 -->
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label>웹사이트</label>
-                            <input type="url" class="form-control" id="website" name="website"
-                                   th:value="${supplier != null ? supplier.website : ''}"
-                                   placeholder="https://example.com">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="phone" class="form-label">전화번호 <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="phone" name="phone"
+                                       th:value="${supplier?.phone}" required
+                                       pattern="^\d{2,3}-\d{3,4}-\d{4}$">
+                                <div class="invalid-feedback">전화번호를 올바른 형식으로 입력해주세요. (예: 02-123-4567)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="email" class="form-label">이메일 <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email"
+                                       th:value="${supplier?.email}" required>
+                                <div class="invalid-feedback">이메일을 올바른 형식으로 입력해주세요.</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label>상태</label>
-                            <select class="form-control" id="status" name="status">
-                                <option value="ACTIVE" th:selected="${supplier != null && supplier.status == 'ACTIVE'}">활성</option>
-                                <option value="INACTIVE" th:selected="${supplier != null && supplier.status == 'INACTIVE'}">비활성</option>
-                            </select>
+
+                    <div class="form-group mb-3">
+                        <label for="address" class="form-label">주소 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="address" name="address"
+                               th:value="${supplier?.address}" required>
+                        <div class="invalid-feedback">주소를 입력해주세요.</div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="description" class="form-label">설명</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"
+                                  th:text="${supplier?.description}"></textarea>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isActive" name="isActive"
+                                   th:checked="${supplier == null || supplier.isActive}">
+                            <label class="form-check-label" for="isActive">활성화</label>
                         </div>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label>메모</label>
-                    <textarea class="form-control" id="memo" name="memo" rows="4"
-                              th:text="${supplier != null ? supplier.memo : ''}"
-                              placeholder="공급사에 대한 메모를 입력하세요"></textarea>
-                </div>
-
-                <div class="text-right mt-3">
-                    <a th:href="@{/admin/suppliers}" class="btn btn-secondary">취소</a>
-                    <button type="button" id="saveBtn" class="btn btn-primary">저장</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    <!-- 공급사 폼 끝 -->
-
-    <!-- 로딩 스피너 -->
-    <div id="loadingSpinner" class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body text-center p-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="sr-only">로딩중...</span>
+                    <div class="text-end">
+                        <a th:href="@{/admin/suppliers}" class="btn btn-secondary me-2">취소</a>
+                        <button type="button" class="btn btn-primary" onclick="saveSupplier()">
+                            <span th:text="${supplier == null ? '등록' : '수정'}">등록</span>
+                        </button>
                     </div>
-                    <p class="mt-3 mb-0">처리 중입니다. 잠시만 기다려주세요.</p>
-                </div>
+                </form>
             </div>
         </div>
+        <!-- 공급사 폼 끝 -->
     </div>
 
-    <!-- 결과 모달 -->
-    <div id="resultModal" class="modal fade" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">알림</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body" id="resultMessage">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="resultConfirmBtn">확인</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 공급사 폼 스크립트 -->
-<th:block layout:fragment="script">
-    <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-    <script th:inline="javascript">
-        /*<![CDATA[*/
-        $(document).ready(function() {
-            // 주소 검색 버튼 클릭 이벤트
-            $('#searchAddressBtn').on('click', function() {
-                searchAddress();
-            });
-
-            // 저장 버튼 클릭 이벤트
-            $('#saveBtn').on('click', function() {
-                saveSupplier();
-            });
-
-            // 결과 모달 확인 버튼 클릭 이벤트
-            $('#resultConfirmBtn').on('click', function() {
-                if ($('#resultModal').data('success') === true) {
-                    window.location.href = '/admin/suppliers';
+    <th:block layout:fragment="scripts">
+        <script>
+            // 공급사 저장
+            function saveSupplier() {
+                const form = document.getElementById('supplierForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
                 }
-            });
-        });
 
-        // 주소 검색 함수
-        function searchAddress() {
-            new daum.Postcode({
-                oncomplete: function(data) {
-                    $('#zipCode').val(data.zonecode);
-                    $('#address1').val(data.address);
-                    $('#address2').focus();
-                }
-            }).open();
-        }
+                const supplierId = document.getElementById('supplierId').value;
+                const url = supplierId ? `/api/suppliers/${supplierId}` : '/api/suppliers';
+                const method = supplierId ? 'PUT' : 'POST';
 
-        // 공급사 저장 함수
-        function saveSupplier() {
-            // 폼 유효성 검사
-            if (!validateForm()) {
-                return;
-            }
-
-            // 로딩 스피너 표시
-            $('#loadingSpinner').modal('show');
-
-            // 폼 데이터 수집
-            const supplierId = $('#supplierId').val();
-            const isUpdate = supplierId !== '';
-            const url = isUpdate ? `/api/suppliers/${supplierId}` : '/api/suppliers';
-            const method = isUpdate ? 'PUT' : 'POST';
-
-            // 폼 데이터 객체 생성
-            const supplierData = {
-                name: $('#name').val(),
-                code: $('#code').val(),
-                businessNumber: $('#businessNumber').val(),
-                representativeName: $('#representativeName').val(),
-                phone: $('#phone').val(),
-                email: $('#email').val(),
-                zipCode: $('#zipCode').val(),
-                address1: $('#address1').val(),
-                address2: $('#address2').val(),
-                bankName: $('#bankName').val(),
-                accountNumber: $('#accountNumber').val(),
-                accountHolder: $('#accountHolder').val(),
-                website: $('#website').val(),
-                status: $('#status').val(),
-                description: $('#description').val()
-            };
-
-            // AJAX 요청
-            $.ajax({
-                url: url,
-                type: method,
-                contentType: 'application/json',
-                data: JSON.stringify(supplierData),
-                success: function(response) {
-                    $('#loadingSpinner').modal('hide');
-                    showResultModal(true, isUpdate ? '공급사 정보가 성공적으로 수정되었습니다.' : '공급사가 성공적으로 등록되었습니다.');
-                },
-                error: function(xhr, status, error) {
-                    $('#loadingSpinner').modal('hide');
-                    let errorMessage = '오류가 발생했습니다.';
-
-                    try {
-                        const response = JSON.parse(xhr.responseText);
-                        if (response.message) {
-                            errorMessage = response.message;
-                        }
-                    } catch (e) {
-                        console.error('Error parsing response:', e);
+                const formData = new FormData(form);
+                const data = {};
+                formData.forEach((value, key) => {
+                    if (key === 'isActive') {
+                        data[key] = formData.get(key) === 'on';
+                    } else if (value) {
+                        data[key] = value;
                     }
+                });
 
-                    showResultModal(false, errorMessage);
-                }
-            });
-        }
-
-        // 폼 유효성 검사 함수
-        function validateForm() {
-            // 필수 필드 검사
-            const requiredFields = [
-                { id: 'name', label: '공급사명' },
-                { id: 'code', label: '공급사코드' },
-                { id: 'businessNumber', label: '사업자등록번호' },
-                { id: 'representativeName', label: '대표자명' },
-                { id: 'phone', label: '연락처' },
-                { id: 'zipCode', label: '우편번호' },
-                { id: 'address1', label: '기본주소' },
-                { id: 'address2', label: '상세주소' },
-                { id: 'bankName', label: '은행명' },
-                { id: 'accountNumber', label: '계좌번호' },
-                { id: 'accountHolder', label: '예금주' }
-            ];
-
-            for (const field of requiredFields) {
-                const value = $(`#${field.id}`).val();
-                if (!value || value.trim() === '') {
-                    showResultModal(false, `${field.label}을(를) 입력해주세요.`);
-                    $(`#${field.id}`).focus();
-                    return false;
-                }
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/admin/suppliers';
+                    } else {
+                        throw new Error('공급사 저장에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
             }
-
-            // 이메일 형식 검사 (입력된 경우)
-            const email = $('#email').val();
-            if (email && !validateEmail(email)) {
-                showResultModal(false, '올바른 이메일 형식이 아닙니다.');
-                $('#email').focus();
-                return false;
-            }
-
-            // 사업자등록번호 형식 검사
-            const businessNumber = $('#businessNumber').val();
-            if (!validateBusinessNumber(businessNumber)) {
-                showResultModal(false, '올바른 사업자등록번호 형식이 아닙니다. (예: 123-45-67890)');
-                $('#businessNumber').focus();
-                return false;
-            }
-
-            return true;
-        }
-
-        // 이메일 유효성 검사 함수
-        function validateEmail(email) {
-            const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-            return re.test(email);
-        }
-
-        // 사업자등록번호 유효성 검사 함수
-        function validateBusinessNumber(businessNumber) {
-            const re = /^\d{3}-\d{2}-\d{5}$/;
-            return re.test(businessNumber);
-        }
-
-        // 결과 모달 표시 함수
-        function showResultModal(success, message) {
-            $('#resultModal').data('success', success);
-            $('#resultMessage').text(message);
-            $('#resultModal').modal('show');
-        }
-        /*]]>*/
-    </script>
-</th:block>
+        </script>
+    </th:block>
 </body>
 </html>

@@ -273,157 +273,52 @@
 
     <!-- 자바스크립트 -->
     <th:block layout:fragment="script">
-        <script>
+        <script th:inline="javascript">
+            // 모달 인스턴스 생성
+            let memberDetailModal;
+            let statusModal;
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                const memberDetailModalElement = document.getElementById('memberDetailModal');
+                const statusModalElement = document.getElementById('statusModal');
+                
+                memberDetailModal = new bootstrap.Modal(memberDetailModalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+                
+                statusModal = new bootstrap.Modal(statusModalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            });
+
+            // 회원 상세 모달 표시
             function showMemberDetail(memberId) {
-                fetch(`/api/admin/members/${memberId}`)
+                fetch(`/api/members/${memberId}`)
                     .then(response => response.json())
                     .then(data => {
-                        const detail = document.getElementById('memberDetail');
-                        detail.innerHTML = `
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <h6>기본 정보</h6>
-                                    <table class="table table-bordered">
-                                        <tr>
-                                            <th style="width: 35%;">회원번호</th>
-                                            <td>${data.memberId}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>이름</th>
-                                            <td>${data.name}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>이메일</th>
-                                            <td>${data.email}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>연락처</th>
-                                            <td>${data.phone}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>생년월일</th>
-                                            <td>${data.birthDate || '-'}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>성별</th>
-                                            <td>${data.gender || '-'}</td>
-                                        </tr>
-                                    </table>
-                                </div>
-                                <div class="col-md-6">
-                                    <h6>회원 상태</h6>
-                                    <table class="table table-bordered">
-                                        <tr>
-                                            <th style="width: 35%;">회원등급</th>
-                                            <td>
-                                                <span class="badge bg-${
-                                                    data.grade === 'DIAMOND' ? 'info' :
-                                                    data.grade === 'PLATINUM' ? 'primary' :
-                                                    data.grade === 'GOLD' ? 'warning' :
-                                                    data.grade === 'SILVER' ? 'secondary' : 'dark'
-                                                }">
-                                                    <i class="fas fa-crown me-1"></i>
-                                                    ${data.grade}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th>회원상태</th>
-                                            <td>
-                                                <span class="badge bg-${
-                                                    data.status === 'ACTIVE' ? 'success' :
-                                                    data.status === 'DORMANT' ? 'warning' :
-                                                    data.status === 'SUSPENDED' ? 'danger' : 'secondary'
-                                                }">${data.status}</span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th>가입일시</th>
-                                            <td>${data.createdAt}</td>
-                                        </tr>
-                                        <tr>
-                                            <th>최근접속</th>
-                                            <td>${data.lastLoginAt}</td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
-                            <div class="row mb-4">
-                                <div class="col-12">
-                                    <h6>주문 정보</h6>
-                                    <table class="table table-bordered">
-                                        <tr>
-                                            <th style="width: 20%;">총 주문건수</th>
-                                            <td>${data.orderCount}건</td>
-                                        </tr>
-                                        <tr>
-                                            <th>총 주문금액</th>
-                                            <td>${data.totalOrderAmount.toLocaleString()}원</td>
-                                        </tr>
-                                        <tr>
-                                            <th>최근 주문일</th>
-                                            <td>${data.lastOrderDate || '-'}</td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
-                            <div class="row mb-4">
-                                <div class="col-12">
-                                    <h6>포인트/쿠폰</h6>
-                                    <table class="table table-bordered">
-                                        <tr>
-                                            <th style="width: 20%;">보유 포인트</th>
-                                            <td>${data.point.toLocaleString()}P</td>
-                                        </tr>
-                                        <tr>
-                                            <th>사용 가능 쿠폰</th>
-                                            <td>${data.availableCoupons}장</td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
-                            ${data.statusHistory ? `
-                                <div class="row">
-                                    <div class="col-12">
-                                        <h6>상태 변경 이력</h6>
-                                        <table class="table table-bordered">
-                                            <thead>
-                                                <tr>
-                                                    <th>변경일시</th>
-                                                    <th>변경상태</th>
-                                                    <th>처리자</th>
-                                                    <th>처리메모</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                ${data.statusHistory.map(history => `
-                                                    <tr>
-                                                        <td>${history.processedAt}</td>
-                                                        <td>${history.status}</td>
-                                                        <td>${history.processor}</td>
-                                                        <td>${history.note || '-'}</td>
-                                                    </tr>
-                                                `).join('')}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            ` : ''}
-                        `;
-
-                        const modal = new bootstrap.Modal(document.getElementById('memberDetailModal'));
-                        modal.show();
+                        // 모달 내용 채우기
+                        document.getElementById('memberId').textContent = data.id;
+                        document.getElementById('memberName').textContent = data.name;
+                        document.getElementById('memberEmail').textContent = data.email;
+                        document.getElementById('memberPhone').textContent = data.phone;
+                        document.getElementById('memberStatus').textContent = data.status;
+                        document.getElementById('memberGrade').textContent = data.grade;
+                        document.getElementById('memberPoints').textContent = data.points.toLocaleString();
+                        document.getElementById('memberCreatedAt').textContent = new Date(data.createdAt).toLocaleString();
+                        
+                        memberDetailModal.show();
                     })
                     .catch(error => {
-                        console.error('Error:', error);
                         alert('회원 정보를 불러오는데 실패했습니다.');
                     });
             }
 
+            // 회원 상태 변경 모달 표시
             function showStatusModal(memberId) {
                 document.getElementById('statusMemberId').value = memberId;
-                const modal = new bootstrap.Modal(document.getElementById('statusModal'));
-                modal.show();
+                statusModal.show();
             }
 
             function updateMemberStatus() {
