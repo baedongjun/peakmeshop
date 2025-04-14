@@ -16,6 +16,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Table(name = "members")
@@ -24,6 +27,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EntityListeners(AuditingEntityListener.class)
 public class Member {
 
     public static final String STATUS_ACTIVE = "ACTIVE";
@@ -119,16 +123,62 @@ public class Member {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
-    @Column(name = "created_at")
+    @CreatedDate
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @LastModifiedDate
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "member")
     private List<MemberCoupon> coupons = new ArrayList<>();
 
+    @Column
+    private int orderCount;
+
+    @Column
+    private double totalOrders;
+
+    @Column
+    private double totalSpent;
+
+    @Column
+    private double totalPoints;
+
     public boolean isActive() {
         return STATUS_ACTIVE.equals(status);
+    }
+
+    public void updateLastLogin() {
+        this.lastLoginAt = LocalDateTime.now();
+    }
+
+    public void withdraw() {
+        this.isWithdrawn = true;
+        this.withdrawnAt = LocalDateTime.now();
+    }
+
+    public void activate() {
+        this.status = STATUS_ACTIVE;
+    }
+
+    public void deactivate() {
+        this.status = STATUS_INACTIVE;
+    }
+
+    public void updateOrderCount(int count) {
+        this.orderCount = count;
+        this.lastOrderDate = LocalDateTime.now();
+    }
+
+    public void updateTotalOrders(double orders) {
+        this.totalOrders = orders;
+    }
+
+    public void updateTotalSpent(double amount) {
+        this.totalSpent = amount;
+    }
+
+    public void updateTotalPoints(double points) {
+        this.totalPoints = points;
     }
 }

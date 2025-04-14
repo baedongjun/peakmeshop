@@ -32,7 +32,7 @@ public class BannerController {
 
     @GetMapping
     public ResponseEntity<Page<BannerDTO>> getAllBanners(@PageableDefault(size = 10) Pageable pageable) {
-        return ResponseEntity.ok(bannerService.getAllBanners(pageable));
+        return ResponseEntity.ok(bannerService.getBanners(pageable));
     }
 
     @GetMapping("/active")
@@ -42,9 +42,7 @@ public class BannerController {
 
     @GetMapping("/{id}")
     public ResponseEntity<BannerDTO> getBannerById(@PathVariable Long id) {
-        return bannerService.getBannerById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(bannerService.getBannerById(id));
     }
 
     @GetMapping("/position/{position}")

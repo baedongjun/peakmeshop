@@ -17,29 +17,23 @@ import com.peakmeshop.domain.entity.Banner;
 import com.peakmeshop.domain.repository.BannerRepository;
 import com.peakmeshop.domain.service.BannerService;
 import com.peakmeshop.domain.service.FileStorageService;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class BannerServiceImpl implements BannerService {
 
     private final BannerRepository bannerRepository;
     private final FileStorageService fileStorageService;
 
-    public BannerServiceImpl(
-            BannerRepository bannerRepository,
-            FileStorageService fileStorageService) {
-        this.bannerRepository = bannerRepository;
-        this.fileStorageService = fileStorageService;
-    }
-
     @Override
-    @Transactional(readOnly = true)
-    public Page<BannerDTO> getAllBanners(Pageable pageable) {
+    public Page<BannerDTO> getBanners(Pageable pageable) {
         return bannerRepository.findAll(pageable)
                 .map(this::convertToDTO);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Page<BannerDTO> getActiveBanners(Pageable pageable) {
         LocalDateTime now = LocalDateTime.now();
         return bannerRepository.findByStartDateBeforeAndEndDateAfterAndIsActiveTrue(now, now, pageable)
@@ -47,92 +41,122 @@ public class BannerServiceImpl implements BannerService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Optional<BannerDTO> getBannerById(Long id) {
-        return bannerRepository.findById(id)
-                .map(this::convertToDTO);
-    }
-
-    @Override
-    @Transactional
-    public BannerDTO createBanner(BannerDTO bannerDTO) {
-        Banner banner = new Banner();
-        banner.setTitle(bannerDTO.title());
-        banner.setSubtitle(bannerDTO.subtitle());
-        banner.setImageUrl(bannerDTO.imageUrl());
-        banner.setLinkUrl(bannerDTO.linkUrl());
-        banner.setPosition(bannerDTO.position());
-        banner.setStartDate(bannerDTO.startDate());
-        banner.setEndDate(bannerDTO.endDate());
-        banner.setActive(bannerDTO.isActive());
-        banner.setCreatedAt(LocalDateTime.now());
-        banner.setUpdatedAt(LocalDateTime.now());
-
-        Banner savedBanner = bannerRepository.save(banner);
-        return convertToDTO(savedBanner);
-    }
-
-    @Override
-    @Transactional
-    public BannerDTO updateBanner(Long id, BannerDTO bannerDTO) {
-        Banner existingBanner = bannerRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("배너를 찾을 수 없습니다. ID: " + id));
-
-        existingBanner.setTitle(bannerDTO.title());
-        existingBanner.setSubtitle(bannerDTO.subtitle());
-        existingBanner.setImageUrl(bannerDTO.imageUrl());
-        existingBanner.setLinkUrl(bannerDTO.linkUrl());
-        existingBanner.setPosition(bannerDTO.position());
-        existingBanner.setStartDate(bannerDTO.startDate());
-        existingBanner.setEndDate(bannerDTO.endDate());
-        existingBanner.setActive(bannerDTO.isActive());
-        existingBanner.setUpdatedAt(LocalDateTime.now());
-
-        Banner updatedBanner = bannerRepository.save(existingBanner);
-        return convertToDTO(updatedBanner);
-    }
-
-    @Override
-    @Transactional
-    public boolean deleteBanner(Long id) {
-        Banner banner = bannerRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("배너를 찾을 수 없습니다. ID: " + id));
-
-        // 이미지 파일 삭제
-        if (banner.getImageUrl() != null && !banner.getImageUrl().isEmpty()) {
-            String fileName = banner.getImageUrl().substring(banner.getImageUrl().lastIndexOf("/") + 1);
-            fileStorageService.deleteFile(fileName);
-        }
-
-        bannerRepository.delete(banner);
-        return true;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public List<BannerDTO> getActiveBannersByPosition(String position) {
         LocalDateTime now = LocalDateTime.now();
-        return bannerRepository.findByPositionAndStartDateBeforeAndEndDateAfterAndIsActiveTrue(
-                        position, now, now)
+        return bannerRepository.findByPositionAndStartDateBeforeAndEndDateAfterAndIsActiveTrue(position, now, now)
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
-    // 엔티티를 DTO로 변환
+    @Override
+    public BannerDTO getBannerById(Long id) {
+        return bannerRepository.findById(id)
+                .map(this::convertToDTO)
+                .orElseThrow(() -> new IllegalArgumentException("Banner not found with id: " + id));
+    }
+
+    @Override
+    public BannerDTO createBanner(BannerDTO bannerDTO) {
+        Banner banner = convertToEntity(bannerDTO);
+        return convertToDTO(bannerRepository.save(banner));
+    }
+
+    @Override
+    public BannerDTO updateBanner(Long id, BannerDTO bannerDTO) {
+        Banner existingBanner = bannerRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Banner not found with id: " + id));
+        
+        Banner updatedBanner = convertToEntity(bannerDTO);
+        existingBanner.setTitle(updatedBanner.getTitle());
+        existingBanner.setSubtitle(updatedBanner.getSubtitle());
+        existingBanner.setDescription(updatedBanner.getDescription());
+        existingBanner.setImageUrl(updatedBanner.getImageUrl());
+        existingBanner.setLinkUrl(updatedBanner.getLinkUrl());
+        existingBanner.setPosition(updatedBanner.getPosition());
+        existingBanner.setStatus(updatedBanner.getStatus());
+        existingBanner.setSortOrder(updatedBanner.getSortOrder());
+        existingBanner.setStartDate(updatedBanner.getStartDate());
+        existingBanner.setEndDate(updatedBanner.getEndDate());
+        existingBanner.setActive(updatedBanner.isActive());
+        existingBanner.setBackgroundColor(updatedBanner.getBackgroundColor());
+        existingBanner.setTextColor(updatedBanner.getTextColor());
+        
+        return convertToDTO(bannerRepository.save(existingBanner));
+    }
+
+    @Override
+    public boolean deleteBanner(Long id) {
+        try {
+            Banner banner = bannerRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Banner not found with id: " + id));
+            bannerRepository.delete(banner);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public void changeBannerOrder(Long id, int newOrder) {
+        Banner banner = bannerRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Banner not found with id: " + id));
+        
+        int oldOrder = banner.getSortOrder();
+        if (newOrder > oldOrder) {
+            bannerRepository.decreaseOrderBetween(oldOrder + 1, newOrder);
+        } else if (newOrder < oldOrder) {
+            bannerRepository.increaseOrderBetween(newOrder, oldOrder - 1);
+        }
+        
+        banner.setSortOrder(newOrder);
+        bannerRepository.save(banner);
+    }
+
+    @Override
+    public void toggleBannerStatus(Long id) {
+        Banner banner = bannerRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Banner not found with id: " + id));
+        banner.setActive(!banner.isActive());
+        bannerRepository.save(banner);
+    }
+
     private BannerDTO convertToDTO(Banner banner) {
         return new BannerDTO(
                 banner.getId(),
                 banner.getTitle(),
                 banner.getSubtitle(),
+                banner.getDescription(),
                 banner.getImageUrl(),
                 banner.getLinkUrl(),
                 banner.getPosition(),
+                banner.getStatus(),
+                banner.getSortOrder(),
                 banner.getStartDate(),
                 banner.getEndDate(),
                 banner.isActive(),
+                banner.getBackgroundColor(),
+                banner.getTextColor(),
                 banner.getCreatedAt(),
                 banner.getUpdatedAt()
         );
+    }
+
+    private Banner convertToEntity(BannerDTO bannerDTO) {
+        Banner banner = new Banner();
+        banner.setTitle(bannerDTO.title());
+        banner.setSubtitle(bannerDTO.subtitle());
+        banner.setDescription(bannerDTO.description());
+        banner.setImageUrl(bannerDTO.imageUrl());
+        banner.setLinkUrl(bannerDTO.linkUrl());
+        banner.setPosition(bannerDTO.position());
+        banner.setStatus(bannerDTO.status());
+        banner.setSortOrder(bannerDTO.sortOrder());
+        banner.setStartDate(bannerDTO.startDate());
+        banner.setEndDate(bannerDTO.endDate());
+        banner.setActive(bannerDTO.isActive());
+        banner.setBackgroundColor(bannerDTO.backgroundColor());
+        banner.setTextColor(bannerDTO.textColor());
+        return banner;
     }
 }

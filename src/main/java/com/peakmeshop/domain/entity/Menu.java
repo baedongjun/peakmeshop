@@ -1,13 +1,20 @@
 package com.peakmeshop.domain.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "menus")
-@Getter
-@Setter
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class Menu {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,22 +23,28 @@ public class Menu {
     @Column(nullable = false)
     private String name;
 
+    @Column
+    private String url;
+
     @Column(nullable = false)
     private String type;
 
-    private String url;
-
-    private String icon;
-
-    @Column(name = "menu_order")
-    private Integer order;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_id")
-    private Menu parent;
+    @Column
+    private Long parentId;
 
     @Column(nullable = false)
-    private Boolean isActive = true;
+    private Integer sortOrder;
 
-    private String target;
+    @Column(nullable = false)
+    private boolean isActive;
+
+    @CreatedDate
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
+
+    public void updateSortOrder(int newOrder) {
+        this.sortOrder = newOrder;
+    }
 } 

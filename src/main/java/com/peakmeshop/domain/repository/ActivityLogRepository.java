@@ -86,6 +86,9 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> 
     Page<ActivityLog> findByTypeAndCreatedAtBetween(
             String type, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
+    Page<ActivityLog> findByTypeAndUserIdAndCreatedAtBetween(
+            String type, String userId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+
     /**
      * 활동 유형, 특정 기간 내, 설명에 특정 키워드가 포함된 활동 로그를 조회합니다.
      * @param type 활동 유형

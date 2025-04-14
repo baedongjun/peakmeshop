@@ -5,6 +5,10 @@
 
 <head>
     <title>FAQ 카테고리 관리 | PeakMe Shop 관리자</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
 </head>
 
 <body>
@@ -16,82 +20,67 @@
                     <h3 class="page-title">FAQ 카테고리 관리</h3>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
-                        <li class="breadcrumb-item"><a th:href="@{/admin/contents/faqs}">FAQ 관리</a></li>
-                        <li class="breadcrumb-item active">FAQ 카테고리 관리</li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/faqs}">FAQ 관리</a></li>
+                        <li class="breadcrumb-item active">카테고리 관리</li>
                     </ul>
-                </div>
-                <div class="col-auto">
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#categoryModal">
-                        <i class="fas fa-plus me-1"></i> 카테고리 추가
-                    </button>
                 </div>
             </div>
         </div>
         <!-- 페이지 헤더 끝 -->
 
-        <!-- FAQ 카테고리 목록 시작 -->
+        <!-- 카테고리 목록 시작 -->
         <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">카테고리 목록</h5>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#categoryModal">
+                        <i class="fas fa-plus"></i> 새 카테고리
+                    </button>
+                </div>
+            </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
+                                <th style="width: 50px;">순서</th>
                                 <th>카테고리명</th>
-                                <th>순서</th>
+                                <th>FAQ 수</th>
                                 <th>상태</th>
-                                <th>작업</th>
+                                <th style="width: 150px;">관리</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr th:each="category : ${categories}">
-                                <td th:text="${category.name}">카테고리명</td>
-                                <td th:text="${category.sortOrder}">1</td>
-                                <td>
-                                    <span class="badge" th:classappend="${category.isActive ? 'bg-success' : 'bg-secondary'}"
-                                          th:text="${category.isActive ? '활성화' : '비활성화'}">활성화</span>
-                                </td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-outline-primary me-1" 
-                                            th:onclick="'editCategory(' + ${category.id} + ')'">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" 
-                                            th:onclick="'deleteCategory(' + ${category.id} + ')'">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
+                        <tbody id="categoryList">
+                            <!-- JavaScript로 동적 로드 -->
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-        <!-- FAQ 카테고리 목록 끝 -->
+        <!-- 카테고리 목록 끝 -->
 
-        <!-- 카테고리 모달 시작 -->
-        <div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalLabel" aria-hidden="true">
+        <!-- 카테고리 등록/수정 모달 시작 -->
+        <div class="modal fade" id="categoryModal" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="categoryModalLabel">FAQ 카테고리</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+                        <h5 class="modal-title" id="modalTitle">새 카테고리</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <form id="categoryForm" class="needs-validation" novalidate>
+                        <form id="categoryForm">
                             <input type="hidden" id="categoryId">
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="name" class="form-label">카테고리명 <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="name" name="name" required>
-                                <div class="invalid-feedback">카테고리명을 입력해주세요.</div>
                             </div>
-                            <div class="form-group mb-3">
-                                <label for="sortOrder" class="form-label">순서 <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="sortOrder" name="sortOrder" required min="1">
-                                <div class="invalid-feedback">순서를 입력해주세요.</div>
+                            <div class="mb-3">
+                                <label for="description" class="form-label">설명</label>
+                                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
                             </div>
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="isActive" name="isActive" checked>
+                                    <input type="checkbox" class="form-check-input" id="isActive" name="isActive">
                                     <label class="form-check-label" for="isActive">활성화</label>
                                 </div>
                             </div>
@@ -104,98 +93,227 @@
                 </div>
             </div>
         </div>
-        <!-- 카테고리 모달 끝 -->
+        <!-- 카테고리 등록/수정 모달 끝 -->
     </div>
 
     <th:block layout:fragment="scripts">
-        <script>
-            // 카테고리 수정
+        <script th:inline="javascript">
+            // 페이지 로드 시 카테고리 목록 조회
+            $(document).ready(function() {
+                loadCategories();
+                initSortable();
+            });
+
+            // 카테고리 목록 조회
+            function loadCategories() {
+                $.ajax({
+                    url: '/api/admin/contents/faq-categories',
+                    type: 'GET',
+                    success: function(categories) {
+                        renderCategoryList(categories);
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '오류',
+                            text: '카테고리 목록을 불러오는데 실패했습니다.'
+                        });
+                    }
+                });
+            }
+
+            // 카테고리 목록 렌더링
+            function renderCategoryList(categories) {
+                let html = '';
+                categories.forEach(function(category) {
+                    html += `
+                        <tr data-id="${category.id}">
+                            <td><i class="fas fa-grip-vertical handle"></i></td>
+                            <td>${category.name}</td>
+                            <td>${category.faqCount}</td>
+                            <td>
+                                <span class="badge ${category.isActive ? 'bg-success' : 'bg-secondary'}">
+                                    ${category.isActive ? '활성' : '비활성'}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="editCategory(${category.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory(${category.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <button class="btn btn-sm ${category.isActive ? 'btn-outline-warning' : 'btn-outline-success'}" 
+                                        onclick="toggleCategoryStatus(${category.id})">
+                                    <i class="fas ${category.isActive ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                $('#categoryList').html(html);
+            }
+
+            // 드래그 앤 드롭 초기화
+            function initSortable() {
+                new Sortable(document.getElementById('categoryList'), {
+                    handle: '.handle',
+                    animation: 150,
+                    onEnd: function(evt) {
+                        const categories = [];
+                        $('#categoryList tr').each(function(index) {
+                            categories.push({
+                                id: $(this).data('id'),
+                                sortOrder: index + 1
+                            });
+                        });
+                        updateCategoryOrder(categories);
+                    }
+                });
+            }
+
+            // 카테고리 순서 업데이트
+            function updateCategoryOrder(categories) {
+                $.ajax({
+                    url: '/api/admin/contents/faq-categories/order',
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(categories),
+                    success: function() {
+                        loadCategories();
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '오류',
+                            text: '카테고리 순서 변경에 실패했습니다.'
+                        });
+                    }
+                });
+            }
+
+            // 새 카테고리 모달 열기
+            function openCategoryModal() {
+                $('#categoryId').val('');
+                $('#name').val('');
+                $('#description').val('');
+                $('#isActive').prop('checked', true);
+                $('#modalTitle').text('새 카테고리');
+                $('#categoryModal').modal('show');
+            }
+
+            // 카테고리 수정 모달 열기
             function editCategory(id) {
-                fetch(`/api/contents/faq-categories/${id}`)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('categoryId').value = data.id;
-                    document.getElementById('name').value = data.name;
-                    document.getElementById('sortOrder').value = data.sortOrder;
-                    document.getElementById('isActive').checked = data.isActive;
-                    
-                    const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
-                    modal.show();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('카테고리 정보를 불러오는데 실패했습니다.');
+                $.ajax({
+                    url: '/api/admin/contents/faq-categories/' + id,
+                    type: 'GET',
+                    success: function(category) {
+                        $('#categoryId').val(category.id);
+                        $('#name').val(category.name);
+                        $('#description').val(category.description);
+                        $('#isActive').prop('checked', category.isActive);
+                        $('#modalTitle').text('카테고리 수정');
+                        $('#categoryModal').modal('show');
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '오류',
+                            text: '카테고리 정보를 불러오는데 실패했습니다.'
+                        });
+                    }
+                });
+            }
+
+            // 카테고리 저장
+            function saveCategory() {
+                const categoryId = $('#categoryId').val();
+                const data = {
+                    name: $('#name').val(),
+                    description: $('#description').val(),
+                    isActive: $('#isActive').is(':checked')
+                };
+
+                const url = categoryId ? '/api/admin/contents/faq-categories/' + categoryId : '/api/admin/contents/faq-categories';
+                const method = categoryId ? 'PUT' : 'POST';
+
+                $.ajax({
+                    url: url,
+                    type: method,
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function() {
+                        $('#categoryModal').modal('hide');
+                        Swal.fire({
+                            icon: 'success',
+                            title: '저장 완료',
+                            text: '카테고리가 저장되었습니다.'
+                        }).then(() => {
+                            loadCategories();
+                        });
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '오류',
+                            text: '카테고리 저장에 실패했습니다.'
+                        });
+                    }
                 });
             }
 
             // 카테고리 삭제
             function deleteCategory(id) {
-                if (confirm('정말로 이 카테고리를 삭제하시겠습니까?')) {
-                    fetch(`/api/contents/faq-categories/${id}`, {
-                        method: 'DELETE'
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            window.location.reload();
-                        } else {
-                            throw new Error('카테고리 삭제에 실패했습니다.');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert(error.message);
-                    });
-                }
-            }
-
-            // 카테고리 저장
-            function saveCategory() {
-                const form = document.getElementById('categoryForm');
-                if (!form.checkValidity()) {
-                    form.classList.add('was-validated');
-                    return;
-                }
-
-                const categoryId = document.getElementById('categoryId').value;
-                const url = categoryId ? `/api/contents/faq-categories/${categoryId}` : '/api/contents/faq-categories';
-                const method = categoryId ? 'PUT' : 'POST';
-
-                const formData = new FormData(form);
-                const data = {};
-                formData.forEach((value, key) => {
-                    if (key === 'isActive') {
-                        data[key] = formData.get(key) === 'on';
-                    } else if (value) {
-                        data[key] = value;
+                Swal.fire({
+                    title: '삭제 확인',
+                    text: '이 카테고리를 삭제하시겠습니까?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: '삭제',
+                    cancelButtonText: '취소'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '/api/admin/contents/faq-categories/' + id,
+                            type: 'DELETE',
+                            success: function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '삭제 완료',
+                                    text: '카테고리가 삭제되었습니다.'
+                                }).then(() => {
+                                    loadCategories();
+                                });
+                            },
+                            error: function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: '오류',
+                                    text: '카테고리 삭제에 실패했습니다.'
+                                });
+                            }
+                        });
                     }
                 });
+            }
 
-                fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json'
+            // 카테고리 상태 토글
+            function toggleCategoryStatus(id) {
+                $.ajax({
+                    url: '/api/admin/contents/faq-categories/' + id + '/toggle',
+                    type: 'PUT',
+                    success: function() {
+                        loadCategories();
                     },
-                    body: JSON.stringify(data)
-                })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.reload();
-                    } else {
-                        throw new Error('카테고리 저장에 실패했습니다.');
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '오류',
+                            text: '카테고리 상태 변경에 실패했습니다.'
+                        });
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert(error.message);
                 });
             }
-
-            // 모달 닫을 때 폼 초기화
-            document.getElementById('categoryModal').addEventListener('hidden.bs.modal', function () {
-                document.getElementById('categoryForm').reset();
-                document.getElementById('categoryId').value = '';
-                document.getElementById('categoryForm').classList.remove('was-validated');
-            });
         </script>
     </th:block>
 </body>

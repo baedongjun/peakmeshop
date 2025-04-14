@@ -1,5 +1,6 @@
 package com.peakmeshop.admin.controller;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import com.peakmeshop.domain.service.MemberService;
+import com.peakmeshop.api.dto.MemberDTO;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -28,17 +30,45 @@ public class AdminMemberViewController {
     public String members(
             @RequestParam(required = false) String grade,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String searchType,
+            @RequestParam(required = false) String searchKeyword,
             @PageableDefault(size = 20) Pageable pageable,
             Model model) {
+        // 검색 조건 설정
         if (grade != null) {
             model.addAttribute("grade", grade);
         }
         if (status != null) {
             model.addAttribute("status", status);
         }
+        if (searchType != null) {
+            model.addAttribute("searchType", searchType);
+        }
+        if (searchKeyword != null) {
+            model.addAttribute("searchKeyword", searchKeyword);
+        }
 
+        // 회원 목록 조회
+        Page<MemberDTO> members;
+        if (searchKeyword != null && !searchKeyword.isEmpty()) {
+            members = memberService.searchMembers(searchKeyword, pageable);
+        } else {
+            members = memberService.getAllMembers(pageable);
+        }
+
+        // 페이지네이션 정보 추가
+        model.addAttribute("members", members);
+        model.addAttribute("currentPage", members.getNumber());
+        model.addAttribute("totalPages", members.getTotalPages());
+        model.addAttribute("totalElements", members.getTotalElements());
+        model.addAttribute("pageSize", members.getSize());
+        model.addAttribute("hasPrevious", members.hasPrevious());
+        model.addAttribute("hasNext", members.hasNext());
+        model.addAttribute("isFirst", members.isFirst());
+        model.addAttribute("isLast", members.isLast());
+
+        // 기타 정보 추가
         model.addAttribute("summary", memberService.getMemberSummary());
-        model.addAttribute("members", memberService.getAllMembers(pageable));
         model.addAttribute("grades", memberService.getAllGrades());
         
         return "admin/members/members";
@@ -140,9 +170,37 @@ public class AdminMemberViewController {
      */
     @GetMapping("/members/dormant")
     public String dormantMembers(
+            @RequestParam(required = false) String searchType,
+            @RequestParam(required = false) String searchKeyword,
             @PageableDefault(size = 20) Pageable pageable,
             Model model) {
-        model.addAttribute("members", memberService.getDormantMembers(pageable));
+        // 검색 조건 설정
+        if (searchType != null) {
+            model.addAttribute("searchType", searchType);
+        }
+        if (searchKeyword != null) {
+            model.addAttribute("searchKeyword", searchKeyword);
+        }
+
+        // 휴면 회원 목록 조회
+        Page<MemberDTO> members;
+        if (searchKeyword != null && !searchKeyword.isEmpty()) {
+            members = memberService.searchMembers(searchKeyword, pageable);
+        } else {
+            members = memberService.getDormantMembers(pageable);
+        }
+
+        // 페이지네이션 정보 추가
+        model.addAttribute("members", members);
+        model.addAttribute("currentPage", members.getNumber());
+        model.addAttribute("totalPages", members.getTotalPages());
+        model.addAttribute("totalElements", members.getTotalElements());
+        model.addAttribute("pageSize", members.getSize());
+        model.addAttribute("hasPrevious", members.hasPrevious());
+        model.addAttribute("hasNext", members.hasNext());
+        model.addAttribute("isFirst", members.isFirst());
+        model.addAttribute("isLast", members.isLast());
+
         return "admin/members/dormant";
     }
 
@@ -153,11 +211,43 @@ public class AdminMemberViewController {
     public String withdrawnMembers(
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) String searchType,
+            @RequestParam(required = false) String searchKeyword,
             @PageableDefault(size = 20) Pageable pageable,
             Model model) {
-        model.addAttribute("startDate", startDate);
-        model.addAttribute("endDate", endDate);
-        model.addAttribute("members", memberService.getWithdrawnMembers(startDate, endDate, pageable));
+        // 검색 조건 설정
+        if (startDate != null) {
+            model.addAttribute("startDate", startDate);
+        }
+        if (endDate != null) {
+            model.addAttribute("endDate", endDate);
+        }
+        if (searchType != null) {
+            model.addAttribute("searchType", searchType);
+        }
+        if (searchKeyword != null) {
+            model.addAttribute("searchKeyword", searchKeyword);
+        }
+
+        // 탈퇴 회원 목록 조회
+        Page<MemberDTO> members;
+        if (searchKeyword != null && !searchKeyword.isEmpty()) {
+            members = memberService.searchMembers(searchKeyword, pageable);
+        } else {
+            members = memberService.getWithdrawnMembers(startDate, endDate, pageable);
+        }
+
+        // 페이지네이션 정보 추가
+        model.addAttribute("members", members);
+        model.addAttribute("currentPage", members.getNumber());
+        model.addAttribute("totalPages", members.getTotalPages());
+        model.addAttribute("totalElements", members.getTotalElements());
+        model.addAttribute("pageSize", members.getSize());
+        model.addAttribute("hasPrevious", members.hasPrevious());
+        model.addAttribute("hasNext", members.hasNext());
+        model.addAttribute("isFirst", members.isFirst());
+        model.addAttribute("isLast", members.isLast());
+
         return "admin/members/withdrawn";
     }
 }

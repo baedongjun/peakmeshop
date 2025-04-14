@@ -4,18 +4,28 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.peakmeshop.api.dto.EmailDTO;
+import com.peakmeshop.api.dto.EmailSendDTO;
+import com.peakmeshop.api.dto.EmailTemplateDTO;
 import com.peakmeshop.domain.service.EmailService;
+import com.peakmeshop.domain.repository.EmailRepository;
+import com.peakmeshop.domain.repository.EmailTemplateRepository;
+import com.peakmeshop.domain.entity.Email;
+import com.peakmeshop.domain.entity.EmailTemplate;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.util.ByteArrayDataSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,24 +36,38 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
+    private final EmailRepository emailRepository;
+    private final EmailTemplateRepository emailTemplateRepository;
 
     private static final String SENDER_NAME = "PeakMeShop";
     private static final String SENDER_EMAIL = "noreply@peakmeshop.com";
 
     @Async
     @Override
-    public void sendEmail(EmailDTO emailDTO) {
+    public void sendEmail(EmailSendDTO emailSendDTO) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setFrom(SENDER_EMAIL, SENDER_NAME);
-            helper.setTo(emailDTO.getTo());
-            helper.setSubject(emailDTO.getSubject());
-            helper.setText(emailDTO.getContent(), emailDTO.isHtml());
+            helper.setTo(emailSendDTO.to());
+            if (emailSendDTO.cc() != null && emailSendDTO.cc().length > 0) {
+                helper.setCc(emailSendDTO.cc());
+            }
+            if (emailSendDTO.bcc() != null && emailSendDTO.bcc().length > 0) {
+                helper.setBcc(emailSendDTO.bcc());
+            }
+            helper.setSubject(emailSendDTO.subject());
+            helper.setText(emailSendDTO.content(), emailSendDTO.isHtml());
+
+            if (emailSendDTO.attachments() != null) {
+                for (Map.Entry<String, byte[]> entry : emailSendDTO.attachments().entrySet()) {
+                    helper.addAttachment(entry.getKey(), new ByteArrayDataSource(entry.getValue(), "application/octet-stream"));
+                }
+            }
 
             mailSender.send(message);
-            log.info("이메일 전송 완료: {}", emailDTO.getTo());
+            log.info("이메일 전송 완료: {}", emailSendDTO.to());
         } catch (MessagingException | UnsupportedEncodingException e) {
             log.error("이메일 전송 실패: {}", e.getMessage());
         }
@@ -52,20 +76,21 @@ public class EmailServiceImpl implements EmailService {
     @Async
     @Override
     public void sendEmail(String to, String subject, String content) {
-        EmailDTO emailDTO = EmailDTO.builder()
-                .to(to)
-                .subject(subject)
-                .content(content)
-                .isHtml(true)
-                .build();
-
-        sendEmail(emailDTO);
+        EmailSendDTO emailSendDTO = new EmailSendDTO(
+            to,
+            null,
+            null,
+            subject,
+            content,
+            true,
+            null
+        );
+        sendEmail(emailSendDTO);
     }
 
     @Async
     @Override
     public void sendSimpleEmail(String to, String subject, String content) {
-        // sendEmail 메서드를 재사용
         sendEmail(to, subject, content);
     }
 
@@ -77,14 +102,17 @@ public class EmailServiceImpl implements EmailService {
 
         String content = templateEngine.process(templateName, context);
 
-        EmailDTO emailDTO = EmailDTO.builder()
-                .to(to)
-                .subject(subject)
-                .content(content)
-                .isHtml(true)
-                .build();
+        EmailSendDTO emailSendDTO = new EmailSendDTO(
+            to,
+            null,
+            null,
+            subject,
+            content,
+            true,
+            null
+        );
 
-        sendEmail(emailDTO);
+        sendEmail(emailSendDTO);
     }
 
     @Async
@@ -96,14 +124,17 @@ public class EmailServiceImpl implements EmailService {
         String subject = "PeakMeShop 회원가입을 환영합니다!";
         String content = templateEngine.process("email/signup-confirmation", context);
 
-        EmailDTO emailDTO = EmailDTO.builder()
-                .to(to)
-                .subject(subject)
-                .content(content)
-                .isHtml(true)
-                .build();
+        EmailSendDTO emailSendDTO = new EmailSendDTO(
+            to,
+            null,
+            null,
+            subject,
+            content,
+            true,
+            null
+        );
 
-        sendEmail(emailDTO);
+        sendEmail(emailSendDTO);
     }
 
     @Async
@@ -117,20 +148,22 @@ public class EmailServiceImpl implements EmailService {
         String subject = "PeakMeShop 이메일 인증";
         String content = templateEngine.process("email/email-verification", context);
 
-        EmailDTO emailDTO = EmailDTO.builder()
-                .to(to)
-                .subject(subject)
-                .content(content)
-                .isHtml(true)
-                .build();
+        EmailSendDTO emailSendDTO = new EmailSendDTO(
+            to,
+            null,
+            null,
+            subject,
+            content,
+            true,
+            null
+        );
 
-        sendEmail(emailDTO);
+        sendEmail(emailSendDTO);
     }
 
     @Async
     @Override
     public void sendVerificationEmail(String to, String verificationToken) {
-        // 사용자 이름 없이 이메일 인증 메일 전송
         Context context = new Context();
         context.setVariable("verificationToken", verificationToken);
         context.setVariable("verificationUrl", "https://peakmeshop.com/verify-email?token=" + verificationToken);
@@ -138,14 +171,17 @@ public class EmailServiceImpl implements EmailService {
         String subject = "PeakMeShop 이메일 인증";
         String content = templateEngine.process("email/email-verification-simple", context);
 
-        EmailDTO emailDTO = EmailDTO.builder()
-                .to(to)
-                .subject(subject)
-                .content(content)
-                .isHtml(true)
-                .build();
+        EmailSendDTO emailSendDTO = new EmailSendDTO(
+            to,
+            null,
+            null,
+            subject,
+            content,
+            true,
+            null
+        );
 
-        sendEmail(emailDTO);
+        sendEmail(emailSendDTO);
     }
 
     @Async
@@ -158,14 +194,17 @@ public class EmailServiceImpl implements EmailService {
         String subject = "PeakMeShop 비밀번호 재설정";
         String content = templateEngine.process("email/password-reset", context);
 
-        EmailDTO emailDTO = EmailDTO.builder()
-                .to(to)
-                .subject(subject)
-                .content(content)
-                .isHtml(true)
-                .build();
+        EmailSendDTO emailSendDTO = new EmailSendDTO(
+            to,
+            null,
+            null,
+            subject,
+            content,
+            true,
+            null
+        );
 
-        sendEmail(emailDTO);
+        sendEmail(emailSendDTO);
     }
 
     @Async
@@ -179,20 +218,22 @@ public class EmailServiceImpl implements EmailService {
         String subject = "PeakMeShop 비밀번호 재설정 요청";
         String content = templateEngine.process("email/password-reset-request", context);
 
-        EmailDTO emailDTO = EmailDTO.builder()
-                .to(to)
-                .subject(subject)
-                .content(content)
-                .isHtml(true)
-                .build();
+        EmailSendDTO emailSendDTO = new EmailSendDTO(
+            to,
+            null,
+            null,
+            subject,
+            content,
+            true,
+            null
+        );
 
-        sendEmail(emailDTO);
+        sendEmail(emailSendDTO);
     }
 
     @Async
     @Override
     public void sendPasswordResetRequestEmail(String to, String resetToken) {
-        // 사용자 이름 없이 비밀번호 재설정 요청 메일 전송
         Context context = new Context();
         context.setVariable("resetToken", resetToken);
         context.setVariable("resetUrl", "https://peakmeshop.com/reset-password?token=" + resetToken);
@@ -200,14 +241,17 @@ public class EmailServiceImpl implements EmailService {
         String subject = "PeakMeShop 비밀번호 재설정 요청";
         String content = templateEngine.process("email/password-reset-request-simple", context);
 
-        EmailDTO emailDTO = EmailDTO.builder()
-                .to(to)
-                .subject(subject)
-                .content(content)
-                .isHtml(true)
-                .build();
+        EmailSendDTO emailSendDTO = new EmailSendDTO(
+            to,
+            null,
+            null,
+            subject,
+            content,
+            true,
+            null
+        );
 
-        sendEmail(emailDTO);
+        sendEmail(emailSendDTO);
     }
 
     @Async
@@ -220,21 +264,22 @@ public class EmailServiceImpl implements EmailService {
         variables.put("orderId", orderId);
         variables.put("orderNumber", orderNumber);
         
-        sendEmail(email, subject, template, variables);
+        sendTemplatedEmail(email, subject, template, variables);
     }
 
     @Async
     @Override
-    public void sendShippingNotificationEmail(String email, Long orderId, String orderNumber, String trackingNumber) {
+    public void sendShippingNotificationEmail(String email, Long orderId, String orderNumber, String carrier, String trackingNumber) {
         String subject = "상품이 발송되었습니다.";
         String template = "shipping-notification";
         
         Map<String, Object> variables = new HashMap<>();
         variables.put("orderId", orderId);
         variables.put("orderNumber", orderNumber);
+        variables.put("carrier", carrier);
         variables.put("trackingNumber", trackingNumber);
         
-        sendEmail(email, subject, template, variables);
+        sendTemplatedEmail(email, subject, template, variables);
     }
 
     @Async
@@ -247,160 +292,214 @@ public class EmailServiceImpl implements EmailService {
         String subject = "PeakMeShop 쿠폰이 발급되었습니다!";
         String content = templateEngine.process("email/coupon", context);
 
-        EmailDTO emailDTO = EmailDTO.builder()
-                .to(to)
-                .subject(subject)
-                .content(content)
-                .isHtml(true)
-                .build();
+        EmailSendDTO emailSendDTO = new EmailSendDTO(
+            to,
+            null,
+            null,
+            subject,
+            content,
+            true,
+            null
+        );
 
-        sendEmail(emailDTO);
+        sendEmail(emailSendDTO);
     }
 
-    @Async
+    @Override
+    public void sendDeliveryConfirmationEmail(String email, Long orderId, String orderNumber) {
+        Context context = new Context();
+        context.setVariable("orderId", orderId);
+        context.setVariable("orderNumber", orderNumber);
+
+        String subject = "배송이 완료되었습니다.";
+        String content = templateEngine.process("email/delivery-confirmation", context);
+
+        EmailSendDTO emailSendDTO = new EmailSendDTO(
+            email,
+            null,
+            null,
+            subject,
+            content,
+            true,
+            null
+        );
+
+        sendEmail(emailSendDTO);
+    }
+
+    @Override
+    public void sendShipmentNotificationEmail(String email, Long orderId, String orderNumber, String carrier, String trackingNumber) {
+        Context context = new Context();
+        context.setVariable("orderId", orderId);
+        context.setVariable("orderNumber", orderNumber);
+        context.setVariable("carrier", carrier);
+        context.setVariable("trackingNumber", trackingNumber);
+
+        String subject = "상품이 발송되었습니다.";
+        String content = templateEngine.process("email/shipment-notification", context);
+
+        EmailSendDTO emailSendDTO = new EmailSendDTO(
+            email,
+            null,
+            null,
+            subject,
+            content,
+            true,
+            null
+        );
+
+        sendEmail(emailSendDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<EmailDTO> getEmails(String status, Pageable pageable) {
+        return emailRepository.findByStatus(status, pageable)
+                .map(this::convertToDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<EmailTemplateDTO> getEmailTemplates(Pageable pageable) {
+        return emailTemplateRepository.findAll(pageable)
+                .map(this::convertToDTO);
+    }
+
+    private EmailDTO convertToDTO(Email email) {
+        return new EmailDTO(
+            email.getId(),
+            email.getTemplate().getId(),
+            email.getRecipient(),
+            email.getSubject(),
+            email.getContent(),
+            email.getStatus(),
+            email.getErrorMessage(),
+            email.getCreatedAt(),
+            email.getSentAt()
+        );
+    }
+
+    private EmailTemplateDTO convertToDTO(EmailTemplate template) {
+        return new EmailTemplateDTO(
+            template.getId(),
+            template.getCode(),
+            template.getName(),
+            template.getSubject(),
+            template.getContent(),
+            template.isActive(),
+            template.getCreatedAt(),
+            template.getUpdatedAt()
+        );
+    }
+
+    @Override
+    public void sendCancellationConfirmationEmail(String email, Long orderId, String orderNumber) {
+        Context context = new Context();
+        context.setVariable("orderId", orderId);
+        context.setVariable("orderNumber", orderNumber);
+
+        String subject = "주문이 취소되었습니다.";
+        String content = templateEngine.process("email/cancellation-confirmation", context);
+
+        EmailSendDTO emailSendDTO = new EmailSendDTO(
+            email,
+            null,
+            null,
+            subject,
+            content,
+            true,
+            null
+        );
+
+        sendEmail(emailSendDTO);
+    }
+
     @Override
     public void sendRefundConfirmationEmail(String email, Long orderId, String orderNumber) {
+        Context context = new Context();
+        context.setVariable("orderId", orderId);
+        context.setVariable("orderNumber", orderNumber);
+
         String subject = "환불이 완료되었습니다.";
-        String template = "refund-confirmation";
-        
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("orderId", orderId);
-        variables.put("orderNumber", orderNumber);
-        
-        sendEmail(email, subject, template, variables);
+        String content = templateEngine.process("email/refund-confirmation", context);
+
+        EmailSendDTO emailSendDTO = new EmailSendDTO(
+            email,
+            null,
+            null,
+            subject,
+            content,
+            true,
+            null
+        );
+
+        sendEmail(emailSendDTO);
     }
 
     @Override
     public void sendRefundRequestEmail(String email, Long orderId, String orderNumber) {
-        try {
-            Context context = new Context();
-            context.setVariable("orderNumber", orderNumber);
-            context.setVariable("orderId", orderId);
+        Context context = new Context();
+        context.setVariable("orderId", orderId);
+        context.setVariable("orderNumber", orderNumber);
 
-            String subject = "환불 요청이 접수되었습니다";
-            String content = templateEngine.process("emails/refund-request", context);
+        String subject = "환불 요청이 접수되었습니다.";
+        String content = templateEngine.process("email/refund-request", context);
 
-            sendEmail(email, subject, content);
-            log.info("환불 요청 이메일 발송 완료: 이메일={}, 주문번호={}", email, orderNumber);
-        } catch (Exception e) {
-            log.error("환불 요청 이메일 발송 실패: {}", e.getMessage());
-        }
+        EmailSendDTO emailSendDTO = new EmailSendDTO(
+            email,
+            null,
+            null,
+            subject,
+            content,
+            true,
+            null
+        );
+
+        sendEmail(emailSendDTO);
     }
 
     @Override
     public void sendRefundRejectionEmail(String email, Long orderId, String orderNumber, String reason) {
-        try {
-            Context context = new Context();
-            context.setVariable("orderNumber", orderNumber);
-            context.setVariable("orderId", orderId);
-            context.setVariable("reason", reason);
+        Context context = new Context();
+        context.setVariable("orderId", orderId);
+        context.setVariable("orderNumber", orderNumber);
+        context.setVariable("reason", reason);
 
-            String subject = "환불 요청이 거부되었습니다";
-            String content = templateEngine.process("emails/refund-rejection", context);
+        String subject = "환불 요청이 거부되었습니다.";
+        String content = templateEngine.process("email/refund-rejection", context);
 
-            sendEmail(email, subject, content);
-            log.info("환불 거부 이메일 발송 완료: 이메일={}, 주문번호={}", email, orderNumber);
-        } catch (Exception e) {
-            log.error("환불 거부 이메일 발송 실패: {}", e.getMessage());
-        }
+        EmailSendDTO emailSendDTO = new EmailSendDTO(
+            email,
+            null,
+            null,
+            subject,
+            content,
+            true,
+            null
+        );
+
+        sendEmail(emailSendDTO);
     }
 
     @Override
     public void sendDeliveryCompletionEmail(String email, Long orderId, String orderNumber) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setTo(email);
-            helper.setSubject("[PeakMeShop] 주문하신 상품이 배송 완료되었습니다. (주문번호: " + orderNumber + ")");
-
-            Context context = new Context();
-            Map<String, Object> variables = new HashMap<>();
-            variables.put("orderId", orderId);
-            variables.put("orderNumber", orderNumber);
-
-            context.setVariables(variables);
-
-            String htmlContent = templateEngine.process("email/delivery-completion", context);
-            helper.setText(htmlContent, true);
-
-            mailSender.send(message);
-            log.info("배송 완료 알림 이메일 발송 완료: 수신자={}, 주문번호={}", email, orderNumber);
-        } catch (MessagingException e) {
-            log.error("배송 완료 알림 이메일 발송 실패: {}", e.getMessage());
-            throw new RuntimeException("이메일 발송 중 오류가 발생했습니다.", e);
-        }
-    }
-
-    @Override
-    public void sendCancellationConfirmationEmail(String email, Long orderId, String baseUrl) {
         Context context = new Context();
         context.setVariable("orderId", orderId);
-        context.setVariable("baseUrl", baseUrl);
+        context.setVariable("orderNumber", orderNumber);
 
-        String html = templateEngine.process("email/cancellation-confirmation", context);
-        sendEmail(email, "주문 취소 완료 안내", html);
-    }
+        String subject = "배송이 완료되었습니다.";
+        String content = templateEngine.process("email/delivery-completion", context);
 
-    @Override
-    public void sendDeliveryConfirmationEmail(String email, Long orderId, String baseUrl) {
-        Context context = new Context();
-        context.setVariable("orderId", orderId);
-        context.setVariable("baseUrl", baseUrl);
+        EmailSendDTO emailSendDTO = new EmailSendDTO(
+            email,
+            null,
+            null,
+            subject,
+            content,
+            true,
+            null
+        );
 
-        String html = templateEngine.process("email/delivery-confirmation", context);
-        sendEmail(email, "배송 완료 안내", html);
-    }
-
-    @Override
-    public void sendShipmentNotificationEmail(String email, Long orderId, String trackingNumber, String carrier, String baseUrl) {
-        Context context = new Context();
-        context.setVariable("orderId", orderId);
-        context.setVariable("trackingNumber", trackingNumber);
-        context.setVariable("carrier", carrier);
-        context.setVariable("baseUrl", baseUrl);
-
-        String html = templateEngine.process("email/shipment-notification", context);
-        sendEmail(email, "상품 발송 안내", html);
-    }
-
-    private void sendEmail(String to, String subject, String template, Map<String, Object> variables) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            
-            Context context = new Context();
-            variables.forEach(context::setVariable);
-            
-            String htmlContent = templateEngine.process(template, context);
-            
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlContent, true);
-            
-            mailSender.send(message);
-            log.info("이메일 전송 완료: {} -> {}", template, to);
-        } catch (MessagingException e) {
-            log.error("이메일 전송 실패: {} -> {}", template, to, e);
-            throw new RuntimeException("이메일 전송에 실패했습니다.", e);
-        }
-    }
-
-    // 배송사별 배송조회 URL 반환 메서드
-    private String getTrackingUrl(String carrier, String trackingNumber) {
-        switch (carrier.toUpperCase()) {
-            case "CJ대한통운":
-                return "https://www.cjlogistics.com/ko/tool/parcel/tracking?gnbInvcNo=" + trackingNumber;
-            case "우체국택배":
-                return "https://service.epost.go.kr/trace.RetrieveDomRigiTraceList.comm?sid1=" + trackingNumber;
-            case "한진택배":
-                return "https://www.hanjin.co.kr/kor/CMS/DeliveryMgr/WaybillResult.do?mCode=MN038&schLang=KR&wblnumText2=" + trackingNumber;
-            case "롯데택배":
-                return "https://www.lotteglogis.com/home/reservation/tracking/index?InvNo=" + trackingNumber;
-            case "로젠택배":
-                return "https://www.ilogen.com/m/personal/trace/" + trackingNumber;
-            default:
-                return "#";
-        }
+        sendEmail(emailSendDTO);
     }
 }

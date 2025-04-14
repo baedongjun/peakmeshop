@@ -1,10 +1,6 @@
 package com.peakmeshop.domain.service.impl;
 
-import com.peakmeshop.api.dto.AuthResponseDTO;
-import com.peakmeshop.api.dto.LoginRequest;
-import com.peakmeshop.api.dto.PasswordResetDTO;
-import com.peakmeshop.api.dto.SignupRequest;
-import com.peakmeshop.api.dto.MemberDTO;
+import com.peakmeshop.api.dto.*;
 import com.peakmeshop.common.security.JwtTokenProvider;
 import com.peakmeshop.common.security.oauth2.user.UserPrincipal;
 import com.peakmeshop.domain.entity.Member;
@@ -310,6 +306,16 @@ public class AuthServiceImpl implements AuthService {
                 .name(userPrincipal.getName())
                 .role(userPrincipal.getAuthorities().iterator().next().getAuthority())
                 .build();
+    }
+
+    @Override
+    public void register(AuthDTO.Register register) {
+
+    }
+
+    @Override
+    public void resendVerification(AuthDTO.ResendVerification resendVerification) {
+
     }
 
     private void saveRefreshToken(Long memberId, String token) {

@@ -1,9 +1,9 @@
 package com.peakmeshop.domain.service.impl;
 
-import com.peakmeshop.api.dto.MenuDTO;
+import com.peakmeshop.domain.service.MenuService;
 import com.peakmeshop.domain.entity.Menu;
 import com.peakmeshop.domain.repository.MenuRepository;
-import com.peakmeshop.domain.service.MenuService;
+import com.peakmeshop.api.dto.MenuDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,14 +13,23 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class MenuServiceImpl implements MenuService {
 
     private final MenuRepository menuRepository;
 
     @Override
+    public List<MenuDTO> getMenus() {
+        return menuRepository.findAll()
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<MenuDTO> getMenusByType(String type) {
-        return menuRepository.findByTypeOrderByOrderAsc(type)
+        return menuRepository.findAllByType(type)
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -28,94 +37,107 @@ public class MenuServiceImpl implements MenuService {
 
     @Override
     @Transactional
+    public List<MenuDTO> updateMenuOrder(List<MenuDTO> menuDTOs) {
+        for (int i = 0; i < menuDTOs.size(); i++) {
+            MenuDTO menuDTO = menuDTOs.get(i);
+            Menu menu = menuRepository.findById(menuDTO.id())
+                    .orElseThrow(() -> new RuntimeException("메뉴를 찾을 수 없습니다: " + menuDTO.id()));
+            
+            menu.updateSortOrder(i + 1);
+            menuRepository.save(menu);
+        }
+        
+        return menuDTOs;
+    }
+
+    @Override
+    public MenuDTO getMenuById(Long id) {
+        return menuRepository.findById(id)
+                .map(this::convertToDTO)
+                .orElseThrow(() -> new IllegalArgumentException("Menu not found with id: " + id));
+    }
+
+    @Override
     public MenuDTO createMenu(MenuDTO menuDTO) {
         Menu menu = convertToEntity(menuDTO);
-        menu = menuRepository.save(menu);
-        return convertToDTO(menu);
+        return convertToDTO(menuRepository.save(menu));
     }
 
     @Override
-    @Transactional
     public MenuDTO updateMenu(Long id, MenuDTO menuDTO) {
-        Menu menu = menuRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Menu not found"));
+        Menu existingMenu = menuRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Menu not found with id: " + id));
         
-        menu.setName(menuDTO.getName());
-        menu.setType(menuDTO.getType());
-        menu.setUrl(menuDTO.getUrl());
-        menu.setIcon(menuDTO.getIcon());
-        menu.setOrder(menuDTO.getOrder());
-        menu.setIsActive(menuDTO.getIsActive());
-        menu.setTarget(menuDTO.getTarget());
+        Menu updatedMenu = convertToEntity(menuDTO);
+        existingMenu.setName(updatedMenu.getName());
+        existingMenu.setUrl(updatedMenu.getUrl());
+        existingMenu.setType(updatedMenu.getType());
+        existingMenu.setParentId(updatedMenu.getParentId());
+        existingMenu.setSortOrder(updatedMenu.getSortOrder());
+        existingMenu.setActive(updatedMenu.isActive());
         
-        if (menuDTO.getParentId() != null) {
-            Menu parent = menuRepository.findById(menuDTO.getParentId())
-                    .orElseThrow(() -> new RuntimeException("Parent menu not found"));
-            menu.setParent(parent);
-        } else {
-            menu.setParent(null);
-        }
-
-        menu = menuRepository.save(menu);
-        return convertToDTO(menu);
+        return convertToDTO(menuRepository.save(existingMenu));
     }
 
     @Override
-    @Transactional
     public void deleteMenu(Long id) {
-        menuRepository.deleteById(id);
+        Menu menu = menuRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Menu not found with id: " + id));
+        menuRepository.delete(menu);
     }
 
     @Override
-    @Transactional
-    public List<MenuDTO> updateMenuOrder(List<MenuDTO> menuDTOs) {
-        List<Menu> menus = menuDTOs.stream()
-                .map(dto -> {
-                    Menu menu = menuRepository.findById(dto.getId())
-                            .orElseThrow(() -> new RuntimeException("Menu not found"));
-                    menu.setOrder(dto.getOrder());
-                    return menu;
-                })
-                .collect(Collectors.toList());
+    public void changeMenuOrder(Long id, int newOrder) {
+        Menu menu = menuRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Menu not found with id: " + id));
+        
+        int oldOrder = menu.getSortOrder();
+        if (newOrder > oldOrder) {
+            menuRepository.decreaseOrderBetween(oldOrder + 1, newOrder);
+        } else if (newOrder < oldOrder) {
+            menuRepository.increaseOrderBetween(newOrder, oldOrder - 1);
+        }
+        
+        menu.setSortOrder(newOrder);
+        menuRepository.save(menu);
+    }
 
-        menus = menuRepository.saveAll(menus);
-        return menus.stream()
+    @Override
+    public void toggleMenuStatus(Long id) {
+        Menu menu = menuRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Menu not found with id: " + id));
+        menu.setActive(!menu.isActive());
+        menuRepository.save(menu);
+    }
+
+    @Override
+    public List<MenuDTO> getActiveMenus() {
+        return menuRepository.findByIsActiveTrueOrderBySortOrderAsc()
+                .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     private MenuDTO convertToDTO(Menu menu) {
-        MenuDTO dto = new MenuDTO();
-        dto.setId(menu.getId());
-        dto.setName(menu.getName());
-        dto.setType(menu.getType());
-        dto.setUrl(menu.getUrl());
-        dto.setIcon(menu.getIcon());
-        dto.setOrder(menu.getOrder());
-        dto.setIsActive(menu.getIsActive());
-        dto.setTarget(menu.getTarget());
-        if (menu.getParent() != null) {
-            dto.setParentId(menu.getParent().getId());
-        }
-        return dto;
+        return new MenuDTO(
+                menu.getId(),
+                menu.getName(),
+                menu.getUrl(),
+                menu.getType(),
+                menu.getParentId(),
+                menu.getSortOrder(),
+                menu.isActive()
+        );
     }
 
-    private Menu convertToEntity(MenuDTO dto) {
+    private Menu convertToEntity(MenuDTO menuDTO) {
         Menu menu = new Menu();
-        menu.setName(dto.getName());
-        menu.setType(dto.getType());
-        menu.setUrl(dto.getUrl());
-        menu.setIcon(dto.getIcon());
-        menu.setOrder(dto.getOrder());
-        menu.setIsActive(dto.getIsActive());
-        menu.setTarget(dto.getTarget());
-        
-        if (dto.getParentId() != null) {
-            Menu parent = menuRepository.findById(dto.getParentId())
-                    .orElseThrow(() -> new RuntimeException("Parent menu not found"));
-            menu.setParent(parent);
-        }
-        
+        menu.setName(menuDTO.name());
+        menu.setUrl(menuDTO.url());
+        menu.setType(menuDTO.type());
+        menu.setParentId(menuDTO.parentId());
+        menu.setSortOrder(menuDTO.sortOrder());
+        menu.setActive(menuDTO.isActive());
         return menu;
     }
 } 

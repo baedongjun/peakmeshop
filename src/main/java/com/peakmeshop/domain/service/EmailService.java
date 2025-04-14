@@ -2,12 +2,17 @@ package com.peakmeshop.domain.service;
 
 import java.util.Map;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.peakmeshop.api.dto.EmailDTO;
+import com.peakmeshop.api.dto.EmailSendDTO;
+import com.peakmeshop.api.dto.EmailTemplateDTO;
 
 public interface EmailService {
 
     // 기본 이메일 전송
-    void sendEmail(EmailDTO emailDTO);
+    void sendEmail(EmailSendDTO emailSendDTO);
 
     // 문자열 파라미터로 이메일 전송 (오버로딩)
     void sendEmail(String to, String subject, String content);
@@ -40,7 +45,7 @@ public interface EmailService {
     void sendOrderConfirmationEmail(String email, Long orderId, String orderNumber);
 
     // 배송 알림 이메일
-    void sendShippingNotificationEmail(String email, Long orderId, String orderNumber, String trackingNumber);
+    void sendShippingNotificationEmail(String email, Long orderId, String orderNumber, String carrier, String trackingNumber);
 
     // 쿠폰 발급 이메일
     void sendCouponEmail(String to, String couponCode, String couponName);
@@ -73,4 +78,10 @@ public interface EmailService {
 
     void sendDeliveryConfirmationEmail(String email, Long orderId, String orderNumber);
     void sendCancellationConfirmationEmail(String email, Long orderId, String orderNumber);
+
+    // 이메일 목록 조회
+    Page<EmailDTO> getEmails(String status, Pageable pageable);
+    
+    // 이메일 템플릿 목록 조회
+    Page<EmailTemplateDTO> getEmailTemplates(Pageable pageable);
 }

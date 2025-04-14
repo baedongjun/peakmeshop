@@ -1,5 +1,6 @@
 package com.peakmeshop.domain.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,13 +52,13 @@ public class Coupon {
     private String discountType; // FIXED, PERCENTAGE
 
     @Column(name = "discount_value", nullable = false)
-    private Integer discountValue;
+    private BigDecimal discountValue;
 
     @Column(name = "min_order_amount")
-    private Integer minOrderAmount;
+    private BigDecimal minOrderAmount;
 
     @Column(name = "max_discount_amount")
-    private Integer maxDiscountAmount;
+    private BigDecimal maxDiscountAmount;
 
     @Column(name = "start_date", nullable = false)
     private LocalDateTime startDate;

@@ -1,6 +1,7 @@
 package com.peakmeshop.domain.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -45,4 +46,12 @@ public interface StatisticsService {
     void generateMonthlyStatistics();
 
     void generateYearlyStatistics();
+
+    List<StatisticsDTO.Product> getProductStatistics(LocalDate startDate, LocalDate endDate);
+
+    List<StatisticsDTO.Member> getMemberStatistics(LocalDate startDate, LocalDate endDate);
+
+    List<StatisticsDTO.Traffic> getTrafficStatistics(LocalDateTime startDateTime, LocalDateTime endDateTime);
+
+    StatisticsDTO.Summary getSummaryStatistics();
 }

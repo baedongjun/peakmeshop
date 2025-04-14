@@ -69,7 +69,7 @@ public interface ProductService {
     Map<String, Object> getProductSummary();
     Map<String, Object> getProductSummary(Long productId);
 
-    Map<String, Object> getProductStatistics(String startDate, String endDate, String interval, String category);
+    Map<String, Object> getProductStatistics(String startDate, String endDate, String interval, String category, Pageable pageable);
     Page<ProductReviewDTO> getProductReviews(Pageable pageable);
     ProductReviewDTO getReviewById(Long id);
     Page<ProductQnaDTO> getProductQnas(Pageable pageable);

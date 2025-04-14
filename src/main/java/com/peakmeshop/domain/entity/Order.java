@@ -88,6 +88,8 @@ public class Order extends BaseTimeEntity {
     private LocalDateTime createdAt;
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
@@ -136,5 +138,10 @@ public class Order extends BaseTimeEntity {
         return items.stream()
                 .map(OrderItem::getProfit)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public void updateStatus(
+            OrderStatus orderStatus) {
+        this.status = orderStatus;
     }
 }

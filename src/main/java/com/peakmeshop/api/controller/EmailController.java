@@ -3,6 +3,7 @@ package com.peakmeshop.api.controller;
 import java.util.Map;
 
 import com.peakmeshop.api.dto.EmailDTO;
+import com.peakmeshop.api.dto.EmailSendDTO;
 import com.peakmeshop.domain.service.EmailService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,8 +35,8 @@ public class EmailController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> sendEmail(@RequestBody EmailDTO emailDTO) {
-        emailService.sendEmail(emailDTO);
+    public ResponseEntity<String> sendEmail(@RequestBody EmailSendDTO emailSendDTO) {
+        emailService.sendEmail(emailSendDTO);
 
         return ResponseEntity.ok("이메일이 성공적으로 전송되었습니다.");
     }

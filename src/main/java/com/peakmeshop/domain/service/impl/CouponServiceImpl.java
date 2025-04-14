@@ -147,9 +147,9 @@ public class CouponServiceImpl implements CouponService {
                 .name(couponDTO.getName())
                 .description(couponDTO.getDescription())
                 .discountType(couponDTO.getDiscountType())
-                .discountValue(couponDTO.getDiscountValue() != null ? couponDTO.getDiscountValue().intValue() : null)
-                .minOrderAmount(couponDTO.getMinOrderAmount() != null ? couponDTO.getMinOrderAmount().intValue() : null)
-                .maxDiscountAmount(couponDTO.getMaxDiscountAmount() != null ? couponDTO.getMaxDiscountAmount().intValue() : null)
+                .discountValue(couponDTO.getDiscountValue())
+                .minOrderAmount(couponDTO.getMinOrderAmount())
+                .maxDiscountAmount(couponDTO.getMaxDiscountAmount())
                 .startDate(couponDTO.getStartDate())
                 .endDate(couponDTO.getEndDate())
                 .usageLimit(couponDTO.getUsageLimit())
@@ -299,13 +299,13 @@ public class CouponServiceImpl implements CouponService {
             coupon.setDiscountType(couponDTO.getDiscountType());
         }
         if (couponDTO.getDiscountValue() != null) {
-            coupon.setDiscountValue(couponDTO.getDiscountValue().intValue());
+            coupon.setDiscountValue(couponDTO.getDiscountValue());
         }
         if (couponDTO.getMinOrderAmount() != null) {
-            coupon.setMinOrderAmount(couponDTO.getMinOrderAmount().intValue());
+            coupon.setMinOrderAmount(couponDTO.getMinOrderAmount());
         }
         if (couponDTO.getMaxDiscountAmount() != null) {
-            coupon.setMaxDiscountAmount(couponDTO.getMaxDiscountAmount().intValue());
+            coupon.setMaxDiscountAmount(couponDTO.getMaxDiscountAmount());
         }
         if (couponDTO.getStartDate() != null) {
             coupon.setStartDate(couponDTO.getStartDate());
@@ -633,9 +633,9 @@ public class CouponServiceImpl implements CouponService {
                 .name(coupon.getName())
                 .description(coupon.getDescription())
                 .discountType(coupon.getDiscountType())
-                .discountValue(coupon.getDiscountValue() != null ? new BigDecimal(coupon.getDiscountValue()) : null)
-                .minOrderAmount(coupon.getMinOrderAmount() != null ? new BigDecimal(coupon.getMinOrderAmount()) : null)
-                .maxDiscountAmount(coupon.getMaxDiscountAmount() !=  null ? new BigDecimal(coupon.getMaxDiscountAmount()) : null)
+                .discountValue(coupon.getDiscountValue())
+                .minOrderAmount(coupon.getMinOrderAmount())
+                .maxDiscountAmount(coupon.getMaxDiscountAmount())
                 .startDate(coupon.getStartDate())
                 .endDate(coupon.getEndDate())
                 .usageLimit(coupon.getUsageLimit())

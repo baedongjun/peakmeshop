@@ -7,7 +7,6 @@ import com.peakmeshop.domain.service.ActivityLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,43 +54,17 @@ public class ActivityLogServiceImpl implements ActivityLogService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ActivityLogDTO> getActivityLogs(String type, LocalDateTime startDate, LocalDateTime endDate, String keyword, Pageable pageable) {
-        Page<ActivityLog> activityLogs;
-
-        if (type != null && !type.isEmpty() && startDate != null && endDate != null && keyword != null && !keyword.isEmpty()) {
-            activityLogs = activityLogRepository.findByTypeAndCreatedAtBetweenAndDescriptionContainingIgnoreCase(
-                    type, startDate, endDate, keyword, pageable);
-        } else if (type != null && !type.isEmpty() && startDate != null && endDate != null) {
-            activityLogs = activityLogRepository.findByTypeAndCreatedAtBetween(type, startDate, endDate, pageable);
-        } else if (startDate != null && endDate != null && keyword != null && !keyword.isEmpty()) {
-            activityLogs = activityLogRepository.findByCreatedAtBetweenAndDescriptionContainingIgnoreCase(
-                    startDate, endDate, keyword, pageable);
-        } else if (type != null && !type.isEmpty() && keyword != null && !keyword.isEmpty()) {
-            activityLogs = activityLogRepository.findByTypeAndDescriptionContainingIgnoreCase(type, keyword, pageable);
-        } else if (type != null && !type.isEmpty()) {
-            activityLogs = activityLogRepository.findByType(type, pageable);
-        } else if (startDate != null && endDate != null) {
-            activityLogs = activityLogRepository.findByCreatedAtBetween(startDate, endDate, pageable);
-        } else if (keyword != null && !keyword.isEmpty()) {
-            activityLogs = activityLogRepository.findByDescriptionContainingIgnoreCase(keyword, pageable);
-        } else {
-            activityLogs = activityLogRepository.findAll(pageable);
-        }
-
-        List<ActivityLogDTO> activityLogDTOs = activityLogs.getContent().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-
-        return new PageImpl<>(activityLogDTOs, pageable, activityLogs.getTotalElements());
+    public Page<ActivityLogDTO> getActivityLogs(String type, String userId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        return activityLogRepository.findByTypeAndUserIdAndCreatedAtBetween(type, userId, startDate, endDate, pageable)
+                .map(this::convertToDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public ActivityLogDTO getActivityLog(Long id) {
-        ActivityLog activityLog = activityLogRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("활동 로그를 찾을 수 없습니다."));
-
-        return convertToDTO(activityLog);
+        return activityLogRepository.findById(id)
+                .map(this::convertToDTO)
+                .orElseThrow(() -> new IllegalArgumentException("Activity log not found"));
     }
 
     @Override
@@ -108,8 +81,7 @@ public class ActivityLogServiceImpl implements ActivityLogService {
                 .userAgent(activityLogDTO.getUserAgent())
                 .build();
 
-        ActivityLog savedActivityLog = activityLogRepository.save(activityLog);
-        return convertToDTO(savedActivityLog);
+        return convertToDTO(activityLogRepository.save(activityLog));
     }
 
     @Override
@@ -171,72 +143,27 @@ public class ActivityLogServiceImpl implements ActivityLogService {
         return result;
     }
 
-    @Override
     public ActivityLogDTO convertToDTO(ActivityLog activityLog) {
-        LocalDateTime now = LocalDateTime.now();
-
-        // 활동 유형에 따라 아이콘과 색상을 설정합니다.
-        String icon = "fa-info-circle";
-        String iconColor = "text-primary";
-
-        switch (activityLog.getType()) {
-            case "MEMBER_JOIN":
-                icon = "fa-user-plus";
-                iconColor = "text-success";
-                break;
-            case "NEW_ORDER":
-                icon = "fa-shopping-cart";
-                iconColor = "text-primary";
-                break;
-            case "LOW_STOCK":
-                icon = "fa-box";
-                iconColor = "text-warning";
-                break;
-            case "SHIPPING_START":
-                icon = "fa-truck";
-                iconColor = "text-info";
-                break;
-            case "NEW_REVIEW":
-                icon = "fa-star";
-                iconColor = "text-warning";
-                break;
-            case "ORDER_STATUS_CHANGE":
-                icon = "fa-exchange-alt";
-                iconColor = "text-info";
-                break;
-            case "PRODUCT_UPDATE":
-                icon = "fa-edit";
-                iconColor = "text-primary";
-                break;
-            case "COUPON_CREATED":
-                icon = "fa-ticket-alt";
-                iconColor = "text-success";
-                break;
-            case "PROMOTION_STARTED":
-                icon = "fa-bullhorn";
-                iconColor = "text-danger";
-                break;
-        }
-
         return ActivityLogDTO.builder()
                 .id(activityLog.getId())
                 .type(activityLog.getType())
                 .description(activityLog.getDescription())
-                .referenceId(activityLog.getReferenceId())
                 .referenceType(activityLog.getReferenceType())
+                .referenceId(activityLog.getReferenceId())
+                .userAgent(activityLog.getUserAgent())
                 .ipAddress(activityLog.getIpAddress())
                 .additionalData(activityLog.getAdditionalData())
                 .userId(activityLog.getUserId())
                 .memberId(activityLog.getMemberId())
-                .userAgent(activityLog.getUserAgent())
                 .createdAt(activityLog.getCreatedAt())
                 .build();
     }
 
     /**
      * 주어진 시간과 현재 시간의 차이를 문자열로 반환합니다.
+     *
      * @param dateTime 비교할 시간
-     * @param now 현재 시간
+     * @param now      현재 시간
      * @return 시간 차이 문자열 (예: "10분 전", "2시간 전")
      */
     private String getTimeAgo(LocalDateTime dateTime, LocalDateTime now) {

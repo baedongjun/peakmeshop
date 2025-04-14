@@ -23,4 +23,8 @@ public interface AuthService {
     void logout();
 
     AuthResponseDTO refreshToken(String refreshToken);
+
+    void register(AuthDTO.Register register);
+
+    void resendVerification(AuthDTO.ResendVerification resendVerification);
 }

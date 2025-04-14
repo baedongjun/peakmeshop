@@ -149,7 +149,7 @@ public class PromotionServiceImpl implements PromotionService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PromotionDTO> getPromotions(String type, String status, String keyword, Pageable pageable) {
+    public Page<PromotionDTO> getPromotions(String keyword, Pageable pageable) {
         Page<Promotion> promotions;
         if (keyword != null && !keyword.isEmpty()) {
             promotions = promotionRepository.searchPromotions(keyword, pageable);

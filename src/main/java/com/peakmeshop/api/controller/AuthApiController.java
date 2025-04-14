@@ -1,20 +1,13 @@
 package com.peakmeshop.api.controller;
 
+import com.peakmeshop.api.dto.AuthDTO;
+import com.peakmeshop.api.dto.AuthResponseDTO;
 import com.peakmeshop.api.dto.LoginRequest;
-import com.peakmeshop.api.dto.PasswordResetDTO;
 import com.peakmeshop.api.dto.SignupRequest;
 import com.peakmeshop.domain.service.AuthService;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -23,62 +16,43 @@ public class AuthApiController {
 
     private final AuthService authService;
 
-    @PostMapping("/signup")
-    public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest signupRequest, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            Map<String, String> errors = new HashMap<>();
-            bindingResult.getAllErrors().forEach(error -> {
-                String fieldName = ((FieldError) error).getField();
-                String errorMessage = error.getDefaultMessage();
-                errors.put(fieldName, errorMessage);
-            });
-            return ResponseEntity.badRequest().body(errors);
-        }
-
-        return ResponseEntity.ok(authService.signup(signupRequest));
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponseDTO> login(@RequestBody LoginRequest loginRequest) {
+        return ResponseEntity.ok(authService.login(loginRequest));
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<Map<String, Object>> getUserInfo() {
-        return ResponseEntity.ok(authService.getUserInfo());
-    }
-
-    @PostMapping("/request-password-reset")
-    public ResponseEntity<?> requestPasswordReset(@RequestParam @Valid @Email(message = "이메일 형식이 올바르지 않습니다.") String email) {
-        authService.requestPasswordReset(email);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@Valid @RequestBody PasswordResetDTO resetDTO, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            Map<String, String> errors = new HashMap<>();
-            bindingResult.getAllErrors().forEach(error -> {
-                String fieldName = ((FieldError) error).getField();
-                String errorMessage = error.getDefaultMessage();
-                errors.put(fieldName, errorMessage);
-            });
-            return ResponseEntity.badRequest().body(errors);
-        }
-
-        authService.resetPassword(resetDTO);
-        return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/verify-email")
-    public ResponseEntity<?> verifyEmail(@RequestParam @NotBlank(message = "토큰은 필수 입력값입니다.") String token) {
-        boolean verified = authService.verifyEmail(token);
-        return ResponseEntity.ok(Map.of("verified", verified));
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponseDTO> refreshToken(@RequestBody String refreshToken) {
+        return ResponseEntity.ok(authService.refreshToken(refreshToken));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout() {
+    public ResponseEntity<Void> logout() {
         authService.logout();
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/refresh-token")
-    public ResponseEntity<?> refreshToken(@RequestParam @NotBlank(message = "리프레시 토큰은 필수 입력값입니다.") String refreshToken) {
-        return ResponseEntity.ok(authService.refreshToken(refreshToken));
+    @PostMapping("/register")
+    public ResponseEntity<Void> register(@RequestBody AuthDTO.Register register) {
+        authService.register(register);
+        return ResponseEntity.ok().build();
     }
-}
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<Void> verifyEmail(@RequestBody AuthDTO.VerifyEmail verifyEmail) {
+        authService.verifyEmail(verifyEmail.token());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Void> resendVerification(@RequestBody AuthDTO.ResendVerification resendVerification) {
+        authService.resendVerification(resendVerification);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/password-reset")
+    public ResponseEntity<Void> requestPasswordReset(@RequestParam String email) {
+        authService.requestPasswordReset(email);
+        return ResponseEntity.ok().build();
+    }
+} 

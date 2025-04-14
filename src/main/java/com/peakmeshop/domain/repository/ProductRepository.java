@@ -172,6 +172,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                                  @Param("endDate") LocalDateTime endDate,
                                  Pageable pageable);
 
+    @Query("SELECT p FROM Product p " +
+            "WHERE EXISTS (SELECT o FROM OrderItem o WHERE o.product = p " +
+            "AND o.createdAt BETWEEN :startDate AND :endDate) " +
+            "ORDER BY p.salesCount DESC")
+    List<Product> findTopProducts(@Param("startDate") LocalDateTime startDate,
+                                  @Param("endDate") LocalDateTime endDate);
+
     /**
      * 재고가 특정 수량 이하인 상품을 조회합니다.
      * @param stock 재고 수량

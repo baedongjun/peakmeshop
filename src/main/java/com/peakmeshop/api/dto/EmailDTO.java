@@ -1,23 +1,17 @@
 package com.peakmeshop.api.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import com.peakmeshop.domain.entity.Email;
+import java.time.LocalDateTime;
 import java.util.Map;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class EmailDTO {
-
-    private String to;
-    private String[] cc;
-    private String[] bcc;
-    private String subject;
-    private String content;
-    private boolean isHtml;
-    private Map<String, byte[]> attachments;
-}
+public record EmailDTO(
+    Long id,
+    Long templateId,
+    String recipient,
+    String subject,
+    String content,
+    Email.EmailStatus status,
+    String errorMessage,
+    LocalDateTime createdAt,
+    LocalDateTime sentAt
+) {}

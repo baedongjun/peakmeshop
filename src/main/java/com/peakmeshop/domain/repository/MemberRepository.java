@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import com.peakmeshop.domain.entity.Member;
 import com.peakmeshop.domain.entity.MemberGrade;
+import com.peakmeshop.api.dto.StatisticsDTO;
 
 @Repository
 public interface MemberRepository extends JpaRepository<Member, Long> {
@@ -46,7 +47,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     @Query("SELECT m.status, COUNT(m) FROM Member m GROUP BY m.status")
     List<Object[]> findMemberStatusDistribution();
 
-    @Query("SELECT cast(m.createdAt as date) as date, COUNT(m) as count " +
+    @Query("SELECT date(m.createdAt) as date, COUNT(m) as count " +
             "FROM Member m " +
             "WHERE m.createdAt BETWEEN :startDate AND :endDate " +
             "GROUP BY cast(m.createdAt as date) " +
@@ -77,4 +78,16 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     @Query("SELECT COUNT(m) FROM Member m WHERE m.status != m.originalStatus AND m.updatedAt BETWEEN :start AND :end")
     long countStatusChangesBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT m FROM Member m WHERE m.status = 'ACTIVE' AND (m.userId LIKE %:keyword% OR m.name LIKE %:keyword% OR m.email LIKE %:keyword%)")
+    Page<Member> findActiveMembersByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT " +
+           "m.id, m.email, m.name, cast(m.createdAt as date), " +
+           "m.orderCount, m.totalSpent, m.totalPoints, m.status " +
+           "FROM Member m " +
+           "WHERE m.status = 'ACTIVE' AND m.createdAt BETWEEN :startDateTime AND :endDateTime")
+    List<StatisticsDTO.Member> findActiveMembers(
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime);
 }

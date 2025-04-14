@@ -44,6 +44,7 @@ public class OrderDTO {
     private LocalDateTime refundedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime completedAt;
     private List<OrderItemDTO> items;
 
     private Long shippingAddressId;

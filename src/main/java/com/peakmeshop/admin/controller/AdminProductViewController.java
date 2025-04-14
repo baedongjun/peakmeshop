@@ -91,12 +91,12 @@ public class AdminProductViewController {
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
             @RequestParam(required = false) String category,
-            Model model) {
+            Model model, Pageable pageable) {
         model.addAttribute("period", period);
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
         model.addAttribute("category", category);
-        model.addAttribute("statistics", productService.getProductStatistics(period, startDate, endDate, category));
+        model.addAttribute("statistics", productService.getProductStatistics(period, startDate, endDate, category, pageable));
         return "admin/products/statistics";
     }
 

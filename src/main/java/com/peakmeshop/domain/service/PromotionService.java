@@ -31,7 +31,7 @@ public interface PromotionService {
 
     boolean isPromotionValid(String code);
 
-    Page<PromotionDTO> getPromotions(String type, String status, String keyword, Pageable pageable);
+    Page<PromotionDTO> getPromotions(String keyword, Pageable pageable);
 
     PromotionSummaryDTO getPromotionSummary();
 

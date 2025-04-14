@@ -5,6 +5,9 @@
 
 <head>
     <title>문의 상세 | PeakMe Shop 관리자</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body>
@@ -25,92 +28,249 @@
         <!-- 페이지 헤더 끝 -->
 
         <!-- 문의 정보 시작 -->
-        <div class="card mb-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">문의 정보</h5>
+                    <div>
+                        <button type="button" class="btn btn-outline-primary me-2" onclick="location.href='/admin/inquiries/${inquiryId}/reply'">
+                            <i class="fas fa-reply"></i> 답변
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" onclick="deleteInquiry()">
+                            <i class="fas fa-trash"></i> 삭제
+                        </button>
+                    </div>
+                </div>
+            </div>
             <div class="card-body">
-                <div class="row">
+                <div class="row mb-3">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">카테고리</label>
-                            <p th:text="${inquiry.category.name}">카테고리</p>
+                            <label class="form-label fw-bold">문의 번호</label>
+                            <p id="inquiryId"></p>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold">제목</label>
-                            <p th:text="${inquiry.title}">제목</p>
+                            <label class="form-label fw-bold">카테고리</label>
+                            <p id="category"></p>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">작성자</label>
-                            <p th:text="${inquiry.member.name}">작성자</p>
+                            <p id="member"></p>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">상태</label>
-                            <p>
-                                <span th:class="${'badge bg-' + 
-                                    (inquiry.status == 'ANSWERED' ? 'success' : 'warning')}"
-                                      th:text="${inquiry.status == 'ANSWERED' ? '답변완료' : '답변대기'}">
-                                    답변대기
-                                </span>
-                            </p>
+                            <p id="status"></p>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">작성일</label>
-                            <p th:text="${#temporals.format(inquiry.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 00:00</p>
+                            <p id="createdAt"></p>
                         </div>
-                        <div class="mb-3" th:if="${inquiry.answeredAt != null}">
-                            <label class="form-label fw-bold">답변일</label>
-                            <p th:text="${#temporals.format(inquiry.answeredAt, 'yyyy-MM-dd HH:mm')}">2024-01-01 00:00</p>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">최종 수정일</label>
+                            <p id="updatedAt"></p>
                         </div>
                     </div>
                 </div>
                 <div class="mb-3">
+                    <label class="form-label fw-bold">제목</label>
+                    <p id="title"></p>
+                </div>
+                <div class="mb-3">
                     <label class="form-label fw-bold">내용</label>
-                    <div class="border rounded p-3 bg-light">
-                        <p th:text="${inquiry.content}" class="mb-0">내용</p>
-                    </div>
+                    <div class="border rounded p-3" id="content"></div>
                 </div>
             </div>
         </div>
         <!-- 문의 정보 끝 -->
 
-        <!-- 답변 영역 시작 -->
+        <!-- 답변 목록 시작 -->
         <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">답변 목록</h5>
+            </div>
             <div class="card-body">
-                <h5 class="card-title mb-4">답변</h5>
-                <form th:action="@{/admin/inquiries/{id}/reply(id=${inquiry.id})}" method="post" class="needs-validation" novalidate>
-                    <div class="mb-3">
-                        <textarea class="form-control" name="content" rows="5" required
-                                  th:text="${inquiry.reply != null ? inquiry.reply.content : ''}"></textarea>
-                        <div class="invalid-feedback">답변 내용을 입력해주세요.</div>
-                    </div>
-                    <div class="text-end">
-                        <a th:href="@{/admin/inquiries}" class="btn btn-secondary me-2">목록</a>
-                        <button type="submit" class="btn btn-primary">
-                            <span th:text="${inquiry.reply != null ? '답변 수정' : '답변 등록'}"></span>
-                        </button>
-                    </div>
-                </form>
+                <div id="answerList">
+                    <!-- JavaScript로 동적 로드 -->
+                </div>
             </div>
         </div>
-        <!-- 답변 영역 끝 -->
+        <!-- 답변 목록 끝 -->
     </div>
 
     <th:block layout:fragment="scripts">
-        <script>
-            // 폼 유효성 검사
-            (function () {
-                'use strict';
-                var forms = document.querySelectorAll('.needs-validation');
-                Array.prototype.slice.call(forms).forEach(function (form) {
-                    form.addEventListener('submit', function (event) {
-                        if (!form.checkValidity()) {
-                            event.preventDefault();
-                            event.stopPropagation();
-                        }
-                        form.classList.add('was-validated');
-                    }, false);
+        <script th:inline="javascript">
+            const inquiryId = /*[[${inquiryId}]]*/ '';
+
+            // 페이지 로드 시 문의 정보 조회
+            $(document).ready(function() {
+                loadInquiry();
+            });
+
+            // 문의 정보 조회
+            function loadInquiry() {
+                $.ajax({
+                    url: '/api/admin/contents/inquiries/' + inquiryId,
+                    type: 'GET',
+                    success: function(inquiry) {
+                        $('#inquiryId').text(inquiry.id);
+                        $('#category').text(inquiry.category.name);
+                        $('#member').text(inquiry.member.name);
+                        $('#status').html(`
+                            <span class="badge ${getStatusBadgeClass(inquiry.status)}">
+                                ${getStatusText(inquiry.status)}
+                            </span>
+                        `);
+                        $('#createdAt').text(new Date(inquiry.createdAt).toLocaleString());
+                        $('#updatedAt').text(new Date(inquiry.updatedAt).toLocaleString());
+                        $('#title').text(inquiry.title);
+                        $('#content').text(inquiry.content);
+                        renderAnswerList(inquiry.answers);
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '오류',
+                            text: '문의 정보를 불러오는데 실패했습니다.'
+                        }).then(() => {
+                            location.href = '/admin/inquiries';
+                        });
+                    }
                 });
-            })();
+            }
+
+            // 답변 목록 렌더링
+            function renderAnswerList(answers) {
+                let html = '';
+                if (answers && answers.length > 0) {
+                    answers.forEach(function(answer) {
+                        html += `
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div>
+                                            <span class="fw-bold">${answer.admin.name}</span>
+                                            <span class="text-muted ms-2">
+                                                ${new Date(answer.createdAt).toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <button class="btn btn-sm btn-outline-primary me-2" onclick="editAnswer(${answer.id})">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteAnswer(${answer.id})">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="border rounded p-3">${answer.content}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html = '<p class="text-center text-muted">등록된 답변이 없습니다.</p>';
+                }
+                $('#answerList').html(html);
+            }
+
+            // 문의 삭제
+            function deleteInquiry() {
+                Swal.fire({
+                    title: '삭제 확인',
+                    text: '이 문의를 삭제하시겠습니까?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: '삭제',
+                    cancelButtonText: '취소'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '/api/admin/contents/inquiries/' + inquiryId,
+                            type: 'DELETE',
+                            success: function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '삭제 완료',
+                                    text: '문의가 삭제되었습니다.'
+                                }).then(() => {
+                                    location.href = '/admin/inquiries';
+                                });
+                            },
+                            error: function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: '오류',
+                                    text: '문의 삭제에 실패했습니다.'
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+
+            // 답변 수정
+            function editAnswer(answerId) {
+                location.href = `/admin/inquiries/${inquiryId}/reply?answerId=${answerId}`;
+            }
+
+            // 답변 삭제
+            function deleteAnswer(answerId) {
+                Swal.fire({
+                    title: '삭제 확인',
+                    text: '이 답변을 삭제하시겠습니까?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: '삭제',
+                    cancelButtonText: '취소'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: `/api/admin/contents/inquiries/${inquiryId}/answers/${answerId}`,
+                            type: 'DELETE',
+                            success: function() {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '삭제 완료',
+                                    text: '답변이 삭제되었습니다.'
+                                }).then(() => {
+                                    loadInquiry();
+                                });
+                            },
+                            error: function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: '오류',
+                                    text: '답변 삭제에 실패했습니다.'
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+
+            // 상태 뱃지 클래스 반환
+            function getStatusBadgeClass(status) {
+                switch (status) {
+                    case 'PENDING': return 'bg-warning';
+                    case 'PROCESSING': return 'bg-info';
+                    case 'COMPLETED': return 'bg-success';
+                    case 'CANCELLED': return 'bg-secondary';
+                    default: return 'bg-secondary';
+                }
+            }
+
+            // 상태 텍스트 반환
+            function getStatusText(status) {
+                switch (status) {
+                    case 'PENDING': return '대기';
+                    case 'PROCESSING': return '처리중';
+                    case 'COMPLETED': return '완료';
+                    case 'CANCELLED': return '취소';
+                    default: return status;
+                }
+            }
         </script>
     </th:block>
 </body>

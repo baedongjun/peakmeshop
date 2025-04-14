@@ -102,4 +102,6 @@ public interface OrderService {
      * @return 주문 통계 정보
      */
     OrderSummaryDTO getOrderSummary(String period, String startDate, String endDate);
+
+    OrderDTO completeOrder(Long id);
 }

@@ -1,18 +1,15 @@
 package com.peakmeshop.api.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class FileDTO {
-
-    private String fileName;
-    private String fileUrl;
-    private long fileSize;
-    private String fileType;
-}
+public record FileDTO(
+    Long id,
+    String originalName,
+    String fileName,
+    String filePath,
+    String fileType,
+    Long fileSize,
+    String mimeType,
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt
+) {}

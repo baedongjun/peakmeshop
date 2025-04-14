@@ -420,7 +420,7 @@ public class CartServiceImpl implements CartService {
 
         // 최소 주문 금액 확인
         BigDecimal subtotal = calculateSubtotal(cart);
-        if (coupon.getMinOrderAmount() != null && subtotal.compareTo(BigDecimal.valueOf(coupon.getMinOrderAmount())) < 0) {
+        if (coupon.getMinOrderAmount() != null && subtotal.compareTo(coupon.getMinOrderAmount()) < 0) {
             throw new BadRequestException("최소 주문 금액을 충족하지 않습니다. 최소 주문 금액: " + coupon.getMinOrderAmount() + "원");
         }
 
@@ -585,23 +585,23 @@ public class CartServiceImpl implements CartService {
             Coupon coupon = cart.getCoupon();
 
             // 최소 주문 금액 확인
-            if (coupon.getMinOrderAmount() != null && subtotal.compareTo(BigDecimal.valueOf(coupon.getMinOrderAmount())) < 0) {
+            if (coupon.getMinOrderAmount() != null && subtotal.compareTo(coupon.getMinOrderAmount()) < 0) {
                 return BigDecimal.ZERO;
             }
 
             // 할인 계산
             if (Coupon.DISCOUNT_TYPE_PERCENTAGE.equals(coupon.getDiscountType())) {
-                Integer discountValue = coupon.getDiscountValue();
+                BigDecimal discountValue = coupon.getDiscountValue();
                 if (discountValue != null) {
                     // Integer를 BigDecimal로 변환
-                    BigDecimal discountPercent = new BigDecimal(discountValue);
+                    BigDecimal discountPercent = discountValue;
                     // RoundingMode를 명시적으로 지정
                     BigDecimal hundred = new BigDecimal(100);
                     discount = subtotal.multiply(discountPercent).divide(hundred, 2, BigDecimal.ROUND_HALF_UP);
 
                     // 최대 할인 금액 제한
                     if (coupon.getMaxDiscountAmount() != null) {
-                        BigDecimal maxDiscount = new BigDecimal(coupon.getMaxDiscountAmount());
+                        BigDecimal maxDiscount = coupon.getMaxDiscountAmount();
                         if (discount.compareTo(maxDiscount) > 0) {
                             discount = maxDiscount;
                         }
@@ -610,7 +610,7 @@ public class CartServiceImpl implements CartService {
             } else if (Coupon.DISCOUNT_TYPE_FIXED.equals(coupon.getDiscountType())) {
                 if (coupon.getDiscountValue() != null) {
                     // Integer를 BigDecimal로 변환
-                    discount = new BigDecimal(coupon.getDiscountValue());
+                    discount = coupon.getDiscountValue();
 
                     // 할인 금액이 장바구니 합계보다 크면 장바구니 합계로 제한
                     if (discount.compareTo(subtotal) > 0) {
@@ -640,9 +640,9 @@ public class CartServiceImpl implements CartService {
                     .name(cart.getCoupon().getName())
                     .description(cart.getCoupon().getDescription())
                     .discountType(cart.getCoupon().getDiscountType())
-                    .discountValue(new BigDecimal(cart.getCoupon().getDiscountValue()))
-                    .minOrderAmount(cart.getCoupon().getMinOrderAmount() != null ? new BigDecimal(cart.getCoupon().getMinOrderAmount()) : null)
-                    .maxDiscountAmount(cart.getCoupon().getMaxDiscountAmount() != null ? new BigDecimal(cart.getCoupon().getMaxDiscountAmount()) : null)
+                    .discountValue(cart.getCoupon().getDiscountValue())
+                    .minOrderAmount(cart.getCoupon().getMinOrderAmount())
+                    .maxDiscountAmount(cart.getCoupon().getMaxDiscountAmount())
                     .startDate(cart.getCoupon().getStartDate())
                     .endDate(cart.getCoupon().getEndDate())
                     .status(cart.getCoupon().getStatus())

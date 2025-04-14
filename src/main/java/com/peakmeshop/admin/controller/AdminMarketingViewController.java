@@ -1,6 +1,11 @@
 package com.peakmeshop.admin.controller;
 
+import com.peakmeshop.api.dto.CouponDTO;
+import com.peakmeshop.api.dto.PromotionDTO;
+import com.peakmeshop.domain.service.*;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -8,12 +13,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import com.peakmeshop.domain.service.CouponService;
-import com.peakmeshop.domain.service.PromotionService;
-import com.peakmeshop.domain.service.CategoryService;
-import com.peakmeshop.domain.service.ProductService;
-import org.springframework.data.web.PageableDefault;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,20 +28,31 @@ public class AdminMarketingViewController {
     private final PromotionService promotionService;
     private final CategoryService categoryService;
     private final ProductService productService;
+    private final MarketingService marketingService;
 
     /**
      * 쿠폰 관리 페이지
      */
     @GetMapping("/coupons")
     public String coupons(
-            @RequestParam(required = false) String type,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String keyword,
-            @PageableDefault(size = 10) Pageable pageable,
-            Model model
-    ) {
-        model.addAttribute("coupons", couponService.getCoupons(type, status, keyword, pageable));
-        model.addAttribute("summary", couponService.getCouponSummary());
+            @PageableDefault(size = 20) Pageable pageable,
+            Model model) {
+        if (status != null) {
+            model.addAttribute("status", status);
+        }
+        
+        Page<CouponDTO> coupons = marketingService.getCoupons(status, pageable);
+        model.addAttribute("coupons", coupons);
+        model.addAttribute("currentPage", coupons.getNumber());
+        model.addAttribute("totalPages", coupons.getTotalPages());
+        model.addAttribute("totalElements", coupons.getTotalElements());
+        model.addAttribute("pageSize", coupons.getSize());
+        model.addAttribute("hasPrevious", coupons.hasPrevious());
+        model.addAttribute("hasNext", coupons.hasNext());
+        model.addAttribute("isFirst", coupons.isFirst());
+        model.addAttribute("isLast", coupons.isLast());
+        
         return "admin/marketing/coupons";
     }
 
@@ -79,14 +89,24 @@ public class AdminMarketingViewController {
      */
     @GetMapping("/promotions")
     public String promotions(
-            @RequestParam(required = false) String type,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String keyword,
-            @PageableDefault(size = 10) Pageable pageable,
-            Model model
-    ) {
-        model.addAttribute("promotions", promotionService.getPromotions(type, status, keyword, pageable));
-        model.addAttribute("summary", promotionService.getPromotionSummary());
+            @RequestParam(required = false) Boolean isActive,
+            @PageableDefault(size = 20) Pageable pageable,
+            Model model) {
+        if (isActive != null) {
+            model.addAttribute("isActive", isActive);
+        }
+        
+        Page<PromotionDTO> promotions = marketingService.getPromotions(isActive, pageable);
+        model.addAttribute("promotions", promotions);
+        model.addAttribute("currentPage", promotions.getNumber());
+        model.addAttribute("totalPages", promotions.getTotalPages());
+        model.addAttribute("totalElements", promotions.getTotalElements());
+        model.addAttribute("pageSize", promotions.getSize());
+        model.addAttribute("hasPrevious", promotions.hasPrevious());
+        model.addAttribute("hasNext", promotions.hasNext());
+        model.addAttribute("isFirst", promotions.isFirst());
+        model.addAttribute("isLast", promotions.isLast());
+        
         return "admin/marketing/promotions";
     }
 

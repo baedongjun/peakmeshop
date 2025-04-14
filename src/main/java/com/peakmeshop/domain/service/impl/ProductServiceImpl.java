@@ -357,7 +357,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public Map<String, Object> getProductStatistics(String startDate, String endDate, String interval, String category) {
+    public Map<String, Object> getProductStatistics(String startDate, String endDate, String interval, String category, Pageable pageable) {
         LocalDateTime start = LocalDateTime.parse(startDate);
         LocalDateTime end = LocalDateTime.parse(endDate);
 
@@ -381,7 +381,7 @@ public class ProductServiceImpl implements ProductService {
         statistics.put("salesByCategory", categorySales);
 
         // 인기 상품
-        Page<Product> topProducts = productRepository.findTopProducts(start, end, PageRequest.of(0, 10));
+        Page<Product> topProducts = productRepository.findTopProducts(start, end, pageable);
         statistics.put("topProducts", topProducts.getContent().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList()));

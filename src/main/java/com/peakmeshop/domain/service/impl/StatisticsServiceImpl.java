@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ import com.peakmeshop.domain.repository.ProductRepository;
 import com.peakmeshop.domain.service.StatisticsService;
 
 @Service
+@Transactional
 public class StatisticsServiceImpl implements StatisticsService {
 
     private final OrderRepository orderRepository;
@@ -273,6 +275,104 @@ public class StatisticsServiceImpl implements StatisticsService {
         int lastYear = LocalDate.now().getYear() - 1;
         StatisticsDTO statistics = getYearlyStatistics(lastYear);
         // 통계 저장 로직 (필요시 구현)
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StatisticsDTO.Product> getProductStatistics(LocalDate startDate, LocalDate endDate) {
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
+
+        return productRepository.findTopProducts(startDateTime, endDateTime)
+                .stream()
+                .map(product -> new StatisticsDTO.Product(
+                        product.getId(),
+                        product.getName(),
+                        product.getCategory().getName(),
+                        product.getTotalSales(),
+                        product.getTotalRevenue(),
+                        product.getReviewCount(),
+                        product.getAverageRating()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StatisticsDTO.Member> getMemberStatistics(LocalDate startDate, LocalDate endDate) {
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
+
+        return memberRepository.findActiveMembers(startDateTime, endDateTime)
+                .stream()
+                .map(member -> new StatisticsDTO.Member(
+                        member.id(),
+                        member.email(),
+                        member.name(),
+                        member.createdAt(),
+                        member.totalOrders(),
+                        member.totalSpent(),
+                        member.totalPoints(),
+                        member.status()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StatisticsDTO.Traffic> getTrafficStatistics(LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        // TODO: 실제 트래픽 데이터를 가져오는 로직 구현 필요
+        // 현재는 임시 데이터 반환
+        List<StatisticsDTO.Traffic> trafficList = new ArrayList<>();
+        
+        LocalDateTime current = startDateTime;
+        while (!current.isAfter(endDateTime)) {
+            trafficList.add(new StatisticsDTO.Traffic(
+                    current,
+                    100, // pageViews
+                    50,  // uniqueVisitors
+                    30.0, // bounceRate
+                    120.0, // averageSessionDuration
+                    "/products" // mostVisitedPage
+            ));
+            current = current.plusHours(1);
+        }
+        
+        return trafficList;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public StatisticsDTO.Summary getSummaryStatistics() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+        LocalDateTime endOfMonth = now.withDayOfMonth(now.toLocalDate().lengthOfMonth())
+                .withHour(23).withMinute(59).withSecond(59);
+
+        double totalSales = calculateTotalSales(startOfMonth, endOfMonth);
+        int totalOrders = calculateTotalOrders(startOfMonth, endOfMonth);
+        Long totalProducts = productRepository.count();
+        Long totalMembers = memberRepository.count();
+        Long activeMembers = memberRepository.countByStatus("ACTIVE");
+        double averageOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0.0;
+        double conversionRate = calculateConversionRate(startOfMonth, endOfMonth);
+
+        Map<String, Double> salesByCategory = calculateSalesByCategory(startOfMonth, endOfMonth);
+        Map<String, Integer> ordersByStatus = calculateOrdersByStatus(startOfMonth, endOfMonth);
+        Map<String, Double> salesByPaymentMethod = calculateSalesByPaymentMethod(startOfMonth, endOfMonth);
+
+        return new StatisticsDTO.Summary(
+                totalSales,
+                totalOrders,
+                totalProducts,
+                totalMembers,
+                activeMembers,
+                averageOrderValue,
+                conversionRate,
+                salesByCategory,
+                ordersByStatus,
+                salesByPaymentMethod
+        );
     }
 
     // 헬퍼 메서드들

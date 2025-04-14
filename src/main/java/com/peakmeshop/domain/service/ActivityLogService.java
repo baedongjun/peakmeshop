@@ -35,13 +35,13 @@ public interface ActivityLogService {
     /**
      * 활동 로그 목록을 조회합니다.
      * @param type 활동 유형
+     * @param userId 사용자
      * @param startDate 시작 날짜
      * @param endDate 종료 날짜
-     * @param keyword 검색어
      * @param pageable 페이징 정보
      * @return 활동 로그 목록
      */
-    Page<ActivityLogDTO> getActivityLogs(String type, LocalDateTime startDate, LocalDateTime endDate, String keyword, Pageable pageable);
+    Page<ActivityLogDTO> getActivityLogs(String type, String userId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
     /**
      * 활동 로그를 조회합니다.

@@ -1,33 +1,52 @@
 package com.peakmeshop.admin.controller;
 
+import com.peakmeshop.api.dto.EmailDTO;
+import com.peakmeshop.api.dto.EmailTemplateDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import com.peakmeshop.domain.service.EmailService;
+import lombok.RequiredArgsConstructor;
 
 /**
  * 관리자 이메일 관리 관련 뷰 컨트롤러
  */
 @Controller
 @RequestMapping("/admin")
+@RequiredArgsConstructor
 public class AdminEmailViewController {
+
+    private final EmailService emailService;
 
     /**
      * 이메일 발송 관리 페이지
      */
     @GetMapping("/emails")
     public String emails(
-            @RequestParam(required = false) String type,
             @RequestParam(required = false) String status,
+            @PageableDefault(size = 20) Pageable pageable,
             Model model) {
-        if (type != null) {
-            model.addAttribute("type", type);
-        }
         if (status != null) {
             model.addAttribute("status", status);
         }
+        
+        Page<EmailDTO> emails = emailService.getEmails(status, pageable);
+        model.addAttribute("emails", emails);
+        model.addAttribute("currentPage", emails.getNumber());
+        model.addAttribute("totalPages", emails.getTotalPages());
+        model.addAttribute("totalElements", emails.getTotalElements());
+        model.addAttribute("pageSize", emails.getSize());
+        model.addAttribute("hasPrevious", emails.hasPrevious());
+        model.addAttribute("hasNext", emails.hasNext());
+        model.addAttribute("isFirst", emails.isFirst());
+        model.addAttribute("isLast", emails.isLast());
+        
         return "admin/emails/emails";
     }
 
@@ -58,11 +77,19 @@ public class AdminEmailViewController {
      */
     @GetMapping("/email-templates")
     public String emailTemplates(
-            @RequestParam(required = false) String type,
+            @PageableDefault(size = 20) Pageable pageable,
             Model model) {
-        if (type != null) {
-            model.addAttribute("type", type);
-        }
+        Page<EmailTemplateDTO> templates = emailService.getEmailTemplates(pageable);
+        model.addAttribute("templates", templates);
+        model.addAttribute("currentPage", templates.getNumber());
+        model.addAttribute("totalPages", templates.getTotalPages());
+        model.addAttribute("totalElements", templates.getTotalElements());
+        model.addAttribute("pageSize", templates.getSize());
+        model.addAttribute("hasPrevious", templates.hasPrevious());
+        model.addAttribute("hasNext", templates.hasNext());
+        model.addAttribute("isFirst", templates.isFirst());
+        model.addAttribute("isLast", templates.isLast());
+        
         return "admin/emails/templates";
     }
 

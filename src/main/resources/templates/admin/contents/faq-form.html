@@ -4,7 +4,11 @@
       layout:decorate="~{layouts/admin-layout}">
 
 <head>
-    <title>FAQ 관리 | PeakMe Shop 관리자</title>
+    <title th:text="${faqId != null ? 'FAQ 수정' : 'FAQ 등록'} | PeakMe Shop 관리자"></title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js"></script>
 </head>
 
 <body>
@@ -13,118 +17,159 @@
         <div class="page-header">
             <div class="row align-items-center">
                 <div class="col">
-                    <h3 class="page-title">FAQ 관리</h3>
+                    <h3 class="page-title" th:text="${faqId != null ? 'FAQ 수정' : 'FAQ 등록'}"></h3>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a th:href="@{/admin}">대시보드</a></li>
-                        <li class="breadcrumb-item"><a th:href="@{/admin/contents/faqs}">FAQ 관리</a></li>
-                        <li class="breadcrumb-item active" th:text="${faq != null ? 'FAQ 수정' : 'FAQ 추가'}">FAQ 추가</li>
+                        <li class="breadcrumb-item"><a th:href="@{/admin/faqs}">FAQ 관리</a></li>
+                        <li class="breadcrumb-item active" th:text="${faqId != null ? 'FAQ 수정' : 'FAQ 등록'}"></li>
                     </ul>
                 </div>
             </div>
         </div>
         <!-- 페이지 헤더 끝 -->
 
-        <!-- FAQ 폼 시작 -->
+        <!-- FAQ 등록/수정 폼 시작 -->
         <div class="card">
             <div class="card-body">
-                <form id="faqForm" class="needs-validation" novalidate>
-                    <input type="hidden" id="faqId" th:value="${faq?.id}">
+                <form id="faqForm">
+                    <input type="hidden" id="faqId" th:value="${faqId}">
                     
-                    <div class="form-group mb-3">
-                        <label for="categoryId" class="form-label">카테고리 <span class="text-danger">*</span></label>
-                        <select class="form-select" id="categoryId" name="categoryId" required>
-                            <option value="">카테고리를 선택하세요</option>
-                            <option th:each="category : ${categories}"
-                                    th:value="${category.id}"
-                                    th:text="${category.name}"
-                                    th:selected="${faq?.categoryId == category.id}">
-                                카테고리명
-                            </option>
-                        </select>
-                        <div class="invalid-feedback">카테고리를 선택해주세요.</div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="category">카테고리 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">카테고리 선택</option>
+                                    <option th:each="category : ${categories}"
+                                            th:value="${category.id}"
+                                            th:text="${category.name}">
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="sortOrder">순서 <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="sortOrder" name="sortOrder" required>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group mb-3">
-                        <label for="question" class="form-label">질문 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="question" name="question" 
-                               th:value="${faq?.question}" required>
-                        <div class="invalid-feedback">질문을 입력해주세요.</div>
+                        <label for="question">질문 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="question" name="question" required>
                     </div>
 
                     <div class="form-group mb-3">
-                        <label for="answer" class="form-label">답변 <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="answer" name="answer" rows="5" required
-                                  th:text="${faq?.answer}">답변 내용</textarea>
-                        <div class="invalid-feedback">답변을 입력해주세요.</div>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label for="sortOrder" class="form-label">순서 <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="sortOrder" name="sortOrder" 
-                               th:value="${faq?.sortOrder}" required min="1">
-                        <div class="invalid-feedback">순서를 입력해주세요.</div>
+                        <label for="answer">답변 <span class="text-danger">*</span></label>
+                        <textarea id="answer" name="answer" required></textarea>
                     </div>
 
                     <div class="form-group mb-3">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="isActive" name="isActive" 
-                                   th:checked="${faq?.isActive}">
-                            <label class="form-check-label" for="isActive">활성화</label>
+                            <input type="checkbox" class="form-check-input" id="isActive" name="isActive">
+                            <label class="form-check-label" for="isActive">게시</label>
                         </div>
                     </div>
 
                     <div class="text-end">
-                        <a th:href="@{/admin/contents/faqs}" class="btn btn-secondary me-2">취소</a>
-                        <button type="button" class="btn btn-primary" onclick="saveFaq()">저장</button>
+                        <button type="button" class="btn btn-secondary" onclick="location.href='/admin/faqs'">
+                            <i class="fas fa-times"></i> 취소
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 저장
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
-        <!-- FAQ 폼 끝 -->
+        <!-- FAQ 등록/수정 폼 끝 -->
     </div>
 
     <th:block layout:fragment="scripts">
-        <script>
-            function saveFaq() {
-                const form = document.getElementById('faqForm');
-                if (!form.checkValidity()) {
-                    form.classList.add('was-validated');
-                    return;
+        <script th:inline="javascript">
+            // TinyMCE 초기화
+            tinymce.init({
+                selector: '#answer',
+                height: 400,
+                plugins: 'link image code',
+                toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter alignright | link image | code',
+                content_css: '/css/admin.css'
+            });
+
+            // 페이지 로드 시 FAQ 데이터 조회
+            $(document).ready(function() {
+                const faqId = $('#faqId').val();
+                if (faqId) {
+                    loadFaq(faqId);
                 }
+            });
 
-                const faqId = document.getElementById('faqId').value;
-                const url = faqId ? `/api/contents/faqs/${faqId}` : '/api/contents/faqs';
-                const method = faqId ? 'PUT' : 'POST';
-
-                const formData = new FormData(form);
-                const data = {};
-                formData.forEach((value, key) => {
-                    if (key === 'isActive') {
-                        data[key] = formData.get(key) === 'on';
-                    } else if (value) {
-                        data[key] = value;
-                    }
-                });
-
-                fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json'
+            // FAQ 데이터 조회
+            function loadFaq(id) {
+                $.ajax({
+                    url: '/api/admin/contents/faqs/' + id,
+                    type: 'GET',
+                    success: function(faq) {
+                        $('#category').val(faq.category.id);
+                        $('#sortOrder').val(faq.sortOrder);
+                        $('#question').val(faq.question);
+                        tinymce.get('answer').setContent(faq.answer);
+                        $('#isActive').prop('checked', faq.isActive);
                     },
-                    body: JSON.stringify(data)
-                })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.href = '/admin/contents/faqs';
-                    } else {
-                        throw new Error('FAQ 저장에 실패했습니다.');
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '오류',
+                            text: 'FAQ 데이터를 불러오는데 실패했습니다.'
+                        }).then(() => {
+                            location.href = '/admin/faqs';
+                        });
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert(error.message);
                 });
             }
+
+            // 폼 제출
+            $('#faqForm').submit(function(e) {
+                e.preventDefault();
+
+                const faqId = $('#faqId').val();
+                const data = {
+                    category: {
+                        id: $('#category').val()
+                    },
+                    sortOrder: $('#sortOrder').val(),
+                    question: $('#question').val(),
+                    answer: tinymce.get('answer').getContent(),
+                    isActive: $('#isActive').is(':checked')
+                };
+
+                const url = faqId ? '/api/admin/contents/faqs/' + faqId : '/api/admin/contents/faqs';
+                const method = faqId ? 'PUT' : 'POST';
+
+                $.ajax({
+                    url: url,
+                    type: method,
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function() {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '저장 완료',
+                            text: 'FAQ가 저장되었습니다.'
+                        }).then(() => {
+                            location.href = '/admin/faqs';
+                        });
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '오류',
+                            text: 'FAQ 저장에 실패했습니다.'
+                        });
+                    }
+                });
+            });
         </script>
     </th:block>
 </body>

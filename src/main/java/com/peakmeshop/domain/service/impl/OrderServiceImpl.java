@@ -606,4 +606,36 @@ public class OrderServiceImpl implements OrderService {
                 .cancelledOrders(statusCounts.getOrDefault(OrderStatus.CANCELLED, 0L))
                 .build();
     }
+
+    @Override
+    @Transactional
+    public OrderDTO completeOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
+        
+        // 주문 상태를 완료로 변경
+        order.updateStatus(OrderStatus.COMPLETED);
+        order.setCompletedAt(LocalDateTime.now());
+        
+        // 회원 통계 업데이트
+        Member member = order.getMember();
+        if (member != null) {
+            // 주문 횟수 증가
+            member.updateOrderCount(member.getOrderCount() + 1);
+            
+            // 총 주문 건수 증가
+            member.updateTotalOrders(member.getTotalOrders() + 1);
+            
+            // 총 구매 금액 업데이트
+            member.updateTotalSpent(member.getTotalSpent() + order.getTotalAmount());
+            
+            // 포인트 적립 (구매 금액의 1%)
+            double points = order.getTotalAmount() * 0.01;
+            member.updateTotalPoints(member.getTotalPoints() + points);
+            
+            memberRepository.save(member);
+        }
+        
+        return convertToDTO(orderRepository.save(order));
+    }
 }
