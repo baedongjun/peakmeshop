@@ -3,9 +3,11 @@ package com.peakmeshop.domain.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 @Table(name = "cart_items")
@@ -35,6 +37,10 @@ public class CartItem {
     @Column(nullable = false)
     private int quantity;
 
+    @Convert(converter = JsonConverter.class)
+    @Column(columnDefinition = "json")
+    private Map<String, String> options;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -42,15 +48,26 @@ public class CartItem {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "cartItem", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CartItemOption> options = new ArrayList<>();
+    private List<CartItemOption> optionsList = new ArrayList<>();
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
     public void addOption(CartItemOption option) {
-        options.add(option);
+        optionsList.add(option);
         option.setCartItem(this);
     }
 
     public void removeOption(CartItemOption option) {
-        options.remove(option);
+        optionsList.remove(option);
         option.setCartItem(null);
     }
 }

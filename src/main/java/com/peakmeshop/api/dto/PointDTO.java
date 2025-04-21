@@ -7,7 +7,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Getter;
 
+@Getter
 @Data
 @Builder
 @NoArgsConstructor
@@ -30,4 +32,13 @@ public class PointDTO {
     private LocalDateTime expiredAt;
     private LocalDateTime createdAt;
     private LocalDateTime expiryDate;
+    private Integer expiringPoints;
+
+    public Integer getCurrentPoints() {
+        return currentPoint;
+    }
+
+    public Integer getExpiringPoints() {
+        return expiringPoints;
+    }
 }

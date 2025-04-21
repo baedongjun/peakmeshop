@@ -360,15 +360,6 @@
     <!-- 자바스크립트 -->
     <th:block layout:fragment="script">
         <script>
-            $(document).ready(function() {
-                $('#popupsTable').DataTable({
-                    order: [[0, 'desc']],
-                    language: {
-                        url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Korean.json'
-                    }
-                });
-            });
-
             function previewImage(input) {
                 if (input.files && input.files[0]) {
                     const reader = new FileReader();

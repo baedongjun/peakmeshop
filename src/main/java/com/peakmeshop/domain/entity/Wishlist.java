@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -24,9 +25,9 @@ import lombok.Setter;
 @Table(name = "wishlists")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Wishlist {
 
     @Id
@@ -37,20 +38,14 @@ public class Wishlist {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    private String name;
-
-    private boolean isDefault;
-
-    private boolean isPublic;
-
-    private String shareUrl;
-
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
-
     @OneToMany(mappedBy = "wishlist", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WishlistItem> items = new ArrayList<>();
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     // 유틸리티 메서드
     public void addItem(WishlistItem item) {

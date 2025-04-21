@@ -15,10 +15,9 @@ public class InventoryDTO {
         private Long id;
         private Long productId;
         private String productName;
-        private int quantity;
-        private int reservedQuantity;
-        private int availableQuantity;
-        private int lowStockThreshold;
-        private boolean isLowStock;
-        private LocalDateTime lastUpdated;
+        private Integer quantity;
+        private Integer reservedQuantity;
+        private Integer lowStockThreshold;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
 }

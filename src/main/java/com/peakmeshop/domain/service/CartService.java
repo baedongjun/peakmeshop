@@ -1,44 +1,19 @@
 package com.peakmeshop.domain.service;
 
 import com.peakmeshop.api.dto.CartDTO;
-import com.peakmeshop.api.dto.CartRequestDTO;
-import com.peakmeshop.api.dto.CartUpdateDTO;
+import com.peakmeshop.api.dto.CartItemDTO;
 
 public interface CartService {
-
-    CartDTO getCartByMemberId(Long memberId);
-
-    CartDTO getCartByGuestId(String guestId);
-
-    CartDTO getOrCreateCart(Long memberId);
-
-    CartDTO getCartBySessionId(String sessionId);
-
-    CartDTO createGuestCart(String guestId);
-
-    CartDTO addItemToCart(Long memberId, CartRequestDTO requestDTO);
-
-    CartDTO addItemToGuestCart(String guestId, CartRequestDTO requestDTO);
-
-    CartDTO updateCartItem(Long memberId, CartUpdateDTO updateDTO);
-
-    CartDTO updateGuestCartItem(String guestId, CartUpdateDTO updateDTO);
-
-    CartDTO removeItemFromCart(Long memberId, Long cartItemId);
-
-    CartDTO removeItemFromGuestCart(String guestId, Long cartItemId);
-
-    CartDTO clearCart(Long memberId);
-
-    CartDTO clearGuestCart(String guestId);
-
-    CartDTO applyCoupon(Long memberId, String couponCode);
-
-    CartDTO applyGuestCoupon(String guestId, String couponCode);
-
-    CartDTO removeCoupon(Long memberId);
-
-    CartDTO removeGuestCoupon(String guestId);
-
-    CartDTO mergeGuestCartWithMemberCart(String guestId, Long memberId);
+    
+    CartDTO getCartById(Long cartId);
+    
+    CartDTO getCartByUser(String userId);
+    
+    CartDTO addItemToCart(String userId, CartItemDTO cartItemDTO);
+    
+    CartDTO updateCartItem(String userId, Long cartItemId, CartItemDTO cartItemDTO);
+    
+    void removeItemFromCart(String userId, Long cartItemId);
+    
+    void clearCart(String userId);
 }

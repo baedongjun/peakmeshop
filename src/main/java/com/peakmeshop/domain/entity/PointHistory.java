@@ -18,13 +18,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "point_histories")
+@Table(name = "point_history")
 @Getter
-@Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class PointHistory {
+public class PointHistory extends BaseTimeEntity {
 
     public static final String TYPE_EARN = "EARN";
     public static final String TYPE_USE = "USE";
@@ -35,25 +34,21 @@ public class PointHistory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+    @Column(name = "member_id", nullable = false)
+    private Long memberId;
 
     @Column(nullable = false)
-    private Integer amount;
+    private Integer points;
 
-    @Column(nullable = false, length = 20)
-    private String type; // EARN, USE, DEDUCT, EXPIRE
+    @Column(nullable = false)
+    private String type;
 
-    @Column(length = 255)
-    private String reason;
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
-    @Column(name = "balance_after", nullable = false)
-    private Integer balanceAfter;
+    @Column(name = "order_id")
+    private Long orderId;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "order_id", length = 50)
-    private String orderId;
+    @Column(name = "expiry_date")
+    private LocalDateTime expiryDate;
 }

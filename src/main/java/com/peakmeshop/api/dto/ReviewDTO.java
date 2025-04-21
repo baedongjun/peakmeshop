@@ -45,7 +45,7 @@ public class ReviewDTO {
 
     private boolean recommended;
 
-    private int helpfulCount;
+    private Integer helpfulCount;
 
     private boolean adminReplied;
 
@@ -56,4 +56,8 @@ public class ReviewDTO {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    private String imageUrl;
+
+    private Boolean isVerifiedPurchase;
 }

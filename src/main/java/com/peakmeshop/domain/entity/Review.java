@@ -1,6 +1,8 @@
 package com.peakmeshop.domain.entity;
 
+import com.peakmeshop.api.dto.ReviewDTO;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,56 +15,70 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.CollectionTable;
 
 @Entity
 @Table(name = "reviews")
-@Data
-@Builder
-@NoArgsConstructor
+@Getter
+@NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 @AllArgsConstructor
-@EqualsAndHashCode(of = "id")
-public class Review {
+@Builder
+public class Review extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+    @JoinColumn(name = "member_id")
+    private Member member;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+    @JoinColumn(name = "product_id")
+    private Product product;
 
     @Column(nullable = false)
     private Integer rating;
 
-    @Column(nullable = false, length = 100)
-    private String title;
-
-    @Column(nullable = false, length = 1000)
+    @Column(columnDefinition = "TEXT")
     private String content;
+
+    @ElementCollection
+    @CollectionTable(name = "review_images", joinColumns = @JoinColumn(name = "review_id"))
+    @Column(name = "image_url")
+    private List<String> images;
+
+    private String adminReply;
+
+    @Column(name = "helpful_count", nullable = false)
+    private Integer helpfulCount;
 
     @Column(nullable = false)
     private boolean recommended;
 
-    @Column(nullable = false)
-    private int helpfulCount;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
+    private Order order;
 
-    @Column(nullable = false)
-    private boolean adminReplied;
+    public void setMemberId(Long memberId) {
+        this.member = Member.builder().id(memberId).build();
+    }
 
-    @Column(length = 1000)
-    private String adminReply;
+    public void update(ReviewDTO reviewDTO) {
+        this.rating = reviewDTO.getRating();
+        this.content = reviewDTO.getContent();
+        this.images = reviewDTO.getImages();
+    }
 
-    private LocalDateTime adminReplyDate;
+    public void incrementHelpfulCount() {
+        this.helpfulCount = (this.helpfulCount == null ? 0 : this.helpfulCount) + 1;
+    }
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
+    public void addAdminReply(String reply) {
+        this.adminReply = reply;
+    }
 }

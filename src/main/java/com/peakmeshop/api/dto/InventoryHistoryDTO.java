@@ -13,15 +13,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class InventoryHistoryDTO {
     private Long id;
+    private Long inventoryId;
     private Long productId;
     private String productName;
-    private int quantityBefore;
-    private int quantityAfter;
-    private int quantityChanged;
+    private Integer quantity;
     private String reason;
-    private String actionType; // INCREASE, DECREASE, RESERVE, RELEASE, CONFIRM
-    private String userId;
+    private Long userId;
     private String userName;
-    private Long orderId;
     private LocalDateTime createdAt;
 }

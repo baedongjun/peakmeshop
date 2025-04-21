@@ -83,6 +83,8 @@ public class AdminContentViewController {
             @RequestParam(required = false) String category,
             @PageableDefault(sort = "sortOrder", direction = Sort.Direction.ASC) Pageable pageable,
             Model model) {
+        Page<FaqDTO> faqs = contentService.getFaqs(category, pageable);
+        model.addAttribute("faqs", faqs);
         model.addAttribute("category", category);
         return "admin/contents/faqs";
     }

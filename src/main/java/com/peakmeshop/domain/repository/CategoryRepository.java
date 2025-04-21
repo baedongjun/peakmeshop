@@ -47,4 +47,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
      * @return 카테고리
      */
     Category findByName(String name);
+
+    List<Category> findByNameContainingIgnoreCase(String name);
 }

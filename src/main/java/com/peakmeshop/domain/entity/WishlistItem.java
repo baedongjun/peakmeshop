@@ -2,6 +2,7 @@ package com.peakmeshop.domain.entity;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -43,7 +44,8 @@ public class WishlistItem {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    private LocalDateTime addedAt;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
     private String notes;
 

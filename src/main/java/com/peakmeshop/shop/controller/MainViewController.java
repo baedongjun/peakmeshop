@@ -3,11 +3,16 @@ package com.peakmeshop.shop.controller;
 import com.peakmeshop.api.dto.BrandDTO;
 import com.peakmeshop.api.dto.CategoryDTO;
 import com.peakmeshop.api.dto.ProductDTO;
+import com.peakmeshop.domain.entity.Product;
 import com.peakmeshop.domain.service.BrandService;
 import com.peakmeshop.domain.service.CategoryService;
 import com.peakmeshop.domain.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,97 +30,372 @@ public class MainViewController {
     private final CategoryService categoryService;
     private final ProductService productService;
     private final BrandService brandService;
+    private final StoreService storeService;
+    private final CompanyService companyService;
+    private final NoticeService noticeService;
+    private final PressService pressService;
+
     /**
      * 쇼핑몰 메인 페이지
      */
-    @GetMapping("/")
+    @GetMapping
     public String shopIndex(Model model) {
-        model.addAttribute("categories", categoryService.getFeaturedCategories());
-        model.addAttribute("newProducts", productService.getNewArrivals(Pageable.ofSize(4)));
-        model.addAttribute("bestProducts", productService.getBestSellers(Pageable.ofSize(4)));
-        model.addAttribute("discountedProducts", productService.getDiscountedProducts(Pageable.ofSize(4)));
-        model.addAttribute("brands", brandService.getFeaturedBrands());
-        return "shop/index";
+        try {
+            // 메인 페이지에 표시할 카테고리와 상품 수 설정
+            int featuredItemCount = 8;
+            
+            // 카테고리 로드
+            List<CategoryDTO> categories = categoryService.getFeaturedCategories();
+            model.addAttribute("categories", categories);
+
+            // 신상품 로드 (최신순)
+            Page<ProductDTO> newProducts = productService.getNewArrivals(
+                PageRequest.of(0, featuredItemCount, Sort.by(Sort.Direction.DESC, "createdAt"))
+            );
+            model.addAttribute("newProducts", newProducts.getContent());
+
+            // 베스트셀러 로드 (판매량순)
+            Page<ProductDTO> bestProducts = productService.getBestSellers(
+                PageRequest.of(0, featuredItemCount, Sort.by(Sort.Direction.DESC, "salesCount"))
+            );
+            model.addAttribute("bestProducts", bestProducts.getContent());
+
+            // 할인상품 로드 (할인율순)
+            Page<ProductDTO> discountedProducts = productService.getDiscountedProducts(
+                PageRequest.of(0, featuredItemCount, Sort.by(Sort.Direction.DESC, "discountRate"))
+            );
+            model.addAttribute("discountedProducts", discountedProducts.getContent());
+
+            // 인기 브랜드 로드 (팔로워순)
+            List<BrandDTO> brands = brandService.getFeaturedBrands();
+            model.addAttribute("brands", brands);
+
+            return "shop/index.html/index";
+        } catch (Exception e) {
+            // 에러 로깅
+            e.printStackTrace();
+            model.addAttribute("error", "페이지를 로드하는 중 오류가 발생했습니다.");
+            return "error/500";
+        }
     }
 
     /**
      * 카테고리별 상품 목록
      */
-    @GetMapping("/category/{categoryName}")
-    public String categoryProducts(@PathVariable String categoryName, Model model) {
-        // 실제 구현에서는 여기서 카테고리별 상품 정보를 모델에 추가해야 합니다
-        model.addAttribute("categoryName", categoryName);
-        return "shop/product-list";
+    @GetMapping("/category/{categoryId}")
+    public String categoryProducts(
+            @PathVariable Long categoryId,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) Integer minPrice,
+            @RequestParam(required = false) Integer maxPrice,
+            @RequestParam(required = false) List<Long> brandIds,
+            Model model) {
+        try {
+            // 카테고리 정보 로드
+            CategoryDTO category = categoryService.getCategoryById(categoryId);
+            if (category == null) {
+                return "error/404";
+            }
+            model.addAttribute("category", category);
+
+            // 정렬 조건 적용
+            if (sort != null) {
+                switch (sort) {
+                    case "price_asc":
+                        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
+                            Sort.by(Sort.Direction.ASC, "price"));
+                        break;
+                    case "price_desc":
+                        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
+                            Sort.by(Sort.Direction.DESC, "price"));
+                        break;
+                    case "popularity":
+                        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
+                            Sort.by(Sort.Direction.DESC, "viewCount"));
+                        break;
+                    case "rating":
+                        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
+                            Sort.by(Sort.Direction.DESC, "averageRating"));
+                        break;
+                }
+            }
+
+            // 상품 목록 로드
+            Page<ProductDTO> products = productService.getProductsByCategory(
+                categoryId, minPrice, maxPrice, brandIds, pageable
+            );
+            model.addAttribute("products", products);
+
+            // 필터 옵션 로드
+            model.addAttribute("brands", brandService.getBrandsByCategory(categoryId));
+            model.addAttribute("minPrice", minPrice);
+            model.addAttribute("maxPrice", maxPrice);
+            model.addAttribute("selectedBrandIds", brandIds);
+            model.addAttribute("currentSort", sort);
+
+            return "shop/product-list";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "상품 목록을 로드하는 중 오류가 발생했습니다.");
+            return "error/500";
+        }
     }
 
     /**
      * 상품 검색 결과
      */
     @GetMapping("/search")
-    public String searchProducts(@RequestParam String query, Model model) {
-        // 실제 구현에서는 여기서 검색 결과를 모델에 추가해야 합니다
-        model.addAttribute("searchQuery", query);
-        return "shop/product-list";
+    public String searchProducts(
+            @RequestParam String query,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Integer minPrice,
+            @RequestParam(required = false) Integer maxPrice,
+            @RequestParam(required = false) List<Long> brandIds,
+            Model model) {
+        try {
+            // 검색어 검증
+            if (query == null || query.trim().isEmpty()) {
+                return "redirect:/";
+            }
+            model.addAttribute("searchQuery", query);
+
+            // 정렬 조건 적용
+            if (sort != null) {
+                switch (sort) {
+                    case "price_asc":
+                        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
+                            Sort.by(Sort.Direction.ASC, "price"));
+                        break;
+                    case "price_desc":
+                        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
+                            Sort.by(Sort.Direction.DESC, "price"));
+                        break;
+                    case "relevance":
+                        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), 
+                            Sort.by(Sort.Direction.DESC, "searchScore"));
+                        break;
+                }
+            }
+
+            // 검색 결과 로드
+            Page<ProductDTO> products = productService.searchProducts(
+                query, categoryId, minPrice, maxPrice, brandIds, pageable
+            );
+            model.addAttribute("products", products);
+
+            // 필터 옵션 로드
+            model.addAttribute("categories", categoryService.getAllCategories());
+            model.addAttribute("brands", brandService.getAllBrands());
+            model.addAttribute("selectedCategoryId", categoryId);
+            model.addAttribute("minPrice", minPrice);
+            model.addAttribute("maxPrice", maxPrice);
+            model.addAttribute("selectedBrandIds", brandIds);
+            model.addAttribute("currentSort", sort);
+
+            return "shop/product-list";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "검색 중 오류가 발생했습니다.");
+            return "error/500";
+        }
+    }
+
+    /**
+     * 베스트셀러 상품 목록
+     */
+    @GetMapping("/best-sellers")
+    public String bestSellers(
+            @PageableDefault(size = 20, sort = "soldCount", direction = Sort.Direction.DESC) Pageable pageable,
+            Model model) {
+        try {
+            Page<ProductDTO> products = productService.getBestSellers(pageable);
+            List<CategoryDTO> categories = categoryService.getAllCategories();
+            List<BrandDTO> brands = brandService.getAllBrands();
+
+            model.addAttribute("products", products);
+            model.addAttribute("categories", categories);
+            model.addAttribute("brands", brands);
+            model.addAttribute("title", "베스트셀러");
+
+            return "shop/product/list";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "페이지를 로드하는 중 오류가 발생했습니다.");
+            return "error/500";
+        }
     }
 
     /**
      * 신상품 목록
      */
     @GetMapping("/new-arrivals")
-    public String newArrivals(Model model) {
-        model.addAttribute("listType", "new");
-        return "shop/product-list";
+    public String newArrivals(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            Model model) {
+        try {
+            Page<ProductDTO> products = productService.getNewArrivals(pageable);
+            List<CategoryDTO> categories = categoryService.getAllCategories();
+            List<BrandDTO> brands = brandService.getAllBrands();
+
+            model.addAttribute("products", products);
+            model.addAttribute("categories", categories);
+            model.addAttribute("brands", brands);
+            model.addAttribute("title", "신상품");
+
+            return "shop/product/list";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "페이지를 로드하는 중 오류가 발생했습니다.");
+            return "error/500";
+        }
     }
 
     /**
-     * 베스트셀러 목록
+     * 할인 상품 목록
      */
-    @GetMapping("/best-sellers")
-    public String bestSellers(Model model) {
-        model.addAttribute("listType", "best");
-        return "shop/product-list";
-    }
+    @GetMapping("/on-sale")
+    public String onSale(
+            @PageableDefault(size = 20, sort = "discountRate", direction = Sort.Direction.DESC) Pageable pageable,
+            Model model) {
+        try {
+            Page<ProductDTO> products = productService.getDiscountedProducts(pageable);
+            List<CategoryDTO> categories = categoryService.getAllCategories();
+            List<BrandDTO> brands = brandService.getAllBrands();
 
-    /**
-     * 세일 상품 목록
-     */
-    @GetMapping("/sale")
-    public String saleProducts(Model model) {
-        model.addAttribute("listType", "sale");
-        return "shop/product-list";
+            model.addAttribute("products", products);
+            model.addAttribute("categories", categories);
+            model.addAttribute("brands", brands);
+            model.addAttribute("title", "할인 상품");
+
+            return "shop/product/list";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "페이지를 로드하는 중 오류가 발생했습니다.");
+            return "error/500";
+        }
     }
 
     /**
      * 브랜드별 상품 목록
      */
-    @GetMapping("/brand/{brandName}")
-    public String brandProducts(@PathVariable String brandName, Model model) {
-        model.addAttribute("brandName", brandName);
-        return "shop/product-list";
+    @GetMapping("/brand/{brandId}")
+    public String brandProducts(
+            @PathVariable Long brandId,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) Integer minPrice,
+            @RequestParam(required = false) Integer maxPrice,
+            Model model) {
+        try {
+            // 정렬 조건 처리
+            if (sort != null) {
+                switch (sort) {
+                    case "price_asc":
+                        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                                Sort.by("price").ascending());
+                        break;
+                    case "price_desc":
+                        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                                Sort.by("price").descending());
+                        break;
+                    case "name_asc":
+                        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                                Sort.by("name").ascending());
+                        break;
+                    case "name_desc":
+                        pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                                Sort.by("name").descending());
+                        break;
+                }
+            }
+
+            Page<ProductDTO> products = productService.getProductsByBrand(brandId, pageable);
+            BrandDTO brand = brandService.getBrandById(brandId).orElseThrow();
+            List<CategoryDTO> categories = categoryService.getAllCategories();
+            List<BrandDTO> brands = brandService.getAllBrands();
+
+            model.addAttribute("products", products);
+            model.addAttribute("brand", brand);
+            model.addAttribute("categories", categories);
+            model.addAttribute("brands", brands);
+            model.addAttribute("title", brand.getName() + " 상품");
+            model.addAttribute("sort", sort);
+            model.addAttribute("minPrice", minPrice);
+            model.addAttribute("maxPrice", maxPrice);
+
+            return "shop/product/list";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "페이지를 로드하는 중 오류가 발생했습니다.");
+            return "error/500";
+        }
     }
 
     /**
      * 상품 비교 페이지
      */
     @GetMapping("/compare")
-    public String compareProducts() {
-        return "shop/product-compare";
+    public String compareProducts(
+            @RequestParam List<Long> productIds,
+            Model model) {
+        try {
+            if (productIds == null || productIds.isEmpty()) {
+                return "redirect:/";
+            }
+
+            // 비교할 상품 정보 로드
+            List<Product> products = productService.getProductsByIds(productIds);
+            model.addAttribute("products", products);
+
+            return "shop/product-compare";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "상품 비교 중 오류가 발생했습니다.");
+            return "error/500";
+        }
     }
 
     /**
      * 매장 위치 정보
      */
     @GetMapping("/stores")
-    public String storeLocations() {
-        return "shop/store-locations";
+    public String storeLocations(
+            @RequestParam(required = false) String region,
+            Model model) {
+        try {
+            // 매장 정보 로드
+            model.addAttribute("stores", storeService.getStoresByRegion(region));
+            model.addAttribute("regions", storeService.getAllRegions());
+            model.addAttribute("selectedRegion", region);
+
+            return "shop/store-locations";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "매장 정보를 로드하는 중 오류가 발생했습니다.");
+            return "error/500";
+        }
     }
 
     /**
      * 회사 소개
      */
     @GetMapping("/about")
-    public String aboutUs() {
-        return "shop/about";
+    public String aboutUs(Model model) {
+        try {
+            // 회사 정보 로드
+            model.addAttribute("companyInfo", companyService.getCompanyInfo());
+            model.addAttribute("notices", noticeService.getRecentNotices(5));
+            model.addAttribute("pressReleases", pressService.getRecentPressReleases(5));
+
+            return "shop/about";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "페이지를 로드하는 중 오류가 발생했습니다.");
+            return "error/500";
+        }
     }
 }
 

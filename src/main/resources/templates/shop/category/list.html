@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/shop-layout}">
+<head>
+    <title>카테고리 - PeakMeShop</title>
+    <th:block layout:fragment="css">
+        <style>
+            .category-card {
+                border-radius: 10px;
+                overflow: hidden;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+                transition: transform 0.3s ease;
+            }
+            .category-card:hover {
+                transform: translateY(-5px);
+            }
+            .category-image {
+                height: 200px;
+                object-fit: cover;
+            }
+            .category-title {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                padding: 20px;
+                background: linear-gradient(transparent, rgba(0,0,0,0.7));
+                color: white;
+            }
+            .subcategory-list {
+                max-height: 200px;
+                overflow-y: auto;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container py-5">
+            <h2 class="mb-4">카테고리</h2>
+
+            <!-- 메인 카테고리 -->
+            <div class="row g-4">
+                <div class="col-md-4" th:each="category : ${categories}">
+                    <div class="category-card position-relative">
+                        <img th:src="${category.imageUrl}" class="category-image w-100" 
+                             th:alt="${category.name}">
+                        <div class="category-title">
+                            <h4 class="mb-0" th:text="${category.name}">카테고리명</h4>
+                        </div>
+                        <a th:href="@{'/categories/' + ${category.id}}" class="stretched-link"></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 전체 카테고리 목록 -->
+            <div class="card mt-5">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">전체 카테고리</h4>
+                    <div class="row">
+                        <div class="col-md-4" th:each="mainCategory : ${allCategories}">
+                            <div class="mb-4">
+                                <h5 class="mb-3" th:text="${mainCategory.name}">메인 카테고리</h5>
+                                <ul class="list-unstyled subcategory-list">
+                                    <li class="mb-2" th:each="subCategory : ${mainCategory.subCategories}">
+                                        <a th:href="@{'/categories/' + ${subCategory.id}}"
+                                           class="text-decoration-none text-dark d-flex justify-content-between align-items-center">
+                                            <span th:text="${subCategory.name}">서브 카테고리</span>
+                                            <span class="badge bg-light text-dark" 
+                                                  th:text="${subCategory.productCount + '개'}">0개</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 인기 카테고리 -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">인기 카테고리</h4>
+                    <div class="row g-3">
+                        <div class="col-6 col-md-3" th:each="category : ${popularCategories}">
+                            <a th:href="@{'/categories/' + ${category.id}}"
+                               class="text-decoration-none">
+                                <div class="card h-100">
+                                    <img th:src="${category.imageUrl}" class="card-img-top"
+                                         style="height: 120px; object-fit: cover;"
+                                         th:alt="${category.name}">
+                                    <div class="card-body">
+                                        <h6 class="card-title mb-0 text-center" th:text="${category.name}">
+                                            카테고리명
+                                        </h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 시즌 카테고리 -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">시즌 카테고리</h4>
+                    <div class="row g-3">
+                        <div class="col-md-6" th:each="season : ${seasonalCategories}">
+                            <div class="card bg-dark text-white">
+                                <img th:src="${season.imageUrl}" class="card-img" 
+                                     style="height: 200px; object-fit: cover;"
+                                     th:alt="${season.name}">
+                                <div class="card-img-overlay d-flex align-items-center">
+                                    <div>
+                                        <h5 class="card-title" th:text="${season.name}">시즌 카테고리</h5>
+                                        <p class="card-text" th:text="${season.description}">설명</p>
+                                        <a th:href="@{'/categories/' + ${season.id}}" 
+                                           class="btn btn-light">자세히 보기</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

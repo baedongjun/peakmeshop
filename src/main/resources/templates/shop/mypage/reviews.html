@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/mypage-layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>내 리뷰 - PeakMeShop</title>
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+</head>
+<body>
+<main layout:fragment="content">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">내 리뷰</h1>
+            <div class="d-flex gap-2">
+                <select class="form-select form-select-sm" onchange="sortReviews(this.value)">
+                    <option value="recent">최근 작성순</option>
+                    <option value="rating_high">별점 높은순</option>
+                    <option value="rating_low">별점 낮은순</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 리뷰 없을 때 -->
+        <div th:if="${#lists.isEmpty(reviews)}" class="text-center py-5">
+            <i class="fas fa-comment-alt text-muted mb-3" style="font-size: 3rem;"></i>
+            <h3>작성한 리뷰가 없습니다</h3>
+            <p class="text-muted mb-4">구매하신 상품에 대한 리뷰를 작성해보세요!</p>
+            <a href="/mypage/orders" class="btn btn-custom-primary">주문 내역 보기</a>
+        </div>
+
+        <!-- 리뷰 목록 -->
+        <div th:unless="${#lists.isEmpty(reviews)}" class="review-list">
+            <div th:each="review : ${reviews}" class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="d-flex gap-3">
+                            <img th:src="${review.product.mainImage}" 
+                                 class="rounded" 
+                                 style="width: 80px; height: 80px; object-fit: cover;"
+                                 th:alt="${review.product.name}">
+                            <div>
+                                <h3 class="h6 mb-2">
+                                    <a th:href="@{'/products/' + ${review.product.id}}" 
+                                       class="text-decoration-none text-dark"
+                                       th:text="${review.product.name}">상품명</a>
+                                </h3>
+                                <div class="rating-stars mb-2">
+                                    <th:block th:each="i : ${#numbers.sequence(1, 5)}">
+                                        <i th:class="${i <= review.rating ? 'fas' : 'far'} + ' fa-star'"></i>
+                                    </th:block>
+                                </div>
+                                <div class="text-muted small">
+                                    <span th:text="${#temporals.format(review.createdAt, 'yyyy.MM.dd')}">2024.01.01</span>
+                                    <span class="mx-1">·</span>
+                                    <span th:text="${review.helpful}">0</span>명에게 도움됨
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-link text-muted p-0" 
+                                    data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <button class="dropdown-item" 
+                                            th:onclick="'editReview(' + ${review.id} + ')'">
+                                        수정
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item text-danger" 
+                                            th:onclick="'deleteReview(' + ${review.id} + ')'">
+                                        삭제
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <p class="mb-3" th:text="${review.content}">리뷰 내용</p>
+                    <div th:if="${not #lists.isEmpty(review.images)}" class="review-images mb-3">
+                        <div class="row g-2">
+                            <div th:each="image : ${review.images}" class="col-auto">
+                                <img th:src="${image}" 
+                                     class="rounded cursor-pointer review-image" 
+                                     style="width: 100px; height: 100px; object-fit: cover;"
+                                     onclick="showImageModal(this.src)"
+                                     alt="리뷰 이미지">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button th:if="${review.canEdit}" 
+                                class="btn btn-sm btn-custom-outline"
+                                th:onclick="'editReview(' + ${review.id} + ')'">
+                            수정
+                        </button>
+                        <button th:if="${review.canDelete}"
+                                class="btn btn-sm btn-custom-outline text-danger"
+                                th:onclick="'deleteReview(' + ${review.id} + ')'">
+                            삭제
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 페이지네이션 -->
+        <div th:if="${not #lists.isEmpty(reviews)}" class="d-flex justify-content-center mt-4">
+            <button class="btn btn-custom-outline" onclick="loadMoreReviews()">
+                더 보기
+            </button>
+        </div>
+    </div>
+</main>
+
+<!-- 이미지 모달 -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body p-0">
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-3 bg-white" 
+                        data-bs-dismiss="modal"></button>
+                <img src="" class="w-100" id="modalImage" alt="리뷰 이미지">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 리뷰 수정 모달 -->
+<div class="modal fade" id="editReviewModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">리뷰 수정</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editReviewForm">
+                    <input type="hidden" id="editReviewId">
+                    <div class="mb-3">
+                        <label class="form-label">별점</label>
+                        <div class="rating-input">
+                            <th:block th:each="i : ${#numbers.sequence(1, 5)}">
+                                <input type="radio" th:id="${'star' + i}" name="rating" th:value="${i}">
+                                <label th:for="${'star' + i}"><i class="far fa-star"></i></label>
+                            </th:block>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">리뷰 내용</label>
+                        <textarea class="form-control" id="editReviewContent" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">이미지</label>
+                        <input type="file" class="form-control" id="editReviewImages" 
+                               multiple accept="image/*">
+                        <div id="currentImages" class="mt-2"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-custom-primary" onclick="updateReview()">수정</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 토스트 메시지 컨테이너 -->
+<div class="toast-container"></div>
+
+<th:block layout:fragment="scripts">
+    <script th:inline="javascript">
+        let currentPage = 0;
+        let loading = false;
+        let hasMore = true;
+        let currentSort = 'recent';
+
+        // 정렬 변경
+        function sortReviews(value) {
+            currentSort = value;
+            currentPage = 0;
+            loadReviews();
+        }
+
+        // 리뷰 로드
+        async function loadReviews() {
+            try {
+                loading = true;
+                updateLoadingState();
+
+                const response = await fetch(`/api/reviews/my?page=${currentPage}&sort=${currentSort}`);
+                if (!response.ok) throw new Error('리뷰 로딩 실패');
+
+                const data = await response.json();
+                if (currentPage === 0) {
+                    document.querySelector('.review-list').innerHTML = '';
+                }
+                
+                data.items.forEach(item => appendReviewItem(item));
+                hasMore = data.hasMore;
+                currentPage = data.currentPage;
+
+            } catch (error) {
+                showToast('리뷰를 불러오는데 실패했습니다.', 'error');
+            } finally {
+                loading = false;
+                updateLoadingState();
+            }
+        }
+
+        // 더 보기
+        function loadMoreReviews() {
+            if (loading || !hasMore) return;
+            currentPage++;
+            loadReviews();
+        }
+
+        // 리뷰 수정
+        async function editReview(reviewId) {
+            try {
+                const response = await fetch(`/api/reviews/${reviewId}`);
+                if (!response.ok) throw new Error('리뷰 정보 로딩 실패');
+
+                const review = await response.json();
+                document.getElementById('editReviewId').value = review.id;
+                document.getElementById('editReviewContent').value = review.content;
+                document.querySelector(`input[name="rating"][value="${review.rating}"]`).checked = true;
+
+                const currentImages = document.getElementById('currentImages');
+                currentImages.innerHTML = '';
+                if (review.images && review.images.length > 0) {
+                    review.images.forEach(image => {
+                        const img = document.createElement('img');
+                        img.src = image;
+                        img.className = 'rounded me-2 mb-2';
+                        img.style = 'width: 80px; height: 80px; object-fit: cover;';
+                        currentImages.appendChild(img);
+                    });
+                }
+
+                const modal = new bootstrap.Modal(document.getElementById('editReviewModal'));
+                modal.show();
+            } catch (error) {
+                showToast('리뷰 정보를 불러오는데 실패했습니다.', 'error');
+            }
+        }
+
+        // 리뷰 수정 저장
+        async function updateReview() {
+            const reviewId = document.getElementById('editReviewId').value;
+            const content = document.getElementById('editReviewContent').value;
+            const rating = document.querySelector('input[name="rating"]:checked').value;
+            const images = document.getElementById('editReviewImages').files;
+
+            const formData = new FormData();
+            formData.append('content', content);
+            formData.append('rating', rating);
+            for (let i = 0; i < images.length; i++) {
+                formData.append('images', images[i]);
+            }
+
+            try {
+                const response = await fetch(`/api/reviews/${reviewId}`, {
+                    method: 'PUT',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    showToast('리뷰가 수정되었습니다.', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('editReviewModal')).hide();
+                    loadReviews();
+                } else {
+                    throw new Error('리뷰 수정 실패');
+                }
+            } catch (error) {
+                showToast('리뷰 수정에 실패했습니다.', 'error');
+            }
+        }
+
+        // 리뷰 삭제
+        async function deleteReview(reviewId) {
+            if (!confirm('리뷰를 삭제하시겠습니까?')) return;
+
+            try {
+                const response = await fetch(`/api/reviews/${reviewId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showToast('리뷰가 삭제되었습니다.', 'success');
+                    loadReviews();
+                } else {
+                    throw new Error('리뷰 삭제 실패');
+                }
+            } catch (error) {
+                showToast('리뷰 삭제에 실패했습니다.', 'error');
+            }
+        }
+
+        // 이미지 모달 표시
+        function showImageModal(src) {
+            document.getElementById('modalImage').src = src;
+            const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+            modal.show();
+        }
+
+        // 로딩 상태 업데이트
+        function updateLoadingState() {
+            const loadMoreBtn = document.querySelector('.btn-custom-outline[onclick="loadMoreReviews()"]');
+            if (loadMoreBtn) {
+                loadMoreBtn.disabled = loading;
+                loadMoreBtn.innerHTML = loading ? 
+                    '<span class="spinner-border spinner-border-sm me-2"></span>로딩 중...' : 
+                    '더 보기';
+            }
+        }
+
+        // 토스트 메시지 표시
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            
+            document.querySelector('.toast-container').appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+    </script>
+</th:block>
+</body>
+</html>

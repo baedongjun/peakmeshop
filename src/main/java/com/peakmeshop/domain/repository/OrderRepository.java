@@ -166,4 +166,30 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT COALESCE(SUM(o.totalPrice), 0) FROM Order o WHERE o.member.id = :memberId")
     long sumTotalAmountByMemberId(@Param("memberId") Long memberId);
 
+    @Query("SELECT o FROM Order o WHERE o.member.id = :memberId AND o.orderStatus = :status ORDER BY o.createdAt DESC")
+    Page<Order> findByMemberIdAndStatus(@Param("memberId") Long memberId, @Param("status") String status, Pageable pageable);
+    
+    @Query("SELECT o FROM Order o WHERE o.member.id = :memberId AND o.createdAt BETWEEN :startDate AND :endDate ORDER BY o.createdAt DESC")
+    Page<Order> findByMemberIdAndDateRange(
+        @Param("memberId") Long memberId, 
+        @Param("startDate") LocalDateTime startDate, 
+        @Param("endDate") LocalDateTime endDate, 
+        Pageable pageable
+    );
+    
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.member.id = :memberId AND o.orderStatus = :status")
+    long countByMemberIdAndStatus(@Param("memberId") Long memberId, @Param("status") String status);
+    
+    @Query("SELECT o FROM Order o WHERE o.member.id = :memberId AND o.orderStatus = 'COMPLETED' ORDER BY o.completedAt DESC")
+    List<Order> findRecentCompletedOrders(@Param("memberId") Long memberId, Pageable pageable);
+
+    @Query("SELECT o.orderStatus as status, COUNT(o) as count FROM Order o WHERE o.member.id = :memberId GROUP BY o.orderStatus")
+    Map<String, Long> getOrderStatusCountByMemberId(@Param("memberId") Long memberId);
+
+    @Query("SELECT o FROM Order o WHERE o.member.id = :memberId AND o.orderNumber LIKE %:keyword% OR o.product.name LIKE %:keyword%")
+    Page<Order> searchByMemberIdAndKeyword(@Param("memberId") Long memberId, @Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT o FROM Order o WHERE o.deliveryTracking IS NOT NULL AND o.deliveryStatus != 'COMPLETED'")
+    List<Order> findOrdersForTrackingUpdate();
+
 }

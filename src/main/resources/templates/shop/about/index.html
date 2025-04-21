@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/shop-layout}">
+<head>
+    <title>회사 소개 - PeakMeShop</title>
+    <th:block layout:fragment="css">
+        <style>
+            .about-section {
+                padding: 80px 0;
+            }
+            .about-section:nth-child(even) {
+                background-color: #f8f9fa;
+            }
+            .value-card {
+                text-align: center;
+                padding: 30px;
+                border-radius: 10px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+                height: 100%;
+                transition: transform 0.3s ease;
+            }
+            .value-card:hover {
+                transform: translateY(-5px);
+            }
+            .timeline {
+                position: relative;
+                padding: 20px 0;
+            }
+            .timeline-item {
+                padding: 20px 0;
+                border-left: 2px solid #dee2e6;
+                margin-left: 20px;
+                position: relative;
+            }
+            .timeline-item::before {
+                content: '';
+                position: absolute;
+                left: -8px;
+                top: 24px;
+                width: 14px;
+                height: 14px;
+                border-radius: 50%;
+                background-color: var(--primary);
+            }
+            .timeline-date {
+                font-weight: bold;
+                margin-bottom: 10px;
+            }
+            .team-member-card {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            .team-member-image {
+                width: 150px;
+                height: 150px;
+                border-radius: 50%;
+                object-fit: cover;
+                margin-bottom: 15px;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- 메인 비주얼 -->
+        <section class="about-section text-center py-5" 
+                 style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/images/about/main-visual.jpg') no-repeat center; background-size: cover; color: white;">
+            <div class="container py-5">
+                <h1 class="display-4 mb-4">PeakMeShop</h1>
+                <p class="lead mb-4">최고의 쇼핑 경험을 제공하는 프리미엄 쇼핑몰</p>
+                <p class="mb-0">고객의 라이프스타일을 더욱 풍요롭게 만드는 쇼핑 플랫폼</p>
+            </div>
+        </section>
+
+        <!-- 회사 소개 -->
+        <section class="about-section">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h2 class="mb-4">About Us</h2>
+                        <p class="lead mb-4">PeakMeShop은 2024년 설립된 프리미엄 쇼핑 플랫폼입니다.</p>
+                        <p class="mb-4">
+                            우리는 고객에게 최고의 쇼핑 경험을 제공하기 위해 노력합니다. 
+                            엄선된 브랜드와 제품, 편리한 쇼핑 환경, 신뢰할 수 있는 서비스를 통해 
+                            고객의 일상을 더욱 특별하게 만들어갑니다.
+                        </p>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-primary me-2"></i>
+                                100% 정품 보증
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-primary me-2"></i>
+                                엄격한 품질 관리
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-primary me-2"></i>
+                                신속한 배송 서비스
+                            </li>
+                            <li>
+                                <i class="bi bi-check-circle-fill text-primary me-2"></i>
+                                친절한 고객 서비스
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <img src="/images/about/about-image.jpg" alt="회사 소개 이미지" 
+                             class="img-fluid rounded shadow">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 핵심 가치 -->
+        <section class="about-section bg-light">
+            <div class="container">
+                <h2 class="text-center mb-5">핵심 가치</h2>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="value-card bg-white">
+                            <i class="bi bi-star-fill text-primary display-4 mb-4"></i>
+                            <h4>최고의 품질</h4>
+                            <p class="mb-0">
+                                엄선된 제품과 브랜드로<br>
+                                최고의 품질을 보장합니다
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="value-card bg-white">
+                            <i class="bi bi-heart-fill text-primary display-4 mb-4"></i>
+                            <h4>고객 중심</h4>
+                            <p class="mb-0">
+                                고객의 니즈를 최우선으로<br>
+                                생각하고 실천합니다
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="value-card bg-white">
+                            <i class="bi bi-shield-check text-primary display-4 mb-4"></i>
+                            <h4>신뢰와 안전</h4>
+                            <p class="mb-0">
+                                안전한 쇼핑과 거래로<br>
+                                신뢰를 쌓아갑니다
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 연혁 -->
+        <section class="about-section">
+            <div class="container">
+                <h2 class="text-center mb-5">연혁</h2>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-date">2024년</div>
+                        <div class="timeline-content">
+                            <h5>회사 설립</h5>
+                            <p>PeakMeShop 법인 설립</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">2024년 2월</div>
+                        <div class="timeline-content">
+                            <h5>서비스 런칭</h5>
+                            <p>PeakMeShop 베타 서비스 오픈</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">2024년 3월</div>
+                        <div class="timeline-content">
+                            <h5>파트너십 확대</h5>
+                            <p>100개 이상의 프리미엄 브랜드와 파트너십 체결</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 팀 소개 -->
+        <section class="about-section bg-light">
+            <div class="container">
+                <h2 class="text-center mb-5">경영진 소개</h2>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="team-member-card">
+                            <img src="/images/about/ceo.jpg" alt="CEO" class="team-member-image">
+                            <h4>김대표</h4>
+                            <p class="text-muted">CEO</p>
+                            <p class="small">
+                                10년 이상의 이커머스 경험을 바탕으로<br>
+                                PeakMeShop을 이끌고 있습니다.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="team-member-card">
+                            <img src="/images/about/cto.jpg" alt="CTO" class="team-member-image">
+                            <h4>이기술</h4>
+                            <p class="text-muted">CTO</p>
+                            <p class="small">
+                                최신 기술을 활용한 플랫폼 개발로<br>
+                                혁신적인 서비스를 구현합니다.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="team-member-card">
+                            <img src="/images/about/cmo.jpg" alt="CMO" class="team-member-image">
+                            <h4>박마케팅</h4>
+                            <p class="text-muted">CMO</p>
+                            <p class="small">
+                                브랜드 가치 향상과 고객 경험 개선을<br>
+                                위해 노력하고 있습니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 오시는 길 -->
+        <section class="about-section">
+            <div class="container">
+                <h2 class="text-center mb-5">오시는 길</h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title mb-4">본사</h5>
+                                <p class="mb-2">
+                                    <i class="bi bi-geo-alt-fill me-2"></i>
+                                    서울특별시 강남구 테헤란로 123 PeakMeShop빌딩
+                                </p>
+                                <p class="mb-2">
+                                    <i class="bi bi-telephone-fill me-2"></i>
+                                    02-1234-5678
+                                </p>
+                                <p class="mb-4">
+                                    <i class="bi bi-envelope-fill me-2"></i>
+                                    contact@peakmeshop.com
+                                </p>
+                                <h6 class="mb-3">교통편</h6>
+                                <p class="mb-2">
+                                    <i class="bi bi-subway me-2"></i>
+                                    2호선 강남역 3번 출구 도보 5분
+                                </p>
+                                <p class="mb-0">
+                                    <i class="bi bi-bus-front me-2"></i>
+                                    간선버스: 146, 341, 360<br>
+                                    지선버스: 4412, 3414
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <!-- 지도는 실제 구현 시 카카오맵 등의 API를 사용하여 표시 -->
+                        <div class="ratio ratio-4x3">
+                            <div id="map" style="background-color: #eee;">
+                                <!-- 지도가 표시될 영역 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <th:block layout:fragment="script">
+        <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_KAKAO_MAP_API_KEY"></script>
+        <script>
+            // 카카오맵 초기화 및 설정
+            $(document).ready(function() {
+                const container = document.getElementById('map');
+                const options = {
+                    center: new kakao.maps.LatLng(37.498095, 127.027610),
+                    level: 3
+                };
+                const map = new kakao.maps.Map(container, options);
+                
+                // 마커 추가
+                const markerPosition = new kakao.maps.LatLng(37.498095, 127.027610);
+                const marker = new kakao.maps.Marker({
+                    position: markerPosition
+                });
+                marker.setMap(map);
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

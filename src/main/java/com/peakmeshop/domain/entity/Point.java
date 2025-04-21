@@ -17,14 +17,16 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.AccessLevel;
 
-@Data
+@Getter
 @Entity
 @Table(name = "points")
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class Point {
+public class Point extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,14 +36,14 @@ public class Point {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    @Column(name = "current_point", nullable = false)
-    private Integer currentPoint;
+    @Column(name = "current_points", nullable = false)
+    private Integer currentPoints;
 
-    @Column(name = "total_earned_point", nullable = false)
-    private Integer totalEarnedPoint;
+    @Column(name = "total_earned_points", nullable = false)
+    private Integer totalEarnedPoints;
 
-    @Column(name = "total_used_point", nullable = false)
-    private Integer totalUsedPoint;
+    @Column(name = "total_used_points", nullable = false)
+    private Integer totalUsedPoints;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
@@ -69,5 +71,35 @@ public class Point {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public void addPoints(Integer points) {
+        this.currentPoints += points;
+        this.totalEarnedPoints += points;
+    }
+
+    public void deductPoints(Integer points) {
+        if (this.currentPoints < points) {
+            throw new IllegalArgumentException("Not enough points");
+        }
+        this.currentPoints -= points;
+        this.totalUsedPoints += points;
+    }
+
+    public void usePoints(Integer points) {
+        deductPoints(points);
+    }
+
+    public void earnPoints(Long points) {
+        addPoints(points.intValue());
+    }
+
+    public void refundPoints(Long points) {
+        addPoints(points.intValue());
+        this.totalUsedPoints -= points.intValue();
+    }
+
+    public void usePoints(Long points) {
+        deductPoints(points.intValue());
     }
 }

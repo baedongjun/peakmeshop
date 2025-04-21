@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/shop-layout}">
+<head>
+    <title>주문 내역 - PeakMeShop</title>
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+</head>
+<body>
+<main layout:fragment="content">
+    <div class="container py-5">
+        <div class="row g-4">
+            <!-- 사이드바 -->
+            <div class="col-lg-3">
+                <div class="card mb-4">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <img th:if="${member.profileImage}" 
+                                 th:src="${member.profileImage}"
+                                 class="rounded-circle"
+                                 style="width: 100px; height: 100px; object-fit: cover;"
+                                 alt="프로필 이미지">
+                            <div th:unless="${member.profileImage}"
+                                 class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto"
+                                 style="width: 100px; height: 100px;">
+                                <i class="fas fa-user text-muted" style="font-size: 2rem;"></i>
+                            </div>
+                        </div>
+                        <h5 class="mb-1" th:text="${member.name}">사용자명</h5>
+                        <p class="text-muted small mb-3" th:text="${member.email}">이메일</p>
+                        <button class="btn btn-sm btn-custom-outline w-100" onclick="editProfile()">
+                            프로필 수정
+                        </button>
+                    </div>
+                </div>
+
+                <div class="list-group">
+                    <a href="/mypage" class="list-group-item list-group-item-action">
+                        <i class="fas fa-home me-2"></i>마이페이지 홈
+                    </a>
+                    <a href="/mypage/orders" class="list-group-item list-group-item-action active">
+                        <i class="fas fa-shopping-bag me-2"></i>주문 내역
+                    </a>
+                    <a href="/mypage/reviews" class="list-group-item list-group-item-action">
+                        <i class="fas fa-star me-2"></i>리뷰 관리
+                    </a>
+                    <a href="/mypage/wishlist" class="list-group-item list-group-item-action">
+                        <i class="fas fa-heart me-2"></i>위시리스트
+                    </a>
+                    <a href="/mypage/points" class="list-group-item list-group-item-action">
+                        <i class="fas fa-coins me-2"></i>포인트
+                    </a>
+                    <a href="/mypage/coupons" class="list-group-item list-group-item-action">
+                        <i class="fas fa-ticket-alt me-2"></i>쿠폰
+                    </a>
+                    <a href="/mypage/addresses" class="list-group-item list-group-item-action">
+                        <i class="fas fa-map-marker-alt me-2"></i>배송지 관리
+                    </a>
+                </div>
+            </div>
+
+            <!-- 메인 컨텐츠 -->
+            <div class="col-lg-9">
+                <!-- 검색/필터 -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <form id="searchForm" class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">기간</label>
+                                <select class="form-select" name="period" onchange="this.form.submit()">
+                                    <option value="1" th:selected="${period == 1}">최근 1개월</option>
+                                    <option value="3" th:selected="${period == 3}">최근 3개월</option>
+                                    <option value="6" th:selected="${period == 6}">최근 6개월</option>
+                                    <option value="12" th:selected="${period == 12}">최근 1년</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">주문 상태</label>
+                                <select class="form-select" name="status" onchange="this.form.submit()">
+                                    <option value="">전체</option>
+                                    <option value="PAYMENT_PENDING" th:selected="${status == 'PAYMENT_PENDING'}">결제대기</option>
+                                    <option value="PREPARING" th:selected="${status == 'PREPARING'}">상품준비중</option>
+                                    <option value="SHIPPING" th:selected="${status == 'SHIPPING'}">배송중</option>
+                                    <option value="DELIVERED" th:selected="${status == 'DELIVERED'}">배송완료</option>
+                                    <option value="CANCELLED" th:selected="${status == 'CANCELLED'}">취소/반품</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">검색</label>
+                                <div class="input-group">
+                                    <input type="text" 
+                                           class="form-control" 
+                                           name="keyword" 
+                                           th:value="${keyword}"
+                                           placeholder="주문번호 또는 상품명">
+                                    <button class="btn btn-custom-outline" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 주문 목록 -->
+                <div class="card">
+                    <div class="card-body">
+                        <div th:if="${#lists.isEmpty(orders)}" class="text-center py-5">
+                            <i class="fas fa-shopping-bag text-muted mb-3" style="font-size: 3rem;"></i>
+                            <h3>주문 내역이 없습니다</h3>
+                            <p class="text-muted mb-4">원하는 상품을 쇼핑해보세요!</p>
+                            <a href="/shop" class="btn btn-custom-primary">쇼핑하러 가기</a>
+                        </div>
+
+                        <div th:unless="${#lists.isEmpty(orders)}" class="orders">
+                            <div th:each="order : ${orders}" class="order-item border-bottom py-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <span class="badge" 
+                                              th:classappend="${
+                                                order.status == 'PAYMENT_PENDING' ? 'bg-warning' :
+                                                order.status == 'PREPARING' ? 'bg-info' :
+                                                order.status == 'SHIPPING' ? 'bg-primary' :
+                                                order.status == 'DELIVERED' ? 'bg-success' :
+                                                'bg-danger'
+                                              }"
+                                              th:text="${
+                                                order.status == 'PAYMENT_PENDING' ? '결제대기' :
+                                                order.status == 'PREPARING' ? '상품준비중' :
+                                                order.status == 'SHIPPING' ? '배송중' :
+                                                order.status == 'DELIVERED' ? '배송완료' :
+                                                '취소/반품'
+                                              }">
+                                        </span>
+                                        <span class="ms-2 text-muted small" 
+                                              th:text="${#temporals.format(order.orderDate, 'yyyy.MM.dd HH:mm')}">
+                                        </span>
+                                    </div>
+                                    <a th:href="@{'/mypage/orders/' + ${order.id}}" 
+                                       class="text-decoration-none">
+                                        주문상세 <i class="fas fa-chevron-right ms-1"></i>
+                                    </a>
+                                </div>
+
+                                <div th:each="item : ${order.orderItems}" class="order-product mb-3">
+                                    <div class="d-flex gap-3">
+                                        <div class="order-product-image">
+                                            <img th:src="${item.product.mainImage}" 
+                                                 class="rounded" 
+                                                 style="width: 80px; height: 80px; object-fit: cover;"
+                                                 th:alt="${item.product.name}">
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <a th:href="@{'/brands/' + ${item.product.brand.id}}" 
+                                                       class="text-decoration-none text-muted small">
+                                                        [[${item.product.brand.name}]]
+                                                    </a>
+                                                    <h3 class="h6 mb-1">
+                                                        <a th:href="@{'/products/' + ${item.product.id}}" 
+                                                           class="text-decoration-none text-dark">
+                                                            [[${item.product.name}]]
+                                                        </a>
+                                                    </h3>
+                                                    <div class="text-muted small" th:if="${not #lists.isEmpty(item.options)}">
+                                                        <th:block th:each="option, stat : ${item.options}">
+                                                            [[${option.name}]]: [[${option.value}]]
+                                                            <span th:unless="${stat.last}">, </span>
+                                                        </th:block>
+                                                    </div>
+                                                </div>
+                                                <div class="text-end">
+                                                    <div class="price-display">
+                                                        <span th:if="${item.product.salePrice != null}" 
+                                                              class="original-price" 
+                                                              th:text="${#numbers.formatDecimal(item.product.price, 0, 'COMMA', 0, 'POINT') + '원'}">
+                                                        </span>
+                                                        <span class="sale-price" 
+                                                              th:text="${#numbers.formatDecimal(item.product.salePrice != null ? item.product.salePrice : item.product.price, 0, 'COMMA', 0, 'POINT') + '원'}">
+                                                        </span>
+                                                    </div>
+                                                    <div class="text-muted small">
+                                                        [[${item.quantity}]]개
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="text-muted small">
+                                        주문번호: <span th:text="${order.orderNumber}"></span>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="fw-bold mb-1">
+                                            총 [[${order.orderItems.size()}]]개 상품
+                                            <span class="ms-2" 
+                                                  th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT') + '원'}">
+                                            </span>
+                                        </div>
+                                        <div class="btn-group btn-group-sm">
+                                            <button th:if="${order.status == 'PAYMENT_PENDING'}"
+                                                    class="btn btn-custom-outline"
+                                                    th:onclick="'cancelOrder(' + ${order.id} + ')'">
+                                                주문 취소
+                                            </button>
+                                            <button th:if="${order.status == 'DELIVERED'}"
+                                                    class="btn btn-custom-outline"
+                                                    th:onclick="'writeReview(' + ${order.id} + ')'">
+                                                리뷰 작성
+                                            </button>
+                                            <button th:if="${order.deliveryTracking != null}"
+                                                    class="btn btn-custom-outline"
+                                                    th:onclick="'trackDelivery(\'' + ${order.deliveryTracking} + '\')'">
+                                                배송 조회
+                                            </button>
+                                            <button th:if="${order.status == 'DELIVERED'}"
+                                                    class="btn btn-custom-outline"
+                                                    th:onclick="'requestReturn(' + ${order.id} + ')'">
+                                                반품 신청
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 페이지네이션 -->
+                        <nav th:if="${!#lists.isEmpty(orders)}" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item" th:classappend="${page == 1 ? 'disabled' : ''}">
+                                    <a class="page-link" th:href="@{${page == 1 ? '#' : ''}}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item" 
+                                    th:each="pageNum : ${#numbers.sequence(1, totalPages)}"
+                                    th:classappend="${pageNum == page ? 'active' : ''}">
+                                    <a class="page-link" 
+                                       th:href="@{/templates/shop/mypage/orders(page=${pageNum}, period=${period}, status=${status}, keyword=${keyword})}"
+                                       th:text="${pageNum}">
+                                    </a>
+                                </li>
+                                <li class="page-item" th:classappend="${page == totalPages ? 'disabled' : ''}">
+                                    <a class="page-link" th:href="@{${page == totalPages ? '#' : ''}}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 리뷰 작성 모달 -->
+<div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">리뷰 작성</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reviewForm">
+                    <input type="hidden" name="orderId" id="reviewOrderId">
+                    <div class="mb-3">
+                        <label class="form-label">별점</label>
+                        <div class="rating">
+                            <i class="far fa-star" data-rating="1"></i>
+                            <i class="far fa-star" data-rating="2"></i>
+                            <i class="far fa-star" data-rating="3"></i>
+                            <i class="far fa-star" data-rating="4"></i>
+                            <i class="far fa-star" data-rating="5"></i>
+                        </div>
+                        <input type="hidden" name="rating" id="ratingInput" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">리뷰 내용</label>
+                        <textarea class="form-control" 
+                                  name="content" 
+                                  rows="4" 
+                                  required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">사진 첨부</label>
+                        <input type="file" 
+                               class="form-control" 
+                               name="images" 
+                               accept="image/*" 
+                               multiple>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-custom-primary" onclick="submitReview()">등록</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 반품 신청 모달 -->
+<div class="modal fade" id="returnModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">반품 신청</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="returnForm">
+                    <input type="hidden" name="orderId" id="returnOrderId">
+                    <div class="mb-3">
+                        <label class="form-label">반품 사유</label>
+                        <select class="form-select" name="reason" required>
+                            <option value="">반품 사유를 선택해주세요</option>
+                            <option value="SIZE_MISMATCH">사이즈가 맞지 않음</option>
+                            <option value="COLOR_MISMATCH">색상이 다름</option>
+                            <option value="DAMAGED">상품 파손/하자</option>
+                            <option value="WRONG_ITEM">다른 상품이 배송됨</option>
+                            <option value="OTHER">기타</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">상세 사유</label>
+                        <textarea class="form-control" 
+                                  name="detail" 
+                                  rows="4" 
+                                  required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">사진 첨부</label>
+                        <input type="file" 
+                               class="form-control" 
+                               name="images" 
+                               accept="image/*" 
+                               multiple>
+                        <div class="form-text">반품 사유를 확인할 수 있는 사진을 첨부해주세요.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-custom-primary" onclick="submitReturn()">신청</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 토스트 메시지 컨테이너 -->
+<div class="toast-container"></div>
+
+<th:block layout:fragment="scripts">
+    <script th:inline="javascript">
+        // 주문 취소
+        async function cancelOrder(orderId) {
+            if (!confirm('주문을 취소하시겠습니까?')) return;
+
+            try {
+                const response = await fetch(`/api/orders/${orderId}/cancel`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    showToast('주문이 취소되었습니다.');
+                    location.reload();
+                } else {
+                    throw new Error('주문 취소 실패');
+                }
+            } catch (error) {
+                showToast('주문 취소에 실패했습니다.', 'error');
+            }
+        }
+
+        // 리뷰 작성 모달
+        function writeReview(orderId) {
+            document.getElementById('reviewOrderId').value = orderId;
+            const modal = new bootstrap.Modal(document.getElementById('reviewModal'));
+            modal.show();
+        }
+
+        // 별점 선택
+        document.querySelectorAll('.rating i').forEach(star => {
+            star.addEventListener('click', function() {
+                const rating = this.dataset.rating;
+                document.getElementById('ratingInput').value = rating;
+                
+                document.querySelectorAll('.rating i').forEach(s => {
+                    if (s.dataset.rating <= rating) {
+                        s.className = 'fas fa-star text-warning';
+                    } else {
+                        s.className = 'far fa-star';
+                    }
+                });
+            });
+        });
+
+        // 리뷰 제출
+        async function submitReview() {
+            const form = document.getElementById('reviewForm');
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch('/api/reviews', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    showToast('리뷰가 등록되었습니다.');
+                    bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
+                    location.reload();
+                } else {
+                    throw new Error('리뷰 등록 실패');
+                }
+            } catch (error) {
+                showToast('리뷰 등록에 실패했습니다.', 'error');
+            }
+        }
+
+        // 배송 조회
+        function trackDelivery(trackingNumber) {
+            window.open(`/delivery/tracking?number=${trackingNumber}`, '_blank');
+        }
+
+        // 반품 신청 모달
+        function requestReturn(orderId) {
+            document.getElementById('returnOrderId').value = orderId;
+            const modal = new bootstrap.Modal(document.getElementById('returnModal'));
+            modal.show();
+        }
+
+        // 반품 신청 제출
+        async function submitReturn() {
+            const form = document.getElementById('returnForm');
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch('/api/returns', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    showToast('반품 신청이 완료되었습니다.');
+                    bootstrap.Modal.getInstance(document.getElementById('returnModal')).hide();
+                    location.reload();
+                } else {
+                    throw new Error('반품 신청 실패');
+                }
+            } catch (error) {
+                showToast('반품 신청에 실패했습니다.', 'error');
+            }
+        }
+
+        // 토스트 메시지 표시
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            
+            document.querySelector('.toast-container').appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+    </script>
+</th:block>
+</body>
+</html>

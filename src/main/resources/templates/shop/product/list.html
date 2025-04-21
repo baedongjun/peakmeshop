@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/shop-layout}">
+<head>
+    <title>상품 목록</title>
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" href="https://unpkg.com/nouislider/dist/nouislider.min.css">
+</head>
+<body>
+<main layout:fragment="content">
+    <section class="py-5">
+        <div class="container">
+            <!-- 페이지 헤더 -->
+            <div class="mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/}">홈</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/templates/shop}">쇼핑</a></li>
+                        <li class="breadcrumb-item active" aria-current="page" 
+                            th:text="${category != null ? category.name : '모든 상품'}">모든 상품</li>
+                    </ol>
+                </nav>
+                <h1 class="h2 mb-3" th:text="${category != null ? category.name : '모든 상품'}">모든 상품</h1>
+                <p class="lead text-muted" th:text="${category != null ? category.description : '다양한 상품을 둘러보세요.'}">
+                    다양한 상품을 둘러보세요.
+                </p>
+            </div>
+
+                <div class="row">
+                    <!-- 필터 사이드바 -->
+                    <div class="col-lg-3">
+                    <div class="filter-sidebar">
+                        <!-- 카테고리 필터 -->
+                        <div class="filter-card mb-4">
+                            <h3 class="h5 mb-3">카테고리</h3>
+                            <div class="category-tree">
+                                <ul class="list-unstyled">
+                                    <li th:each="cat : ${categories}" class="mb-2">
+                                        <a th:href="@{'/category/' + ${cat.slug}}" 
+                                           th:class="${category != null && category.id == cat.id ? 'active' : ''}"
+                                           th:text="${cat.name}">카테고리명</a>
+                                        <ul th:if="${not #lists.isEmpty(cat.children)}" class="list-unstyled ps-3 mt-2">
+                                            <li th:each="subCat : ${cat.children}" class="mb-2">
+                                                <a th:href="@{'/category/' + ${subCat.slug}}"
+                                                   th:class="${category != null && category.id == subCat.id ? 'active' : ''}"
+                                                   th:text="${subCat.name}">서브카테고리명</a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>
+                                </div>
+
+                        <!-- 가격 범위 필터 -->
+                        <div class="filter-card mb-4">
+                            <h3 class="h5 mb-3">가격 범위</h3>
+                            <div id="priceRange" class="mb-3"></div>
+                            <div class="d-flex justify-content-between">
+                                <span id="priceMin">0원</span>
+                                <span id="priceMax">1,000,000원</span>
+                            </div>
+                        </div>
+
+                        <!-- 브랜드 필터 -->
+                        <div class="filter-card mb-4">
+                            <h3 class="h5 mb-3">브랜드</h3>
+                            <div class="brand-filter">
+                                <div class="form-check mb-2" th:each="brand : ${brands}">
+                                    <input class="form-check-input" type="checkbox" 
+                                           th:id="${'brand-' + brand.id}"
+                                           th:value="${brand.id}"
+                                           th:checked="${#lists.contains(selectedBrands, brand.id)}">
+                                    <label class="form-check-label" th:for="${'brand-' + brand.id}"
+                                           th:text="${brand.name + ' (' + brand.productCount + ')'}">
+                                        브랜드명 (0)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 색상 필터 -->
+                        <div class="filter-card mb-4">
+                            <h3 class="h5 mb-3">색상</h3>
+                            <div class="color-filter d-flex flex-wrap gap-2">
+                                <div th:each="color : ${colors}" 
+                                     th:class="'color-option ' + ${color.code}"
+                                     th:data-color="${color.code}"
+                                     th:title="${color.name}"
+                                     th:classappend="${#lists.contains(selectedColors, color.code) ? 'active' : ''}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 사이즈 필터 -->
+                        <div class="filter-card mb-4">
+                            <h3 class="h5 mb-3">사이즈</h3>
+                            <div class="size-filter d-flex flex-wrap gap-2">
+                                <button th:each="size : ${sizes}" 
+                                        class="btn btn-outline-secondary btn-sm"
+                                        th:classappend="${#lists.contains(selectedSizes, size) ? 'active' : ''}"
+                                        th:text="${size}">
+                                    사이즈
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 필터 초기화 버튼 -->
+                        <button class="btn btn-custom-outline w-100" onclick="resetFilters()">
+                            필터 초기화
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 상품 목록 -->
+                    <div class="col-lg-9">
+                    <!-- 정렬 옵션 -->
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="d-flex align-items-center">
+                            <span class="me-2">정렬:</span>
+                            <select class="form-select form-select-sm sort-select" onchange="sortProducts(this.value)">
+                                <option value="newest" th:selected="${sort == 'newest'}">최신순</option>
+                                <option value="price_asc" th:selected="${sort == 'price_asc'}">가격 낮은순</option>
+                                <option value="price_desc" th:selected="${sort == 'price_desc'}">가격 높은순</option>
+                                <option value="popular" th:selected="${sort == 'popular'}">인기순</option>
+                                <option value="rating" th:selected="${sort == 'rating'}">평점순</option>
+                                </select>
+                        </div>
+                        <div class="view-options">
+                            <button class="btn btn-sm btn-outline-secondary me-2" onclick="setViewMode('grid')">
+                                <i class="fas fa-th"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="setViewMode('list')">
+                                <i class="fas fa-list"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 상품 그리드 -->
+                    <div id="productGrid" class="responsive-grid">
+                        <!-- 스켈레톤 로딩 -->
+                        <div class="product-card skeleton" th:if="${#lists.isEmpty(products)}">
+                            <div class="product-image-wrapper skeleton"></div>
+                            <div class="p-3">
+                                <div class="skeleton" style="height: 20px; width: 80%;"></div>
+                                <div class="skeleton" style="height: 15px; width: 60%; margin: 10px 0;"></div>
+                                <div class="skeleton" style="height: 15px; width: 40%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- 상품 카드 -->
+                        <div th:each="product : ${products}" class="product-card" data-aos="fade-up">
+                            <div class="product-image-wrapper">
+                                <span th:if="${product.isNew}" class="product-badge badge-new">NEW</span>
+                                <span th:if="${product.salePrice != null}" class="product-badge badge-sale"
+                                      th:text="${'-' + #numbers.formatInteger((product.price - product.salePrice) * 100 / product.price, 0) + '%'}">
+                                </span>
+                                <img th:src="${product.mainImage}" class="product-image" th:alt="${product.name}"
+                                     loading="lazy">
+                                <div class="product-actions">
+                                    <button class="action-button" th:onclick="'quickView(' + ${product.id} + ')'">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="action-button" th:onclick="'addToWishlist(' + ${product.id} + ')'">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                    <button class="action-button" th:onclick="'addToCart(' + ${product.id} + ')'">
+                                        <i class="fas fa-shopping-cart"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="p-3">
+                                <h3 class="h6 mb-2" th:text="${product.name}">상품명</h3>
+                                <div class="rating-stars mb-2">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                    <span class="ms-1 text-muted" th:text="${product.averageRating}">4.5</span>
+                                </div>
+                                <div class="price-display">
+                                    <span th:if="${product.salePrice != null}" class="original-price" 
+                                          th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT') + '원'}">
+                                    </span>
+                                    <span class="sale-price" 
+                                          th:text="${#numbers.formatDecimal(product.salePrice != null ? product.salePrice : product.price, 0, 'COMMA', 0, 'POINT') + '원'}">
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+
+                        <!-- 페이지네이션 -->
+                    <div th:if="${not #lists.isEmpty(products)}" class="d-flex justify-content-center mt-4">
+                        <button class="btn btn-custom-outline me-3" 
+                                th:if="${page > 0}"
+                                onclick="loadPreviousPage()">
+                            이전
+                        </button>
+                        <button class="btn btn-custom-primary" 
+                                th:if="${hasMore}"
+                                onclick="loadMoreProducts()">
+                            더 보기
+                        </button>
+                    </div>
+
+                    <!-- 결과 없음 -->
+                    <div th:if="${#lists.isEmpty(products) && !loading}" class="empty-results">
+                        <i class="fas fa-search mb-3"></i>
+                        <h3>검색 결과가 없습니다</h3>
+                        <p class="text-muted">다른 검색어나 필터를 시도해보세요.</p>
+                        <button class="btn btn-custom-primary" onclick="resetFilters()">
+                            필터 초기화
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- 퀵뷰 모달 -->
+<div class="modal fade" id="quickViewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+            <div class="modal-body p-0">
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
+                <div class="row g-0">
+                        <div class="col-md-6">
+                        <div class="product-image-wrapper">
+                            <img src="" class="product-image" id="quickViewImage" alt="상품 이미지">
+                        </div>
+                        </div>
+                        <div class="col-md-6">
+                        <div class="p-4">
+                            <h3 id="quickViewTitle" class="mb-3">상품명</h3>
+                            <div class="rating-stars mb-3">
+                                <div id="quickViewRating"></div>
+                            </div>
+                            <div class="price-display mb-3">
+                                <span id="quickViewOriginalPrice" class="original-price"></span>
+                                <span id="quickViewPrice" class="sale-price"></span>
+                            </div>
+                            <p id="quickViewDescription" class="mb-4">상품 설명</p>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-custom-primary" onclick="addToCart(productId)">
+                                    장바구니에 담기
+                                </button>
+                                <a href="" id="quickViewLink" class="btn btn-custom-outline">
+                                    상세 정보 보기
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 토스트 메시지 컨테이너 -->
+<div class="toast-container"></div>
+
+<th:block layout:fragment="scripts">
+    <script src="https://unpkg.com/nouislider/dist/nouislider.min.js"></script>
+    <script src="https://unpkg.com/aos/dist/aos.js"></script>
+    <script th:inline="javascript">
+        // 전역 변수
+        let currentPage = /*[[${page}]]*/ 0;
+        let loading = false;
+        let hasMore = /*[[${hasMore}]]*/ true;
+        let currentSort = /*[[${sort}]]*/ 'newest';
+        let currentViewMode = localStorage.getItem('viewMode') || 'grid';
+        
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            // AOS 초기화
+            AOS.init({
+                duration: 1000,
+                once: true
+            });
+
+            // 가격 범위 슬라이더 초기화
+            const priceSlider = document.getElementById('priceRange');
+            if (priceSlider) {
+                noUiSlider.create(priceSlider, {
+                    start: [0, 1000000],
+                    connect: true,
+                    range: {
+                        'min': 0,
+                        'max': 1000000
+                    },
+                    format: {
+                        to: value => Math.round(value),
+                        from: value => Math.round(value)
+                    }
+                });
+
+                priceSlider.noUiSlider.on('update', function(values, handle) {
+                    document.getElementById('priceMin').textContent = 
+                        new Intl.NumberFormat('ko-KR').format(values[0]) + '원';
+                    document.getElementById('priceMax').textContent = 
+                        new Intl.NumberFormat('ko-KR').format(values[1]) + '원';
+                });
+
+                priceSlider.noUiSlider.on('change', function() {
+                    applyFilters();
+                });
+            }
+
+            // 뷰 모드 설정
+            setViewMode(currentViewMode);
+
+            // 필터 이벤트 리스너 설정
+            setupFilterListeners();
+        });
+
+        // 필터 이벤트 리스너 설정
+        function setupFilterListeners() {
+            // 브랜드 필터
+            document.querySelectorAll('.brand-filter input').forEach(input => {
+                input.addEventListener('change', applyFilters);
+            });
+
+            // 색상 필터
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    applyFilters();
+                });
+            });
+
+            // 사이즈 필터
+            document.querySelectorAll('.size-filter button').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    applyFilters();
+                });
+            });
+        }
+
+        // 필터 적용
+        async function applyFilters() {
+            loading = true;
+            currentPage = 0;
+            updateLoadingState();
+
+            const filters = {
+                priceRange: document.getElementById('priceRange').noUiSlider.get(),
+                brands: Array.from(document.querySelectorAll('.brand-filter input:checked'))
+                    .map(input => input.value),
+                colors: Array.from(document.querySelectorAll('.color-option.active'))
+                    .map(option => option.dataset.color),
+                sizes: Array.from(document.querySelectorAll('.size-filter button.active'))
+                    .map(button => button.textContent.trim()),
+                sort: currentSort,
+                page: currentPage
+            };
+
+            try {
+                const response = await fetch('/api/products/filter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(filters)
+                });
+
+                if (!response.ok) throw new Error('필터 적용 실패');
+
+                const data = await response.json();
+                updateProductGrid(data.products);
+                hasMore = data.hasMore;
+                currentPage = data.currentPage;
+
+            } catch (error) {
+                showToast('필터 적용 중 오류가 발생했습니다.', 'error');
+            } finally {
+                loading = false;
+                updateLoadingState();
+            }
+        }
+
+        // 상품 목록 업데이트
+        function updateProductGrid(products) {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+
+            if (products.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-results">
+                        <i class="fas fa-search mb-3"></i>
+                        <h3>검색 결과가 없습니다</h3>
+                        <p class="text-muted">다른 검색어나 필터를 시도해보세요.</p>
+                        <button class="btn btn-custom-primary" onclick="resetFilters()">
+                            필터 초기화
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            products.forEach(product => {
+                grid.innerHTML += createProductCard(product);
+            });
+
+            // AOS 새로고침
+            AOS.refresh();
+        }
+
+        // 상품 카드 HTML 생성
+        function createProductCard(product) {
+            return `
+                <div class="product-card" data-aos="fade-up">
+                    <div class="product-image-wrapper">
+                        ${product.isNew ? '<span class="product-badge badge-new">NEW</span>' : ''}
+                        ${product.salePrice ? `
+                            <span class="product-badge badge-sale">
+                                -${Math.round((product.price - product.salePrice) * 100 / product.price)}%
+                            </span>
+                        ` : ''}
+                        <img src="${product.mainImage}" class="product-image" alt="${product.name}" loading="lazy">
+                        <div class="product-actions">
+                            <button class="action-button" onclick="quickView(${product.id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="action-button" onclick="addToWishlist(${product.id})">
+                                <i class="fas fa-heart"></i>
+                            </button>
+                            <button class="action-button" onclick="addToCart(${product.id})">
+                                <i class="fas fa-shopping-cart"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-3">
+                        <h3 class="h6 mb-2">${product.name}</h3>
+                        <div class="rating-stars mb-2">
+                            ${createRatingStars(product.averageRating)}
+                            <span class="ms-1 text-muted">${product.averageRating}</span>
+                        </div>
+                        <div class="price-display">
+                            ${product.salePrice ? `
+                                <span class="original-price">
+                                    ${new Intl.NumberFormat('ko-KR').format(product.price)}원
+                                </span>
+                            ` : ''}
+                            <span class="sale-price">
+                                ${new Intl.NumberFormat('ko-KR').format(product.salePrice || product.price)}원
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 별점 HTML 생성
+        function createRatingStars(rating) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= Math.floor(rating)) {
+                    stars += '<i class="fas fa-star"></i>';
+                } else if (i === Math.ceil(rating) && rating % 1 !== 0) {
+                    stars += '<i class="fas fa-star-half-alt"></i>';
+                } else {
+                    stars += '<i class="far fa-star"></i>';
+                }
+            }
+            return stars;
+        }
+
+        // 정렬 변경
+        function sortProducts(value) {
+            currentSort = value;
+            applyFilters();
+        }
+
+        // 뷰 모드 변경
+        function setViewMode(mode) {
+            const grid = document.getElementById('productGrid');
+            currentViewMode = mode;
+            localStorage.setItem('viewMode', mode);
+
+            if (mode === 'list') {
+                grid.classList.remove('responsive-grid');
+                grid.classList.add('list-view');
+            } else {
+                grid.classList.add('responsive-grid');
+                grid.classList.remove('list-view');
+            }
+        }
+
+        // 더 보기
+        async function loadMoreProducts() {
+            if (loading || !hasMore) return;
+
+            loading = true;
+            currentPage++;
+            updateLoadingState();
+
+            try {
+                const response = await fetch(`/api/products?page=${currentPage}&sort=${currentSort}`);
+                if (!response.ok) throw new Error('상품 로딩 실패');
+
+                const data = await response.json();
+                appendProducts(data.products);
+                hasMore = data.hasMore;
+
+            } catch (error) {
+                showToast('상품을 불러오는데 실패했습니다.', 'error');
+                currentPage--;
+            } finally {
+                loading = false;
+                updateLoadingState();
+            }
+        }
+
+        // 상품 추가
+        function appendProducts(products) {
+            const grid = document.getElementById('productGrid');
+            products.forEach(product => {
+                const card = document.createElement('div');
+                card.innerHTML = createProductCard(product);
+                grid.appendChild(card.firstElementChild);
+            });
+            AOS.refresh();
+        }
+
+        // 로딩 상태 업데이트
+        function updateLoadingState() {
+            const loadMoreBtn = document.querySelector('.btn-custom-primary[onclick="loadMoreProducts()"]');
+            if (loadMoreBtn) {
+                loadMoreBtn.disabled = loading;
+                loadMoreBtn.innerHTML = loading ? 
+                    '<span class="spinner-border spinner-border-sm me-2"></span>로딩 중...' : 
+                    '더 보기';
+            }
+        }
+
+        // 필터 초기화
+        function resetFilters() {
+            // 가격 범위 초기화
+            document.getElementById('priceRange').noUiSlider.reset();
+
+            // 브랜드 필터 초기화
+            document.querySelectorAll('.brand-filter input').forEach(input => {
+                input.checked = false;
+            });
+
+            // 색상 필터 초기화
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.classList.remove('active');
+            });
+
+            // 사이즈 필터 초기화
+            document.querySelectorAll('.size-filter button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // 필터 적용
+            applyFilters();
+        }
+
+        // 퀵뷰, 장바구니 추가, 위시리스트 추가 함수는 index.html과 동일
+    </script>
+</th:block>
+</body>
+</html>
+

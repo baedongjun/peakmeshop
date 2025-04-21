@@ -1,5 +1,6 @@
 package com.peakmeshop.domain.repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -62,4 +63,40 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
     // 활성 상태이고 시작일과 종료일 사이에 있는 쿠폰 조회 (페이징)
     Page<Coupon> findByStatusAndStartDateBeforeAndEndDateAfter(
             String status, LocalDateTime currentDate, LocalDateTime currentDate2, Pageable pageable);
+
+    @Query("SELECT c FROM Coupon c JOIN c.memberCoupons mc " +
+           "WHERE mc.member.id = :memberId " +
+           "AND c.startDate <= :now " +
+           "AND c.endDate > :now " +
+           "AND mc.used = false")
+    List<Coupon> findAvailableCouponsByMemberId(@Param("memberId") Long memberId, 
+                                               @Param("now") LocalDateTime now);
+
+    @Query("SELECT c FROM Coupon c JOIN c.memberCoupons mc " +
+           "WHERE mc.member.id = :memberId " +
+           "AND (:expired = true AND c.endDate <= :now OR " +
+           "     :expired = false AND c.endDate > :now)")
+    List<Coupon> findExpiredCouponsByMemberId(@Param("memberId") Long memberId,
+                                             @Param("expired") boolean expired,
+                                             @Param("now") LocalDateTime now);
+
+    @Query("SELECT c FROM Coupon c JOIN c.memberCoupons mc " +
+           "WHERE mc.member.id = :memberId " +
+           "AND c.startDate <= :now " +
+           "AND c.endDate > :now " +
+           "AND mc.used = false " +
+           "AND c.minOrderAmount <= :totalAmount")
+    List<Coupon> findAvailableCoupons(@Param("memberId") Long memberId,
+                                     @Param("totalAmount") BigDecimal totalAmount,
+                                     @Param("now") LocalDateTime now);
+
+    @Query("SELECT c FROM Coupon c WHERE " +
+           "(:type IS NULL OR c.type = :type) AND " +
+           "(:status IS NULL OR c.status = :status) AND " +
+           "(:keyword IS NULL OR c.name LIKE %:keyword% OR c.code LIKE %:keyword%)")
+    Page<Coupon> findCoupons(@Param("type") String type,
+                            @Param("status") String status,
+                            @Param("keyword") String keyword,
+                            Pageable pageable);
+
 }

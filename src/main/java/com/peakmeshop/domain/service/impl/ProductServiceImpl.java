@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -186,13 +187,26 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductDTO> getProductsByCategory(Long categoryId, Pageable pageable) {
-        Page<Product> productsPage = productRepository.findByCategoryId(categoryId, pageable);
-        List<ProductDTO> productDTOs = productsPage.getContent().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-
-        return new PageImpl<>(productDTOs, pageable, productsPage.getTotalElements());
+    public Page<ProductDTO> getProductsByCategory(Long categoryId, Integer minPrice, Integer maxPrice, List<Long> brandIds, Pageable pageable) {
+        Page<Product> products;
+        
+        if (brandIds != null && !brandIds.isEmpty()) {
+            if (minPrice != null && maxPrice != null) {
+                products = productRepository.findByCategoryIdAndBrandIdInAndPriceBetween(
+                    categoryId, brandIds, minPrice, maxPrice, pageable);
+            } else {
+                products = productRepository.findByCategoryIdAndBrandIdIn(categoryId, brandIds, pageable);
+            }
+        } else {
+            if (minPrice != null && maxPrice != null) {
+                products = productRepository.findByCategoryIdAndPriceBetween(
+                    categoryId, minPrice, maxPrice, pageable);
+            } else {
+                products = productRepository.findByCategoryId(categoryId, pageable);
+            }
+        }
+        
+        return products.map(this::convertToDTO);
     }
 
     @Override
@@ -208,13 +222,45 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductDTO> searchProducts(String keyword, Pageable pageable) {
-        Page<Product> productsPage = productRepository.findByNameContainingOrDescriptionContaining(keyword, keyword, pageable);
-        List<ProductDTO> productDTOs = productsPage.getContent().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-
-        return new PageImpl<>(productDTOs, pageable, productsPage.getTotalElements());
+    public Page<ProductDTO> searchProducts(String query, Long categoryId, Integer minPrice, Integer maxPrice, List<Long> brandIds, Pageable pageable) {
+        Page<Product> products;
+        
+        if (categoryId != null) {
+            if (brandIds != null && !brandIds.isEmpty()) {
+                if (minPrice != null && maxPrice != null) {
+                    products = productRepository.findByNameContainingAndCategoryIdAndBrandIdInAndPriceBetween(
+                        query, categoryId, brandIds, minPrice, maxPrice, pageable);
+                } else {
+                    products = productRepository.findByNameContainingAndCategoryIdAndBrandIdIn(
+                        query, categoryId, brandIds, pageable);
+                }
+            } else {
+                if (minPrice != null && maxPrice != null) {
+                    products = productRepository.findByNameContainingAndCategoryIdAndPriceBetween(
+                        query, categoryId, minPrice, maxPrice, pageable);
+                } else {
+                    products = productRepository.findByNameContainingAndCategoryId(query, categoryId, pageable);
+                }
+            }
+        } else {
+            if (brandIds != null && !brandIds.isEmpty()) {
+                if (minPrice != null && maxPrice != null) {
+                    products = productRepository.findByNameContainingAndBrandIdInAndPriceBetween(
+                        query, brandIds, minPrice, maxPrice, pageable);
+                } else {
+                    products = productRepository.findByNameContainingAndBrandIdIn(query, brandIds, pageable);
+                }
+            } else {
+                if (minPrice != null && maxPrice != null) {
+                    products = productRepository.findByNameContainingAndPriceBetween(
+                        query, minPrice, maxPrice, pageable);
+                } else {
+                    products = productRepository.findByNameContaining(query, pageable);
+                }
+            }
+        }
+        
+        return products.map(this::convertToDTO);
     }
 
     @Override
@@ -226,15 +272,69 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductDTO> getNewArrivals(Pageable pageable) {
-        Page<Product> products = productRepository.findByIsActiveTrueOrderByCreatedAtDesc(pageable);
+    public Page<ProductDTO> getNewArrivals(Long categoryId, List<Long> brandIds, Pageable pageable) {
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        Page<Product> products;
+        
+        if (categoryId != null) {
+            if (brandIds != null && !brandIds.isEmpty()) {
+                products = productRepository.findByCategoryIdAndBrandIdInAndCreatedAtAfter(
+                    categoryId, brandIds, thirtyDaysAgo, pageable);
+            } else {
+                products = productRepository.findByCategoryIdAndCreatedAtAfter(
+                    categoryId, thirtyDaysAgo, pageable);
+            }
+        } else {
+            if (brandIds != null && !brandIds.isEmpty()) {
+                products = productRepository.findByBrandIdInAndCreatedAtAfter(brandIds, thirtyDaysAgo, pageable);
+            } else {
+                products = productRepository.findByCreatedAtAfter(thirtyDaysAgo, pageable);
+            }
+        }
+        
         return products.map(this::convertToDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductDTO> getBestSellers(Pageable pageable) {
-        Page<Product> products = productRepository.findByIsActiveTrueOrderBySalesCountDesc(pageable);
+    public Page<ProductDTO> getBestSellers(Long categoryId, List<Long> brandIds, String period, Pageable pageable) {
+        LocalDateTime startDate;
+        LocalDateTime endDate = LocalDateTime.now();
+        
+        // 기간 설정
+        switch (period != null ? period : "all") {
+            case "daily":
+                startDate = endDate.minusDays(1);
+                break;
+            case "weekly":
+                startDate = endDate.minusWeeks(1);
+                break;
+            case "monthly":
+                startDate = endDate.minusMonths(1);
+                break;
+            default:
+                startDate = endDate.minusYears(100); // 전체 기간
+        }
+        
+        Page<Product> products;
+        
+        if (categoryId != null) {
+            if (brandIds != null && !brandIds.isEmpty()) {
+                products = productRepository.findBestSellersByCategoryAndBrandsAndPeriod(
+                    categoryId, brandIds, startDate, endDate, pageable);
+            } else {
+                products = productRepository.findBestSellersByCategoryAndPeriod(
+                    categoryId, startDate, endDate, pageable);
+            }
+        } else {
+            if (brandIds != null && !brandIds.isEmpty()) {
+                products = productRepository.findBestSellersByBrandsAndPeriod(
+                    brandIds, startDate, endDate, pageable);
+            } else {
+                products = productRepository.findBestSellersByPeriod(startDate, endDate, pageable);
+            }
+        }
+        
         return products.map(this::convertToDTO);
     }
 
@@ -588,5 +688,182 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<Product> getProductsByIds(List<Long> ids) {
         return productRepository.findAllById(ids);
+    }
+
+    // 관련 상품 조회
+    @Override
+    public List<ProductDTO> getRelatedProducts(Long productId, int limit) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
+        
+        // 같은 카테고리의 상품 중에서 연관 상품을 찾음
+        Page<Product> relatedProducts = productRepository.findByCategoryIdAndIdNot(
+            product.getCategory().getId(),
+            productId,
+            PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "viewCount"))
+        );
+        
+        return relatedProducts.getContent().stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
+    }
+
+    // 기본 카테고리별 상품 조회
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductDTO> getProductsByCategory(Long categoryId, Pageable pageable) {
+        return productRepository.findByCategoryId(categoryId, pageable)
+                .map(this::convertToDTO);
+    }
+
+    // 기본 상품 검색
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductDTO> searchProducts(String keyword, Pageable pageable) {
+        return productRepository.findByNameContainingOrDescriptionContaining(keyword, keyword, pageable)
+                .map(this::convertToDTO);
+    }
+
+    // 기본 신상품 조회
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductDTO> getNewArrivals(Pageable pageable) {
+        return productRepository.findByIsActiveTrueOrderByCreatedAtDesc(pageable)
+                .map(this::convertToDTO);
+    }
+
+    // 기본 베스트셀러 조회
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductDTO> getBestSellers(Pageable pageable) {
+        return productRepository.findByIsActiveTrueOrderBySalesCountDesc(pageable)
+                .map(this::convertToDTO);
+    }
+
+    // 브랜드별 상품 조회 (정렬 조건 포함)
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductDTO> getProductsByBrand(Long brandId, String sortType, Pageable pageable) {
+        Sort sort;
+        switch (sortType) {
+            case "popularity":
+                sort = Sort.by(Sort.Direction.DESC, "viewCount");
+                break;
+            case "new":
+                sort = Sort.by(Sort.Direction.DESC, "createdAt");
+                break;
+            default:
+                sort = pageable.getSort();
+        }
+        
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+        Page<Product> products = productRepository.findByBrandId(brandId, pageRequest);
+        return products.map(this::convertToDTO);
+    }
+
+    // 브랜드별 상품 조회 (필터링 포함)
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductDTO> getProductsByBrand(Long brandId, Long categoryId, Integer minPrice, Integer maxPrice, Pageable pageable) {
+        Page<Product> products;
+        
+        if (categoryId != null) {
+            if (minPrice != null && maxPrice != null) {
+                products = productRepository.findByBrandIdAndCategoryIdAndPriceBetween(
+                    brandId, categoryId, minPrice, maxPrice, pageable);
+            } else {
+                products = productRepository.findByBrandIdAndCategoryId(brandId, categoryId, pageable);
+            }
+        } else {
+            if (minPrice != null && maxPrice != null) {
+                products = productRepository.findByBrandIdAndPriceBetween(
+                    brandId, minPrice, maxPrice, pageable);
+            } else {
+                products = productRepository.findByBrandId(brandId, pageable);
+            }
+        }
+        
+        return products.map(this::convertToDTO);
+    }
+
+    @Override
+    @Transactional
+    public void incrementViewCount(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
+        product.setViewCount(product.getViewCount() + 1);
+        productRepository.save(product);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductDTO> getPopularProductsByCategory(Long categoryId, Pageable pageable) {
+        return productRepository.findByCategoryIdOrderByViewCountDesc(categoryId, pageable)
+                .map(this::convertToDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductDTO> getNewProductsByCategory(Long categoryId, Pageable pageable) {
+        return productRepository.findByCategoryIdOrderByCreatedAtDesc(categoryId, pageable)
+                .map(this::convertToDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductDTO> getRecommendedProducts(String username, int limit) {
+        // 1. 사용자의 최근 구매 이력에서 카테고리와 브랜드 정보 추출
+        // 2. 해당 카테고리/브랜드의 인기 상품 추천
+        // 3. 사용자의 구매 이력이 없는 경우 전체 인기 상품 추천
+        return productRepository.findTop10ByIsActiveTrueOrderBySalesCountDesc()
+                .stream()
+                .map(this::convertToDTO)
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<ProductDTO> getRelatedProducts(Long productId, Pageable pageable) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
+
+        // 같은 카테고리의 상품들을 가져옴
+        Page<Product> relatedProducts = productRepository.findByCategoryAndIdNot(
+                product.getCategory(), productId, pageable);
+
+        return relatedProducts.map(this::convertToDTO);
+    }
+
+    @Override
+    public Page<ProductDTO> getFrequentlyBoughtTogether(Long productId, Pageable pageable) {
+        // 주문 내역에서 함께 구매된 상품들을 조회
+        Page<Product> frequentlyBoughtProducts = productRepository.findFrequentlyBoughtTogether(
+                productId, pageable);
+
+        return frequentlyBoughtProducts.map(this::convertToDTO);
+    }
+
+    @Override
+    public Page<ProductDTO> getProducts(
+            Long categoryId, Long brandId, Integer minPrice, Integer maxPrice, Boolean inStock,
+            Pageable pageable) {
+        // 조건에 맞는 상품들을 조회
+        Page<Product> products = productRepository.findByFilters(
+                categoryId, brandId, minPrice, maxPrice, inStock, pageable);
+
+        return products.map(this::convertToDTO);
+    }
+
+    @Override
+    public Page<ProductDTO> getProductReviews(Long productId, Pageable pageable) {
+        // 상품의 리뷰들을 조회
+        return reviewRepository.findByProductId(productId, pageable)
+                .map(review -> {
+                    ProductDTO productDTO = new ProductDTO();
+                    productDTO.setId(review.getProduct().getId());
+                    productDTO.setName(review.getProduct().getName());
+                    // 필요한 다른 정보들도 설정
+                    return productDTO;
+                });
     }
 }

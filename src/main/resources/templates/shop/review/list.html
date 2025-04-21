@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/shop-layout}">
+<head>
+    <title>상품 리뷰 - PeakMeShop</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container py-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>상품 리뷰</h2>
+                <div class="d-flex gap-2">
+                    <select class="form-select" id="sortOption">
+                        <option value="latest" th:selected="${sort == 'latest'}">최신순</option>
+                        <option value="rating_high" th:selected="${sort == 'rating_high'}">별점 높은순</option>
+                        <option value="rating_low" th:selected="${sort == 'rating_low'}">별점 낮은순</option>
+                        <option value="helpful" th:selected="${sort == 'helpful'}">도움순</option>
+                    </select>
+                    <select class="form-select" id="filterOption">
+                        <option value="all" th:selected="${filter == 'all'}">전체 리뷰</option>
+                        <option value="photo" th:selected="${filter == 'photo'}">포토 리뷰</option>
+                        <option value="text" th:selected="${filter == 'text'}">텍스트 리뷰</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 리뷰 통계 -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-3 text-center">
+                            <h3 class="mb-0" th:text="${#numbers.formatDecimal(product.averageRating, 1, 1)}">4.5</h3>
+                            <div class="rating-stars my-2">
+                                <i class="bi bi-star-fill text-warning"
+                                   th:each="i : ${#numbers.sequence(1, 5)}"
+                                   th:classappend="${i <= product.averageRating ? 'text-warning' : 'text-muted'}"></i>
+                            </div>
+                            <p class="mb-0" th:text="${product.reviewCount + '개의 리뷰'}">100개의 리뷰</p>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="rating-bars">
+                                <div class="d-flex align-items-center mb-1" th:each="stat : ${ratingStats}">
+                                    <div class="col-2 text-end pe-2" th:text="${stat.rating + '점'}">5점</div>
+                                    <div class="col">
+                                        <div class="progress" style="height: 15px;">
+                                            <div class="progress-bar bg-warning" role="progressbar"
+                                                 th:style="'width: ' + ${stat.percentage} + '%'"
+                                                 th:aria-valuenow="${stat.percentage}"
+                                                 aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-2 ps-2" th:text="${stat.count + '개'}">50개</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <p class="mb-2">포토 리뷰</p>
+                            <h4 class="mb-0" th:text="${photoReviewCount + '개'}">30개</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 리뷰 목록 -->
+            <div class="review-list">
+                <div class="card mb-3" th:each="review : ${reviews}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <div class="rating-stars mb-2">
+                                    <i class="bi bi-star-fill text-warning"
+                                       th:each="i : ${#numbers.sequence(1, review.rating)}"></i>
+                                    <i class="bi bi-star text-warning"
+                                       th:each="i : ${#numbers.sequence(review.rating + 1, 5)}"></i>
+                                </div>
+                                <h5 class="card-title" th:text="${review.title}">리뷰 제목</h5>
+                                <p class="text-muted small mb-2">
+                                    <span th:text="${review.author}">작성자</span> |
+                                    <span th:text="${#temporals.format(review.createdAt, 'yyyy.MM.dd')}">2024.03.14</span>
+                                </p>
+                            </div>
+                            <div class="text-end">
+                                <button class="btn btn-sm btn-outline-secondary helpful-btn"
+                                        th:data-review-id="${review.id}">
+                                    <i class="bi bi-hand-thumbs-up"></i>
+                                    도움돼요 <span th:text="${review.helpfulCount}">0</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 구매 옵션 -->
+                        <p class="text-muted small mb-3" th:if="${review.productOption != null}">
+                            구매 옵션: <span th:text="${review.productOption}">옵션명</span>
+                        </p>
+
+                        <!-- 리뷰 내용 -->
+                        <p class="card-text" th:text="${review.content}">리뷰 내용</p>
+
+                        <!-- 리뷰 이미지 -->
+                        <div class="review-images mb-3" th:if="${not #lists.isEmpty(review.images)}">
+                            <div class="row g-2">
+                                <div class="col-4 col-md-3" th:each="image : ${review.images}">
+                                    <a href="#" class="review-image" th:data-image="${image}">
+                                        <img th:src="${image}" class="img-fluid rounded" alt="리뷰 이미지">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 페이지네이션 -->
+            <nav th:if="${reviews.totalPages > 1}" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:classappend="${!reviews.hasPrevious() ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{${#httpServletRequest.requestURI}(
+                            page=${reviews.number - 1},
+                            sort=${param.sort},
+                            filter=${param.filter}
+                        )}">이전</a>
+                    </li>
+                    <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, reviews.totalPages - 1)}"
+                        th:classappend="${pageNum == reviews.number ? 'active' : ''}">
+                        <a class="page-link" th:href="@{${#httpServletRequest.requestURI}(
+                            page=${pageNum},
+                            sort=${param.sort},
+                            filter=${param.filter}
+                        )}" th:text="${pageNum + 1}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${!reviews.hasNext() ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{${#httpServletRequest.requestURI}(
+                            page=${reviews.number + 1},
+                            sort=${param.sort},
+                            filter=${param.filter}
+                        )}">다음</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- 이미지 모달 -->
+        <div class="modal fade" id="imageModal" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body p-0">
+                        <button type="button" class="btn-close position-absolute top-0 end-0 m-2"
+                                data-bs-dismiss="modal"></button>
+                        <img src="" class="img-fluid" alt="리뷰 이미지">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="script">
+        <script th:inline="javascript">
+            $(document).ready(function() {
+                // 정렬 옵션 변경
+                $('#sortOption').change(function() {
+                    updateQueryParams('sort', $(this).val());
+                });
+
+                // 필터 옵션 변경
+                $('#filterOption').change(function() {
+                    updateQueryParams('filter', $(this).val());
+                });
+
+                // 도움돼요 버튼 클릭
+                $('.helpful-btn').click(function() {
+                    const reviewId = $(this).data('review-id');
+                    const button = $(this);
+
+                    $.post('/api/reviews/' + reviewId + '/helpful')
+                        .done(function(response) {
+                            const count = button.find('span');
+                            count.text(parseInt(count.text()) + 1);
+                            button.prop('disabled', true);
+                        })
+                        .fail(function() {
+                            alert('처리에 실패했습니다. 다시 시도해주세요.');
+                        });
+                });
+
+                // 이미지 클릭
+                $('.review-image').click(function(e) {
+                    e.preventDefault();
+                    const imageUrl = $(this).data('image');
+                    $('#imageModal img').attr('src', imageUrl);
+                    $('#imageModal').modal('show');
+                });
+
+                function updateQueryParams(key, value) {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    urlParams.set(key, value);
+                    urlParams.set('page', '0');
+                    window.location.search = urlParams.toString();
+                }
+            });
+        </script>
+    </th:block>
+</body>
+</html> 

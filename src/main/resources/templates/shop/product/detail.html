@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/shop-layout}">
+<head>
+    <title th:text="${product.name + ' - PeakMeShop'}">상품 상세</title>
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/lightgallery/css/lightgallery.css">
+    <link rel="stylesheet" href="https://unpkg.com/lightgallery/css/lg-zoom.css">
+    <link rel="stylesheet" href="https://unpkg.com/lightgallery/css/lg-thumbnail.css">
+</head>
+<body>
+<main layout:fragment="content">
+    <section class="product-detail py-5">
+        <div class="container">
+            <!-- 브레드크럼 -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/}">홈</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/templates/shop}">쇼핑</a></li>
+                    <li class="breadcrumb-item">
+                        <a th:href="@{'/category/' + ${product.category.slug}}" 
+                           th:text="${product.category.name}">카테고리</a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page" th:text="${product.name}">상품명</li>
+                </ol>
+            </nav>
+
+            <div class="row">
+                <!-- 상품 이미지 -->
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                    <div class="product-gallery" id="productGallery">
+                        <!-- 메인 이미지 슬라이더 -->
+                        <div class="swiper gallery-main mb-3">
+                            <div class="swiper-wrapper">
+                                <a th:each="image : ${product.images}" 
+                                   class="swiper-slide"
+                                   th:href="${image.url}"
+                                   th:data-src="${image.url}">
+                                    <img th:src="${image.url}" 
+                                         class="img-fluid" 
+                                         th:alt="${product.name + ' - 이미지 ' + imageStat.count}">
+                                </a>
+                            </div>
+                            <div class="swiper-button-next"></div>
+                            <div class="swiper-button-prev"></div>
+    </div>
+
+                        <!-- 썸네일 슬라이더 -->
+                        <div class="swiper gallery-thumbs">
+                            <div class="swiper-wrapper">
+                                <div th:each="image : ${product.images}" class="swiper-slide">
+                                    <img th:src="${image.url}" 
+                                         class="img-fluid" 
+                                         th:alt="${product.name + ' - 썸네일 ' + imageStat.count}">
+                                </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 상품 정보 -->
+            <div class="col-lg-6">
+                    <div class="product-info">
+                        <!-- 상품명 및 브랜드 -->
+                        <div class="mb-4">
+                            <h1 class="h2 mb-2" th:text="${product.name}">상품명</h1>
+                            <div class="d-flex align-items-center gap-3">
+                                <a th:href="@{'/brand/' + ${product.brand.slug}}" 
+                                   class="text-muted text-decoration-none">
+                                    <img th:src="${product.brand.logoUrl}" 
+                                         class="brand-logo" 
+                                         th:alt="${product.brand.name}"
+                                         height="24">
+                                    <span th:text="${product.brand.name}" class="ms-2">브랜드명</span>
+                                </a>
+                                <div class="rating-stars">
+                                    <th:block th:each="i : ${#numbers.sequence(1, 5)}">
+                                        <i th:class="${i <= product.averageRating ? 'fas' : 
+                                                     (i - product.averageRating <= 0.5 ? 'fas fa-star-half-alt' : 
+                                                     'far')} + ' fa-star'"></i>
+                                    </th:block>
+                                    <span class="ms-2 text-muted">
+                                        <span th:text="${#numbers.formatDecimal(product.averageRating, 1, 1)}">4.5</span>
+                                        (<span th:text="${product.reviewCount}">100</span>개 리뷰)
+                                    </span>
+                </div>
+                </div>
+                </div>
+
+                        <!-- 가격 정보 -->
+                        <div class="price-info mb-4">
+                            <div class="price-display">
+                                <span th:if="${product.salePrice != null}" class="original-price" 
+                                      th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT') + '원'}">
+                                </span>
+                                <span class="sale-price" 
+                                      th:text="${#numbers.formatDecimal(product.salePrice != null ? product.salePrice : product.price, 0, 'COMMA', 0, 'POINT') + '원'}">
+                                </span>
+                                <span th:if="${product.salePrice != null}" class="discount-badge">
+                                    -<span th:text="${#numbers.formatInteger((product.price - product.salePrice) * 100 / product.price, 0)}">20</span>%
+                                </span>
+                    </div>
+                            <div class="text-muted small mt-2">
+                                <i class="fas fa-truck me-1"></i> 
+                                <span th:if="${product.freeShipping}">무료배송</span>
+                                <span th:unless="${product.freeShipping}" 
+                                      th:text="${#numbers.formatDecimal(product.shippingFee, 0, 'COMMA', 0, 'POINT') + '원'}">
+                                    3,000원
+                                </span>
+                                <span th:if="${product.estimatedDelivery}" class="ms-2">
+                                    (<span th:text="${product.estimatedDelivery}">내일(수) 도착 예정</span>)
+                                </span>
+                    </div>
+                </div>
+
+                        <!-- 옵션 선택 -->
+                        <div class="options mb-4">
+                            <!-- 색상 선택 -->
+                            <div class="mb-3" th:if="${not #lists.isEmpty(product.colors)}">
+                                <label class="form-label">색상</label>
+                                <div class="color-options d-flex gap-2">
+                                    <button th:each="color : ${product.colors}" 
+                                            type="button"
+                                            class="color-option"
+                                            th:classappend="${color.available ? '' : 'disabled'}"
+                                            th:data-color-id="${color.id}"
+                                            th:data-color-name="${color.name}"
+                                            th:style="'background-color: ' + ${color.code}"
+                                            th:title="${color.name + (color.available ? '' : ' (품절)')}">
+                                    </button>
+                        </div>
+                                <div id="selectedColor" class="selected-option mt-2"></div>
+                    </div>
+
+                            <!-- 사이즈 선택 -->
+                            <div class="mb-3" th:if="${not #lists.isEmpty(product.sizes)}">
+                                <label class="form-label">사이즈</label>
+                                <div class="size-options d-flex flex-wrap gap-2">
+                                    <button th:each="size : ${product.sizes}"
+                                            type="button"
+                                            class="btn btn-outline-secondary"
+                                            th:classappend="${size.available ? '' : 'disabled'}"
+                                            th:data-size-id="${size.id}"
+                                            th:data-size-name="${size.name}"
+                                            th:text="${size.name}"
+                                            th:disabled="${!size.available}">
+                                        S
+                                    </button>
+                        </div>
+                                <div id="selectedSize" class="selected-option mt-2"></div>
+                    </div>
+
+                    <!-- 수량 선택 -->
+                            <div class="mb-4">
+                                <label class="form-label">수량</label>
+                                <div class="quantity-control d-flex align-items-center gap-2">
+                                    <button class="btn btn-outline-secondary" onclick="decreaseQuantity()">
+                                        <i class="fas fa-minus"></i>
+                    </button>
+                                    <input type="number" id="quantity" class="form-control text-center" 
+                                           value="1" min="1" max="99">
+                                    <button class="btn btn-outline-secondary" onclick="increaseQuantity()">
+                                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+                        <!-- 총 금액 -->
+                        <div class="total-price mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">총 상품 금액</span>
+                                <span class="total-amount h4 mb-0">
+                                    <span id="totalPrice" 
+                                          th:text="${#numbers.formatDecimal(product.salePrice != null ? product.salePrice : product.price, 0, 'COMMA', 0, 'POINT') + '원'}">
+                                    </span>
+                                </span>
+            </div>
+                        </div>
+
+                        <!-- 구매 버튼 -->
+                        <div class="purchase-buttons d-grid gap-2">
+                            <button class="btn btn-custom-primary" onclick="buyNow()">
+                                <i class="fas fa-credit-card me-2"></i>바로 구매하기
+                            </button>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-custom-outline flex-grow-1" onclick="addToCart()">
+                                    <i class="fas fa-shopping-cart me-2"></i>장바구니
+                                </button>
+                                <button class="btn btn-custom-outline" onclick="toggleWishlist()">
+                                    <i th:class="${isWishlisted ? 'fas' : 'far'} + ' fa-heart'"></i>
+                                </button>
+                                <button class="btn btn-custom-outline" onclick="shareProduct()">
+                                    <i class="fas fa-share-alt"></i>
+                                </button>
+                </div>
+            </div>
+
+                        <!-- 혜택 정보 -->
+                        <div class="benefits mt-4">
+                            <div class="benefit-item d-flex align-items-center gap-2 mb-2">
+                                <i class="fas fa-coins text-warning"></i>
+                                <span th:text="${'구매 시 ' + product.rewardPoints + '원 적립'}">
+                                    구매 시 200원 적립
+                                </span>
+                    </div>
+                            <div class="benefit-item d-flex align-items-center gap-2 mb-2">
+                                <i class="fas fa-credit-card text-primary"></i>
+                                <span>무이자 할부 가능</span>
+                </div>
+                            <div th:if="${product.freeGift}" class="benefit-item d-flex align-items-center gap-2">
+                                <i class="fas fa-gift text-danger"></i>
+                                <span th:text="${product.freeGift}">사은품 증정</span>
+            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- 이미지 모달 -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">이미지 보기</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <img id="modalImage" src="/placeholder.svg" alt="확대 이미지" class="modal-image">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 스크립트 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/product-detail.js}"></script>
+</body>
+</html>
+

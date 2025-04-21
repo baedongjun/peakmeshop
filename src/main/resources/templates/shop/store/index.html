@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/shop-layout}">
+<head>
+    <title>스토어 - PeakMeShop</title>
+    <th:block layout:fragment="css">
+        <style>
+            .store-banner {
+                height: 400px;
+                background-size: cover;
+                background-position: center;
+                position: relative;
+            }
+            .store-banner-content {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                padding: 40px;
+                background: linear-gradient(transparent, rgba(0,0,0,0.7));
+                color: white;
+            }
+            .brand-card {
+                border-radius: 10px;
+                overflow: hidden;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+                transition: transform 0.3s ease;
+            }
+            .brand-card:hover {
+                transform: translateY(-5px);
+            }
+            .brand-logo {
+                width: 80px;
+                height: 80px;
+                object-fit: cover;
+                border-radius: 50%;
+            }
+            .collection-card {
+                position: relative;
+                overflow: hidden;
+                border-radius: 10px;
+            }
+            .collection-card img {
+                transition: transform 0.3s ease;
+            }
+            .collection-card:hover img {
+                transform: scale(1.05);
+            }
+            .collection-content {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                padding: 20px;
+                background: linear-gradient(transparent, rgba(0,0,0,0.7));
+                color: white;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- 스토어 배너 -->
+        <div class="store-banner" th:style="'background-image: url(' + ${mainBanner.imageUrl} + ')'">
+            <div class="store-banner-content">
+                <div class="container">
+                    <h1 class="display-4 mb-3" th:text="${mainBanner.title}">스토어</h1>
+                    <p class="lead mb-4" th:text="${mainBanner.description}">
+                        프리미엄 브랜드와 제품을 만나보세요
+                    </p>
+                    <a th:href="${mainBanner.linkUrl}" class="btn btn-light btn-lg">자세히 보기</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="container py-5">
+            <!-- 인기 브랜드 -->
+            <section class="mb-5">
+                <h2 class="mb-4">인기 브랜드</h2>
+                <div class="row g-4">
+                    <div class="col-md-3" th:each="brand : ${popularBrands}">
+                        <div class="brand-card">
+                            <div class="card">
+                                <img th:src="${brand.coverImage}" class="card-img-top" 
+                                     style="height: 150px; object-fit: cover;" th:alt="${brand.name}">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <img th:src="${brand.logoImage}" class="brand-logo me-3" 
+                                             th:alt="${brand.name}">
+                                        <div>
+                                            <h5 class="card-title mb-1" th:text="${brand.name}">브랜드명</h5>
+                                            <p class="text-muted small mb-0" 
+                                               th:text="${brand.productCount + '개 상품'}">상품 수</p>
+                                        </div>
+                                    </div>
+                                    <p class="card-text small" th:text="${brand.description}">브랜드 설명</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="small text-muted">
+                                            팔로워 <span th:text="${#numbers.formatInteger(brand.followerCount, 0, 'COMMA')}">0</span>
+                                        </div>
+                                        <a th:href="@{'/brands/' + ${brand.id}}" class="btn btn-outline-primary btn-sm">
+                                            브랜드관 방문
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 기획전 -->
+            <section class="mb-5">
+                <h2 class="mb-4">기획전</h2>
+                <div class="row g-4">
+                    <div class="col-md-6" th:each="collection : ${collections}">
+                        <div class="collection-card">
+                            <img th:src="${collection.imageUrl}" class="w-100" 
+                                 style="height: 300px; object-fit: cover;" th:alt="${collection.title}">
+                            <div class="collection-content">
+                                <span class="badge bg-primary mb-2" th:text="${collection.category}">카테고리</span>
+                                <h3 th:text="${collection.title}">기획전 제목</h3>
+                                <p class="mb-3" th:text="${collection.description}">기획전 설명</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-white-50" 
+                                          th:text="${#temporals.format(collection.endDate, 'yyyy.MM.dd')} + ' 까지'">
+                                        종료일
+                                    </span>
+                                    <a th:href="@{'/collections/' + ${collection.id}}" class="btn btn-light">
+                                        자세히 보기
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 신규 입점 브랜드 -->
+            <section class="mb-5">
+                <h2 class="mb-4">신규 입점 브랜드</h2>
+                <div class="row g-4">
+                    <div class="col-md-3" th:each="brand : ${newBrands}">
+                        <div class="brand-card">
+                            <div class="card">
+                                <div class="position-relative">
+                                    <img th:src="${brand.coverImage}" class="card-img-top" 
+                                         style="height: 150px; object-fit: cover;" th:alt="${brand.name}">
+                                    <span class="badge bg-danger position-absolute top-0 end-0 m-2">NEW</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <img th:src="${brand.logoImage}" class="brand-logo me-3" 
+                                             th:alt="${brand.name}">
+                                        <div>
+                                            <h5 class="card-title mb-1" th:text="${brand.name}">브랜드명</h5>
+                                            <p class="text-muted small mb-0"
+                                               th:text="${#temporals.format(brand.openDate, 'yyyy.MM.dd')} + ' OPEN'">
+                                                오픈일
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <p class="card-text small" th:text="${brand.description}">브랜드 설명</p>
+                                    <a th:href="@{'/brands/' + ${brand.id}}" class="btn btn-outline-primary w-100">
+                                        브랜드관 방문
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 브랜드 카테고리 -->
+            <section>
+                <h2 class="mb-4">브랜드 카테고리</h2>
+                <div class="row g-4">
+                    <div class="col-md-4" th:each="category : ${brandCategories}">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title mb-4" th:text="${category.name}">카테고리명</h5>
+                                <div class="row g-3">
+                                    <div class="col-4" th:each="brand : ${category.brands}">
+                                        <a th:href="@{'/brands/' + ${brand.id}}" 
+                                           class="text-decoration-none">
+                                            <img th:src="${brand.logoImage}" class="img-fluid rounded"
+                                                 th:alt="${brand.name}">
+                                        </a>
+                                    </div>
+                                </div>
+                                <a th:href="@{'/brand-categories/' + ${category.id}}" 
+                                   class="btn btn-link stretched-link">더보기</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</body>
+</html> 

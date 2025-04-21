@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layouts/main-layout}">
+      layout:decorate="~{layouts/shop-layout}">
 <head>
     <title>마이페이지 - PeakMeShop</title>
 </head>
@@ -40,7 +40,7 @@
                                 </div>
                             </div>
                             <div class="col-md-3 text-md-end">
-                                <a th:href="@{/mypage/profile}" class="btn btn-outline-primary">회원정보 수정</a>
+                                <a th:href="@{/templates/shop/mypage/profile}" class="btn btn-outline-primary">회원정보 수정</a>
                             </div>
                         </div>
                     </div>
@@ -51,7 +51,7 @@
                             <div class="point-summary p-4 border rounded h-100">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h3 class="summary-title">포인트</h3>
-                                    <a th:href="@{/mypage/points}" class="btn btn-sm btn-outline-secondary">자세히</a>
+                                    <a th:href="@{/templates/shop/mypage/points}" class="btn btn-sm btn-outline-secondary">자세히</a>
                                 </div>
                                 <div class="point-amount">
                                     <span class="amount-value" th:text="${#numbers.formatInteger(member.point, 0, 'COMMA')}">10,000</span>
@@ -68,7 +68,7 @@
                             <div class="coupon-summary p-4 border rounded h-100">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h3 class="summary-title">쿠폰</h3>
-                                    <a th:href="@{/mypage/coupons}" class="btn btn-sm btn-outline-secondary">자세히</a>
+                                    <a th:href="@{/templates/shop/mypage/coupons}" class="btn btn-sm btn-outline-secondary">자세히</a>
                                 </div>
                                 <div class="coupon-count">
                                     <span class="count-value" th:text="${availableCoupons}">5</span>
@@ -88,7 +88,7 @@
                     <div class="recent-orders mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h3 class="section-title">최근 주문 내역</h3>
-                            <a th:href="@{/mypage/orders}" class="btn btn-sm btn-outline-secondary">전체보기</a>
+                            <a th:href="@{/templates/shop/mypage/orders}" class="btn btn-sm btn-outline-secondary">전체보기</a>
                         </div>
 
                         <div class="table-responsive">
@@ -120,7 +120,7 @@
                                                   th:text="${order.status.displayName}">결제완료</span>
                                     </td>
                                     <td>
-                                        <a th:href="@{/mypage/orders/{id}(id=${order.id})}" class="btn btn-sm btn-outline-primary">상세보기</a>
+                                        <a th:href="@{/templates/shop/mypage/orders/{id}(id=${order.id})}" class="btn btn-sm btn-outline-primary">상세보기</a>
                                     </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(recentOrders)}">
@@ -190,7 +190,7 @@
                     <div class="recent-products mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h3 class="section-title">최근 본 상품</h3>
-                            <a th:href="@{/mypage/recent-products}" class="btn btn-sm btn-outline-secondary">전체보기</a>
+                            <a th:href="@{/templates/shop/mypage/recent-products}" class="btn btn-sm btn-outline-secondary">전체보기</a>
                         </div>
 
                         <div class="row">
@@ -219,7 +219,7 @@
                     <div class="wishlist">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h3 class="section-title">위시리스트</h3>
-                            <a th:href="@{/mypage/wishlist}" class="btn btn-sm btn-outline-secondary">전체보기</a>
+                            <a th:href="@{/templates/shop/mypage/wishlist}" class="btn btn-sm btn-outline-secondary">전체보기</a>
                         </div>
 
                         <div class="row">

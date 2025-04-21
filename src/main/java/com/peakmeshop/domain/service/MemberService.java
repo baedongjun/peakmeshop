@@ -13,6 +13,7 @@ import com.peakmeshop.api.dto.PasswordResetRequestDTO;
 import com.peakmeshop.api.dto.MemberGradeDTO;
 import com.peakmeshop.api.dto.PointDTO;
 import com.peakmeshop.api.dto.MemberSummaryDTO;
+import com.peakmeshop.domain.entity.Member;
 
 public interface MemberService {
 
@@ -76,4 +77,6 @@ public interface MemberService {
      * @return 회원 통계 정보
      */
     MemberSummaryDTO getMemberSummary(String period, String startDate, String endDate);
+
+    Long getMemberIdByUserId(String userId);
 }

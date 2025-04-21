@@ -4,12 +4,15 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,39 +21,29 @@ import lombok.Setter;
 @Table(name = "inventory_history")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class InventoryHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "inventory_id", nullable = false)
     private Inventory inventory;
 
     @Column(nullable = false)
-    private int quantityBefore;
+    private Integer quantity;
 
-    @Column(nullable = false)
-    private int quantityAfter;
-
-    @Column(nullable = false)
-    private int quantityChanged;
-
-    @Column(nullable = false)
+    @Column(length = 500)
     private String reason;
 
-    @Column(nullable = false)
-    private String actionType; // INCREASE, DECREASE, RESERVE, RELEASE, CONFIRM
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private Member user;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private Member member;
-
-    @Column
-    private Long orderId;
-
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 }
