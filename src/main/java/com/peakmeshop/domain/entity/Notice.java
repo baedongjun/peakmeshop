@@ -10,10 +10,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "notices")
 @Getter
-@Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Notice {
     
     @Id
@@ -23,20 +22,20 @@ public class Notice {
     @Column(nullable = false)
     private String title;
     
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
     
     @Column(nullable = false)
     private String category;
     
     @Column(nullable = false)
+    private Boolean important;
+    
+    @Column(nullable = false)
     private String status;
     
     @Column(nullable = false)
-    private int viewCount;
-    
-    @Column(nullable = false)
-    private boolean isImportant;
+    private Integer viewCount;
     
     @Column(nullable = false)
     private boolean isTop;
@@ -54,4 +53,33 @@ public class Notice {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    public void update(String title, String content, String category, Boolean important) {
+        this.title = title;
+        this.content = content;
+        this.category = category;
+        this.important = important;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public void setImportant(Boolean important) {
+        this.important = important;
+    }
+
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
 } 

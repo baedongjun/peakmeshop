@@ -30,10 +30,6 @@ public class MainViewController {
     private final CategoryService categoryService;
     private final ProductService productService;
     private final BrandService brandService;
-    private final StoreService storeService;
-    private final CompanyService companyService;
-    private final NoticeService noticeService;
-    private final PressService pressService;
 
     /**
      * 쇼핑몰 메인 페이지
@@ -354,46 +350,6 @@ public class MainViewController {
         } catch (Exception e) {
             e.printStackTrace();
             model.addAttribute("error", "상품 비교 중 오류가 발생했습니다.");
-            return "error/500";
-        }
-    }
-
-    /**
-     * 매장 위치 정보
-     */
-    @GetMapping("/stores")
-    public String storeLocations(
-            @RequestParam(required = false) String region,
-            Model model) {
-        try {
-            // 매장 정보 로드
-            model.addAttribute("stores", storeService.getStoresByRegion(region));
-            model.addAttribute("regions", storeService.getAllRegions());
-            model.addAttribute("selectedRegion", region);
-
-            return "shop/store-locations";
-        } catch (Exception e) {
-            e.printStackTrace();
-            model.addAttribute("error", "매장 정보를 로드하는 중 오류가 발생했습니다.");
-            return "error/500";
-        }
-    }
-
-    /**
-     * 회사 소개
-     */
-    @GetMapping("/about")
-    public String aboutUs(Model model) {
-        try {
-            // 회사 정보 로드
-            model.addAttribute("companyInfo", companyService.getCompanyInfo());
-            model.addAttribute("notices", noticeService.getRecentNotices(5));
-            model.addAttribute("pressReleases", pressService.getRecentPressReleases(5));
-
-            return "shop/about";
-        } catch (Exception e) {
-            e.printStackTrace();
-            model.addAttribute("error", "페이지를 로드하는 중 오류가 발생했습니다.");
             return "error/500";
         }
     }

@@ -10,10 +10,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "faqs")
 @Getter
-@Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Faq {
     
     @Id
@@ -30,10 +29,10 @@ public class Faq {
     private String category;
     
     @Column(nullable = false)
-    private int sortOrder;
+    private Integer sortOrder;
     
     @Column(nullable = false)
-    private boolean isActive;
+    private Boolean isActive;
     
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -42,4 +41,33 @@ public class Faq {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        if (isActive == null) {
+            isActive = true;
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    public void update(String question, String answer, String category, Boolean isActive) {
+        this.question = question;
+        this.answer = answer;
+        this.category = category;
+        this.isActive = isActive;
+    }
+
+    public void setActive(Boolean active) {
+        isActive = active;
+    }
+
+    public void setSortOrder(Integer sortOrder) {
+        this.sortOrder = sortOrder;
+    }
 } 

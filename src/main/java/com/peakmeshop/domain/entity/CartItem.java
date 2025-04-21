@@ -1,5 +1,6 @@
 package com.peakmeshop.domain.entity;
 
+import com.peakmeshop.domain.converter.JsonConverter;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -15,12 +15,9 @@ public class NoticeDTO {
     private String title;
     private String content;
     private String category;
+    private Boolean important;
     private String status;
     private Integer viewCount;
-    private boolean isImportant;
-    private boolean isTop;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 } 

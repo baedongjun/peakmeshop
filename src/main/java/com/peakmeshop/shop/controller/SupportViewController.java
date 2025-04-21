@@ -2,10 +2,9 @@ package com.peakmeshop.shop.controller;
 
 import com.peakmeshop.api.dto.FaqDTO;
 import com.peakmeshop.api.dto.NoticeDTO;
-import com.peakmeshop.api.dto.InquiryDTO;
 import com.peakmeshop.domain.service.FaqService;
-import com.peakmeshop.domain.service.NoticeService;
 import com.peakmeshop.domain.service.InquiryService;
+import com.peakmeshop.domain.service.NoticeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,14 +38,14 @@ public class SupportViewController {
     public String supportMain(Model model) {
         try {
             // 공지사항 최근 5개
-            Page<NoticeDTO> notices = noticeService.getNotices(
-                PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"))
+            Page<NoticeDTO> notices = noticeService.getAllNotices(
+                    PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"))
             );
             model.addAttribute("notices", notices.getContent());
 
             // 자주 묻는 질문 최근 5개
-            Page<FaqDTO> faqs = faqService.getFaqs(
-                PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "viewCount"))
+            Page<FaqDTO> faqs = faqService.getFaqList(
+                    PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "viewCount"))
             );
             model.addAttribute("faqs", faqs.getContent());
 
