@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductSummaryDTO {
+    private String categoryName;
     private long totalProducts;
     private long activeProducts;
     private long outOfStockProducts;

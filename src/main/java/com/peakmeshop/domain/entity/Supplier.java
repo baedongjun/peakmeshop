@@ -86,26 +86,15 @@ public class Supplier {
     @OneToMany(mappedBy = "supplier")
     private List<SupplierProduct> products = new ArrayList<>();
 
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAtTimestamp;
-
-    @UpdateTimestamp
-    @Column(nullable = false)
-    private LocalDateTime updatedAtTimestamp;
-
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        createdAtTimestamp = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        updatedAtTimestamp = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-        updatedAtTimestamp = LocalDateTime.now();
     }
 
     public BigDecimal getTotalSales() {

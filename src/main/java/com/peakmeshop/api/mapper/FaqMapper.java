@@ -1,26 +1,18 @@
 package com.peakmeshop.api.mapper;
 
-import com.peakmeshop.api.dto.FaqDTO;
 import com.peakmeshop.domain.entity.Faq;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.factory.Mappers;
+import com.peakmeshop.api.dto.FaqDTO;
+import org.mapstruct.*;
 
-@Mapper(componentModel = "spring")
+@Mapper(
+    componentModel = "spring",
+    uses = {BaseMapper.class},
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
+)
 public interface FaqMapper {
     
-    FaqMapper INSTANCE = Mappers.getMapper(FaqMapper.class);
-    
-    FaqDTO toDto(Faq faq);
-    
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    Faq toEntity(FaqDTO faqDTO);
-    
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    void updateFaqFromDto(FaqDTO faqDTO, @MappingTarget Faq faq);
+    FaqDTO toDTO(Faq faq);
+
+    Faq toEntity(FaqDTO dto);
 } 

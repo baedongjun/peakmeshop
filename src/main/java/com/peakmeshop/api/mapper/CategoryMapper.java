@@ -1,32 +1,21 @@
 package com.peakmeshop.api.mapper;
 
-import com.peakmeshop.api.dto.CategoryDTO;
 import com.peakmeshop.domain.entity.Category;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import java.util.List;
+import com.peakmeshop.api.dto.CategoryDTO;
+import org.mapstruct.*;
 
-@Mapper(componentModel = "spring")
+@Mapper(
+    componentModel = "spring",
+    uses = {BaseMapper.class},
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
+)
 public interface CategoryMapper {
     
-    @Mapping(source = "parent.id", target = "parentId")
-    @Mapping(source = "parent.name", target = "parentName")
-    CategoryDTO toDto(Category category);
-    
-    List<CategoryDTO> toDtoList(List<Category> categories);
-    
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "children", ignore = true)
-    @Mapping(source = "parentId", target = "parent.id")
-    Category toEntity(CategoryDTO categoryDTO);
-    
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "children", ignore = true)
-    @Mapping(source = "parentId", target = "parent.id")
-    void updateCategoryFromDto(CategoryDTO categoryDTO, @MappingTarget Category category);
+    @Mapping(target = "parentId", source = "parent.id")
+    CategoryDTO toDTO(Category category);
+
+    @Mapping(target = "parent", ignore = true)
+    @Mapping(target = "products", ignore = true)
+    Category toEntity(CategoryDTO dto);
 } 

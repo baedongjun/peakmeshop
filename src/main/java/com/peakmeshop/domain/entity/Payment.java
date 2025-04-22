@@ -39,6 +39,9 @@ public class Payment {
     private String paymentMethod;
 
     @Column(nullable = false)
+    private String paymentStatus;
+
+    @Column(nullable = false)
     private double amount;
 
     @Column(nullable = false)

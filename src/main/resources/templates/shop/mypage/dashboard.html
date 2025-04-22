@@ -58,7 +58,7 @@
                                     <span class="amount-unit">P</span>
                                 </div>
                                 <div class="point-expiry mt-2" th:if="${expiringPoints > 0}">
-                                    <span class="text-danger" th:text="${#numbers.formatInteger(expiringPoints, 0, 'COMMA') + 'P가 ' + #temporals.format(expiryDate, 'yyyy년 MM월 dd일') + '에 소멸됩니다.'}">
+                                    <span class="text-danger" th:text="${#numbers.formatInteger(expiringPoints, 0, 'COMMA') + 'P가 ' + #temporals.format(expiryAt, 'yyyy년 MM월 dd일') + '에 소멸됩니다.'}">
                                         1,000P가 2023년 12월 31일에 소멸됩니다.
                                     </span>
                                 </div>

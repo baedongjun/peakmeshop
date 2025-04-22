@@ -100,7 +100,7 @@ public class MemberServiceImpl implements MemberService {
         VerificationToken verificationToken = VerificationToken.builder()
                 .token(token)
                 .member(savedMember)
-                .expiryDate(LocalDateTime.now().plusHours(24))
+                .expiryAt(LocalDateTime.now().plusHours(24))
                 .build();
 
         verificationTokenRepository.save(verificationToken);
@@ -213,7 +213,7 @@ public class MemberServiceImpl implements MemberService {
                 .orElseThrow(() -> new EntityNotFoundException("유효하지 않은 토큰입니다."));
 
         // 토큰 만료 확인
-        if (verificationToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+        if (verificationToken.getExpiryAt().isBefore(LocalDateTime.now())) {
             verificationTokenRepository.delete(verificationToken);
             throw new BadRequestException("만료된 토큰입니다.");
         }
@@ -249,7 +249,7 @@ public class MemberServiceImpl implements MemberService {
         VerificationToken verificationToken = VerificationToken.builder()
                 .token(token)
                 .member(member)
-                .expiryDate(LocalDateTime.now().plusHours(24))
+                .expiryAt(LocalDateTime.now().plusHours(24))
                 .build();
 
         verificationTokenRepository.save(verificationToken);
@@ -396,7 +396,7 @@ public class MemberServiceImpl implements MemberService {
         return Map.of(
             "totalPoints", pointRepository.sumPointsByMemberId(memberId),
             "totalOrders", orderRepository.countByMemberId(memberId),
-            "totalSpent", orderRepository.sumTotalAmountByMemberId(memberId),
+            "totalOrderAmount", orderRepository.sumTotalAmountByMemberId(memberId),
             "lastOrderDate", member.getLastOrderDate() != null ? 
                 member.getLastOrderDate().toEpochSecond(ZoneOffset.UTC) : 0L
         );
@@ -505,7 +505,7 @@ public class MemberServiceImpl implements MemberService {
         return pointRepository.findAll(pageable)
                 .map(point -> PointDTO.builder()
                         .id(point.getId())
-                        .member(point.getMember())
+                        .memberId(point.getMember().getId())
                         .memberName(point.getMember().getName())
                         .type(point.getType())
                         .amount(point.getAmount())
@@ -519,7 +519,7 @@ public class MemberServiceImpl implements MemberService {
         return pointRepository.findById(id)
                 .map(point -> PointDTO.builder()
                         .id(point.getId())
-                        .member(point.getMember())
+                        .memberId(point.getMember().getId())
                         .memberName(point.getMember().getName())
                         .type(point.getType())
                         .amount(point.getAmount())

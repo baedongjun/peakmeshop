@@ -43,7 +43,7 @@ public class PasswordResetTokenServiceImpl implements PasswordResetTokenService 
         PasswordResetToken resetToken = PasswordResetToken.builder()
                 .member(member)
                 .token(token)
-                .expiryDate(LocalDateTime.now().plusHours(24)) // 24시간 유효
+                .expiryAt(LocalDateTime.now().plusHours(24)) // 24시간 유효
                 .build();
 
         PasswordResetToken savedToken = tokenRepository.save(resetToken);
@@ -52,7 +52,7 @@ public class PasswordResetTokenServiceImpl implements PasswordResetTokenService 
                 .id(savedToken.getId())
                 .token(savedToken.getToken())
                 .memberId(savedToken.getMember().getId())
-                .expiryDate(savedToken.getExpiryDate())
+                .expiryAt(savedToken.getExpiryAt())
                 .build();
     }
 
@@ -66,7 +66,7 @@ public class PasswordResetTokenServiceImpl implements PasswordResetTokenService 
                 .id(resetToken.getId())
                 .token(resetToken.getToken())
                 .memberId(resetToken.getMember().getId())
-                .expiryDate(resetToken.getExpiryDate())
+                .expiryAt(resetToken.getExpiryAt())
                 .build();
     }
 
@@ -77,7 +77,7 @@ public class PasswordResetTokenServiceImpl implements PasswordResetTokenService 
                 .orElseThrow(() -> new BadRequestException("Invalid password reset token"));
 
         // 토큰 만료 확인
-        if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+        if (resetToken.getExpiryAt().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("Password reset token has expired");
         }
     }
@@ -102,7 +102,7 @@ public class PasswordResetTokenServiceImpl implements PasswordResetTokenService 
     @Transactional
     public void cleanExpiredTokens() {
         LocalDateTime now = LocalDateTime.now();
-        List<PasswordResetToken> expiredTokens = tokenRepository.findByExpiryDateBefore(now);
+        List<PasswordResetToken> expiredTokens = tokenRepository.findByExpiryAtBefore(now);
 
         if (!expiredTokens.isEmpty()) {
             tokenRepository.deleteAll(expiredTokens);

@@ -43,5 +43,5 @@ public class VerificationToken {
 
     @NotNull(message = "만료일은 필수 입력값입니다.")
     @Column(name = "expiry_date", nullable = false)
-    private LocalDateTime expiryDate;
+    private LocalDateTime expiryAt;
 }

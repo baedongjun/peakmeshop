@@ -207,7 +207,7 @@ public class PointServiceImpl implements PointService {
                 .amount(amount)
                 .reason(reason)
                 .type("EARN")
-                .expiryDate(LocalDateTime.now().plusYears(1))
+                .expiryAt(LocalDateTime.now().plusYears(1))
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -380,11 +380,11 @@ public class PointServiceImpl implements PointService {
     private PointDTO convertToDTO(Point point) {
         return PointDTO.builder()
                 .id(point.getId())
-                .member(point.getMember())
+                .memberId(point.getMember().getId())
                 .amount(point.getAmount())
                 .reason(point.getReason())
                 .type(point.getType())
-                .expiryDate(point.getExpiryDate())
+                .expiredAt(point.getExpiryAt())
                 .createdAt(point.getCreatedAt())
                 .build();
     }

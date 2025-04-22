@@ -10,7 +10,7 @@ public record CustomerStatDTO(
         String memberName,
         String memberEmail,
         int orderCount,
-        double totalSpent,
+        double totalOrderAmount,
         double averageOrderValue,
         LocalDateTime firstOrderDate,
         LocalDateTime lastOrderDate

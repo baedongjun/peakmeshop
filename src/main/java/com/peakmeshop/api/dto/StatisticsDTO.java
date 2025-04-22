@@ -39,7 +39,7 @@ public record StatisticsDTO(
             String name,
             LocalDate createdAt,
             int totalOrders,
-            double totalSpent,
+            double totalOrderAmount,
             int totalPoints,
             String status
     ) {}

@@ -470,7 +470,7 @@ function getPaymentDetails(formData) {
                 // 여기서는 예시로만 작성
                 cardNumber: "************1234",
                 cardHolder: "홍길동",
-                expiryDate: "12/25",
+                expiryAt: "12/25",
                 cvv: "***",
             }
         case "bankTransfer":

@@ -70,8 +70,8 @@ public class ProductServiceImpl implements ProductService {
 
         // 카테고리 확인
         Category category = null;
-        if (productDTO.getCategory().getId() != null) {
-            category = categoryRepository.findById(productDTO.getCategory().getId())
+        if (productDTO.getCategoryId() != null) {
+            category = categoryRepository.findById(productDTO.getCategoryId())
                     .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다."));
         }
 
@@ -114,8 +114,8 @@ public class ProductServiceImpl implements ProductService {
         }
 
         // 카테고리 확인 (변경된 경우)
-        if (productDTO.getCategory().getId() != null) {
-            Category category = categoryRepository.findById(productDTO.getCategory().getId())
+        if (productDTO.getCategoryId() != null) {
+            Category category = categoryRepository.findById(productDTO.getCategoryId())
                     .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다."));
             product.setCategory(category);
         }
@@ -373,7 +373,7 @@ public class ProductServiceImpl implements ProductService {
                 .salePrice(product.getSalePrice())
                 .discountedPrice(product.getSalePrice()) // salePrice를 discountedPrice로도 설정
                 .brand(product.getBrand())
-                .category(product.getCategory())
+                .categoryId(product.getCategory().getId())
                 .supplier(product.getSupplier())
                 .mainImage(product.getMainImage())
                 .stock(product.getStock())

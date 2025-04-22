@@ -24,11 +24,11 @@ public interface PointRepository extends JpaRepository<Point, Long> {
     Page<Point> findByMemberId(Long memberId, Pageable pageable);
     
     // 회원별 유효한 포인트 내역 조회
-    @Query("SELECT p FROM Point p WHERE p.member = :memberId AND p.expiryDate > :now")
+    @Query("SELECT p FROM Point p WHERE p.member = :memberId AND p.expiryAt > :now")
     List<Point> findValidPointsByMemberId(@Param("memberId") Long memberId, @Param("now") LocalDateTime now);
     
     // 회원별 총 포인트 조회
-    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Point p WHERE p.member = :memberId AND p.expiryDate > :now")
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Point p WHERE p.member = :memberId AND p.expiryAt > :now")
     int getTotalPointsByMemberId(@Param("memberId") Long memberId, @Param("now") LocalDateTime now);
     
     // 기간별 포인트 통계
@@ -40,7 +40,7 @@ public interface PointRepository extends JpaRepository<Point, Long> {
                                     @Param("endDate") LocalDateTime endDate);
     
     // 만료 예정 포인트 조회
-    @Query("SELECT p FROM Point p WHERE p.expiryDate BETWEEN :start AND :end AND p.amount > 0")
+    @Query("SELECT p FROM Point p WHERE p.expiryAt BETWEEN :start AND :end AND p.amount > 0")
     List<Point> findExpiringPoints(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
     
     // 포인트 유형별 통계
@@ -58,7 +58,7 @@ public interface PointRepository extends JpaRepository<Point, Long> {
      * 전체 유효한 포인트 합계 계산
      * @return 전체 유효한 포인트 합계
      */
-    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Point p WHERE p.expiryDate > :now")
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Point p WHERE p.expiryAt > :now")
     int calculateTotalPoints(@Param("now") LocalDateTime now);
 
     /**

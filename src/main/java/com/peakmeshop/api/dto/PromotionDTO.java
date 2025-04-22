@@ -21,8 +21,8 @@ public class PromotionDTO {
     private String discountType;
     private Double discountValue;
     private String target;
-    private Category category;
-    private Product product;
+    private Long categoryId;
+    private Long productId;
     private Double discountRate;
     private LocalDateTime startDate;
     private LocalDateTime endDate;

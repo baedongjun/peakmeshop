@@ -80,14 +80,14 @@ public class ProductBundleServiceImpl implements ProductBundleService {
 
         // 번들 아이템 저장
         if (bundleDTO.getItems() != null) {
-            for (ProductBundleItemDTO itemDTO : bundleDTO.getItems()) {
-                Product product = productRepository.findById(itemDTO.getProductId())
-                        .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + itemDTO.getProductId()));
+            for (ProductBundleItem items : bundleDTO.getItems()) {
+                Product product = productRepository.findById(items.getProduct().getId())
+                        .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + items.getProduct().getId()));
 
                 ProductBundleItem item = ProductBundleItem.builder()
                         .bundle(savedBundle)
                         .product(product)
-                        .quantity(itemDTO.getQuantity())
+                        .quantity(items.getQuantity())
                         .build();
 
                 bundleItemRepository.save(item);
@@ -119,14 +119,14 @@ public class ProductBundleServiceImpl implements ProductBundleService {
 
         // 새 번들 아이템 저장
         if (bundleDTO.getItems() != null) {
-            for (ProductBundleItemDTO itemDTO : bundleDTO.getItems()) {
-                Product product = productRepository.findById(itemDTO.getProductId())
-                        .orElseThrow(() -> new UsernameNotFoundException("Product not found with id: " + itemDTO.getProductId()));
+            for (ProductBundleItem items : bundleDTO.getItems()) {
+                Product product = productRepository.findById(items.getProduct().getId())
+                        .orElseThrow(() -> new UsernameNotFoundException("Product not found with id: " + items.getProduct().getId()));
 
                 ProductBundleItem item = ProductBundleItem.builder()
                         .bundle(bundle)
                         .product(product)
-                        .quantity(itemDTO.getQuantity())
+                        .quantity(items.getQuantity())
                         .build();
 
                 bundleItemRepository.save(item);
@@ -175,9 +175,7 @@ public class ProductBundleServiceImpl implements ProductBundleService {
     }
 
     private ProductBundleDTO convertToDTO(ProductBundle bundle) {
-        List<ProductBundleItemDTO> itemDTOs = bundle.getItems().stream()
-                .map(this::convertToItemDTO)
-                .collect(Collectors.toList());
+        List<ProductBundleItem> items = bundle.getItems();
 
         return ProductBundleDTO.builder()
                 .id(bundle.getId())
@@ -190,7 +188,7 @@ public class ProductBundleServiceImpl implements ProductBundleService {
                 .endDate(bundle.getEndDate())
                 .createdAt(bundle.getCreatedAt())
                 .updatedAt(bundle.getUpdatedAt())
-                .items(itemDTOs)
+                .items(items)
                 .build();
     }
 

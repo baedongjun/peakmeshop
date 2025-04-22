@@ -43,7 +43,7 @@ public class RefreshToken {
 
     @NotNull(message = "만료일은 필수 입력값입니다.")
     @Column(name = "expiry_date", nullable = false)
-    private LocalDateTime expiryDate;
+    private LocalDateTime expiryAt;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -56,7 +56,7 @@ public class RefreshToken {
 
     // 토큰 만료 확인 메서드
     public boolean isExpired() {
-        return LocalDateTime.now().isAfter(this.expiryDate);
+        return LocalDateTime.now().isAfter(this.expiryAt);
     }
 
     // 토큰 취소 확인 메서드

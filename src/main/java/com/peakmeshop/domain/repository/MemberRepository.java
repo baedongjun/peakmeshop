@@ -84,7 +84,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     @Query("SELECT " +
            "m.id, m.email, m.name, cast(m.createdAt as date), " +
-           "m.orderCount, m.totalSpent, m.totalPoints, m.status " +
+           "m.orderCount, m.totalOrderAmount, m.totalPoints, m.status " +
            "FROM Member m " +
            "WHERE m.status = 'ACTIVE' AND m.createdAt BETWEEN :startDateTime AND :endDateTime")
     List<StatisticsDTO.Member> findActiveMembers(

@@ -5,8 +5,6 @@ import com.peakmeshop.common.exception.BadRequestException;
 import com.peakmeshop.domain.entity.*;
 import com.peakmeshop.domain.repository.*;
 import com.peakmeshop.domain.service.CartService;
-import com.peakmeshop.domain.service.MemberService;
-import com.peakmeshop.domain.service.ProductService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,124 +31,6 @@ public class CartServiceImpl implements CartService {
     private final ProductVariantRepository productVariantRepository;
     private final ProductOptionRepository productOptionRepository;
     private final CouponRepository couponRepository;
-    private final ProductService productService;
-    private final MemberService memberService;
-
-    @Override
-    @Transactional(readOnly = true)
-    public CartDTO getCartById(Long cartId) {
-        return cartRepository.findById(cartId)
-                .map(this::convertToDTO)
-                .orElse(null);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public CartDTO getCartByUser(String userId) {
-        Long memberId = memberService.getMemberIdByUserId(userId);
-        return cartRepository.findByMemberId(memberId)
-                .map(this::convertToDTO)
-                .orElseGet(() -> createNewCart(memberId));
-    }
-
-    @Override
-    @Transactional
-    public CartDTO addItemToCart(String userId, CartItemDTO cartItemDTO) {
-        Long memberId = memberService.getMemberIdByUserId(userId);
-        Cart cart = cartRepository.findByMemberId(memberId)
-                .orElseGet(() -> createEmptyCart(memberId));
-        
-        Product product = productService.getProductEntity(cartItemDTO.getProductId());
-        CartItem cartItem = CartItem.builder()
-                .cart(cart)
-                .product(product)
-                .quantity(cartItemDTO.getQuantity())
-                .options(cartItemDTO.getOptions())
-                .build();
-        
-        cart.addItem(cartItem);
-        Cart savedCart = cartRepository.save(cart);
-        return convertToDTO(savedCart);
-    }
-
-    @Override
-    @Transactional
-    public CartDTO updateCartItem(String userId, Long cartItemId, CartItemDTO cartItemDTO) {
-        Long memberId = memberService.getMemberIdByUserId(userId);
-        Cart cart = cartRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new RuntimeException("Cart not found"));
-                
-        CartItem item = cart.getItems().stream()
-                .filter(i -> i.getId().equals(cartItemId))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Cart item not found"));
-        
-        item.updateQuantity(cartItemDTO.getQuantity());
-        item.updateOptions(cartItemDTO.getOptions());
-        
-        Cart savedCart = cartRepository.save(cart);
-        return convertToDTO(savedCart);
-    }
-
-    @Override
-    @Transactional
-    public void removeItemFromCart(String userId, Long cartItemId) {
-        Long memberId = memberService.getMemberIdByUserId(userId);
-        Cart cart = cartRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new RuntimeException("Cart not found"));
-        cart.removeItem(cartItemId);
-        cartRepository.save(cart);
-    }
-
-    @Override
-    @Transactional
-    public void clearCart(String userId) {
-        Long memberId = memberService.getMemberIdByUserId(userId);
-        Cart cart = cartRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new RuntimeException("Cart not found"));
-        cart.clearItems();
-        cartRepository.save(cart);
-    }
-
-    private Cart createEmptyCart(Long memberId) {
-        Cart cart = Cart.builder()
-                .member(memberService.getMemberById(memberId))
-                .build();
-        return cartRepository.save(cart);
-    }
-
-    private CartDTO createNewCart(Long memberId) {
-        Cart cart = createEmptyCart(memberId);
-        return convertToDTO(cart);
-    }
-
-    private CartDTO convertToDTO(Cart cart) {
-        return CartDTO.builder()
-                .id(cart.getId())
-                .userId(cart.getMember().getUserId())
-                .items(cart.getItems().stream()
-                        .map(this::convertToCartItemDTO)
-                        .collect(Collectors.toList()))
-                .totalAmount(calculateTotalAmount(cart))
-                .build();
-    }
-
-    private CartItemDTO convertToCartItemDTO(CartItem item) {
-        return CartItemDTO.builder()
-                .id(item.getId())
-                .productId(item.getProduct().getId())
-                .productName(item.getProduct().getName())
-                .quantity(item.getQuantity())
-                .price(item.getProduct().getPrice())
-                .options(item.getOptions())
-                .build();
-    }
-
-    private BigDecimal calculateTotalAmount(Cart cart) {
-        return cart.getItems().stream()
-                .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -215,6 +95,26 @@ public class CartServiceImpl implements CartService {
 
         Cart savedCart = cartRepository.save(newCart);
         return convertToDTO(savedCart);
+    }
+
+    @Override
+    @Transactional
+    public CartDTO addItemToCart(Long memberId, CartRequestDTO requestDTO) {
+        Cart cart = cartRepository.findByMemberId(memberId)
+                .orElseGet(() -> {
+                    Member member = memberRepository.findById(memberId)
+                            .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+
+                    Cart newCart = Cart.builder()
+                            .member(member)
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
+                            .build();
+
+                    return cartRepository.save(newCart);
+                });
+
+        return addItemToCart(cart, requestDTO);
     }
 
     @Override
@@ -721,5 +621,119 @@ public class CartServiceImpl implements CartService {
         }
 
         return discount;
+    }
+
+    private CartDTO convertToDTO(Cart cart) {
+        BigDecimal subtotal = calculateSubtotal(cart);
+        BigDecimal discount = calculateDiscount(cart);
+        BigDecimal total = subtotal.subtract(discount);
+
+        int itemCount = cart.getItems().stream()
+                .mapToInt(CartItem::getQuantity)
+                .sum();
+
+        CouponDTO couponDTO = null;
+        if (cart.getCoupon() != null) {
+            couponDTO = CouponDTO.builder()
+                    .id(cart.getCoupon().getId())
+                    .code(cart.getCoupon().getCode())
+                    .name(cart.getCoupon().getName())
+                    .description(cart.getCoupon().getDescription())
+                    .discountType(cart.getCoupon().getDiscountType())
+                    .discountValue(cart.getCoupon().getDiscountValue())
+                    .minOrderAmount(cart.getCoupon().getMinOrderAmount())
+                    .maxDiscountAmount(cart.getCoupon().getMaxDiscountAmount())
+                    .startDate(cart.getCoupon().getStartDate())
+                    .endDate(cart.getCoupon().getEndDate())
+                    .status(cart.getCoupon().getStatus())
+                    .build();
+        }
+
+        List<CartItemDTO> itemDTOs = cart.getItems().stream()
+                .map(this::convertToItemDTO)
+                .collect(Collectors.toList());
+
+        return CartDTO.builder()
+                .id(cart.getId())
+                .memberId(cart.getMember() != null ? cart.getMember().getId() : null)
+                .guestId(cart.getGuestId())
+                .items(itemDTOs)
+                .coupon(couponDTO)
+                .subtotal(subtotal)
+                .discount(discount)
+                .total(total)
+                .itemCount(itemCount)
+                .createdAt(cart.getCreatedAt())
+                .updatedAt(cart.getUpdatedAt())
+                .build();
+    }
+
+    private CartItemDTO convertToItemDTO(CartItem item) {
+        BigDecimal itemPrice;
+        String variantName = null;
+
+        if (item.getVariant() != null) {
+            itemPrice = item.getVariant().getPrice();
+            variantName = item.getVariant().getName();
+        } else {
+            itemPrice = item.getProduct().getPrice();
+        }
+
+        // 옵션 가격 추가
+        for (CartItemOption option : item.getOptions()) {
+            if (option.getProductOption().getAdditionalPrice() != null) {
+                itemPrice = itemPrice.add(option.getProductOption().getAdditionalPrice());
+            }
+        }
+
+        BigDecimal totalPrice = itemPrice.multiply(new BigDecimal(item.getQuantity()));
+
+        // 상품 이미지 URL 가져오기 - 수정된 부분
+        String thumbnailUrl = null;
+        if (!item.getProduct().getImages().isEmpty()) {
+            ProductImage thumbnail = item.getProduct().getImages().stream()
+                    .map(Images -> {
+                        ProductImage productImage = new ProductImage();
+                        productImage.setUrl(Images.getUrl());
+                        productImage.setIsMain(Images.getIsMain());
+                        return productImage;
+                    })
+                    .filter(image -> image.getIsMain()) // 람다 표현식 사용
+                    .findFirst()
+                    .orElseGet(() -> {
+                        ProductImage defaultImage = new ProductImage();
+                        defaultImage.setUrl(item.getProduct().getMainImage());
+                        return defaultImage;
+                    });
+
+            thumbnailUrl = thumbnail.getUrl();
+
+        }
+
+        // 옵션 정보 변환
+        List<CartItemOptionDTO> optionDTOs = item.getOptions().stream()
+                .map(option -> CartItemOptionDTO.builder()
+                        .id(option.getId())
+                        .optionId(option.getProductOption().getId())
+                        .name(option.getProductOption().getName())
+                        .value(option.getValue())
+                        .additionalPrice(option.getProductOption().getAdditionalPrice())
+                        .build())
+                .collect(Collectors.toList());
+
+        return CartItemDTO.builder()
+                .id(item.getId())
+                .productId(item.getProduct().getId())
+                .productName(item.getProduct().getName())
+                .variantId(item.getVariant() != null ? item.getVariant().getId() : null)
+                .variantName(variantName)
+                .options(optionDTOs)
+                .quantity(item.getQuantity())
+                .price(itemPrice)
+                .totalPrice(totalPrice)
+                .thumbnailUrl(thumbnailUrl)
+                .createdAt(item.getCreatedAt())
+                .updatedAt(item.getUpdatedAt())
+                .build();
     }
 }

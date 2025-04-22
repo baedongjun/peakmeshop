@@ -142,9 +142,9 @@ public class AdminMarketingViewController {
         model.addAttribute("promotion", promotion);
 
         if (promotion.getTarget().equals("CATEGORY")) {
-            model.addAttribute("categories", categoryService.getCategoryById(promotion.getCategory().getId()));
+            model.addAttribute("categories", categoryService.getCategoryById(promotion.getCategoryId()));
         } else if (promotion.getTarget().equals("PRODUCT")) {
-            model.addAttribute("products", productService.getProductById(promotion.getProduct().getId()));
+            model.addAttribute("products", productService.getProductById(promotion.getProductId()));
         }
 
         return "admin/marketing/promotion-detail";

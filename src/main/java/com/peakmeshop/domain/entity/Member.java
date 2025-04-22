@@ -132,6 +132,26 @@ public class Member {
     @OneToMany(mappedBy = "member")
     private List<MemberCoupon> coupons = new ArrayList<>();
 
+    @OneToMany(mappedBy = "member")
+    private List<Order> orders = new ArrayList<>();
+
+    @OneToMany(mappedBy = "member")
+    private List<Cart> cart = new ArrayList<>();
+
+    @OneToMany(mappedBy = "member")
+    private List<Wishlist> wishlist = new ArrayList<>();
+
+    @OneToMany(mappedBy = "member")
+    private List<Review> reviews = new ArrayList<>();
+
+    @OneToOne
+    @JoinColumn(name = "point_id")
+    private Point point;
+
+    @OneToOne
+    @JoinColumn(name = "member_grade_id")
+    private MemberGrade memberGrade;
+
     @Column
     private int orderCount;
 
@@ -139,7 +159,7 @@ public class Member {
     private double totalOrders;
 
     @Column
-    private double totalSpent;
+    private double totalOrderAmount;
 
     @Column
     private double totalPoints;
@@ -174,8 +194,8 @@ public class Member {
         this.totalOrders = orders;
     }
 
-    public void updateTotalSpent(double amount) {
-        this.totalSpent = amount;
+    public void updateTotalOrderAmount(double amount) {
+        this.totalOrderAmount = amount;
     }
 
     public void updateTotalPoints(double points) {

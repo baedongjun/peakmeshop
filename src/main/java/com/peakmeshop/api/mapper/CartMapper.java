@@ -1,29 +1,20 @@
 package com.peakmeshop.api.mapper;
 
-import com.peakmeshop.api.dto.CartDTO;
 import com.peakmeshop.domain.entity.Cart;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import java.util.List;
+import com.peakmeshop.api.dto.CartDTO;
+import org.mapstruct.*;
 
-@Mapper(componentModel = "spring", uses = {MemberMapper.class, CartItemMapper.class})
+@Mapper(
+    componentModel = "spring",
+    uses = {BaseMapper.class, CartItemMapper.class, MemberMapper.class},
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
+)
 public interface CartMapper {
     
-    @Mapping(source = "member.id", target = "memberId")
-    CartDTO toDto(Cart cart);
-    
-    List<CartDTO> toDtoList(List<Cart> carts);
-    
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(source = "memberId", target = "member.id")
-    Cart toEntity(CartDTO cartDTO);
-    
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(source = "memberId", target = "member.id")
-    void updateCartFromDto(CartDTO cartDTO, @MappingTarget Cart cart);
+    @Mapping(target = "memberId", source = "member.id")
+    CartDTO toDTO(Cart cart);
+
+    @Mapping(target = "member", ignore = true)
+    Cart toEntity(CartDTO dto);
 } 

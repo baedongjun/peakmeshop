@@ -72,8 +72,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .isActive(categoryDTO.isActive())
                 .isFeatured(categoryDTO.isFeatured())
                 .sortOrder(categoryDTO.getSortOrder())
-                .filterableAttributes(categoryDTO.getFilterableAttributes() != null ?
-                        String.join(",", categoryDTO.getFilterableAttributes()) : null)
+                .filterableAttributes(categoryDTO.getFilterableAttributes())
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -185,11 +184,7 @@ public class CategoryServiceImpl implements CategoryService {
         category.setActive(categoryDTO.isActive());
         category.setFeatured(categoryDTO.isFeatured());
         category.setSortOrder(categoryDTO.getSortOrder());
-
-        if (categoryDTO.getFilterableAttributes() != null) {
-            category.setFilterableAttributes(String.join(",", categoryDTO.getFilterableAttributes()));
-        }
-
+        category.setFilterableAttributes(categoryDTO.getFilterableAttributes());
         category.setUpdatedAt(LocalDateTime.now());
 
         Category updatedCategory = categoryRepository.save(category);
@@ -224,7 +219,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         // 필터링 가능한 속성 업데이트
         if (attributes != null && !attributes.isEmpty()) {
-            category.setFilterableAttributes(String.join(",", attributes));
+            category.setFilterableAttributes(attributes);
         } else {
             category.setFilterableAttributes(null);
         }
@@ -287,7 +282,7 @@ public class CategoryServiceImpl implements CategoryService {
     private CategoryDTO convertToDTO(Category category) {
         List<String> filterableAttributes = null;
         if (category.getFilterableAttributes() != null && !category.getFilterableAttributes().isEmpty()) {
-            filterableAttributes = List.of(category.getFilterableAttributes().split(","));
+            filterableAttributes = category.getFilterableAttributes();
         }
 
         // Calculate depth

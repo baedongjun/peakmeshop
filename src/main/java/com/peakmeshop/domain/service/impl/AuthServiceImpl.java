@@ -135,7 +135,7 @@ public class AuthServiceImpl implements AuthService {
         VerificationToken verificationToken = new VerificationToken();
         verificationToken.setToken(token);
         verificationToken.setMember(savedMember);
-        verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24)); // 24시간 유효
+        verificationToken.setExpiryAt(LocalDateTime.now().plusHours(24)); // 24시간 유효
         verificationTokenRepository.save(verificationToken);
 
         // 인증 이메일 발송
@@ -209,7 +209,7 @@ public class AuthServiceImpl implements AuthService {
         PasswordResetToken passwordResetToken = new PasswordResetToken();
         passwordResetToken.setToken(token);
         passwordResetToken.setMember(member);
-        passwordResetToken.setExpiryDate(LocalDateTime.now().plusHours(1)); // 1시간 유효
+        passwordResetToken.setExpiryAt(LocalDateTime.now().plusHours(1)); // 1시간 유효
         passwordResetTokenRepository.save(passwordResetToken);
 
         // 비밀번호 재설정 이메일 발송
@@ -227,7 +227,7 @@ public class AuthServiceImpl implements AuthService {
         PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(resetDTO.getToken())
                 .orElseThrow(() -> new RuntimeException("유효하지 않은 토큰입니다."));
 
-        if (passwordResetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+        if (passwordResetToken.getExpiryAt().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("만료된 토큰입니다.");
         }
 
@@ -246,7 +246,7 @@ public class AuthServiceImpl implements AuthService {
         VerificationToken verificationToken = verificationTokenRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("유효하지 않은 토큰입니다."));
 
-        if (verificationToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+        if (verificationToken.getExpiryAt().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("만료된 토큰입니다.");
         }
 
@@ -280,7 +280,7 @@ public class AuthServiceImpl implements AuthService {
         RefreshToken refreshTokenEntity = refreshTokenRepository.findByToken(refreshToken)
                 .orElseThrow(() -> new RuntimeException("유효하지 않은 리프레시 토큰입니다."));
 
-        if (refreshTokenEntity.getExpiryDate().isBefore(LocalDateTime.now())) {
+        if (refreshTokenEntity.getExpiryAt().isBefore(LocalDateTime.now())) {
             refreshTokenRepository.delete(refreshTokenEntity);
             throw new RuntimeException("만료된 리프레시 토큰입니다.");
         }
@@ -293,7 +293,7 @@ public class AuthServiceImpl implements AuthService {
 
         // 리프레시 토큰 업데이트
         refreshTokenEntity.setToken(newRefreshToken);
-        refreshTokenEntity.setExpiryDate(LocalDateTime.now().plusDays(7)); // 7일 유효
+        refreshTokenEntity.setExpiryAt(LocalDateTime.now().plusDays(7)); // 7일 유효
         refreshTokenRepository.save(refreshTokenEntity);
 
         return AuthResponseDTO.builder()
@@ -326,7 +326,7 @@ public class AuthServiceImpl implements AuthService {
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setMember(memberRepository.findById(memberId).orElseThrow());
         refreshToken.setToken(token);
-        refreshToken.setExpiryDate(LocalDateTime.now().plusDays(7)); // 7일 유효
+        refreshToken.setExpiryAt(LocalDateTime.now().plusDays(7)); // 7일 유효
         refreshToken.setCreatedAt(LocalDateTime.now());
         refreshTokenRepository.save(refreshToken);
     }

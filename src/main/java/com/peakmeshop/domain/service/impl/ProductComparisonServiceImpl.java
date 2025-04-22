@@ -225,7 +225,7 @@ public class ProductComparisonServiceImpl implements ProductComparisonService {
         comparisonData.put("price", products.stream().map(ProductDTO::getPrice).collect(Collectors.toList()));
         comparisonData.put("discountedPrice", products.stream().map(ProductDTO::getDiscountedPrice).collect(Collectors.toList()));
         comparisonData.put("brand", products.stream().map(ProductDTO::getBrand).collect(Collectors.toList()));
-        comparisonData.put("category", products.stream().map(ProductDTO::getCategory).collect(Collectors.toList()));
+        comparisonData.put("category", products.stream().map(ProductDTO::getCategoryId).collect(Collectors.toList()));
         comparisonData.put("rating", products.stream().map(ProductDTO::getAverageRating).collect(Collectors.toList()));
         comparisonData.put("reviewCount", products.stream().map(ProductDTO::getReviewCount).collect(Collectors.toList()));
 

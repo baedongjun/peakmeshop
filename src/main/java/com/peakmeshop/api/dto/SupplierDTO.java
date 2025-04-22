@@ -1,7 +1,9 @@
 package com.peakmeshop.api.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
+import com.peakmeshop.domain.entity.SupplierProduct;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -37,4 +39,5 @@ public class SupplierDTO {
     private Long totalSales;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private List<SupplierProduct> products;
 }

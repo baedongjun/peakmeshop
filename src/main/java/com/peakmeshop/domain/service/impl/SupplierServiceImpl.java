@@ -256,7 +256,7 @@ public class SupplierServiceImpl implements SupplierService {
                 .price(product.getPrice())
                 .salePrice(product.getSalePrice())
                 .brand(product.getBrand())
-                .category(product.getCategory())
+                .categoryId(product.getCategory().getId())
                 .supplier(product.getSupplier())
                 .mainImage(product.getMainImage())
                 .stock(product.getStock())

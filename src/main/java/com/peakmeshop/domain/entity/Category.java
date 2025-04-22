@@ -4,16 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -67,8 +58,10 @@ public class Category {
     @Column(name = "sort_order")
     private Integer sortOrder;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "category_filterable_attributes", joinColumns = @JoinColumn(name = "attribute_id"))
     @Column(name = "filterable_attributes", length = 500)
-    private String filterableAttributes;
+    private List<String> filterableAttributes = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

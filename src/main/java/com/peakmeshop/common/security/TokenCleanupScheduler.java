@@ -25,9 +25,9 @@ public class TokenCleanupScheduler {
 
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_MONTH, -30);
-        Date expiryDate = calendar.getTime();
+        Date expiryAt = calendar.getTime();
 
-        tokenRepository.cleanUpExpiredTokens(expiryDate);
+        tokenRepository.cleanUpExpiredTokens(expiryAt);
 
         log.info("만료된 Remember Me 토큰 정리 작업 완료");
     }

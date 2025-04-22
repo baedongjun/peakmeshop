@@ -31,48 +31,48 @@ public class JwtTokenProvider {
 
     public String generateToken(UserPrincipal userPrincipal) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+        Date expiryAt = new Date(now.getTime() + jwtExpirationInMs);
 
         return Jwts.builder()
                 .setSubject(userPrincipal.getUserId())
                 .setIssuedAt(now)
-                .setExpiration(expiryDate)
+                .setExpiration(expiryAt)
                 .signWith(SignatureAlgorithm.HS512, jwtSecret)
                 .compact();
     }
 
     public String generateToken(String userId) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+        Date expiryAt = new Date(now.getTime() + jwtExpirationInMs);
 
         return Jwts.builder()
                 .setSubject(userId)
                 .setIssuedAt(now)
-                .setExpiration(expiryDate)
+                .setExpiration(expiryAt)
                 .signWith(SignatureAlgorithm.HS512, jwtSecret)
                 .compact();
     }
 
     public String generateRefreshToken(UserPrincipal userPrincipal) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtRefreshExpirationInMs);
+        Date expiryAt = new Date(now.getTime() + jwtRefreshExpirationInMs);
 
         return Jwts.builder()
                 .setSubject(Long.toString(userPrincipal.getId()))
                 .setIssuedAt(now)
-                .setExpiration(expiryDate)
+                .setExpiration(expiryAt)
                 .signWith(SignatureAlgorithm.HS512, jwtSecret)
                 .compact();
     }
 
     public String generateRefreshToken(String userId) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtRefreshExpirationInMs);
+        Date expiryAt = new Date(now.getTime() + jwtRefreshExpirationInMs);
 
         return Jwts.builder()
                 .setSubject(userId)
                 .setIssuedAt(now)
-                .setExpiration(expiryDate)
+                .setExpiration(expiryAt)
                 .signWith(SignatureAlgorithm.HS512, jwtSecret)
                 .compact();
     }

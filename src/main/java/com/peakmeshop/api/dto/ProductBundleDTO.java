@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.peakmeshop.api.dto.ProductBundleItemDTO;
+import com.peakmeshop.domain.entity.ProductBundleItem;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,12 +30,12 @@ public class ProductBundleDTO {
     private LocalDateTime updatedAt;
 
     @Builder.Default
-    private List<ProductBundleItemDTO> items = new ArrayList<>();
+    private List<ProductBundleItem> items = new ArrayList<>();
 
     // 총 정가 계산
     public BigDecimal getTotalOriginalPrice() {
         return items.stream()
-                .map(item -> item.getPrice().multiply(new BigDecimal(item.getQuantity())))
+                .map(item -> item.getProduct().getFinalPrice().multiply(new BigDecimal(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 

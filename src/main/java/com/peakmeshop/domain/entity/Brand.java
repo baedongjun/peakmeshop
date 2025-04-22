@@ -63,14 +63,4 @@ public class Brand {
     @JsonIgnore
     @OneToMany(mappedBy = "brand", cascade = CascadeType.ALL)
     private List<Product> products = new ArrayList<>();
-
-    public void addProduct(Product product) {
-        products.add(product);
-        product.setBrand(this);
-    }
-
-    public void removeProduct(Product product) {
-        products.remove(product);
-        product.setBrand(null);
-    }
 }

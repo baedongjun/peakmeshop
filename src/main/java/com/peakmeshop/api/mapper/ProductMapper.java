@@ -1,35 +1,32 @@
 package com.peakmeshop.api.mapper;
 
-import com.peakmeshop.api.dto.ProductDTO;
 import com.peakmeshop.domain.entity.Product;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import java.util.List;
+import com.peakmeshop.api.dto.ProductDTO;
+import com.peakmeshop.api.dto.ProductSummaryDTO;
+import org.mapstruct.*;
 
-@Mapper(componentModel = "spring")
+@Mapper(
+    componentModel = "spring",
+    uses = {BaseMapper.class, CategoryMapper.class},
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
+)
 public interface ProductMapper {
     
+    @Mapping(target = "categoryId", source = "category.id")
     @Mapping(target = "categoryName", source = "category.name")
-    ProductDTO toDto(Product product);
-    
-    List<ProductDTO> toDtoList(List<Product> products);
-    
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "viewCount", ignore = true)
-    @Mapping(target = "averageRating", ignore = true)
-    @Mapping(target = "reviewCount", ignore = true)
+    ProductDTO toDTO(Product product);
+
     @Mapping(target = "category", ignore = true)
     Product toEntity(ProductDTO productDTO);
-    
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "viewCount", ignore = true)
-    @Mapping(target = "averageRating", ignore = true)
-    @Mapping(target = "reviewCount", ignore = true)
-    @Mapping(target = "category", ignore = true)
-    void updateProductFromDto(ProductDTO productDTO, @MappingTarget Product product);
+
+    @Mapping(target = "categoryName", source = "category.name")
+    ProductSummaryDTO toSummaryDTO(Product product);
+
+    @AfterMapping
+    default void afterToDTO(@MappingTarget ProductDTO target, Product source) {
+        if (source.getImages() != null && !source.getImages().isEmpty()) {
+            target.setMainImage(source.getImages().get(0).getUrl());
+        }
+    }
 } 

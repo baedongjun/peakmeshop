@@ -311,7 +311,7 @@ public class StatisticsServiceImpl implements StatisticsService {
                         member.name(),
                         member.createdAt(),
                         member.totalOrders(),
-                        member.totalSpent(),
+                        member.totalOrderAmount(),
                         member.totalPoints(),
                         member.status()
                 ))

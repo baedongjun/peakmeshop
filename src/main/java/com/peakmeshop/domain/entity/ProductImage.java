@@ -15,6 +15,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "product_images")
 @Getter
@@ -43,8 +45,8 @@ public class ProductImage {
     @Column(name = "sort_order")
     private Integer sortOrder;
 
-    @Column(name = "is_thumbnail")
-    private boolean thumbnail;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
 }
 

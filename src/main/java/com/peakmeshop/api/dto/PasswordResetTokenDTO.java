@@ -16,6 +16,6 @@ public class PasswordResetTokenDTO {
     private String token;
     private Long memberId;
     private String memberEmail;
-    private LocalDateTime expiryDate;
+    private LocalDateTime expiryAt;
     private LocalDateTime createdAt;
 }

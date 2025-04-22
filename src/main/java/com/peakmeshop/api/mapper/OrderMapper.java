@@ -1,32 +1,30 @@
 package com.peakmeshop.api.mapper;
 
-import com.peakmeshop.api.dto.OrderDTO;
 import com.peakmeshop.domain.entity.Order;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import java.util.List;
+import com.peakmeshop.api.dto.OrderDTO;
+import com.peakmeshop.api.dto.OrderSummaryDTO;
+import org.mapstruct.*;
 
-@Mapper(componentModel = "spring", uses = {MemberMapper.class, OrderItemMapper.class, CouponMapper.class})
+@Mapper(
+    componentModel = "spring",
+    uses = {BaseMapper.class, OrderItemMapper.class, MemberMapper.class},
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
+)
 public interface OrderMapper {
     
-    @Mapping(source = "member.id", target = "memberId")
-    @Mapping(source = "coupon.id", target = "couponId")
-    OrderDTO toDto(Order order);
-    
-    List<OrderDTO> toDtoList(List<Order> orders);
-    
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(source = "memberId", target = "member.id")
-    @Mapping(source = "couponId", target = "coupon.id")
-    Order toEntity(OrderDTO orderDTO);
-    
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(source = "memberId", target = "member.id")
-    @Mapping(source = "couponId", target = "coupon.id")
-    void updateOrderFromDto(OrderDTO orderDTO, @MappingTarget Order order);
+    @Mapping(target = "memberId", source = "member.id")
+    @Mapping(target = "memberName", source = "member.name")
+    @Mapping(target = "paymentId", source = "payment.id")
+    @Mapping(target = "shippingId", source = "shipping.id")
+    @Mapping(target = "shippingAddress", source = "shipping.shippingAddress")
+    OrderDTO toDTO(Order order);
+
+    @Mapping(target = "member", ignore = true)
+    @Mapping(target = "payment", ignore = true)
+    @Mapping(target = "shipping", ignore = true)
+    Order toEntity(OrderDTO dto);
+
+    @Mapping(target = "memberName", source = "member.name")
+    OrderSummaryDTO toSummaryDTO(Order order);
 } 

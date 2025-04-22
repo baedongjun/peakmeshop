@@ -51,7 +51,9 @@ public class MemberDTO {
     private String userRole;
     private boolean enabled;
     private String status;
-    private String grade;
+    private Long gradeId;
+    private String gradeName;
+    private Integer currentPoint;
     private boolean isEmailVerified;
     private String provider;
     private String providerId;

@@ -15,7 +15,7 @@ public interface PasswordResetTokenRepository extends JpaRepository<PasswordRese
     Optional<PasswordResetToken> findByMemberId(Long memberId);
 
     // 만료일이 특정 날짜 이전인 토큰 목록 조회
-    List<PasswordResetToken> findByExpiryDateBefore(LocalDateTime date);
+    List<PasswordResetToken> findByExpiryAtBefore(LocalDateTime date);
 
     void deleteByMemberId(Long memberId);
 }

@@ -38,7 +38,7 @@ public class EmailVerificationToken {
     private Member member;
 
     @Column(nullable = false)
-    private LocalDateTime expiryDate;
+    private LocalDateTime expiryAt;
 
     private LocalDateTime confirmedAt;
 
@@ -47,7 +47,7 @@ public class EmailVerificationToken {
 
     // 토큰 만료 확인 메서드
     public boolean isExpired() {
-        return LocalDateTime.now().isAfter(this.expiryDate);
+        return LocalDateTime.now().isAfter(this.expiryAt);
     }
 
     // 토큰 확인 메서드

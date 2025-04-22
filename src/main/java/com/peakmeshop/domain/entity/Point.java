@@ -32,8 +32,7 @@ public class Point extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
-    @JoinColumn(name = "member_id", nullable = false)
+    @OneToOne(mappedBy = "point")
     private Member member;
 
     @Column(name = "current_points", nullable = false)
@@ -57,8 +56,8 @@ public class Point extends BaseTimeEntity {
     @Column(length = 20, nullable = false)
     private String type;  // EARN, USE, REFUND, EXPIRED
 
-    @Column(name = "expiry_date")
-    private LocalDateTime expiryDate;
+    @Column(name = "expiry_at")
+    private LocalDateTime expiryAt;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

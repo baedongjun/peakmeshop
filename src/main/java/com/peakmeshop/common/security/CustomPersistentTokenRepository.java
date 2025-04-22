@@ -121,11 +121,11 @@ public class CustomPersistentTokenRepository implements PersistentTokenRepositor
      * 만료된 토큰을 정리합니다.
      */
     @Transactional
-    public void cleanUpExpiredTokens(Date expiryDate) {
-        log.info("만료된 Remember Me 토큰 정리: {}", expiryDate);
+    public void cleanUpExpiredTokens(Date expiryAt) {
+        log.info("만료된 Remember Me 토큰 정리: {}", expiryAt);
         try {
             String cleanUpSql = "DELETE FROM " + TABLE_NAME + " WHERE " + LAST_USED_COLUMN + " < ?";
-            int count = jdbcTemplate.update(cleanUpSql, expiryDate);
+            int count = jdbcTemplate.update(cleanUpSql, expiryAt);
             log.info("{}개의 만료된 토큰이 삭제되었습니다.", count);
         } catch (DataAccessException e) {
             log.error("만료된 토큰 정리 중 오류 발생", e);

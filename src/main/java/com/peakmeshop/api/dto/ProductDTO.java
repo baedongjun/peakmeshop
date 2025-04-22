@@ -28,7 +28,8 @@ public class ProductDTO {
     private BigDecimal salePrice; // 판매가 (할인가)
     private BigDecimal discountedPrice; // 할인가 (다른 이름)
     private Brand brand; // 브랜드
-    private Category category;
+    private Long categoryId;
+    private String categoryName;
     private Supplier supplier;
     private String mainImage;
     private Integer stock;

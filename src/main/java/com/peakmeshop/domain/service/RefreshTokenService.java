@@ -45,7 +45,7 @@ public class RefreshTokenService {
         refreshTokenRepository.deleteByMemberId(memberId);
 
         refreshToken.setMember(member);
-        refreshToken.setExpiryDate(LocalDateTime.ofInstant(Instant.now().plusMillis(refreshTokenDurationMs), ZoneId.systemDefault()));
+        refreshToken.setExpiryAt(LocalDateTime.ofInstant(Instant.now().plusMillis(refreshTokenDurationMs), ZoneId.systemDefault()));
         refreshToken.setToken(UUID.randomUUID().toString());
 
         refreshToken = refreshTokenRepository.save(refreshToken);
@@ -56,7 +56,7 @@ public class RefreshTokenService {
     public RefreshToken verifyExpiration(RefreshToken token) {
         // Instant를 LocalDateTime으로 변환
         LocalDateTime now = LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault());
-        if (token.getExpiryDate().isBefore(now)) {
+        if (token.getExpiryAt().isBefore(now)) {
             refreshTokenRepository.delete(token);
             throw new TokenRefreshException(token.getToken(), "Refresh token was expired. Please make a new signin request");
         }

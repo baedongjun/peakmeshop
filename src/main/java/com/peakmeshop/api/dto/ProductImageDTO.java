@@ -1,17 +1,24 @@
 package com.peakmeshop.api.dto;
 
-public record ProductImageDTO(
-        Long id,
-        String url,
-        String alt,
-        int displayOrder,
-        boolean isDefault,
-        String thumbnailUrl,
-        String mediumUrl,
-        String largeUrl,
-        String originalUrl,
-        String mimeType,
-        long fileSize,
-        int width,
-        int height
-) {}
+import lombok.Getter;
+import lombok.Setter;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ProductImageDTO {
+    private Long id;
+    private Long productId;
+    private String url;
+    private String alt;
+    private Integer sortOrder;
+    private Boolean isMain;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+}

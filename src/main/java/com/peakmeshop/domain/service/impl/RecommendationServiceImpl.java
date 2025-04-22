@@ -236,7 +236,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         dto.setPrice(product.getPrice());
         dto.setSalePrice(product.getSalePrice());
         dto.setBrand(product.getBrand());
-        dto.setCategory(product.getCategory());
+        dto.setCategoryId(product.getCategory().getId());
         dto.setSupplier(product.getSupplier());
         dto.setMainImage(product.getMainImage());
         dto.setStock(product.getStock());

@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderSummaryDTO {
+    private String memberName;
     private long totalOrders;
     private long monthlyOrders;
     private long dailyOrders;

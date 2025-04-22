@@ -25,7 +25,7 @@ public class TokenProvider {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + tokenExpirationMsec);
+        Date expiryAt = new Date(now.getTime() + tokenExpirationMsec);
 
         String roles = userPrincipal.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -37,7 +37,7 @@ public class TokenProvider {
                 .claim("name", userPrincipal.getName())
                 .claim("roles", roles)
                 .setIssuedAt(new Date())
-                .setExpiration(expiryDate)
+                .setExpiration(expiryAt)
                 .signWith(SignatureAlgorithm.HS512, tokenSecret)
                 .compact();
     }

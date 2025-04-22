@@ -2,29 +2,31 @@ package com.peakmeshop.api.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.peakmeshop.api.dto.CartItemDTO;
 import com.peakmeshop.api.dto.CouponDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CartDTO {
-
     private Long id;
-    private String userId;
-    private List<CartItemDTO> items = new ArrayList<>();
-    private BigDecimal totalAmount;
-    private String couponCode;
-    private BigDecimal discountAmount;
-    private BigDecimal finalAmount;
+    private Long memberId;
+    private String guestId;
+    private List<CartItemDTO> items;
+    private CouponDTO coupon;
+    private BigDecimal subtotal;
+    private BigDecimal discount;
+    private BigDecimal total;
+    private Integer itemCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

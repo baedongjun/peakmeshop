@@ -16,6 +16,9 @@ public class MemberGrade {
     @Column(nullable = false)
     private String name;
 
+    @OneToOne(mappedBy = "memberGrade")
+    private Member member;
+
     @Column(name = "condition_type", nullable = false)
     private String conditionType;
 

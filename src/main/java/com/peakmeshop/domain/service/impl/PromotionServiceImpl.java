@@ -73,13 +73,13 @@ public class PromotionServiceImpl implements PromotionService {
         promotion.setDiscountType(promotionDTO.getDiscountType());
         promotion.setDiscountValue(promotionDTO.getDiscountValue());
         promotion.setTarget(promotionDTO.getTarget());
-        if (promotionDTO.getCategory() != null) {
-            Category category = categoryRepository.findById(promotionDTO.getCategory().getId())
-                    .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + promotionDTO.getCategory().getId()));
+        if (promotionDTO.getCategoryId() != null) {
+            Category category = categoryRepository.findById(promotionDTO.getCategoryId())
+                    .orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + promotionDTO.getCategoryId()));
             promotion.setCategory(category);
         }
-        if (promotionDTO.getProduct() != null) {
-            Product product = productRepository.findById(promotionDTO.getProduct().getId()).orElse(null);
+        if (promotionDTO.getProductId() != null) {
+            Product product = productRepository.findById(promotionDTO.getProductId()).orElse(null);
             promotion.setProduct(product);
         }
         promotion.setDiscountRate(promotionDTO.getDiscountRate());
@@ -273,11 +273,11 @@ public class PromotionServiceImpl implements PromotionService {
         promotion.setDiscountType(dto.getDiscountType());
         promotion.setDiscountValue(dto.getDiscountValue());
         promotion.setTarget(dto.getTarget());
-        if (dto.getCategory() != null) {
-            promotion.setCategory(categoryRepository.findById(dto.getCategory().getId()).orElse(null));
+        if (dto.getCategoryId() != null) {
+            promotion.setCategory(categoryRepository.findById(dto.getCategoryId()).orElse(null));
         }
-        if (dto.getProduct() != null) {
-            promotion.setProduct(productRepository.findById(dto.getProduct().getId()).orElse(null));
+        if (dto.getProductId() != null) {
+            promotion.setProduct(productRepository.findById(dto.getProductId()).orElse(null));
         }
         promotion.setDiscountRate(dto.getDiscountRate());
         promotion.setStartDate(dto.getStartDate());
@@ -302,8 +302,8 @@ public class PromotionServiceImpl implements PromotionService {
                 .discountType(promotion.getDiscountType())
                 .discountValue(promotion.getDiscountValue())
                 .target(promotion.getTarget())
-                .category(promotion.getCategory())
-                .product(promotion.getProduct())
+                .categoryId(promotion.getCategory().getId())
+                .productId(promotion.getProduct().getId())
                 .discountRate(promotion.getDiscountRate())
                 .startDate(promotion.getStartDate())
                 .endDate(promotion.getEndDate())

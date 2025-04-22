@@ -223,7 +223,6 @@ public class OrderServiceImpl implements OrderService {
                 .orderNumber(order.getOrderNumber())
                 .memberId(order.getMember().getId())
                 .memberName(order.getMember().getName())
-                .memberEmail(order.getMember().getEmail())
                 .status(order.getStatus())
                 .totalPrice(order.getTotalPrice())
                 .discount(order.getDiscount())
@@ -627,7 +626,7 @@ public class OrderServiceImpl implements OrderService {
             member.updateTotalOrders(member.getTotalOrders() + 1);
             
             // 총 구매 금액 업데이트
-            member.updateTotalSpent(member.getTotalSpent() + order.getTotalAmount());
+            member.updateTotalOrderAmount(member.getTotalOrderAmount() + order.getTotalAmount());
             
             // 포인트 적립 (구매 금액의 1%)
             double points = order.getTotalAmount() * 0.01;
