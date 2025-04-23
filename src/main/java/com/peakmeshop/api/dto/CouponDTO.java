@@ -2,6 +2,7 @@ package com.peakmeshop.api.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CouponDTO {
+
     private Long id;
     private String code;
     private String name;
@@ -20,11 +22,11 @@ public class CouponDTO {
     private BigDecimal discountValue;
     private BigDecimal minOrderAmount;
     private BigDecimal maxDiscountAmount;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
     private Integer usageLimit;
     private Integer usedCount;
     private String status;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
