@@ -29,10 +29,10 @@ public class ContentServiceImpl implements ContentService {
                         .category(notice.getCategory())
                         .status(notice.getStatus())
                         .viewCount(notice.getViewCount())
-                        .isImportant(notice.isImportant())
+                        .important(notice.getImportant())
                         .isTop(notice.isTop())
-                        .startDate(notice.getStartDate())
-                        .endDate(notice.getEndDate())
+                        .startAt(notice.getStartAt())
+                        .endAt(notice.getEndAt())
                         .createdAt(notice.getCreatedAt())
                         .updatedAt(notice.getUpdatedAt())
                         .build());
@@ -48,7 +48,7 @@ public class ContentServiceImpl implements ContentService {
                         .answer(faq.getAnswer())
                         .category(faq.getCategory())
                         .sortOrder(faq.getSortOrder())
-                        .isActive(faq.isActive())
+                        .isActive(faq.getIsActive())
                         .createdAt(faq.getCreatedAt())
                         .updatedAt(faq.getUpdatedAt())
                         .build());

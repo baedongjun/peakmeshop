@@ -8,16 +8,15 @@ import com.peakmeshop.api.dto.CartItemDTO;
 import com.peakmeshop.api.dto.CouponDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CartDTO {
+
     private Long id;
     private Long memberId;
     private String guestId;
@@ -26,7 +25,7 @@ public class CartDTO {
     private BigDecimal subtotal;
     private BigDecimal discount;
     private BigDecimal total;
-    private Integer itemCount;
+    private int itemCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

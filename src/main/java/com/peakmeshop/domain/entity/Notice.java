@@ -41,10 +41,10 @@ public class Notice {
     private boolean isTop;
     
     @Column(nullable = false)
-    private LocalDateTime startDate;
+    private LocalDateTime startAt;
     
     @Column(nullable = false)
-    private LocalDateTime endDate;
+    private LocalDateTime endAt;
     
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

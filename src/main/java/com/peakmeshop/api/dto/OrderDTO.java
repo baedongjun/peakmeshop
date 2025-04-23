@@ -10,11 +10,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,6 +21,7 @@ public class OrderDTO {
     private String orderNumber;
     private Long memberId;
     private String memberName;
+    private String memberEmail;
     private OrderStatus status;
     private BigDecimal totalPrice;
     private BigDecimal discount;
@@ -49,7 +47,8 @@ public class OrderDTO {
     private LocalDateTime completedAt;
     private List<OrderItemDTO> items;
 
-    private Long paymentId;
-    private Long shippingId;
-    private String shippingAddress;
+    private Long shippingAddressId;
+    private Long billingAddressId;
+    private AddressDTO shippingAddress;
+    private AddressDTO billingAddress;
 }

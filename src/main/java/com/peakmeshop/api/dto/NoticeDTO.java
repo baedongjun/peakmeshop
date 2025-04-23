@@ -18,8 +18,11 @@ public class NoticeDTO {
     private String content;
     private String category;
     private Boolean important;
+    private Boolean isTop;
     private String status;
     private Integer viewCount;
+    private LocalDateTime startAt;
+    private LocalDateTime endAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Boolean isVisible;

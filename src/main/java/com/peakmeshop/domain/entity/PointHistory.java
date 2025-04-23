@@ -14,12 +14,13 @@ import jakarta.persistence.Table;
 import lombok.*;
 
 @Entity
-@Table(name = "point_history")
+@Table(name = "point_histories")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PointHistory extends BaseTimeEntity {
+public class PointHistory {
 
     public static final String TYPE_EARN = "EARN";
     public static final String TYPE_USE = "USE";
@@ -30,21 +31,25 @@ public class PointHistory extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "member_id", nullable = false)
-    private Long memberId;
+    @ManyToOne
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
 
     @Column(nullable = false)
-    private Integer points;
+    private Integer amount;
 
-    @Column(nullable = false)
-    private String type;
+    @Column(nullable = false, length = 20)
+    private String type; // EARN, USE, DEDUCT, EXPIRE
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
+    @Column(length = 255)
+    private String reason;
 
-    @Column(name = "order_id")
-    private Long orderId;
+    @Column(name = "balance_after", nullable = false)
+    private Integer balanceAfter;
 
-    @Column(name = "expiry_date")
-    private LocalDateTime expiryDate;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "order_id", length = 50)
+    private String orderId;
 }

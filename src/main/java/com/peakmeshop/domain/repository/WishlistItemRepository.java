@@ -37,14 +37,4 @@ public interface WishlistItemRepository extends JpaRepository<WishlistItem, Long
 
     // 회원 ID로 위시리스트 아이템 조회
     Page<WishlistItem> findByWishlistMemberId(Long memberId, Pageable pageable);
-
-    Optional<WishlistItem> findByWishlistMemberIdAndProductId(Long memberId, Long productId);
-
-    void deleteByWishlistMemberId(Long memberId);
-
-    boolean existsByWishlistMemberIdAndProductId(Long memberId, Long productId);
-
-    int countByWishlistMemberId(Long memberId);
-
-    int countByWishlistId(Long wishlistId);
 }

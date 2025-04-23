@@ -15,26 +15,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.peakmeshop.api.dto.BrandDTO;
-import com.peakmeshop.api.dto.BrandNewsDTO;
-import com.peakmeshop.api.dto.CategoryDTO;
 import com.peakmeshop.domain.entity.Brand;
-import com.peakmeshop.domain.entity.BrandNews;
-import com.peakmeshop.domain.entity.Member;
-import com.peakmeshop.domain.repository.BrandNewsRepository;
 import com.peakmeshop.domain.repository.BrandRepository;
-import com.peakmeshop.domain.repository.MemberRepository;
 import com.peakmeshop.domain.service.BrandService;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class BrandServiceImpl implements BrandService {
 
     private final BrandRepository brandRepository;
-    private final BrandNewsRepository brandNewsRepository;
-    private final MemberRepository memberRepository;
 
     @Override
     @Transactional
@@ -305,109 +296,6 @@ public class BrandServiceImpl implements BrandService {
         statistics.put("endDate", end);
 
         return statistics;
-    }
-
-    @Override
-    public Page<BrandDTO> getBrands(String category, String keyword, Pageable pageable) {
-        Page<Brand> brands;
-        if (category != null && keyword != null) {
-            brands = brandRepository.findByCategoryAndKeyword(category, keyword, pageable);
-        } else if (category != null) {
-            brands = brandRepository.findByCategory(category, pageable);
-        } else if (keyword != null) {
-            brands = brandRepository.findByKeyword(keyword, pageable);
-        } else {
-            brands = brandRepository.findAll(pageable);
-        }
-        return brands.map(this::convertToDTO);
-    }
-
-    @Override
-    public List<CategoryDTO> getBrandCategories() {
-        return brandRepository.findAllCategories().stream()
-                .map(category -> CategoryDTO.builder()
-                        .id(category.getId())
-                        .name(category.getName())
-                        .code(category.getCode())
-                        .build())
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional
-    public void incrementViewCount(Long id) {
-        brandRepository.incrementViewCount(id);
-    }
-
-    @Override
-    public boolean isFollowing(String username, Long brandId) {
-        Member member = memberRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-        return brandRepository.existsByFollowerAndId(member, brandId);
-    }
-
-    @Override
-    public Page<BrandNewsDTO> getBrandNews(Long brandId, Pageable pageable) {
-        Page<BrandNews> news = brandNewsRepository.findByBrandId(brandId, pageable);
-        return news.map(this::convertToNewsDTO);
-    }
-
-    @Override
-    public BrandNewsDTO getBrandNewsById(Long newsId) {
-        return brandNewsRepository.findById(newsId)
-                .map(this::convertToNewsDTO)
-                .orElse(null);
-    }
-
-    @Override
-    @Transactional
-    public void incrementNewsViewCount(Long newsId) {
-        brandNewsRepository.incrementViewCount(newsId);
-    }
-
-    @Override
-    public BrandNewsDTO getPrevBrandNews(Long brandId, Long newsId) {
-        return brandNewsRepository.findPrevNews(brandId, newsId)
-                .map(this::convertToNewsDTO)
-                .orElse(null);
-    }
-
-    @Override
-    public BrandNewsDTO getNextBrandNews(Long brandId, Long newsId) {
-        return brandNewsRepository.findNextNews(brandId, newsId)
-                .map(this::convertToNewsDTO)
-                .orElse(null);
-    }
-
-    private BrandDTO convertToDTO(Brand brand) {
-        return BrandDTO.builder()
-                .id(brand.getId())
-                .name(brand.getName())
-                .code(brand.getCode())
-                .description(brand.getDescription())
-                .logo(brand.getLogo())
-                .banner(brand.getBanner())
-                .website(brand.getWebsite())
-                .status(brand.getStatus())
-                .viewCount(brand.getViewCount())
-                .followerCount(brand.getFollowerCount())
-                .createdAt(brand.getCreatedAt())
-                .updatedAt(brand.getUpdatedAt())
-                .build();
-    }
-
-    private BrandNewsDTO convertToNewsDTO(BrandNews news) {
-        return BrandNewsDTO.builder()
-                .id(news.getId())
-                .brandId(news.getBrand().getId())
-                .title(news.getTitle())
-                .content(news.getContent())
-                .thumbnail(news.getThumbnail())
-                .viewCount(news.getViewCount())
-                .status(news.getStatus())
-                .createdAt(news.getCreatedAt())
-                .updatedAt(news.getUpdatedAt())
-                .build();
     }
 
     // Entity -> DTO 변환

@@ -9,24 +9,20 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CartItemDTO {
 
     private Long id;
-    private Long cartId;
     private Long productId;
     private String productName;
     private Long variantId;
     private String variantName;
     private List<CartItemOptionDTO> options;
-    private Integer quantity;
+    private int quantity;
     private BigDecimal price;
     private BigDecimal totalPrice;
     private String thumbnailUrl;

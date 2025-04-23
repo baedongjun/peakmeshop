@@ -23,7 +23,4 @@ public class AddressDTO {
     private boolean isDefault;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private String phoneNumber;
-    private String postalCode;
-    private String deliveryInstructions;
 }

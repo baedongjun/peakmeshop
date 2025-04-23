@@ -11,7 +11,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.peakmeshop.domain.entity.Point;
-import com.peakmeshop.domain.entity.PointHistory;
 
 import java.time.LocalDateTime;
 
@@ -90,22 +89,4 @@ public interface PointRepository extends JpaRepository<Point, Long> {
     
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Point p WHERE p.createdAt BETWEEN :start AND :end")
     long sumPointsByDateRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
-
-    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Point p WHERE p.member.id = :memberId AND p.expiryDate > :now")
-    Long getCurrentPointsByMemberId(@Param("memberId") Long memberId, @Param("now") LocalDateTime now);
-
-    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Point p WHERE p.member.id = :memberId AND p.expiryDate BETWEEN :now AND :expiry")
-    Long getExpiringPointsByMemberId(@Param("memberId") Long memberId, @Param("now") LocalDateTime now, @Param("expiry") LocalDateTime expiry);
-
-    @Query("SELECT p FROM Point p WHERE p.member.id = :memberId AND p.expiryDate > :now ORDER BY p.expiryDate ASC")
-    Page<Point> findAvailablePointsByMemberId(@Param("memberId") Long memberId, @Param("now") LocalDateTime now, Pageable pageable);
-
-    @Query("SELECT ph FROM PointHistory ph WHERE ph.member.id = :memberId ORDER BY ph.createdAt DESC")
-    Page<PointHistory> findPointHistoryByMemberId(@Param("memberId") Long memberId, Pageable pageable);
-
-    @Query("SELECT COALESCE(SUM(ph.amount), 0) FROM PointHistory ph WHERE ph.member.id = :memberId AND ph.type = 'EARN'")
-    Long getTotalEarnedPointsByMemberId(@Param("memberId") Long memberId);
-
-    @Query("SELECT COALESCE(SUM(ph.amount), 0) FROM PointHistory ph WHERE ph.member.id = :memberId AND ph.type = 'USE'")
-    Long getTotalUsedPointsByMemberId(@Param("memberId") Long memberId);
 }

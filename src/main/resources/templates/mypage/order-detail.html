@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layouts/shop-layout}">
+      layout:decorate="~{layouts/main-layout}">
 <head>
     <title>주문 상세 - PeakMeShop</title>
 </head>
@@ -19,7 +19,7 @@
                 <div class="col-lg-9">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h1 class="mypage-title">주문 상세</h1>
-                        <a th:href="@{/templates/shop/mypage/orders}" class="btn btn-outline-secondary">
+                        <a th:href="@{/mypage/orders}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-1"></i> 주문 목록으로
                         </a>
                     </div>
@@ -66,7 +66,7 @@
                                               th:text="${item.status.displayName}">결제완료</span>
                                     </div>
                                     <div class="order-item-actions mt-2" th:if="${item.status.name() == 'DELIVERED'}">
-                                        <a th:href="@{/templates/shop/mypage/reviews/write(orderItemId=${item.id})}" class="btn btn-sm btn-outline-primary">리뷰 작성</a>
+                                        <a th:href="@{/mypage/reviews/write(orderItemId=${item.id})}" class="btn btn-sm btn-outline-primary">리뷰 작성</a>
                                     </div>
                                     <div class="order-item-actions mt-2" th:if="${item.status.name() == 'PAYMENT_COMPLETED' || item.status.name() == 'PREPARING'}">
                                         <button class="btn btn-sm btn-outline-danger"

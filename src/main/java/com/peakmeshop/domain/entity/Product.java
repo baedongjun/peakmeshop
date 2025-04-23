@@ -95,9 +95,6 @@ public class Product {
     @Column(name = "sales_count")
     private Integer salesCount;
 
-    @Column(name = "view_count")
-    private Integer viewCount;
-
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -136,18 +133,6 @@ public class Product {
         updatedAt = LocalDateTime.now();
         if (cost == null) {
             cost = BigDecimal.ZERO;
-        }
-        if (viewCount == null) {
-            viewCount = 0;
-        }
-        if (salesCount == null) {
-            salesCount = 0;
-        }
-        if (reviewCount == null) {
-            reviewCount = 0;
-        }
-        if (averageRating == null) {
-            averageRating = 0.0;
         }
     }
 

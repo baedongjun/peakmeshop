@@ -8,70 +8,53 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.peakmeshop.api.dto.BrandDTO;
-import com.peakmeshop.api.dto.BrandNewsDTO;
-import com.peakmeshop.api.dto.CategoryDTO;
-import com.peakmeshop.domain.entity.Brand;
-import com.peakmeshop.domain.entity.BrandNews;
-import com.peakmeshop.domain.entity.Member;
-import com.peakmeshop.domain.repository.BrandNewsRepository;
-import com.peakmeshop.domain.repository.BrandRepository;
-import com.peakmeshop.domain.repository.MemberRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.stream.Collectors;
 
 public interface BrandService {
 
-    /**
-     * 브랜드 목록 조회
-     */
-    Page<BrandDTO> getBrands(String category, String keyword, Pageable pageable);
+    // 기본 CRUD 작업
+    BrandDTO createBrand(BrandDTO brandDTO);
 
-    /**
-     * 브랜드 카테고리 목록 조회
-     */
-    List<CategoryDTO> getBrandCategories();
+    BrandDTO updateBrand(Long id, BrandDTO brandDTO);
 
-    /**
-     * 브랜드 조회수 증가
-     */
-    void incrementViewCount(Long id);
-
-    /**
-     * 브랜드 팔로우 여부 확인
-     */
-    boolean isFollowing(String username, Long brandId);
-
-    /**
-     * 브랜드 뉴스 목록 조회
-     */
-    Page<BrandNewsDTO> getBrandNews(Long brandId, Pageable pageable);
-
-    /**
-     * 브랜드 뉴스 상세 조회
-     */
-    BrandNewsDTO getBrandNewsById(Long newsId);
-
-    /**
-     * 브랜드 뉴스 조회수 증가
-     */
-    void incrementNewsViewCount(Long newsId);
-
-    /**
-     * 이전 브랜드 뉴스 조회
-     */
-    BrandNewsDTO getPrevBrandNews(Long brandId, Long newsId);
-
-    /**
-     * 다음 브랜드 뉴스 조회
-     */
-    BrandNewsDTO getNextBrandNews(Long brandId, Long newsId);
-
-    /**
-     * 브랜드 상세 조회
-     */
     BrandDTO getBrandById(Long id);
+
+    Optional<BrandDTO> getBrandBySlug(String slug);
+
+    Page<BrandDTO> getAllBrandsPaged(Pageable pageable);
+
+    List<BrandDTO> getAllBrands();
+
+    boolean deleteBrand(Long id);
+
+    // 추가 기능
+    List<BrandDTO> getActiveBrands();
+
+    List<BrandDTO> getFeaturedBrands();
+
+    Page<BrandDTO> getActiveBrandsPaged(Pageable pageable);
+
+    Page<BrandDTO> getFeaturedBrandsPaged(Pageable pageable);
+
+    BrandDTO updateBrandStatus(Long id, boolean active);
+
+    BrandDTO updateBrandFeatured(Long id, boolean featured);
+
+    Page<BrandDTO> searchBrands(String keyword, Pageable pageable);
+
+    List<BrandDTO> getTopBrandsByProductCount(int limit);
+
+    int getProductCountByBrandId(Long brandId);
+
+    boolean isSlugUnique(String slug, Long brandId);
+
+    boolean isNameUnique(String name, Long brandId);
+
+    Page<BrandDTO> getAllBrands(Pageable pageable);
+
+    Map<String, Long> getBrandSummary();
+
+    Map<String, Long> getBrandSummary(Long brandId);
+
+    Map<String, Object> getBrandStatistics(String period, String startDate, String endDate);
 }
 

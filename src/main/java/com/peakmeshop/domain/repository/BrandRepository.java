@@ -8,14 +8,11 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.peakmeshop.domain.entity.Brand;
-import com.peakmeshop.domain.entity.Category;
-import com.peakmeshop.domain.entity.Member;
 
 @Repository
 public interface BrandRepository extends JpaRepository<Brand, Long> {
@@ -80,38 +77,5 @@ public interface BrandRepository extends JpaRepository<Brand, Long> {
      */
     @Query("SELECT COUNT(b) FROM Brand b WHERE b.createdAt BETWEEN :startOfMonth AND :endOfMonth")
     Long countMonthlyNewBrands(LocalDateTime startOfMonth, LocalDateTime endOfMonth);
-
-    List<Brand> findByNameContainingIgnoreCase(String name);
-
-    Page<Brand> findByCategoryAndNameContainingIgnoreCase(String category, String name, Pageable pageable);
-
-    Page<Brand> findByNameContainingIgnoreCase(String name, Pageable pageable);
-
-    @Query("SELECT DISTINCT b.category FROM Brand b WHERE b.category IS NOT NULL ORDER BY b.category")
-    List<String> findDistinctCategories();
-
-    @Query("SELECT b FROM Brand b WHERE b.category.code = :category AND " +
-           "(LOWER(b.name) LIKE %:keyword% OR LOWER(b.description) LIKE %:keyword%)")
-    Page<Brand> findByCategoryAndKeyword(@Param("category") String category, 
-                                       @Param("keyword") String keyword, 
-                                       Pageable pageable);
-
-    @Query("SELECT b FROM Brand b WHERE b.category.code = :category")
-    Page<Brand> findByCategory(@Param("category") String category, Pageable pageable);
-
-    @Query("SELECT b FROM Brand b WHERE LOWER(b.name) LIKE %:keyword% OR " +
-           "LOWER(b.description) LIKE %:keyword%")
-    Page<Brand> findByKeyword(@Param("keyword") String keyword, Pageable pageable);
-
-    @Query("SELECT DISTINCT c FROM Category c JOIN c.brands b")
-    List<Category> findAllCategories();
-
-    @Modifying
-    @Query("UPDATE Brand b SET b.viewCount = b.viewCount + 1 WHERE b.id = :id")
-    void incrementViewCount(@Param("id") Long id);
-
-    @Query("SELECT CASE WHEN COUNT(b) > 0 THEN true ELSE false END FROM Brand b " +
-           "JOIN b.followers f WHERE f = :member AND b.id = :brandId")
-    boolean existsByFollowerAndId(@Param("member") Member member, @Param("brandId") Long brandId);
 }
 

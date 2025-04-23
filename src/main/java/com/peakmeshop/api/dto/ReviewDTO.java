@@ -1,7 +1,6 @@
 package com.peakmeshop.api.dto;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -12,11 +11,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -60,6 +56,4 @@ public class ReviewDTO {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
-
-    private List<String> imageUrls;
 }

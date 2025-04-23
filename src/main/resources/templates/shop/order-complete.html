@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main-layout}">
+<head>
+    <title>주문 완료</title>
+    <th:block layout:fragment="css">
+        <style>
+            .order-complete-container {
+                min-height: 60vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                padding: 3rem 0;
+            }
+            .success-icon {
+                width: 100px;
+                height: 100px;
+                background-color: var(--success-color);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 2rem;
+                color: white;
+                font-size: 3rem;
+            }
+            .order-info-card {
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+                overflow: hidden;
+                border: none;
+                margin-bottom: 1.5rem;
+                max-width: 600px;
+                width: 100%;
+            }
+            .order-info-card-header {
+                background-color: var(--gray-100);
+                padding: 1rem 1.5rem;
+                border-bottom: 1px solid var(--gray-200);
+            }
+            .order-info-card-body {
+                padding: 1.5rem;
+            }
+            .order-info-item {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 0.5rem;
+                padding-bottom: 0.5rem;
+                border-bottom: 1px solid var(--gray-200);
+            }
+            .order-info-item:last-child {
+                margin-bottom: 0;
+                padding-bottom: 0;
+                border-bottom: none;
+            }
+            .order-info-label {
+                font-weight: 600;
+                color: var(--gray-700);
+            }
+            .order-info-value {
+                font-weight: 600;
+            }
+            .order-summary-card {
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+                overflow: hidden;
+                border: none;
+                margin-bottom: 1.5rem;
+                max-width: 600px;
+                width: 100%;
+            }
+            .order-summary-card-header {
+                background-color: var(--gray-100);
+                padding: 1rem 1.5rem;
+                border-bottom: 1px solid var(--gray-200);
+            }
+            .order-summary-card-body {
+                padding: 1.5rem;
+            }
+            .order-item {
+                display: flex;
+                align-items: center;
+                margin-bottom: 1rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid var(--gray-200);
+            }
+            .order-item:last-child {
+                margin-bottom: 0;
+                padding-bottom: 0;
+                border-bottom: none;
+            }
+            .order-item-img {
+                width: 60px;
+                height: 60px;
+                object-fit: cover;
+                border-radius: 0.5rem;
+                margin-right: 1rem;
+            }
+            .order-item-info {
+                flex: 1;
+            }
+            .order-item-name {
+                font-weight: 600;
+                margin-bottom: 0.25rem;
+            }
+            .order-item-price {
+                color: var(--gray-700);
+                font-size: 0.9rem;
+            }
+            .order-item-quantity {
+                font-weight: 600;
+                margin-left: 1rem;
+            }
+            .payment-summary {
+                margin-top: 1.5rem;
+                padding-top: 1.5rem;
+                border-top: 1px solid var(--gray-200);
+            }
+            .payment-summary-item {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 0.5rem;
+            }
+            .payment-summary-item:last-child {
+                margin-top: 0.5rem;
+                padding-top: 0.5rem;
+                border-top: 1px solid var(--gray-200);
+                font-weight: 700;
+                font-size: 1.1rem;
+            }
+            .action-buttons {
+                display: flex;
+                gap: 1rem;
+                margin-top: 2rem;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+<main layout:fragment="content">
+    <section class="py-5">
+        <div class="container">
+            <div class="order-complete-container">
+                <div class="success-icon">
+                    <i class="fas fa-check"></i>
+                </div>
+
+                <h2 class="mb-3">주문이 완료되었습니다!</h2>
+                <p class="text-muted mb-5">주문해주셔서 감사합니다. 주문 내역은 마이페이지에서 확인하실 수 있습니다.</p>
+
+                <!-- 주문 정보 카드 -->
+                <div class="order-info-card">
+                    <div class="order-info-card-header">
+                        <h4 class="mb-0">주문 정보</h4>
+                    </div>
+                    <div class="order-info-card-body">
+                        <div class="order-info-item">
+                            <div class="order-info-label">주문번호</div>
+                            <div class="order-info-value" th:text="${order != null ? order.orderNumber : 'ORD-1001'}">ORD-1001</div>
+                        </div>
+                        <div class="order-info-item">
+                            <div class="order-info-label">주문일자</div>
+                            <div class="order-info-value" th:text="${order != null ? order.orderDate : '2023-07-15 14:30:25'}">2023-07-15 14:30:25</div>
+                        </div>
+                        <div class="order-info-item">
+                            <div class="order-info-label">결제방법</div>
+                            <div class="order-info-value" th:text="${order != null ? order.paymentMethod : '신용카드'}">신용카드</div>
+                        </div>
+                        <div class="order-info-item">
+                            <div class="order-info-label">배송지</div>
+                            <div class="order-info-value" th:text="${order != null ? order.address : '서울시 강남구 테헤란로 123, 456동 789호'}">서울시 강남구 테헤란로 123, 456동 789호</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 주문 요약 카드 -->
+                <div class="order-summary-card">
+                    <div class="order-summary-card-header">
+                        <h4 class="mb-0">주문 상품 정보</h4>
+                    </div>
+                    <div class="order-summary-card-body">
+                        <!-- 주문 상품 목록 (실제로는 DB에서 가져올 것) -->
+                        <div th:each="item, stat : ${orderItems != null ? orderItems : {
+                                    {1, '프리미엄 데님 자켓', 52000, 1, '/placeholder.svg?height=60&width=60'},
+                                    {2, '캐주얼 티셔츠', 35000, 2, '/placeholder.svg?height=60&width=60'}
+                                }}"
+                             class="order-item">
+                            <img th:src="${item[4]}" class="order-item-img" th:alt="${item[1]}">
+                            <div class="order-item-info">
+                                <div class="order-item-name" th:text="${item[1]}">상품명</div>
+                                <div class="order-item-price" th:text="${'₩' + #numbers.formatInteger(item[2], 0, 'COMMA')}">₩52,000</div>
+                            </div>
+                            <div class="order-item-quantity" th:text="${item[3] + '개'}">1개</div>
+                        </div>
+
+                        <!-- 결제 요약 -->
+                        <div class="payment-summary">
+                            <div class="payment-summary-item">
+                                <span>상품 금액</span>
+                                <span th:text="${'₩' + #numbers.formatInteger(order != null ? order.subtotal : 122000, 0, 'COMMA')}">₩122,000</span>
+                            </div>
+                            <div class="payment-summary-item">
+                                <span>배송비</span>
+                                <span th:text="${'₩' + #numbers.formatInteger(order != null ? order.shippingFee : 3000, 0, 'COMMA')}">₩3,000</span>
+                            </div>
+                            <div class="payment-summary-item">
+                                <span>할인 금액</span>
+                                <span class="text-danger" th:text="${'-₩' + #numbers.formatInteger(order != null ? order.discount : 0, 0, 'COMMA')}">-₩0</span>
+                            </div>
+                            <div class="payment-summary-item">
+                                <span>총 결제금액</span>
+                                <span class="text-primary" th:text="${'₩' + #numbers.formatInteger(order != null ? order.totalAmount : 125000, 0, 'COMMA')}">₩125,000</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 액션 버튼 -->
+                <div class="action-buttons">
+                    <a th:href="@{/mypage/orders}" class="btn btn-primary">
+                        <i class="fas fa-list me-1"></i> 주문 내역 보기
+                    </a>
+                    <a th:href="@{/shop}" class="btn btn-outline-primary">
+                        <i class="fas fa-shopping-bag me-1"></i> 쇼핑 계속하기
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<th:block layout:fragment="script">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 주문 완료 페이지 로드 시 장바구니 비우기 (실제로는 서버에서 처리)
+            localStorage.removeItem('cartItemCount');
+
+            // 주문 정보 저장 (실제로는 서버에서 처리)
+            console.log('주문 완료 페이지 로드');
+        });
+    </script>
+</th:block>
+</body>
+</html>

@@ -12,7 +12,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.peakmeshop.domain.entity.Product;
-import com.peakmeshop.domain.entity.Category;
 
 import java.time.LocalDateTime;
 
@@ -21,21 +20,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<Product> findByCode(String code);
 
-    Optional<Product> findBySlug(String slug);
-
     Page<Product> findByCategoryId(Long categoryId, Pageable pageable);
 
     Page<Product> findByBrand(String brand, Pageable pageable);
 
-    Page<Product> findByBrandId(Long brandId, Pageable pageable);
-
-    Page<Product> findByIsActiveTrue(Pageable pageable);
-
     Page<Product> findByNameContainingOrDescriptionContaining(String name, String description, Pageable pageable);
 
     Page<Product> findByNameContainingOrDescriptionContainingAndCategoryId(String name, String description, Long categoryId, Pageable pageable);
-
-    Page<Product> findByNameContaining(String query, Pageable pageable);
 
     Page<Product> findByIsFeaturedTrueAndIsActiveTrue(Pageable pageable);
 
@@ -49,35 +40,30 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     long countByCategoryId(Long categoryId);
 
-    long countByStatus(String status);
+    @Query("SELECT p FROM Product p WHERE p.category.id = :categoryId AND p.id != :productId")
+    List<Product> findByCategoryIdAndIdNot(@Param("categoryId") Long categoryId, @Param("productId") Long productId, Pageable pageable);
 
-    long countByStockLessThanAndStockGreaterThan(int maxStock, int minStock);
+    @Query("SELECT p FROM Product p WHERE p.category.id = :categoryId ORDER BY p.salesCount DESC")
+    List<Product> findByCategoryIdOrderBySalesCountDesc(@Param("categoryId") Long categoryId, Pageable pageable);
 
-    long countByStockGreaterThan(Integer stock);
+    @Query("SELECT p FROM Product p ORDER BY p.salesCount DESC")
+    List<Product> findAllByOrderBySalesCountDesc(Pageable pageable);
 
-    long countByStockEquals(Integer stock);
+    Page<Product> findByBrandId(Long brandId, Pageable pageable);
 
-    long countByStockLessThanEqual(int stock);
-
-    long countByIsActiveTrue();
-
-    long countByIsActiveFalse();
-
-    long countByIsFeaturedTrue();
+    Page<Product> findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
 
     Page<Product> findByStockGreaterThan(Integer stock, Pageable pageable);
 
     Page<Product> findByStockEquals(Integer stock, Pageable pageable);
 
-    Page<Product> findByStockLessThanEqual(int stock, Pageable pageable);
+    Page<Product> findBySalePriceIsNotNull(Pageable pageable);
 
-    Page<Product> findByStockLessThanEqualAndIsActive(int stock, boolean isActive, Pageable pageable);
+    Page<Product> findBySalePriceIsNull(Pageable pageable);
 
-    List<Product> findLowStockProducts();
+    long countByStockGreaterThan(Integer stock);
 
-    List<Product> findOutOfStockProducts();
-
-    Page<Product> findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
+    long countByStockEquals(Integer stock);
 
     @Query("SELECT MIN(p.price) FROM Product p")
     BigDecimal findMinPrice();
@@ -85,11 +71,55 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT MAX(p.price) FROM Product p")
     BigDecimal findMaxPrice();
 
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.price BETWEEN :minPrice AND :maxPrice")
+    long countByPriceBetween(@Param("minPrice") double minPrice, @Param("maxPrice") double maxPrice);
+
+    List<Product> findTop10ByNameContainingOrderByName(String name);
+
+    @Query("SELECT p.category.name, COUNT(p) FROM Product p GROUP BY p.category.name")
+    List<Object[]> findProductCategoryDistribution();
+
+    long countByIsActiveTrue();
+    long countByIsActiveFalse();
+
+    long countByIsFeaturedTrue();
+    
+    long countByStockLessThanEqual(int stock);
+
     @Query("SELECT COALESCE(SUM(p.salePrice), 0) FROM Product p")
     BigDecimal calculateTotalSales();
-
+    
     @Query("SELECT COALESCE(AVG(p.averageRating), 0) FROM Product p WHERE p.averageRating > 0")
     BigDecimal calculateAverageRating();
+
+    @Query("SELECT p.category.name as category, COUNT(p) as count, SUM(p.price) as total " +
+           "FROM Product p WHERE p.category.name = :category " +
+           "AND p.createdAt BETWEEN :startDate AND :endDate " +
+           "GROUP BY p.category.name")
+    List<Object[]> findSalesByCategory(String category, LocalDateTime startDate, LocalDateTime endDate);
+
+    @Query("SELECT p.category.name as category, SUM(p.stock) as totalStock " +
+           "FROM Product p " +
+           "GROUP BY p.category.name")
+    List<Object[]> findStockByCategory();
+
+    @Query("SELECT p FROM Product p WHERE p.stock <= p.stockAlert AND p.stock > 0")
+    List<Product> findLowStockProducts();
+
+    @Query("SELECT p FROM Product p WHERE p.stock = 0")
+    List<Product> findOutOfStockProducts();
+
+    Optional<Product> findBySlug(String slug);
+    
+    List<Product> findByIsActiveTrueOrderByNameAsc();
+    
+    Page<Product> findByIsActiveTrue(Pageable pageable);
+
+    List<Product> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    long countByStatus(String status);
+
+    long countByStockLessThanAndStockGreaterThan(int maxStock, int minStock);
 
     @Query("SELECT COALESCE(AVG(p.price), 0) FROM Product p WHERE p.isActive = true")
     double calculateAveragePrice();
@@ -97,122 +127,73 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT COALESCE(SUM(p.stock), 0) FROM Product p WHERE p.isActive = true")
     long calculateTotalInventory();
 
-    @Query("SELECT p FROM Product p WHERE p.category.id = :categoryId AND p.brand.id IN :brandIds AND p.price BETWEEN :minPrice AND :maxPrice")
-    Page<Product> findByCategoryIdAndBrandIdInAndPriceBetween(
-            @Param("categoryId") Long categoryId,
-            @Param("brandIds") List<Long> brandIds,
-            @Param("minPrice") Integer minPrice,
-            @Param("maxPrice") Integer maxPrice,
-            Pageable pageable);
+    @Query("SELECT COALESCE(CAST(SUM(o.quantity) AS double) / " +
+           "NULLIF(AVG(p.stock), 0), 0) " +
+           "FROM OrderItem o " +
+           "JOIN o.product p " +
+           "WHERE o.createdAt BETWEEN :startDate AND :endDate")
+    double calculateInventoryTurnover(@Param("startDate") LocalDateTime startDate,
+                                    @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT p FROM Product p WHERE p.brand.id = :brandId AND p.category.id = :categoryId AND p.price BETWEEN :minPrice AND :maxPrice")
-    Page<Product> findByBrandIdAndCategoryIdAndPriceBetween(
-            @Param("brandId") Long brandId,
-            @Param("categoryId") Long categoryId,
-            @Param("minPrice") Integer minPrice,
-            @Param("maxPrice") Integer maxPrice,
-            Pageable pageable);
+    long countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
 
-    @Query("SELECT p FROM Product p WHERE p.category.id = :categoryId AND p.id != :productId ORDER BY p.viewCount DESC")
-    List<Product> findByCategoryIdAndIdNot(@Param("categoryId") Long categoryId, @Param("productId") Long productId, Pageable pageable);
+    @Query("SELECT COUNT(DISTINCT p) FROM OrderItem o JOIN o.product p " +
+            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+            "AND (SELECT COUNT(oi) FROM OrderItem oi WHERE oi.product = p) >= 10")
+    long countTopSellers(@Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT p FROM Product p WHERE p.category.id = :categoryId AND p.brand.id IN :brandIds AND p.createdAt BETWEEN :startDate AND :endDate ORDER BY p.salesCount DESC")
-    Page<Product> findBestSellersByCategoryAndBrandsAndPeriod(
-            @Param("categoryId") Long categoryId,
-            @Param("brandIds") List<Long> brandIds,
-            @Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate,
-            Pageable pageable);
+    @Query("SELECT p.category.name, " +
+           "COUNT(o) as count, " +
+           "COALESCE(SUM(o.price * o.quantity), 0) as total " +
+           "FROM OrderItem o " +
+           "JOIN o.product p " +
+           "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+           "GROUP BY p.category.name " +
+           "ORDER BY total DESC")
+    List<Object[]> findSalesByCategory(@Param("startDate") LocalDateTime startDate,
+                                     @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT p FROM Product p WHERE p.category.id = :categoryId AND p.brand.id IN :brandIds AND p.createdAt > :date")
-    Page<Product> findByCategoryIdAndBrandIdInAndCreatedAtAfter(
-            @Param("categoryId") Long categoryId,
-            @Param("brandIds") List<Long> brandIds,
-            @Param("date") LocalDateTime date,
-            Pageable pageable);
+    @Query("SELECT cast(o.createdAt as date) as date, " +
+           "COUNT(o) as count, " +
+           "COALESCE(SUM(o.price * o.quantity), 0) as total " +
+           "FROM OrderItem o " +
+           "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+           "GROUP BY cast(o.createdAt as date) " +
+           "ORDER BY date")
+    List<Object[]> findSalesTrend(@Param("startDate") LocalDateTime startDate,
+                                 @Param("endDate") LocalDateTime endDate);
 
-    Page<Product> findByCategory(Category category, Pageable pageable);
+    @Query("SELECT p FROM Product p " +
+           "WHERE EXISTS (SELECT o FROM OrderItem o WHERE o.product = p " +
+           "AND o.createdAt BETWEEN :startDate AND :endDate) " +
+           "ORDER BY p.salesCount DESC")
+    Page<Product> findTopProducts(@Param("startDate") LocalDateTime startDate,
+                                 @Param("endDate") LocalDateTime endDate,
+                                 Pageable pageable);
 
-    Page<Product> findByCategoryAndIdNot(Category category, Long productId, Pageable pageable);
+    @Query("SELECT p FROM Product p " +
+            "WHERE EXISTS (SELECT o FROM OrderItem o WHERE o.product = p " +
+            "AND o.createdAt BETWEEN :startDate AND :endDate) " +
+            "ORDER BY p.salesCount DESC")
+    List<Product> findTopProducts(@Param("startDate") LocalDateTime startDate,
+                                  @Param("endDate") LocalDateTime endDate);
 
-    @Query(value = """
-            SELECT p FROM Product p
-            WHERE p.id IN (
-                SELECT oi2.product.id
-                FROM OrderItem oi1
-                JOIN OrderItem oi2 ON oi1.order = oi2.order
-                WHERE oi1.product.id = :productId
-                AND oi2.product.id != :productId
-                GROUP BY oi2.product.id
-                ORDER BY COUNT(oi2.product.id) DESC
-            )
-            """)
-    Page<Product> findFrequentlyBoughtTogether(@Param("productId") Long productId, Pageable pageable);
+    /**
+     * 재고가 특정 수량 이하인 상품을 조회합니다.
+     * @param stock 재고 수량
+     * @param pageable 페이징 정보
+     * @return 재고가 부족한 상품 목록
+     */
+    Page<Product> findByStockLessThanEqual(int stock, Pageable pageable);
 
-    @Query(value = """
-            SELECT p FROM Product p
-            WHERE (:categoryId IS NULL OR p.category.id = :categoryId)
-            AND (:brandId IS NULL OR p.brand.id = :brandId)
-            AND (:minPrice IS NULL OR p.price >= :minPrice)
-            AND (:maxPrice IS NULL OR p.price <= :maxPrice)
-            AND (:inStock IS NULL OR (CASE WHEN p.stockQuantity > 0 THEN true ELSE false END) = :inStock)
-            """)
-    Page<Product> findByFilters(
-            @Param("categoryId") Long categoryId,
-            @Param("brandId") Long brandId,
-            @Param("minPrice") Integer minPrice,
-            @Param("maxPrice") Integer maxPrice,
-            @Param("inStock") Boolean inStock,
-            Pageable pageable);
-
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.category.id = :categoryId ORDER BY p.createdAt DESC")
-    Page<Product> findActiveByCategoryIdOrderByCreatedAtDesc(@Param("categoryId") Long categoryId, Pageable pageable);
-
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.brand.id = :brandId ORDER BY p.createdAt DESC")
-    Page<Product> findActiveByBrandIdOrderByCreatedAtDesc(@Param("brandId") Long brandId, Pageable pageable);
-
-    @Query("SELECT DISTINCT p.brand FROM Product p WHERE p.category.id = :categoryId AND p.isActive = true")
-    List<String> findDistinctBrandsByCategoryId(@Param("categoryId") Long categoryId);
-
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.salePrice IS NOT NULL AND p.salePrice > 0 ORDER BY (p.price - p.salePrice)/p.price DESC")
-    Page<Product> findActiveProductsWithHighestDiscountPercentage(Pageable pageable);
-
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.averageRating >= :minRating ORDER BY p.averageRating DESC")
-    Page<Product> findActiveByMinimumRating(@Param("minRating") Double minRating, Pageable pageable);
-
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.tags LIKE %:tag% ORDER BY p.createdAt DESC")
-    Page<Product> findActiveByTag(@Param("tag") String tag, Pageable pageable);
-
-    @Query("SELECT p FROM Product p WHERE p.isActive = true AND FUNCTION('MONTH', p.createdAt) = :month AND FUNCTION('YEAR', p.createdAt) = :year")
-    Page<Product> findActiveByMonthAndYear(@Param("month") int month, @Param("year") int year, Pageable pageable);
-
-    @Query(value = """
-            SELECT DISTINCT p.* FROM products p
-            LEFT JOIN order_items oi ON p.id = oi.product_id
-            LEFT JOIN orders o ON oi.order_id = o.id
-            WHERE o.member_id = :memberId
-            AND p.status = 'ACTIVE'
-            ORDER BY 
-                CASE 
-                    WHEN o.created_at IS NOT NULL THEN 1
-                    ELSE 2
-                END,
-                o.created_at DESC
-            LIMIT 10
-            """, nativeQuery = true)
-    List<Product> findRecommendedProducts(@Param("memberId") Long memberId);
-
-    List<Product> findByNameContainingIgnoreCase(String keyword);
-
-    Page<Product> findByStatus(String status, Pageable pageable);
-
-    @Query("SELECT p FROM Product p WHERE " +
-           "(:category IS NULL OR p.category.id = :category) AND " +
-           "(:status IS NULL OR p.status = :status) AND " +
-           "(:keyword IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    Page<Product> findProducts(@Param("category") Long category,
-                             @Param("status") String status,
-                             @Param("keyword") String keyword,
-                             Pageable pageable);
+    /**
+     * 재고가 특정 수량 이하이고 활성화된 상품을 조회합니다.
+     * @param stock 재고 수량
+     * @param isActive 활성화 여부
+     * @param pageable 페이징 정보
+     * @return 재고가 부족한 활성화된 상품 목록
+     */
+    Page<Product> findByStockLessThanEqualAndIsActive(int stock, boolean isActive, Pageable pageable);
 
 }

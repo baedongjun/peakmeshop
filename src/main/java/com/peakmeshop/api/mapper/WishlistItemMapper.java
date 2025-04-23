@@ -11,13 +11,5 @@ public interface WishlistItemMapper {
     
     WishlistItemDTO toDto(WishlistItem wishlistItem);
     
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
     WishlistItem toEntity(WishlistItemDTO wishlistItemDTO);
-    
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    void updateWishlistItemFromDto(WishlistItemDTO wishlistItemDTO, @MappingTarget WishlistItem wishlistItem);
-} 
+}

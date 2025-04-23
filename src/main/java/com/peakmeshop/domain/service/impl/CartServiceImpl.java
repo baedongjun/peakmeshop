@@ -695,10 +695,10 @@ public class CartServiceImpl implements CartService {
                     .map(Images -> {
                         ProductImage productImage = new ProductImage();
                         productImage.setUrl(Images.getUrl());
-                        productImage.setIsMain(Images.getIsMain());
+                        productImage.setThumbnail(Images.isThumbnail());
                         return productImage;
                     })
-                    .filter(image -> image.getIsMain()) // 람다 표현식 사용
+                    .filter(image -> image.isThumbnail()) // 람다 표현식 사용
                     .findFirst()
                     .orElseGet(() -> {
                         ProductImage defaultImage = new ProductImage();

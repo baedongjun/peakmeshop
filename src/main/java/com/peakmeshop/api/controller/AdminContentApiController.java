@@ -1,5 +1,6 @@
 package com.peakmeshop.api.controller;
 
+import com.peakmeshop.api.dto.FaqDTO;
 import com.peakmeshop.domain.entity.Faq;
 import com.peakmeshop.domain.entity.Inquiry;
 import com.peakmeshop.domain.service.FaqService;
@@ -22,24 +23,24 @@ public class AdminContentApiController {
 
     // FAQ 관련 API
     @GetMapping("/faqs")
-    public ResponseEntity<Page<Faq>> getFaqs(
+    public ResponseEntity<Page<FaqDTO>> getFaqs(
             @RequestParam(required = false) String category,
             Pageable pageable) {
         return ResponseEntity.ok(faqService.getFaqListByCategory(category, pageable));
     }
 
     @GetMapping("/faqs/{id}")
-    public ResponseEntity<Faq> getFaq(@PathVariable Long id) {
+    public ResponseEntity<FaqDTO> getFaq(@PathVariable Long id) {
         return ResponseEntity.ok(faqService.getFaqById(id));
     }
 
     @PostMapping("/faqs")
-    public ResponseEntity<Faq> createFaq(@RequestBody Faq faq) {
+    public ResponseEntity<FaqDTO> createFaq(@RequestBody Faq faq) {
         return ResponseEntity.ok(faqService.createFaq(faq));
     }
 
     @PutMapping("/faqs/{id}")
-    public ResponseEntity<Faq> updateFaq(@PathVariable Long id, @RequestBody Faq faq) {
+    public ResponseEntity<FaqDTO> updateFaq(@PathVariable Long id, @RequestBody Faq faq) {
         return ResponseEntity.ok(faqService.updateFaq(id, faq));
     }
 

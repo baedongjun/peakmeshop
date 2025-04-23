@@ -11,13 +11,6 @@ public interface InventoryHistoryMapper {
     
     InventoryHistoryDTO toDto(InventoryHistory inventoryHistory);
     
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
     InventoryHistory toEntity(InventoryHistoryDTO inventoryHistoryDTO);
     
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    void updateInventoryHistoryFromDto(InventoryHistoryDTO inventoryHistoryDTO, @MappingTarget InventoryHistory inventoryHistory);
-} 
+}

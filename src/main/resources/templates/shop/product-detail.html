@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상품 상세 - Peak Me Shop</title>
+
+    <!-- 공통 스타일시트 및 스크립트 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+
+    <!-- 상품 상세 페이지 스타일 -->
+    <style>
+        /* 상품 이미지 갤러리 */
+        .product-gallery {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .main-image-container {
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            background-color: #f8f9fa;
+        }
+
+        .main-image {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .main-image:hover {
+            transform: scale(1.05);
+        }
+
+        .product-thumbnails {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .product-thumbnail {
+            width: 80px;
+            height: 80px;
+            border-radius: 0.25rem;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+            opacity: 0.7;
+            transition: all 0.2s ease;
+        }
+
+        .product-thumbnail.active {
+            border-color: #0d6efd;
+            opacity: 1;
+        }
+
+        .product-thumbnail:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .product-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 상품 정보 */
+        .product-title {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-rating {
+            margin-bottom: 1rem;
+        }
+
+        .product-rating .fas.fa-star,
+        .product-rating .fas.fa-star-half-alt {
+            color: #ffc107;
+        }
+
+        .product-rating .far.fa-star {
+            color: #e4e5e9;
+        }
+
+        .product-price {
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .original-price {
+            text-decoration: line-through;
+            color: #6c757d;
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .current-price {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .product-description {
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .product-meta {
+            margin-bottom: 1.5rem;
+        }
+
+        .product-meta-item {
+            margin-bottom: 0.5rem;
+        }
+
+        /* 색상 및 사이즈 옵션 */
+        .product-options {
+            margin-bottom: 1.5rem;
+        }
+
+        .option-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .color-options {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #e9ecef;
+            transition: all 0.2s ease;
+        }
+
+        .color-option.active {
+            border-color: #0d6efd;
+            transform: scale(1.1);
+        }
+
+        .size-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .size-option {
+            padding: 0.5rem 1rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .size-option.active {
+            background-color: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+
+        /* 수량 선택 */
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .quantity-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            cursor: pointer;
+        }
+
+        .quantity-input {
+            width: 60px;
+            height: 40px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            border-left: none;
+            border-right: none;
+        }
+
+        /* 액션 버튼 */
+        .product-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .add-to-cart-btn {
+            flex: 1;
+            padding: 0.75rem 1.5rem;
+        }
+
+        .wishlist-btn {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .wishlist-btn:hover {
+            background-color: #e9ecef;
+        }
+
+        /* 탭 */
+        .product-tabs {
+            margin-top: 3rem;
+        }
+
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-btn {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            border-bottom-color: #0d6efd;
+            color: #0d6efd;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        /* 리뷰 */
+        .review-item {
+            padding: 1.5rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .review-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .review-user-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .review-user-name {
+            margin-bottom: 0.25rem;
+        }
+
+        .review-date {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        .review-content {
+            margin-bottom: 1rem;
+        }
+
+        .review-images {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .review-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 0.25rem;
+            cursor: pointer;
+        }
+
+        /* 관련 상품 */
+        .related-products {
+            margin-top: 3rem;
+        }
+
+        /* 이미지 모달 */
+        .modal-image {
+            width: 100%;
+            height: auto;
+        }
+
+        /* 상품 없음 메시지 */
+        .product-not-found {
+            text-align: center;
+            padding: 3rem;
+            background-color: #f8f9fa;
+            border-radius: 0.5rem;
+            margin: 2rem 0;
+        }
+    </style>
+</head>
+<body>
+<!-- 헤더 포함 -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- 메인 컨텐츠 -->
+<main class="container py-5">
+    <!-- 상품 없음 메시지 -->
+    <div id="productNotFound" class="product-not-found" style="display: none;">
+        <h2>상품을 찾을 수 없습니다</h2>
+        <p>요청하신 상품이 존재하지 않거나 삭제되었습니다.</p>
+        <a href="/shop" class="btn btn-primary mt-3">상품 목록으로 돌아가기</a>
+    </div>
+
+    <!-- 상품 상세 정보 -->
+    <div id="productDetail">
+        <div class="row">
+            <!-- 상품 이미지 갤러리 -->
+            <div class="col-lg-6">
+                <div class="product-gallery">
+                    <div class="main-image-container">
+                        <img id="mainProductImage" src="/placeholder.svg?height=600&width=600" alt="상품 이미지" class="main-image">
+                    </div>
+                    <div id="productThumbnails" class="product-thumbnails">
+                        <!-- 썸네일 이미지는 JavaScript로 동적 생성 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 상품 정보 -->
+            <div class="col-lg-6">
+                <h1 id="productName" class="product-title">상품명</h1>
+
+                <div id="productRating" class="product-rating">
+                    <!-- 별점은 JavaScript로 동적 생성 -->
+                </div>
+
+                <div id="productPrice" class="product-price">
+                    <!-- 가격은 JavaScript로 동적 생성 -->
+                </div>
+
+                <div class="product-description">
+                    <p id="productDescription">상품 설명</p>
+                </div>
+
+                <div class="product-meta">
+                    <div class="product-meta-item">
+                        <span class="fw-bold">SKU:</span>
+                        <span id="productSku">N/A</span>
+                    </div>
+                    <div class="product-meta-item">
+                        <span class="fw-bold">카테고리:</span>
+                        <span id="productCategory">N/A</span>
+                    </div>
+                    <div class="product-meta-item">
+                        <span class="fw-bold">태그:</span>
+                        <span id="productTags">N/A</span>
+                    </div>
+                    <div class="product-meta-item">
+                        <span class="fw-bold">재고:</span>
+                        <span id="productStock">N/A</span>
+                    </div>
+                </div>
+
+                <div class="product-options">
+                    <!-- 색상 옵션 -->
+                    <div class="mb-3">
+                        <h6 class="option-title">색상</h6>
+                        <div id="productColors" class="color-options">
+                            <!-- 색상 옵션은 JavaScript로 동적 생성 -->
+                        </div>
+                        <input type="hidden" id="selectedColorId">
+                        <input type="hidden" id="selectedColorName">
+                    </div>
+
+                    <!-- 사이즈 옵션 -->
+                    <div class="mb-3">
+                        <h6 class="option-title">사이즈</h6>
+                        <div id="productSizes" class="size-options">
+                            <!-- 사이즈 옵션은 JavaScript로 동적 생성 -->
+                        </div>
+                        <input type="hidden" id="selectedSizeId">
+                        <input type="hidden" id="selectedSizeName">
+                    </div>
+
+                    <!-- 수량 선택 -->
+                    <div class="mb-3">
+                        <h6 class="option-title">수량</h6>
+                        <div class="quantity-selector">
+                            <button id="decreaseQuantity" class="quantity-btn">-</button>
+                            <input id="productQuantity" type="number" min="1" max="10" value="1" class="quantity-input">
+                            <button id="increaseQuantity" class="quantity-btn">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 액션 버튼 -->
+                <div class="product-actions">
+                    <button id="addToCartBtn" class="btn btn-primary add-to-cart-btn">
+                        <i class="fas fa-shopping-cart me-2"></i> 장바구니에 담기
+                    </button>
+                    <button id="addToWishlistBtn" class="wishlist-btn">
+                        <i class="far fa-heart"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 상품 탭 -->
+        <div class="product-tabs">
+            <div class="tab-buttons">
+                <div class="tab-btn active" data-tab="description">상품 설명</div>
+                <div class="tab-btn" data-tab="additional-info">추가 정보</div>
+                <div class="tab-btn" data-tab="reviews">리뷰</div>
+            </div>
+
+            <!-- 상품 설명 탭 -->
+            <div id="description" class="tab-content" style="display: block;">
+                <div class="row">
+                    <div class="col-12">
+                        <div id="productFullDescription">
+                            <!-- 상세 설명은 JavaScript로 동적 생성 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 추가 정보 탭 -->
+            <div id="additional-info" class="tab-content">
+                <div class="row">
+                    <div class="col-12">
+                        <table class="table">
+                            <tbody id="productAttributes">
+                            <!-- 추가 정보는 JavaScript로 동적 생성 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 리뷰 탭 -->
+            <div id="reviews" class="tab-content">
+                <div class="row">
+                    <div class="col-12">
+                        <div id="productReviews">
+                            <!-- 리뷰는 JavaScript로 동적 생성 -->
+                        </div>
+
+                        <!-- 리뷰 페이지네이션 -->
+                        <nav aria-label="리뷰 페이지 네비게이션" class="mt-4">
+                            <ul id="reviewPagination" class="pagination justify-content-center">
+                                <!-- 페이지네이션은 JavaScript로 동적 생성 -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 관련 상품 -->
+        <div class="related-products">
+            <h3 class="mb-4">관련 상품</h3>
+            <div id="relatedProducts" class="row">
+                <!-- 관련 상품은 JavaScript로 동적 생성 -->
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 이미지 모달 -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">이미지 보기</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <img id="modalImage" src="/placeholder.svg" alt="확대 이미지" class="modal-image">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 푸터 포함 -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<!-- 스크립트 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/product-detail.js}"></script>
+</body>
+</html>
+

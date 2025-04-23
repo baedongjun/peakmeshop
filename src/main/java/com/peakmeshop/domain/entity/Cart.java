@@ -10,9 +10,10 @@ import java.util.List;
 @Entity
 @Table(name = "carts")
 @Getter
-@Builder
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Cart {
 
     @Id
@@ -30,23 +31,14 @@ public class Cart {
     @JoinColumn(name = "coupon_id")
     private Coupon coupon;
 
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CartItem> items = new ArrayList<>();
-
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CartItem> items = new ArrayList<>();
 
     public void addItem(CartItem item) {
         items.add(item);

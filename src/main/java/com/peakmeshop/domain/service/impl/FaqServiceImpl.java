@@ -22,41 +22,36 @@ public class FaqServiceImpl implements FaqService {
 
     @Override
     public Page<FaqDTO> getFaqList(Pageable pageable) {
-        return faqRepository.findAll(pageable).map(faqMapper::toDto);
+        return faqRepository.findAll(pageable).map(faqMapper::toDTO);
     }
 
     @Override
     public Page<FaqDTO> getFaqListByCategory(String category, Pageable pageable) {
-        return faqRepository.findByCategory(category, pageable).map(faqMapper::toDto);
+        return faqRepository.findByCategory(category, pageable).map(faqMapper::toDTO);
     }
 
     @Override
     public FaqDTO getFaqById(Long id) {
         Faq faq = faqRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("FAQ를 찾을 수 없습니다. ID: " + id));
-        return faqMapper.toDto(faq);
+        return faqMapper.toDTO(faq);
     }
 
     @Override
-    public FaqDTO createFaq(FaqDTO faqDTO) {
+    public FaqDTO createFaq(Faq faq) {
         // 새로운 FAQ의 순서를 마지막으로 설정
         Integer maxOrder = faqRepository.findMaxSortOrder();
         int newOrder = (maxOrder == null) ? 1 : maxOrder + 1;
         
-        Faq faq = faqMapper.toEntity(faqDTO);
         faq.setSortOrder(newOrder);
         faq.setActive(true);
         
-        return faqMapper.toDto(faqRepository.save(faq));
+        return faqMapper.toDTO(faqRepository.save(faq));
     }
 
     @Override
-    public FaqDTO updateFaq(Long id, FaqDTO faqDTO) {
-        Faq faq = faqRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("FAQ를 찾을 수 없습니다. ID: " + id));
-        
-        faqMapper.updateFaqFromDto(faqDTO, faq);
-        return faqMapper.toDto(faqRepository.save(faq));
+    public FaqDTO updateFaq(Long id, Faq faq) {
+        return faqMapper.toDTO(faqRepository.save(faq));
     }
 
     @Override
