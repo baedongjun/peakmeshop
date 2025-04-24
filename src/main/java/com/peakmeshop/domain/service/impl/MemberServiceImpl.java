@@ -375,6 +375,8 @@ public class MemberServiceImpl implements MemberService {
     public MemberSummaryDTO getTotalMemberSummary() {
         return MemberSummaryDTO.createTotalSummary(
             memberRepository.count(),
+            memberRepository.countByCreatedAtBetween(LocalDateTime.now().minusMonths(1), LocalDateTime.now()),
+            memberRepository.countByCreatedAtBetween(LocalDateTime.now().minusDays(1), LocalDateTime.now()),
             memberRepository.countByStatus(Member.STATUS_ACTIVE),
             memberRepository.countByStatus(Member.STATUS_INACTIVE),
             memberRepository.countByStatus(Member.STATUS_BLOCKED),
@@ -425,14 +427,18 @@ public class MemberServiceImpl implements MemberService {
             end = LocalDate.parse(endDate).atTime(23, 59, 59);
         }
 
-        long newMembers = memberRepository.countByCreatedAtBetween(start, end);
+        long totalMembers = memberRepository.count();
+        long monthlyNewMembers = memberRepository.countByCreatedAtBetween(LocalDateTime.now().minusMonths(1), LocalDateTime.now());
+        long dailyNewMembers = memberRepository.countByCreatedAtBetween(LocalDateTime.now().minusDays(1), LocalDateTime.now());
         long statusChanges = memberRepository.countStatusChangesBetween(start, end);
         long activeMembers = memberRepository.countByStatus(Member.STATUS_ACTIVE);
         long inactiveMembers = memberRepository.countByStatus(Member.STATUS_INACTIVE);
         long blockedMembers = memberRepository.countByStatus(Member.STATUS_BLOCKED);
 
         return MemberSummaryDTO.createTotalSummary(
-            newMembers + activeMembers + inactiveMembers + blockedMembers,
+            totalMembers,
+            monthlyNewMembers,
+            dailyNewMembers,
             activeMembers,
             inactiveMembers,
             blockedMembers,

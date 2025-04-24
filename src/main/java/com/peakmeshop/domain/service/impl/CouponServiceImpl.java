@@ -75,42 +75,29 @@ public class CouponServiceImpl implements CouponService {
     @Transactional(readOnly = true)
     public CouponSummaryDTO getCouponSummary(String period, String startDate, String endDate) {
         LocalDateTime start = null;
-        LocalDateTime end = null;
+        LocalDateTime end = LocalDateTime.now();
 
-        if (startDate != null && endDate != null) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            LocalDate localStartDate = LocalDate.parse(startDate, formatter);
-            LocalDate localEndDate = LocalDate.parse(endDate, formatter);
-            start = localStartDate.atStartOfDay();
-            end = localEndDate.plusDays(1).atStartOfDay();
-        } else {
-            LocalDateTime now = LocalDateTime.now();
-            if (period != null) {
-                switch (period) {
-                    case "daily":
-                        start = now.toLocalDate().atStartOfDay();
-                        end = now.plusDays(1).toLocalDate().atStartOfDay();
-                        break;
-                    case "weekly":
-                        start = now.minusWeeks(1).toLocalDate().atStartOfDay();
-                        end = now.plusDays(1).toLocalDate().atStartOfDay();
-                        break;
-                    case "monthly":
-                        start = now.minusMonths(1).toLocalDate().atStartOfDay();
-                        end = now.plusDays(1).toLocalDate().atStartOfDay();
-                        break;
-                    case "yearly":
-                        start = now.minusYears(1).toLocalDate().atStartOfDay();
-                        end = now.plusDays(1).toLocalDate().atStartOfDay();
-                        break;
-                    default:
-                        start = now.minusMonths(1).toLocalDate().atStartOfDay();
-                        end = now.plusDays(1).toLocalDate().atStartOfDay();
-                }
-            } else {
-                start = now.minusMonths(1).toLocalDate().atStartOfDay();
-                end = now.plusDays(1).toLocalDate().atStartOfDay();
+        if (period != null) {
+            switch (period) {
+                case "daily":
+                    start = end.minusDays(30);
+                    break;
+                case "weekly":
+                    start = end.minusWeeks(12);
+                    break;
+                case "monthly":
+                    start = end.minusMonths(12);
+                    break;
+                case "yearly":
+                    start = end.minusYears(5);
+                    break;
+                default:
+                    start = LocalDate.parse(startDate).atStartOfDay();
+                    end = LocalDate.parse(endDate).atTime(23, 59, 59);
             }
+        } else {
+            start = LocalDate.parse(startDate).atStartOfDay();
+            end = LocalDate.parse(endDate).atTime(23, 59, 59);
         }
 
         long totalCoupons = couponRepository.countByCreatedAtBetween(start, end);

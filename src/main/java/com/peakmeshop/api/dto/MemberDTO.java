@@ -61,7 +61,7 @@ public class MemberDTO {
     private String providerType;
     private String imageUrl;
     private Integer orderCount;
-    private BigDecimal totalOrderAmount;
+    private Double totalOrderAmount;
     private LocalDate birthDate;
     private String gender;
     private LocalDateTime createdAt;

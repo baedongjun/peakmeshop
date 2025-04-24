@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 public record MemberSummaryDTO(
     // 전체 회원 통계
     long total,                  // 전체 회원 수
+    long monthlyNewMembers,      // 월간 신규 회원 수
+    long dailyNewMembers,        // 일간 신규 회원 수
     long active,                 // 활성 회원 수
     long inactive,              // 비활성 회원 수
     long blocked,               // 차단된 회원 수
@@ -18,6 +20,8 @@ public record MemberSummaryDTO(
 ) {
     public static MemberSummaryDTO createTotalSummary(
             long total,
+            long monthlyNewMembers,
+            long dailyNewMembers,
             long active,
             long inactive,
             long blocked,
@@ -25,6 +29,8 @@ public record MemberSummaryDTO(
     ) {
         return new MemberSummaryDTO(
                 total,
+                monthlyNewMembers,
+                dailyNewMembers,
                 active,
                 inactive,
                 blocked,
@@ -43,6 +49,8 @@ public record MemberSummaryDTO(
             LocalDateTime lastOrderDate
     ) {
         return new MemberSummaryDTO(
+                0,
+                0,
                 0,
                 0,
                 0,
