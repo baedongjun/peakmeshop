@@ -15,8 +15,6 @@ public interface StatisticsRepository extends JpaRepository<Statistics, Long> {
     
     Optional<Statistics> findByTypeAndDate(String type, LocalDate date);
     
-    List<Statistics> findByTypeBetweenDates(String type, LocalDate startDate, LocalDate endDate);
-    
     @Query("SELECT s FROM Statistics s WHERE s.type = :type AND s.date BETWEEN :startDate AND :endDate")
     List<Statistics> findByTypeAndDateBetween(
             @Param("type") String type,

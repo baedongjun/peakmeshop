@@ -15,7 +15,7 @@ public interface ProductOptionRepository extends JpaRepository<ProductOption, Lo
 
     List<ProductOption> findByProductId(Long productId);
 
-    List<ProductOption> findByProductIdAndNameAndValues(Long productId, String name, List<ProductOptionValue> values);
+    List<ProductOption> findByProductIdAndNameAndOptionValues(Long productId, String name, List<ProductOptionValue> values);
 
     Page<ProductOption> findByProductId(Long productId, Pageable pageable);
 }

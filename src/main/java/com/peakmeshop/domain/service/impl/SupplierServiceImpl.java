@@ -51,7 +51,7 @@ public class SupplierServiceImpl implements SupplierService {
     @Override
     @Transactional(readOnly = true)
     public Page<SupplierDTO> getActiveSuppliers(Pageable pageable) {
-        return supplierRepository.findByStatus("ACTIVE", pageable)
+        return supplierRepository.findByIsActiveTrue(pageable)
                 .map(supplierMapper::toDTO);
     }
 

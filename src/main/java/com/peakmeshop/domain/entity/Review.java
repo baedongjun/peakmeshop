@@ -55,7 +55,7 @@ public class Review {
 
     private LocalDateTime adminReplyDate;
 
-    @OneToMany(mappedBy = "reviews", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReviewImage> images = new ArrayList<>();
 
     @Column(nullable = false)

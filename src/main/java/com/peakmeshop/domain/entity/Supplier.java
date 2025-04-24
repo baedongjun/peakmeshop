@@ -28,6 +28,8 @@ public class Supplier {
     @Column(unique = true)
     private String code;
 
+    private String businessNumber;
+
     private String email;
 
     private String phone;

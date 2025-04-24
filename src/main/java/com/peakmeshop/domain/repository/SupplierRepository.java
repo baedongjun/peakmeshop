@@ -17,12 +17,12 @@ public interface SupplierRepository extends JpaRepository<Supplier, Long> {
 
     Optional<Supplier> findByCode(String code);
 
-    Page<Supplier> findByStatus(String status, Pageable pageable);
+    Page<Supplier> findByIsActiveTrue(Pageable pageable);
 
     List<Supplier> findByNameContainingIgnoreCaseOrCodeContainingIgnoreCase(String name, String code);
 
     // 활성 공급사 수 조회
-    @Query("SELECT COUNT(s) FROM Supplier s WHERE s.status = 'ACTIVE'")
+    @Query("SELECT COUNT(s) FROM Supplier s WHERE s.isActive = true")
     long countActiveSuppliers();
 
     // 이번 달 신규 등록 공급사 수 조회
