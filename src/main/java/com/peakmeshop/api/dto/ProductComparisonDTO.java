@@ -18,7 +18,7 @@ public class ProductComparisonDTO {
 
     private Long id;
     private Long memberId;
-    private List<ProductDTO> products;
+    private List<Long> productIds;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

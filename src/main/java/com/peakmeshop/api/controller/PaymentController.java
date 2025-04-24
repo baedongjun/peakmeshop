@@ -2,6 +2,7 @@ package com.peakmeshop.api.controller;
 
 import java.util.Map;
 
+import com.peakmeshop.api.dto.PaymentDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,16 +26,16 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping("/{paymentMethod}/request")
-    public ResponseEntity<?> requestPayment(
+    public ResponseEntity<PaymentDTO> requestPayment(
             @PathVariable String paymentMethod,
             @RequestBody Map<String, Object> paymentInfo) {
 
-        Map<String, Object> response = paymentService.requestPayment(paymentMethod, paymentInfo);
+        PaymentDTO response = paymentService.requestPayment(paymentMethod, paymentInfo);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{paymentMethod}/verify")
-    public ResponseEntity<?> verifyPayment(
+    public ResponseEntity<PaymentDTO> verifyPayment(
             @PathVariable String paymentMethod,
             @RequestBody Map<String, Object> verifyInfo) {
 
@@ -42,26 +43,26 @@ public class PaymentController {
         String orderId = (String) verifyInfo.get("orderId");
         Long amount = Long.valueOf(verifyInfo.get("amount").toString());
 
-        Map<String, Object> response = paymentService.verifyPayment(paymentMethod, paymentKey, orderId, amount);
+        PaymentDTO response = paymentService.verifyPayment(paymentMethod, paymentKey, orderId, amount);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{paymentMethod}/cancel")
-    public ResponseEntity<?> cancelPayment(
+    public ResponseEntity<PaymentDTO> cancelPayment(
             @PathVariable String paymentMethod,
             @RequestParam String paymentKey,
             @RequestBody Map<String, Object> cancelInfo) {
 
-        Map<String, Object> response = paymentService.cancelPayment(paymentMethod, paymentKey, cancelInfo);
+        PaymentDTO response = paymentService.cancelPayment(paymentMethod, paymentKey, cancelInfo);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{paymentMethod}/details")
-    public ResponseEntity<?> getPaymentDetails(
+    public ResponseEntity<PaymentDTO> getPaymentDetails(
             @PathVariable String paymentMethod,
             @RequestParam String paymentKey) {
 
-        Map<String, Object> response = paymentService.getPaymentDetails(paymentMethod, paymentKey);
+        PaymentDTO response = paymentService.getPaymentDetails(paymentMethod, paymentKey);
         return ResponseEntity.ok(response);
     }
 

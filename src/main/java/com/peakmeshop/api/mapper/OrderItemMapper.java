@@ -12,11 +12,13 @@ import org.mapstruct.*;
 )
 public interface OrderItemMapper {
     
-    @Mapping(target = "orderId", source = "order.id")
     @Mapping(target = "productId", source = "product.id")
+    @Mapping(target = "productName", source = "product.name")
+    @Mapping(target = "orderId", source = "order.id")
+    @Mapping(target = "productImage", source = "product.mainImage")
     OrderItemDTO toDTO(OrderItem orderItem);
 
-    @Mapping(target = "order", ignore = true)
     @Mapping(target = "product", ignore = true)
+    @Mapping(target = "order", ignore = true)
     OrderItem toEntity(OrderItemDTO dto);
 } 

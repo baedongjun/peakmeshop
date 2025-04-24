@@ -6,15 +6,14 @@ import org.mapstruct.*;
 
 @Mapper(
     componentModel = "spring",
-    uses = {BaseMapper.class, EmailTemplateMapper.class},
+    uses = {BaseMapper.class},
     nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
     nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
 )
 public interface EmailMapper {
     
-    @Mapping(target = "templateId", source = "template.id")
     EmailDTO toDTO(Email email);
 
-    @Mapping(target = "template", ignore = true)
+    @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
     Email toEntity(EmailDTO dto);
 } 

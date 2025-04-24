@@ -14,6 +14,7 @@ import com.peakmeshop.api.dto.ProductAttributeDTO;
 import com.peakmeshop.domain.entity.ProductAttribute;
 import com.peakmeshop.domain.repository.ProductAttributeRepository;
 import com.peakmeshop.domain.service.ProductAttributeService;
+import com.peakmeshop.api.mapper.ProductAttributeMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,26 +26,27 @@ import lombok.extern.slf4j.Slf4j;
 public class ProductAttributeServiceImpl implements ProductAttributeService {
 
     private final ProductAttributeRepository productAttributeRepository;
+    private final ProductAttributeMapper productAttributeMapper;
 
     @Override
     @Transactional(readOnly = true)
     public Page<ProductAttributeDTO> getAllAttributes(Pageable pageable) {
         return productAttributeRepository.findAll(pageable)
-                .map(this::convertToDTO);
+                .map(productAttributeMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<ProductAttributeDTO> getAttributeById(Long id) {
         return productAttributeRepository.findById(id)
-                .map(this::convertToDTO);
+                .map(productAttributeMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<ProductAttributeDTO> getAttributeByCode(String code) {
         return productAttributeRepository.findByCode(code)
-                .map(this::convertToDTO);
+                .map(productAttributeMapper::toDTO);
     }
 
     @Override
@@ -54,10 +56,10 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
             throw new IllegalArgumentException("이미 존재하는 속성 코드입니다: " + attributeDTO.getCode());
         }
 
-        ProductAttribute attribute = convertToEntity(attributeDTO);
+        ProductAttribute attribute = productAttributeMapper.toEntity(attributeDTO);
         ProductAttribute savedAttribute = productAttributeRepository.save(attribute);
         log.info("상품 속성 생성: {}", savedAttribute.getName());
-        return convertToDTO(savedAttribute);
+        return productAttributeMapper.toDTO(savedAttribute);
     }
 
     @Override
@@ -71,21 +73,14 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
             throw new IllegalArgumentException("이미 존재하는 속성 코드입니다: " + attributeDTO.getCode());
         }
 
-        existingAttribute.setName(attributeDTO.getName());
-        existingAttribute.setCode(attributeDTO.getCode());
-        existingAttribute.setDescription(attributeDTO.getDescription());
-        existingAttribute.setType(attributeDTO.getType());
-        existingAttribute.setRequired(attributeDTO.isRequired());
-        existingAttribute.setFilterable(attributeDTO.isFilterable());
-        existingAttribute.setSearchable(attributeDTO.isSearchable());
-        existingAttribute.setComparable(attributeDTO.isComparable());
-        existingAttribute.setShowInProductListing(attributeDTO.isShowInProductListing());
+        ProductAttribute updatedAttribute = productAttributeMapper.toEntity(attributeDTO);
+        updatedAttribute.setId(existingAttribute.getId());
+        updatedAttribute.setCreatedAt(existingAttribute.getCreatedAt());
+        updatedAttribute.setProduct(existingAttribute.getProduct());
 
-        // 옵션은 별도로 관리하므로 여기서는 업데이트하지 않음
-
-        ProductAttribute updatedAttribute = productAttributeRepository.save(existingAttribute);
-        log.info("상품 속성 업데이트: {}", updatedAttribute.getName());
-        return convertToDTO(updatedAttribute);
+        ProductAttribute savedAttribute = productAttributeRepository.save(updatedAttribute);
+        log.info("상품 속성 업데이트: {}", savedAttribute.getName());
+        return productAttributeMapper.toDTO(savedAttribute);
     }
 
     @Override
@@ -101,7 +96,7 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
     @Transactional(readOnly = true)
     public List<ProductAttributeDTO> getFilterableAttributes() {
         return productAttributeRepository.findByFilterableTrue().stream()
-                .map(this::convertToDTO)
+                .map(productAttributeMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -109,7 +104,7 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
     @Transactional(readOnly = true)
     public List<ProductAttributeDTO> getSearchableAttributes() {
         return productAttributeRepository.findBySearchableTrue().stream()
-                .map(this::convertToDTO)
+                .map(productAttributeMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -117,7 +112,7 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
     @Transactional(readOnly = true)
     public List<ProductAttributeDTO> getComparableAttributes() {
         return productAttributeRepository.findByComparableTrue().stream()
-                .map(this::convertToDTO)
+                .map(productAttributeMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -125,7 +120,7 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
     @Transactional(readOnly = true)
     public List<ProductAttributeDTO> getAttributesForProductListing() {
         return productAttributeRepository.findByShowInProductListingTrue().stream()
-                .map(this::convertToDTO)
+                .map(productAttributeMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -158,43 +153,5 @@ public class ProductAttributeServiceImpl implements ProductAttributeService {
         return productAttributeRepository.findById(attributeId)
                 .map(ProductAttribute::getOptions)
                 .orElseThrow(() -> new IllegalArgumentException("상품 속성을 찾을 수 없습니다: " + attributeId));
-    }
-
-    // 헬퍼 메서드
-    private ProductAttributeDTO convertToDTO(ProductAttribute attribute) {
-        return ProductAttributeDTO.builder()
-                .id(attribute.getId())
-                .name(attribute.getName())
-                .code(attribute.getCode())
-                .description(attribute.getDescription())
-                .type(attribute.getType())
-                .required(attribute.isRequired())
-                .filterable(attribute.isFilterable())
-                .searchable(attribute.isSearchable())
-                .comparable(attribute.isComparable())
-                .showInProductListing(attribute.isShowInProductListing())
-                .options(new ArrayList<>(attribute.getOptions()))
-                .createdAt(attribute.getCreatedAt())
-                .updatedAt(attribute.getUpdatedAt())
-                .build();
-    }
-
-    private ProductAttribute convertToEntity(ProductAttributeDTO dto) {
-        ProductAttribute attribute = new ProductAttribute();
-        attribute.setName(dto.getName());
-        attribute.setCode(dto.getCode());
-        attribute.setDescription(dto.getDescription());
-        attribute.setType(dto.getType());
-        attribute.setRequired(dto.isRequired());
-        attribute.setFilterable(dto.isFilterable());
-        attribute.setSearchable(dto.isSearchable());
-        attribute.setComparable(dto.isComparable());
-        attribute.setShowInProductListing(dto.isShowInProductListing());
-
-        if (dto.getOptions() != null) {
-            attribute.setOptions(new ArrayList<>(dto.getOptions()));
-        }
-
-        return attribute;
     }
 }

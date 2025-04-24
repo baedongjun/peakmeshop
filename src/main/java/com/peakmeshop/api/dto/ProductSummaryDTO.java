@@ -15,7 +15,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductSummaryDTO {
+    private Long id;
+    private String name;
     private String categoryName;
+    private String brandName;
+    private BigDecimal price;
+    private BigDecimal salePrice;
+    private String mainImage;
+    private Boolean isActive;
+    private Double averageRating;
+    private Integer reviewCount;
     private long totalProducts;
     private long activeProducts;
     private long outOfStockProducts;

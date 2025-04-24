@@ -9,6 +9,8 @@ import com.peakmeshop.api.dto.FaqDTO;
 import com.peakmeshop.domain.service.ContentService;
 import com.peakmeshop.domain.repository.NoticeRepository;
 import com.peakmeshop.domain.repository.FaqRepository;
+import com.peakmeshop.api.mapper.NoticeMapper;
+import com.peakmeshop.api.mapper.FaqMapper;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -17,40 +19,20 @@ public class ContentServiceImpl implements ContentService {
 
     private final NoticeRepository noticeRepository;
     private final FaqRepository faqRepository;
+    private final NoticeMapper noticeMapper;
+    private final FaqMapper faqMapper;
 
     @Override
     @Transactional(readOnly = true)
     public Page<NoticeDTO> getNotices(String category, String status, Pageable pageable) {
         return noticeRepository.findByCategoryAndStatus(category, status, pageable)
-                .map(notice -> NoticeDTO.builder()
-                        .id(notice.getId())
-                        .title(notice.getTitle())
-                        .content(notice.getContent())
-                        .category(notice.getCategory())
-                        .status(notice.getStatus())
-                        .viewCount(notice.getViewCount())
-                        .important(notice.getImportant())
-                        .isTop(notice.isTop())
-                        .startAt(notice.getStartAt())
-                        .endAt(notice.getEndAt())
-                        .createdAt(notice.getCreatedAt())
-                        .updatedAt(notice.getUpdatedAt())
-                        .build());
+                .map(noticeMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<FaqDTO> getFaqs(String category, Pageable pageable) {
         return faqRepository.findByCategory(category, pageable)
-                .map(faq -> FaqDTO.builder()
-                        .id(faq.getId())
-                        .question(faq.getQuestion())
-                        .answer(faq.getAnswer())
-                        .category(faq.getCategory())
-                        .sortOrder(faq.getSortOrder())
-                        .isActive(faq.getIsActive())
-                        .createdAt(faq.getCreatedAt())
-                        .updatedAt(faq.getUpdatedAt())
-                        .build());
+                .map(faqMapper::toDTO);
     }
 } 

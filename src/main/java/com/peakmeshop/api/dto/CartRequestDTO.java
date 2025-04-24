@@ -14,7 +14,8 @@ import lombok.NoArgsConstructor;
 public class CartRequestDTO {
 
     private Long productId;
-    private Long variantId;
+    private Long optionId;
+    private Long optionValueId;
     private int quantity;
     private List<CartOptionDTO> options;
 

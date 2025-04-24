@@ -3,6 +3,7 @@ package com.peakmeshop.api.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -66,4 +67,9 @@ public class MemberDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime lastLoginAt;
+    private List<AddressDTO> addresses;
+    private List<CouponDTO> coupons;
+    private Integer totalOrders;
+    private Integer totalReviews;
+    private Boolean isActive;
 }

@@ -14,7 +14,10 @@ import lombok.NoArgsConstructor;
 public class TagDTO {
     private Long id;
     private String name;
+    private String slug;
     private String description;
+    private Boolean isActive;
+    private Integer productCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

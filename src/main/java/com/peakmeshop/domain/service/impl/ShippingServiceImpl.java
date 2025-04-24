@@ -10,12 +10,12 @@ import com.peakmeshop.domain.enums.OrderStatus;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.peakmeshop.api.dto.OrderStatusUpdateDTO;
 import com.peakmeshop.api.dto.ShippingDTO;
+import com.peakmeshop.api.mapper.ShippingMapper;
 import com.peakmeshop.domain.entity.Order;
 import com.peakmeshop.domain.entity.Shipping;
 import com.peakmeshop.domain.repository.OrderRepository;
@@ -24,51 +24,44 @@ import com.peakmeshop.domain.service.EmailService;
 import com.peakmeshop.domain.service.OrderService;
 import com.peakmeshop.domain.service.ShippingService;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class ShippingServiceImpl implements ShippingService {
 
     private final ShippingRepository shippingRepository;
     private final OrderRepository orderRepository;
     private final OrderService orderService;
     private final EmailService emailService;
-
-    public ShippingServiceImpl(
-            ShippingRepository shippingRepository,
-            OrderRepository orderRepository,
-            OrderService orderService,
-            EmailService emailService) {
-        this.shippingRepository = shippingRepository;
-        this.orderRepository = orderRepository;
-        this.orderService = orderService;
-        this.emailService = emailService;
-    }
+    private final ShippingMapper shippingMapper;
 
     @Override
     @Transactional(readOnly = true)
     public Page<ShippingDTO> getAllShippings(Pageable pageable) {
         return shippingRepository.findAll(pageable)
-                .map(this::convertToDTO);
+                .map(shippingMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<ShippingDTO> getShippingById(Long id) {
         return shippingRepository.findById(id)
-                .map(this::convertToDTO);
+                .map(shippingMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<ShippingDTO> getShippingByOrderId(Long orderId) {
         return shippingRepository.findByOrderId(orderId)
-                .map(this::convertToDTO);
+                .map(shippingMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<ShippingDTO> getShippingByTrackingNumber(String trackingNumber) {
         return shippingRepository.findByTrackingNumber(trackingNumber)
-                .map(this::convertToDTO);
+                .map(shippingMapper::toDTO);
     }
 
     @Override
@@ -84,17 +77,9 @@ public class ShippingServiceImpl implements ShippingService {
         }
 
         // 배송 정보 생성
-        Shipping shipping = new Shipping();
+        Shipping shipping = shippingMapper.toEntity(shippingDTO);
         shipping.setOrder(order);
         shipping.setTrackingNumber(generateTrackingNumber());
-        shipping.setCarrier(shippingDTO.carrier());
-        shipping.setStatus(shippingDTO.status() != null ? shippingDTO.status() : "PREPARING");
-        shipping.setShippingAddress(shippingDTO.shippingAddress());
-        shipping.setRecipientName(shippingDTO.recipientName());
-        shipping.setRecipientPhone(shippingDTO.recipientPhone());
-        shipping.setShippingDate(shippingDTO.shippingDate());
-        shipping.setEstimatedDeliveryDate(shippingDTO.estimatedDeliveryDate());
-        shipping.setDeliveryDate(shippingDTO.deliveryDate());
         shipping.setCreatedAt(LocalDateTime.now());
         shipping.setUpdatedAt(LocalDateTime.now());
 
@@ -106,7 +91,7 @@ public class ShippingServiceImpl implements ShippingService {
             OrderStatusUpdateDTO statusUpdateDTO = OrderStatusUpdateDTO.builder()
                     .status(OrderStatus.SHIPPED)
                     .trackingNumber(shipping.getTrackingNumber())
-                    .shippingCompany(shipping.getCarrier())
+                    .shippingCompany(shipping.getShippingCompany())
                     .build();
 
             orderService.updateOrderStatus(order.getId(), statusUpdateDTO);
@@ -117,7 +102,7 @@ public class ShippingServiceImpl implements ShippingService {
             // 배송 시작 이메일 발송 로직 구현
         }
 
-        return convertToDTO(savedShipping);
+        return shippingMapper.toDTO(savedShipping);
     }
 
     @Override
@@ -131,13 +116,13 @@ public class ShippingServiceImpl implements ShippingService {
 
         // 배송 완료 처리
         if (OrderStatus.DELIVERED.equals(status)) {
-            shipping.setDeliveryDate(LocalDateTime.now());
+            shipping.setDeliveredAt(LocalDateTime.now());
 
             // OrderStatusUpdateDTO 객체 생성
             OrderStatusUpdateDTO statusUpdateDTO = OrderStatusUpdateDTO.builder()
                     .status(OrderStatus.COMPLETED)
                     .trackingNumber(shipping.getTrackingNumber())
-                    .shippingCompany(shipping.getCarrier())
+                    .shippingCompany(shipping.getShippingCompany())
                     .build();
 
             orderService.updateOrderStatus(shipping.getOrder().getId(), statusUpdateDTO);
@@ -150,7 +135,7 @@ public class ShippingServiceImpl implements ShippingService {
             // 배송 상태 변경 이메일 발송 로직 구현
         }
 
-        return convertToDTO(updatedShipping);
+        return shippingMapper.toDTO(updatedShipping);
     }
 
     @Override
@@ -159,7 +144,7 @@ public class ShippingServiceImpl implements ShippingService {
         Shipping shipping = shippingRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("배송 정보를 찾을 수 없습니다. ID: " + id));
 
-        shipping.setCarrier(carrier);
+        shipping.setShippingCompany(carrier);
         shipping.setTrackingNumber(trackingNumber);
         shipping.setUpdatedAt(LocalDateTime.now());
 
@@ -170,7 +155,7 @@ public class ShippingServiceImpl implements ShippingService {
             // 배송 추적 정보 변경 이메일 발송 로직 구현
         }
 
-        return convertToDTO(updatedShipping);
+        return shippingMapper.toDTO(updatedShipping);
     }
 
     @Override
@@ -178,31 +163,12 @@ public class ShippingServiceImpl implements ShippingService {
     public List<ShippingDTO> getShippingsByStatus(String status, Pageable pageable) {
         return shippingRepository.findByStatus(status, pageable)
                 .stream()
-                .map(this::convertToDTO)
+                .map(shippingMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
     // 운송장 번호 생성
     private String generateTrackingNumber() {
         return "TRK-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-    }
-
-    // 엔티티를 DTO로 변환
-    private ShippingDTO convertToDTO(Shipping shipping) {
-        return new ShippingDTO(
-                shipping.getId(),
-                shipping.getOrder().getId(),
-                shipping.getTrackingNumber(),
-                shipping.getCarrier(),
-                shipping.getStatus(),
-                shipping.getShippingAddress(),
-                shipping.getRecipientName(),
-                shipping.getRecipientPhone(),
-                shipping.getShippingDate(),
-                shipping.getEstimatedDeliveryDate(),
-                shipping.getDeliveryDate(),
-                shipping.getCreatedAt(),
-                shipping.getUpdatedAt()
-        );
     }
 }

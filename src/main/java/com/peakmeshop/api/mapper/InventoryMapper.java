@@ -1,23 +1,28 @@
 package com.peakmeshop.api.mapper;
 
 import com.peakmeshop.api.dto.InventoryDTO;
-import com.peakmeshop.domain.entity.Inventory;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValueCheckStrategy;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.factory.Mappers;
 
-@Mapper(componentModel = "spring", uses = {ProductMapper.class})
+import com.peakmeshop.domain.entity.Inventory;
+
+@Mapper(
+    componentModel = "spring",
+    uses = {BaseMapper.class, ProductMapper.class},
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
+)
 public interface InventoryMapper {
     
-    InventoryDTO toDto(Inventory inventory);
-    
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    Inventory toEntity(InventoryDTO inventoryDTO);
-    
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    void updateInventoryFromDto(InventoryDTO inventoryDTO, @MappingTarget Inventory inventory);
+    InventoryMapper INSTANCE = Mappers.getMapper(InventoryMapper.class);
+
+    @Mapping(target = "productId", source = "product.id")
+    @Mapping(target = "productName", source = "product.name")
+    InventoryDTO toDTO(Inventory inventory);
+
+    @Mapping(target = "product", ignore = true)
+    Inventory toEntity(InventoryDTO dto);
 } 

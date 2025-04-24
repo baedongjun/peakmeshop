@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 import com.peakmeshop.api.dto.*;
+import com.peakmeshop.api.mapper.*;
 import com.peakmeshop.domain.entity.*;
 import com.peakmeshop.domain.repository.*;
 import jakarta.persistence.EntityNotFoundException;
@@ -41,12 +42,19 @@ public class ProductServiceImpl implements ProductService {
     private final ProductOptionValueRepository optionValueRepository;
     private final ProductImageRepository productImageRepository;
     private final BrandRepository brandRepository;
+    
+    private final ProductMapper productMapper;
+    private final ProductReviewMapper reviewMapper;
+    private final ProductQnaMapper qnaMapper;
+    private final ProductOptionMapper optionMapper;
+    private final ProductOptionValueMapper optionValueMapper;
+    private final ProductImageMapper imageMapper;
 
     @Override
     @Transactional(readOnly = true)
     public Page<ProductDTO> getAllProducts(Pageable pageable) {
         Page<Product> products = productRepository.findAll(pageable);
-        return products.map(this::convertToDTO);
+        return products.map(productMapper::toDTO);
     }
 
     @Override
@@ -54,7 +62,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductDTO getProductById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
-        return convertToDTO(product);
+        return productMapper.toDTO(product);
     }
 
     @Override
@@ -74,28 +82,16 @@ public class ProductServiceImpl implements ProductService {
                     .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다."));
         }
 
-        Product product = Product.builder()
-                .code(productDTO.getCode())
-                .name(productDTO.getName())
-                .description(productDTO.getDescription())
-                .price(productDTO.getPrice())
-                .salePrice(productDTO.getSalePrice())
-                .brand(productDTO.getBrand())
-                .category(category)
-                .mainImage(productDTO.getMainImage())
-                .stock(productDTO.getStock())
-                .status(productDTO.getStatus())
-                .isActive(productDTO.getIsActive())
-                .isFeatured(productDTO.getIsFeatured())
-                .averageRating(0.0)
-                .reviewCount(0)
-                .salesCount(0)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        Product product = productMapper.toEntity(productDTO);
+        product.setCategory(category);
+        product.setAverageRating(0.0);
+        product.setReviewCount(0);
+        product.setSalesCount(0);
+        product.setCreatedAt(LocalDateTime.now());
+        product.setUpdatedAt(LocalDateTime.now());
 
         Product savedProduct = productRepository.save(product);
-        return convertToDTO(savedProduct);
+        return productMapper.toDTO(savedProduct);
     }
 
     @Override
@@ -109,7 +105,6 @@ public class ProductServiceImpl implements ProductService {
             if (productRepository.findByCode(productDTO.getCode()).isPresent()) {
                 throw new BadRequestException("이미 존재하는 상품 코드입니다: " + productDTO.getCode());
             }
-            product.setCode(productDTO.getCode());
         }
 
         // 카테고리 확인 (변경된 경우)
@@ -119,40 +114,16 @@ public class ProductServiceImpl implements ProductService {
             product.setCategory(category);
         }
 
-        if (productDTO.getName() != null) {
-            product.setName(productDTO.getName());
-        }
-        if (productDTO.getDescription() != null) {
-            product.setDescription(productDTO.getDescription());
-        }
-        if (productDTO.getPrice() != null) {
-            product.setPrice(productDTO.getPrice());
-        }
-        if (productDTO.getSalePrice() != null) {
-            product.setSalePrice(productDTO.getSalePrice());
-        }
-        if (productDTO.getBrand() != null) {
-            product.setBrand(productDTO.getBrand());
-        }
-        if (productDTO.getMainImage() != null) {
-            product.setMainImage(productDTO.getMainImage());
-        }
-        if (productDTO.getStock() != null) {
-            product.setStock(productDTO.getStock());
-        }
-        if (productDTO.getStatus() != null) {
-            product.setStatus(productDTO.getStatus());
-        }
-        if (productDTO.getIsActive() != null) {
-            product.setIsActive(productDTO.getIsActive());
-        }
-        if (productDTO.getIsFeatured() != null) {
-            product.setIsFeatured(productDTO.getIsFeatured());
-        }
+        Product updatedProduct = productMapper.toEntity(productDTO);
+        updatedProduct.setId(product.getId());
+        updatedProduct.setAverageRating(product.getAverageRating());
+        updatedProduct.setReviewCount(product.getReviewCount());
+        updatedProduct.setSalesCount(product.getSalesCount());
+        updatedProduct.setCreatedAt(product.getCreatedAt());
+        updatedProduct.setUpdatedAt(LocalDateTime.now());
 
-        product.setUpdatedAt(LocalDateTime.now());
-        Product updatedProduct = productRepository.save(product);
-        return convertToDTO(updatedProduct);
+        Product savedProduct = productRepository.save(updatedProduct);
+        return productMapper.toDTO(savedProduct);
     }
 
     @Override
@@ -181,68 +152,56 @@ public class ProductServiceImpl implements ProductService {
         product.setUpdatedAt(LocalDateTime.now());
 
         Product updatedProduct = productRepository.save(product);
-        return convertToDTO(updatedProduct);
+        return productMapper.toDTO(updatedProduct);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ProductDTO> getProductsByCategory(Long categoryId, Pageable pageable) {
         Page<Product> productsPage = productRepository.findByCategoryId(categoryId, pageable);
-        List<ProductDTO> productDTOs = productsPage.getContent().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-
-        return new PageImpl<>(productDTOs, pageable, productsPage.getTotalElements());
+        return productsPage.map(productMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ProductDTO> getProductsByBrand(String brand, Pageable pageable) {
         Page<Product> productsPage = productRepository.findByBrand(brand, pageable);
-        List<ProductDTO> productDTOs = productsPage.getContent().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-
-        return new PageImpl<>(productDTOs, pageable, productsPage.getTotalElements());
+        return productsPage.map(productMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ProductDTO> searchProducts(String keyword, Pageable pageable) {
         Page<Product> productsPage = productRepository.findByNameContainingOrDescriptionContaining(keyword, keyword, pageable);
-        List<ProductDTO> productDTOs = productsPage.getContent().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-
-        return new PageImpl<>(productDTOs, pageable, productsPage.getTotalElements());
+        return productsPage.map(productMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ProductDTO> getFeaturedProducts(Pageable pageable) {
         Page<Product> products = productRepository.findByIsFeaturedTrueAndIsActiveTrue(pageable);
-        return products.map(this::convertToDTO);
+        return products.map(productMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ProductDTO> getNewArrivals(Pageable pageable) {
         Page<Product> products = productRepository.findByIsActiveTrueOrderByCreatedAtDesc(pageable);
-        return products.map(this::convertToDTO);
+        return products.map(productMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ProductDTO> getBestSellers(Pageable pageable) {
         Page<Product> products = productRepository.findByIsActiveTrueOrderBySalesCountDesc(pageable);
-        return products.map(this::convertToDTO);
+        return products.map(productMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ProductDTO> getDiscountedProducts(Pageable pageable) {
         Page<Product> products = productRepository.findByIsActiveTrueAndSalePriceIsNotNullOrderBySalePriceAsc(pageable);
-        return products.map(this::convertToDTO);
+        return products.map(productMapper::toDTO);
     }
 
     @Override
@@ -259,38 +218,6 @@ public class ProductServiceImpl implements ProductService {
             product.setIsFeatured(true);
             productRepository.save(product);
         }
-    }
-
-    // Entity를 DTO로 변환하는 메서드
-    private ProductDTO convertToDTO(Product product) {
-        ProductDTO dto = ProductDTO.builder()
-                .id(product.getId())
-                .code(product.getCode())
-                .name(product.getName())
-                .description(product.getDescription())
-                .price(product.getPrice())
-                .cost(product.getCost())
-                .salePrice(product.getSalePrice())
-                .discountedPrice(product.getSalePrice()) // salePrice를 discountedPrice로도 설정
-                .brand(product.getBrand())
-                .categoryId(product.getCategory().getId())
-                .supplier(product.getSupplier())
-                .mainImage(product.getMainImage())
-                .stock(product.getStock())
-                .stockAlert(product.getStockAlert())
-                .maxPurchaseQuantity(product.getMaxPurchaseQuantity())
-                .shortDescription(product.getShortDescription())
-                .status(product.getStatus())
-                .isActive(product.getIsActive())
-                .isFeatured(product.getIsFeatured())
-                .averageRating(product.getAverageRating())
-                .reviewCount(product.getReviewCount())
-                .salesCount(product.getSalesCount())
-                .createdAt(product.getCreatedAt())
-                .updatedAt(product.getUpdatedAt())
-                .build();
-
-        return dto;
     }
 
     @Override
@@ -310,7 +237,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         Product updatedProduct = productRepository.save(product);
-        return convertToDTO(updatedProduct);
+        return productMapper.toDTO(updatedProduct);
     }
 
     @Override
@@ -330,7 +257,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         Product updatedProduct = productRepository.save(product);
-        return convertToDTO(updatedProduct);
+        return productMapper.toDTO(updatedProduct);
     }
 
     @Override
@@ -383,7 +310,7 @@ public class ProductServiceImpl implements ProductService {
         // 인기 상품
         Page<Product> topProducts = productRepository.findTopProducts(start, end, pageable);
         statistics.put("topProducts", topProducts.getContent().stream()
-                .map(this::convertToDTO)
+                .map(productMapper::toDTO)
                 .collect(Collectors.toList()));
 
         // 판매 추이
@@ -420,13 +347,13 @@ public class ProductServiceImpl implements ProductService {
         // 재고 부족 상품
         List<Product> lowStockProducts = productRepository.findLowStockProducts();
         statistics.put("lowStockProducts", lowStockProducts.stream()
-                .map(this::convertToDTO)
+                .map(productMapper::toDTO)
                 .collect(Collectors.toList()));
 
         // 품절 상품
         List<Product> outOfStockProducts = productRepository.findOutOfStockProducts();
         statistics.put("outOfStockProducts", outOfStockProducts.stream()
-                .map(this::convertToDTO)
+                .map(productMapper::toDTO)
                 .collect(Collectors.toList()));
 
         return statistics;
@@ -434,26 +361,28 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductReviewDTO> getProductReviews(Pageable pageable) {
-        return reviewRepository.findAll(pageable).map(this::convertToReviewDTO);
+        Page<ProductReview> reviews = reviewRepository.findAll(pageable);
+        return reviews.map(reviewMapper::toDTO);
     }
 
     @Override
     public ProductReviewDTO getReviewById(Long id) {
-        return reviewRepository.findById(id)
-                .map(this::convertToReviewDTO)
-                .orElseThrow(() -> new RuntimeException("Review not found"));
+        ProductReview review = reviewRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("리뷰를 찾을 수 없습니다."));
+        return reviewMapper.toDTO(review);
     }
 
     @Override
     public Page<ProductQnaDTO> getProductQnas(Pageable pageable) {
-        return qnaRepository.findAll(pageable).map(this::convertToQnaDTO);
+        Page<ProductQna> qnas = qnaRepository.findAll(pageable);
+        return qnas.map(qnaMapper::toDTO);
     }
 
     @Override
     public ProductQnaDTO getQnaById(Long id) {
-        return qnaRepository.findById(id)
-                .map(this::convertToQnaDTO)
-                .orElseThrow(() -> new RuntimeException("QnA not found"));
+        ProductQna qna = qnaRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("문의를 찾을 수 없습니다."));
+        return qnaMapper.toDTO(qna);
     }
 
     @Override
@@ -469,38 +398,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductOptionDTO> getProductOptions(Long productId) {
-        return optionRepository.findByProductId(productId).stream()
-                .map(this::convertToOptionDTO)
-                .toList();
-    }
-
-    private ProductReviewDTO convertToReviewDTO(ProductReview review) {
-        // ProductReview 엔티티를 DTO로 변환하는 로직
-        return null; // TODO: 구현 필요
-    }
-
-    private ProductQnaDTO convertToQnaDTO(ProductQna qna) {
-        // ProductQna 엔티티를 DTO로 변환하는 로직
-        return null; // TODO: 구현 필요
-    }
-
-    private ProductOptionDTO convertToOptionDTO(ProductOption option) {
-        // ProductOption 엔티티를 DTO로 변환하는 로직
-        return null; // TODO: 구현 필요
-    }
-
-    private ProductOptionValueDTO convertToOptionValueDTO(ProductOptionValue value) {
-        ProductOptionValueDTO dto = new ProductOptionValueDTO();
-        dto.setId(value.getId());
-        dto.setOptionId(value.getOption().getId());
-        dto.setValue(value.getValue());
-        dto.setAdditionalPrice(value.getAdditionalPrice());
-        dto.setStock(value.getStock());
-        dto.setSku(value.getSku());
-        dto.setActive(value.isActive());
-        dto.setCreatedAt(value.getCreatedAt());
-        dto.setUpdatedAt(value.getUpdatedAt());
-        return dto;
+        List<ProductOption> options = optionRepository.findByProductId(productId);
+        return options.stream()
+                .map(optionMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.peakmeshop.api.controller;
 
 import java.util.List;
 
+import com.peakmeshop.domain.enums.ShipmentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -84,7 +85,7 @@ public class ShipmentController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ShipmentDTO> updateShipmentStatus(
             @PathVariable Long id,
-            @RequestParam String status) {
+            @RequestParam ShipmentStatus status) {
         return ResponseEntity.ok(shipmentService.updateShipmentStatus(id, status));
     }
 

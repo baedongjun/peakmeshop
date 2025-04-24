@@ -1,6 +1,7 @@
 package com.peakmeshop.api.controller;
 
 import com.peakmeshop.api.dto.FaqDTO;
+import com.peakmeshop.api.dto.InquiryDTO;
 import com.peakmeshop.domain.entity.Faq;
 import com.peakmeshop.domain.entity.Inquiry;
 import com.peakmeshop.domain.service.FaqService;
@@ -35,13 +36,13 @@ public class AdminContentApiController {
     }
 
     @PostMapping("/faqs")
-    public ResponseEntity<FaqDTO> createFaq(@RequestBody Faq faq) {
-        return ResponseEntity.ok(faqService.createFaq(faq));
+    public ResponseEntity<FaqDTO> createFaq(@RequestBody FaqDTO faqDTO) {
+        return ResponseEntity.ok(faqService.createFaq(faqDTO));
     }
 
     @PutMapping("/faqs/{id}")
-    public ResponseEntity<FaqDTO> updateFaq(@PathVariable Long id, @RequestBody Faq faq) {
-        return ResponseEntity.ok(faqService.updateFaq(id, faq));
+    public ResponseEntity<FaqDTO> updateFaq(@PathVariable Long id, @RequestBody FaqDTO faqDTO) {
+        return ResponseEntity.ok(faqService.updateFaq(id, faqDTO));
     }
 
     @DeleteMapping("/faqs/{id}")
@@ -66,7 +67,7 @@ public class AdminContentApiController {
 
     // 문의 관련 API
     @GetMapping("/inquiries")
-    public ResponseEntity<Page<Inquiry>> getInquiries(
+    public ResponseEntity<Page<InquiryDTO>> getInquiries(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) Inquiry.InquiryStatus status,
             Pageable pageable) {
@@ -74,19 +75,19 @@ public class AdminContentApiController {
     }
 
     @GetMapping("/inquiries/{id}")
-    public ResponseEntity<Inquiry> getInquiry(@PathVariable Long id) {
+    public ResponseEntity<InquiryDTO> getInquiry(@PathVariable Long id) {
         return ResponseEntity.ok(inquiryService.getInquiry(id));
     }
 
     @PutMapping("/inquiries/{id}/answer")
-    public ResponseEntity<Inquiry> answerInquiry(
+    public ResponseEntity<InquiryDTO> answerInquiry(
             @PathVariable Long id,
             @RequestBody String answer) {
         return ResponseEntity.ok(inquiryService.answerInquiry(id, answer));
     }
 
     @PutMapping("/inquiries/{id}/status")
-    public ResponseEntity<Inquiry> changeInquiryStatus(
+    public ResponseEntity<InquiryDTO> changeInquiryStatus(
             @PathVariable Long id,
             @RequestParam Inquiry.InquiryStatus status) {
         return ResponseEntity.ok(inquiryService.changeInquiryStatus(id, status));

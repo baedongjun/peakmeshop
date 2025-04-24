@@ -1,29 +1,21 @@
 package com.peakmeshop.api.mapper;
 
-import com.peakmeshop.api.dto.AddressDTO;
 import com.peakmeshop.domain.entity.Address;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import java.util.List;
+import com.peakmeshop.api.dto.AddressDTO;
+import org.mapstruct.*;
 
-@Mapper(componentModel = "spring")
+@Mapper(
+    componentModel = "spring",
+    uses = {BaseMapper.class},
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
+)
 public interface AddressMapper {
     
-    @Mapping(source = "member.id", target = "memberId")
-    AddressDTO toDto(Address address);
-    
-    List<AddressDTO> toDtoList(List<Address> addresses);
-    
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(source = "memberId", target = "member.id")
-    Address toEntity(AddressDTO addressDTO);
-    
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(source = "memberId", target = "member.id")
-    void updateAddressFromDto(AddressDTO addressDTO, @MappingTarget Address address);
+    @Mapping(target = "memberId", source = "member.id")
+    AddressDTO toDTO(Address address);
+
+    @Mapping(target = "member", ignore = true)
+    @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
+    Address toEntity(AddressDTO dto);
 } 

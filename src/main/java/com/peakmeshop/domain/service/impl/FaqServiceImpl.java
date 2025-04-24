@@ -38,19 +38,27 @@ public class FaqServiceImpl implements FaqService {
     }
 
     @Override
-    public FaqDTO createFaq(Faq faq) {
+    public FaqDTO createFaq(FaqDTO faqDTO) {
         // 새로운 FAQ의 순서를 마지막으로 설정
         Integer maxOrder = faqRepository.findMaxSortOrder();
         int newOrder = (maxOrder == null) ? 1 : maxOrder + 1;
         
+        Faq faq = faqMapper.toEntity(faqDTO);
         faq.setSortOrder(newOrder);
-        faq.setActive(true);
+        faq.setIsActive(true);
         
         return faqMapper.toDTO(faqRepository.save(faq));
     }
 
     @Override
-    public FaqDTO updateFaq(Long id, Faq faq) {
+    public FaqDTO updateFaq(Long id, FaqDTO faqDTO) {
+        Faq existingFaq = faqRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("FAQ를 찾을 수 없습니다. ID: " + id));
+        
+        Faq faq = faqMapper.toEntity(faqDTO);
+        faq.setId(id);
+        faq.setSortOrder(existingFaq.getSortOrder());
+        
         return faqMapper.toDTO(faqRepository.save(faq));
     }
 
@@ -79,10 +87,18 @@ public class FaqServiceImpl implements FaqService {
     }
 
     @Override
+    @Transactional
     public void toggleFaqStatus(Long id) {
         Faq faq = faqRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("FAQ를 찾을 수 없습니다. ID: " + id));
-        faq.setActive(!faq.getIsActive());
+                .orElseThrow(() -> new EntityNotFoundException("FAQ not found with id: " + id));
+        
+        faq.update(
+            faq.getQuestion(),
+            faq.getAnswer(),
+            faq.getCategory(),
+            !faq.getIsActive()
+        );
+        
         faqRepository.save(faq);
     }
 

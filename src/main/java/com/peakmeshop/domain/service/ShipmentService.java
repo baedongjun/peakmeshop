@@ -3,6 +3,7 @@ package com.peakmeshop.domain.service;
 import java.util.List;
 import java.util.Optional;
 
+import com.peakmeshop.domain.enums.ShipmentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -25,7 +26,7 @@ public interface ShipmentService {
 
     boolean deleteShipment(Long id);
 
-    ShipmentDTO updateShipmentStatus(Long id, String status);
+    ShipmentDTO updateShipmentStatus(Long id, ShipmentStatus status);
 
     ShipmentTrackingDTO addTrackingEvent(Long shipmentId, ShipmentTrackingDTO trackingDTO);
 

@@ -2,6 +2,8 @@ package com.peakmeshop.api.dto;
 
 import java.time.LocalDateTime;
 
+import com.peakmeshop.domain.enums.InventoryActionType;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,13 +17,13 @@ public class InventoryHistoryDTO {
     private Long id;
     private Long productId;
     private String productName;
-    private int quantityBefore;
-    private int quantityAfter;
-    private int quantityChanged;
+    private Integer quantityBefore;
+    private Integer quantityAfter;
+    private Integer quantityChanged;
     private String reason;
-    private String actionType; // INCREASE, DECREASE, RESERVE, RELEASE, CONFIRM
-    private String userId;
-    private String userName;
+    private InventoryActionType actionType;
+    private Long memberId;
+    private String memberName;
     private Long orderId;
     private LocalDateTime createdAt;
 }

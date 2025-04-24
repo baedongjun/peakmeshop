@@ -24,25 +24,21 @@ import com.peakmeshop.domain.repository.ProductRepository;
 import com.peakmeshop.domain.repository.WishlistItemRepository;
 import com.peakmeshop.domain.repository.WishlistRepository;
 import com.peakmeshop.domain.service.WishlistService;
+import com.peakmeshop.api.mapper.WishlistMapper;
+import com.peakmeshop.api.mapper.WishlistItemMapper;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class WishlistServiceImpl implements WishlistService {
 
     private final WishlistRepository wishlistRepository;
     private final WishlistItemRepository wishlistItemRepository;
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
-
-    public WishlistServiceImpl(
-            WishlistRepository wishlistRepository,
-            WishlistItemRepository wishlistItemRepository,
-            MemberRepository memberRepository,
-            ProductRepository productRepository) {
-        this.wishlistRepository = wishlistRepository;
-        this.wishlistItemRepository = wishlistItemRepository;
-        this.memberRepository = memberRepository;
-        this.productRepository = productRepository;
-    }
+    private final WishlistMapper wishlistMapper;
+    private final WishlistItemMapper wishlistItemMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -50,7 +46,7 @@ public class WishlistServiceImpl implements WishlistService {
         Optional<Wishlist> wishlistOpt = wishlistRepository.findByMemberId(memberId);
 
         if (wishlistOpt.isPresent()) {
-            return Optional.of(convertToDTO(wishlistOpt.get()));
+            return Optional.of(wishlistMapper.toDto(wishlistOpt.get()));
         } else {
             return Optional.empty();
         }
@@ -62,7 +58,7 @@ public class WishlistServiceImpl implements WishlistService {
         Wishlist wishlist = wishlistRepository.findByMemberId(memberId)
                 .orElseGet(() -> createNewWishlist(memberId));
 
-        return convertToDTO(wishlist);
+        return wishlistMapper.toDto(wishlist);
     }
 
     @Override
@@ -96,7 +92,7 @@ public class WishlistServiceImpl implements WishlistService {
             wishlistRepository.save(wishlist);
         }
 
-        return convertToDTO(wishlist);
+        return wishlistMapper.toDto(wishlist);
     }
 
     @Override
@@ -171,10 +167,8 @@ public class WishlistServiceImpl implements WishlistService {
     @Override
     @Transactional(readOnly = true)
     public Page<WishlistItemDTO> getWishlistItems(Long memberId, Pageable pageable) {
-        // WishlistItemRepository에 적절한 메서드 추가 필요
-        // 임시 구현 (실제로는 WishlistItemRepository에 적절한 메서드 추가 필요)
         return wishlistItemRepository.findByWishlistMemberId(memberId, pageable)
-                .map(this::convertToDTO);
+                .map(wishlistItemMapper::toDto);
     }
 
     @Override
@@ -201,41 +195,5 @@ public class WishlistServiceImpl implements WishlistService {
         wishlist.setUpdatedAt(LocalDateTime.now());
 
         return wishlistRepository.save(wishlist);
-    }
-
-    // 엔티티를 DTO로 변환
-    private WishlistDTO convertToDTO(Wishlist wishlist) {
-        List<WishlistItemDTO> itemDTOs = wishlist.getItems().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-
-        // WishlistDTO 생성자 매개변수에 맞게 수정
-        return new WishlistDTO(
-                wishlist.getId(),
-                wishlist.getMember().getId(),
-                true, // isPublic - 기본값 설정
-                false, // isShared - 기본값 설정
-                "", // shareUrl - 기본값 설정
-                wishlist.getCreatedAt(),
-                wishlist.getUpdatedAt(),
-                itemDTOs
-        );
-    }
-
-    // 위시리스트 아이템 엔티티를 DTO로 변환
-    private WishlistItemDTO convertToDTO(WishlistItem wishlistItem) {
-        Product product = wishlistItem.getProduct();
-
-        // WishlistItemDTO 생성자 매개변수에 맞게 수정
-        return new WishlistItemDTO(
-                wishlistItem.getId(),
-                wishlistItem.getWishlist().getId(),
-                null, // ProductDTO 대신 null 전달
-                LocalDateTime.now(),
-                "", // note
-                1,  // quantity
-                false, // isPurchased
-                false  // isGift
-        );
     }
 }

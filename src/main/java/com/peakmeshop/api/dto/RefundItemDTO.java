@@ -19,9 +19,9 @@ public class RefundItemDTO {
     private Long orderId;
     private Long orderItemId;
     private Long productId;
-    private Long productVariantId;
+    private Long productOptionId;
     private String productName;
-    private String variantName;
+    private String optionName;
     private Integer quantity;
     private BigDecimal price;
     private BigDecimal totalPrice;

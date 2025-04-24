@@ -2,16 +2,17 @@ package com.peakmeshop.domain.service;
 
 import java.math.BigDecimal;
 import java.util.Map;
+import com.peakmeshop.api.dto.PaymentDTO;
 
 public interface PaymentService {
 
-    Map<String, Object> requestPayment(String paymentMethod, Map<String, Object> paymentInfo);
+    PaymentDTO requestPayment(String paymentMethod, Map<String, Object> paymentInfo);
 
-    Map<String, Object> verifyPayment(String paymentMethod, String paymentKey, String orderId, Long amount);
+    PaymentDTO verifyPayment(String paymentMethod, String paymentKey, String orderId, Long amount);
 
-    Map<String, Object> cancelPayment(String paymentMethod, String paymentKey, Map<String, Object> cancelInfo);
+    PaymentDTO cancelPayment(String paymentMethod, String paymentKey, Map<String, Object> cancelInfo);
 
-    Map<String, Object> getPaymentDetails(String paymentMethod, String paymentKey);
+    PaymentDTO getPaymentDetails(String paymentMethod, String paymentKey);
 
     boolean processPayment(String paymentMethod, BigDecimal amount, String description);
 

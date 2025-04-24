@@ -19,6 +19,7 @@ import com.peakmeshop.common.exception.BadRequestException;
 import com.peakmeshop.domain.repository.CategoryRepository;
 import com.peakmeshop.domain.repository.ProductRepository;
 import com.peakmeshop.domain.service.CategoryService;
+import com.peakmeshop.api.mapper.CategoryMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,6 +30,7 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
     private final OrderItemRepository orderItemRepository;
+    private final CategoryMapper categoryMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -63,21 +65,12 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         // 카테고리 생성
-        Category category = Category.builder()
-                .name(categoryDTO.getName())
-                .description(categoryDTO.getDescription())
-                .slug(categoryDTO.getSlug())
-                .parent(parent)
-                .imageUrl(categoryDTO.getImageUrl())
-                .isActive(categoryDTO.isActive())
-                .isFeatured(categoryDTO.isFeatured())
-                .sortOrder(categoryDTO.getSortOrder())
-                .filterableAttributes(categoryDTO.getFilterableAttributes())
-                .createdAt(LocalDateTime.now())
-                .build();
+        Category category = categoryMapper.toEntity(categoryDTO);
+        category.setParent(parent);
+        category.setCreatedAt(LocalDateTime.now());
 
         Category savedCategory = categoryRepository.save(category);
-        return convertToDTO(savedCategory);
+        return categoryMapper.toDTO(savedCategory);
     }
 
     @Override
@@ -86,14 +79,14 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
 
-        return convertToDTO(category);
+        return categoryMapper.toDTO(category);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<CategoryDTO> getCategoryBySlug(String slug) {
         return categoryRepository.findBySlug(slug)
-                .map(this::convertToDTO);
+                .map(categoryMapper::toDTO);
     }
 
     @Override
@@ -101,7 +94,7 @@ public class CategoryServiceImpl implements CategoryService {
     public List<CategoryDTO> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
         return categories.stream()
-                .map(this::convertToDTO)
+                .map(categoryMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -109,7 +102,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional(readOnly = true)
     public Page<CategoryDTO> getCategories(Pageable pageable) {
         Page<Category> categories = categoryRepository.findAll(pageable);
-        return categories.map(this::convertToDTO);
+        return categories.map(categoryMapper::toDTO);
     }
 
     @Override
@@ -117,7 +110,7 @@ public class CategoryServiceImpl implements CategoryService {
     public List<CategoryDTO> getActiveCategories() {
         List<Category> categories = categoryRepository.findByIsActiveTrue();
         return categories.stream()
-                .map(this::convertToDTO)
+                .map(categoryMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -126,7 +119,7 @@ public class CategoryServiceImpl implements CategoryService {
     public List<CategoryDTO> getRootCategories() {
         List<Category> categories = categoryRepository.findByParentIsNull();
         return categories.stream()
-                .map(this::convertToDTO)
+                .map(categoryMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -135,7 +128,7 @@ public class CategoryServiceImpl implements CategoryService {
     public List<CategoryDTO> getChildCategories(Long parentId) {
         List<Category> categories = categoryRepository.findByParentId(parentId);
         return categories.stream()
-                .map(this::convertToDTO)
+                .map(categoryMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -144,7 +137,7 @@ public class CategoryServiceImpl implements CategoryService {
     public List<CategoryDTO> getCategoriesByParentId(Long parentId) {
         List<Category> categories = categoryRepository.findByParentId(parentId);
         return categories.stream()
-                .map(this::convertToDTO)
+                .map(categoryMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -176,19 +169,20 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         // 카테고리 업데이트
-        category.setName(categoryDTO.getName());
-        category.setDescription(categoryDTO.getDescription());
-        category.setSlug(categoryDTO.getSlug());
+        Category updatedCategory = categoryMapper.toEntity(categoryDTO);
+        category.setName(updatedCategory.getName());
+        category.setDescription(updatedCategory.getDescription());
+        category.setSlug(updatedCategory.getSlug());
         category.setParent(parent);
-        category.setImageUrl(categoryDTO.getImageUrl());
-        category.setActive(categoryDTO.isActive());
-        category.setFeatured(categoryDTO.isFeatured());
-        category.setSortOrder(categoryDTO.getSortOrder());
-        category.setFilterableAttributes(categoryDTO.getFilterableAttributes());
+        category.setImageUrl(updatedCategory.getImageUrl());
+        category.setActive(updatedCategory.isActive());
+        category.setFeatured(updatedCategory.isFeatured());
+        category.setSortOrder(updatedCategory.getSortOrder());
+        category.setFilterableAttributes(updatedCategory.getFilterableAttributes());
         category.setUpdatedAt(LocalDateTime.now());
 
-        Category updatedCategory = categoryRepository.save(category);
-        return convertToDTO(updatedCategory);
+        Category savedCategory = categoryRepository.save(category);
+        return categoryMapper.toDTO(savedCategory);
     }
 
     @Override
@@ -226,8 +220,8 @@ public class CategoryServiceImpl implements CategoryService {
 
         category.setUpdatedAt(LocalDateTime.now());
 
-        Category updatedCategory = categoryRepository.save(category);
-        return convertToDTO(updatedCategory);
+        Category savedCategory = categoryRepository.save(category);
+        return categoryMapper.toDTO(savedCategory);
     }
 
     @Override
@@ -239,8 +233,8 @@ public class CategoryServiceImpl implements CategoryService {
         category.setActive(active);
         category.setUpdatedAt(LocalDateTime.now());
 
-        Category updatedCategory = categoryRepository.save(category);
-        return convertToDTO(updatedCategory);
+        Category savedCategory = categoryRepository.save(category);
+        return categoryMapper.toDTO(savedCategory);
     }
 
     @Override
@@ -252,21 +246,21 @@ public class CategoryServiceImpl implements CategoryService {
         category.setSortOrder(position);
         category.setUpdatedAt(LocalDateTime.now());
 
-        Category updatedCategory = categoryRepository.save(category);
-        return convertToDTO(updatedCategory);
+        Category savedCategory = categoryRepository.save(category);
+        return categoryMapper.toDTO(savedCategory);
     }
 
     @Override
     @Transactional
     public CategoryDTO updateCategoryFeatured(Long id, boolean featured) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("Category not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
 
         category.setFeatured(featured);
         category.setUpdatedAt(LocalDateTime.now());
 
-        Category updatedCategory = categoryRepository.save(category);
-        return convertToDTO(updatedCategory);
+        Category savedCategory = categoryRepository.save(category);
+        return categoryMapper.toDTO(savedCategory);
     }
 
     @Override
@@ -274,44 +268,7 @@ public class CategoryServiceImpl implements CategoryService {
     public List<CategoryDTO> getFeaturedCategories() {
         List<Category> categories = categoryRepository.findByIsFeaturedTrue();
         return categories.stream()
-                .map(this::convertToDTO)
+                .map(categoryMapper::toDTO)
                 .collect(Collectors.toList());
-    }
-
-    // Category 엔티티를 CategoryDTO로 변환
-    private CategoryDTO convertToDTO(Category category) {
-        List<String> filterableAttributes = null;
-        if (category.getFilterableAttributes() != null && !category.getFilterableAttributes().isEmpty()) {
-            filterableAttributes = category.getFilterableAttributes();
-        }
-
-        // Calculate depth
-        int depth = 0;
-        Category parent = category.getParent();
-        while (parent != null) {
-            depth++;
-            parent = parent.getParent();
-        }
-
-        // Get product count from repository
-        long productCount = productRepository.countByCategoryId(category.getId());
-
-        return CategoryDTO.builder()
-                .id(category.getId())
-                .name(category.getName())
-                .description(category.getDescription())
-                .slug(category.getSlug())
-                .parentId(category.getParent() != null ? category.getParent().getId() : null)
-                .parentName(category.getParent() != null ? category.getParent().getName() : null)
-                .imageUrl(category.getImageUrl())
-                .isActive(category.isActive())
-                .isFeatured(category.isFeatured())
-                .sortOrder(category.getSortOrder())
-                .filterableAttributes(filterableAttributes)
-                .createdAt(category.getCreatedAt())
-                .updatedAt(category.getUpdatedAt())
-                .productCount(productCount)
-                .depth(depth)
-                .build();
     }
 }

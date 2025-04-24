@@ -1,8 +1,7 @@
 package com.peakmeshop.domain.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -13,6 +12,9 @@ import java.time.LocalDateTime;
 @Table(name = "product_option_values")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProductOptionValue {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,12 +25,20 @@ public class ProductOptionValue {
     private ProductOption option;
 
     @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
     private String value;
+
+    private Integer sortOrder;
 
     @Column
     private BigDecimal additionalPrice;
 
-    @Column
+    @Column(columnDefinition = "boolean default true")
+    private boolean enabled;
+
+    @Column(nullable = false)
     private Integer stock;
 
     @Column

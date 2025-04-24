@@ -12,7 +12,10 @@ import org.mapstruct.*;
 )
 public interface ProductAttributeMapper {
     
-    ProductAttributeDTO toDTO(ProductAttribute productAttribute);
+    @Mapping(target = "productId", source = "product.id")
+    ProductAttributeDTO toDTO(ProductAttribute attribute);
 
+    @Mapping(target = "product", ignore = true)
+    @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
     ProductAttribute toEntity(ProductAttributeDTO dto);
 } 

@@ -99,7 +99,6 @@ public class AdminServiceImpl implements AdminService {
                 .userAgent(httpSession.getAttribute("userAgent") != null ? httpSession.getAttribute("userAgent").toString() : "Unknown")
                 .ipAddress(httpSession.getAttribute("ipAddress") != null ? httpSession.getAttribute("ipAddress").toString() : "Unknown")
                 .userId(admin.getMember().getUserId())
-                .memberId(admin.getMember().getId())
                 .createdAt(LocalDateTime.now())
                 .build();
         activityLogRepository.save(activityLog);
@@ -202,7 +201,6 @@ public class AdminServiceImpl implements AdminService {
                     .ipAddress(httpSession.getAttribute("ipAddress") != null ? httpSession.getAttribute("ipAddress").toString() : "Unknown")
                     .createdAt(LocalDateTime.now())
                     .userId(admin.getMember().getUserId())
-                    .memberId(admin.getMember().getId())
                     .build();
             activityLogRepository.save(activityLog);
 
@@ -255,7 +253,6 @@ public class AdminServiceImpl implements AdminService {
                 .ipAddress(httpSession.getAttribute("ipAddress") != null ? httpSession.getAttribute("ipAddress").toString() : "Unknown")
                 .createdAt(LocalDateTime.now())
                 .userId(admin.getMember().getUserId())
-                .memberId(admin.getMember().getId())
                 .build();
         activityLogRepository.save(activityLog);
 
@@ -289,7 +286,6 @@ public class AdminServiceImpl implements AdminService {
                 .ipAddress(httpSession.getAttribute("ipAddress") != null ? httpSession.getAttribute("ipAddress").toString() : "Unknown")
                 .createdAt(LocalDateTime.now())
                 .userId(admin.getMember().getUserId())
-                .memberId(admin.getMember().getId())
                 .build();
         activityLogRepository.save(activityLog);
 
@@ -355,7 +351,6 @@ public class AdminServiceImpl implements AdminService {
                 .ipAddress(httpSession.getAttribute("ipAddress") != null ? httpSession.getAttribute("ipAddress").toString() : "Unknown")
                 .createdAt(LocalDateTime.now())
                 .userId(admin.getMember().getUserId())
-                .memberId(admin.getMember().getId())
                 .build();
         activityLogRepository.save(activityLog);
 
@@ -406,7 +401,6 @@ public class AdminServiceImpl implements AdminService {
                 .ipAddress(httpSession.getAttribute("ipAddress") != null ? httpSession.getAttribute("ipAddress").toString() : "Unknown")
                 .createdAt(LocalDateTime.now())
                 .userId(admin.getMember().getUserId())
-                .memberId(admin.getMember().getId())
                 .build();
         activityLogRepository.save(activityLog);
     }

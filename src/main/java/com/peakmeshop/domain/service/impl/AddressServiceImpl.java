@@ -6,6 +6,7 @@ import com.peakmeshop.domain.entity.Member;
 import com.peakmeshop.domain.repository.AddressRepository;
 import com.peakmeshop.domain.repository.MemberRepository;
 import com.peakmeshop.domain.service.AddressService;
+import com.peakmeshop.api.mapper.AddressMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -22,13 +23,14 @@ public class AddressServiceImpl implements AddressService {
 
     private final AddressRepository addressRepository;
     private final MemberRepository memberRepository;
+    private final AddressMapper addressMapper;
 
     @Override
     @Transactional(readOnly = true)
     public AddressDTO getAddressById(Long id) {
         Address address = addressRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Address not found with id: " + id));
-        return convertToDTO(address);
+        return addressMapper.toDTO(address);
     }
 
     @Override
@@ -37,7 +39,7 @@ public class AddressServiceImpl implements AddressService {
         Address address = addressRepository.findByIdAndMemberId(addressId, memberId)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Address not found with id: " + addressId + " for member id: " + memberId));
-        return convertToDTO(address);
+        return addressMapper.toDTO(address);
     }
 
     @Override
@@ -45,7 +47,7 @@ public class AddressServiceImpl implements AddressService {
     public List<AddressDTO> getAddressesByMemberId(Long memberId) {
         List<Address> addresses = addressRepository.findByMemberId(memberId);
         return addresses.stream()
-                .map(this::convertToDTO)
+                .map(addressMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -57,7 +59,7 @@ public class AddressServiceImpl implements AddressService {
 
         List<Address> addresses = addressRepository.findByMemberId(member.getId());
         return addresses.stream()
-                .map(this::convertToDTO)
+                .map(addressMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -70,19 +72,12 @@ public class AddressServiceImpl implements AddressService {
         // 첫 번째 주소인 경우 기본 주소로 설정
         boolean isDefault = !addressRepository.existsByMemberId(addressDTO.getMemberId());
 
-        Address address = Address.builder()
-                .member(member)
-                .recipientName(addressDTO.getRecipientName())
-                .zipcode(addressDTO.getZipcode())
-                .address1(addressDTO.getAddress1())
-                .address2(addressDTO.getAddress2())
-                .phone(addressDTO.getPhone())
-                .isDefault(isDefault)
-                .createdAt(LocalDateTime.now())
-                .build();
+        Address address = addressMapper.toEntity(addressDTO);
+        address.setMember(member);
+        address.setDefault(isDefault);
 
         Address savedAddress = addressRepository.save(address);
-        return convertToDTO(savedAddress);
+        return addressMapper.toDTO(savedAddress);
     }
 
     @Override
@@ -91,15 +86,14 @@ public class AddressServiceImpl implements AddressService {
         Address address = addressRepository.findById(addressDTO.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Address not found with id: " + addressDTO.getId()));
 
-        address.setRecipientName(addressDTO.getRecipientName());
-        address.setZipcode(addressDTO.getZipcode());
-        address.setAddress1(addressDTO.getAddress1());
-        address.setAddress2(addressDTO.getAddress2());
-        address.setPhone(addressDTO.getPhone());
-        address.setUpdatedAt(LocalDateTime.now());
+        Address updatedAddress = addressMapper.toEntity(addressDTO);
+        updatedAddress.setId(address.getId());
+        updatedAddress.setMember(address.getMember());
+        updatedAddress.setDefault(address.isDefault());
+        updatedAddress.setCreatedAt(address.getCreatedAt());
 
-        Address updatedAddress = addressRepository.save(address);
-        return convertToDTO(updatedAddress);
+        Address savedAddress = addressRepository.save(updatedAddress);
+        return addressMapper.toDTO(savedAddress);
     }
 
     @Override
@@ -148,20 +142,5 @@ public class AddressServiceImpl implements AddressService {
 
         newDefault.setDefault(true);
         addressRepository.save(newDefault);
-    }
-
-    private AddressDTO convertToDTO(Address address) {
-        return AddressDTO.builder()
-                .id(address.getId())
-                .memberId(address.getMember().getId())
-                .recipientName(address.getRecipientName())
-                .zipcode(address.getZipcode())
-                .address1(address.getAddress1())
-                .address2(address.getAddress2())
-                .phone(address.getPhone())
-                .isDefault(address.isDefault())
-                .createdAt(address.getCreatedAt())
-                .updatedAt(address.getUpdatedAt())
-                .build();
     }
 }

@@ -6,7 +6,7 @@ import org.mapstruct.*;
 
 @Mapper(
     componentModel = "spring",
-    uses = {BaseMapper.class, CategoryMapper.class, ProductMapper.class},
+    uses = {BaseMapper.class},
     nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
     nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
 )
@@ -18,5 +18,6 @@ public interface PromotionMapper {
 
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "product", ignore = true)
+    @Mapping(target = "active", constant = "true")
     Promotion toEntity(PromotionDTO dto);
 } 

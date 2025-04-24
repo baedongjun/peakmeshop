@@ -14,6 +14,5 @@ public interface CouponMapper {
     
     CouponDTO toDTO(Coupon coupon);
 
-    @Mapping(target = "memberCoupons", ignore = true)
     Coupon toEntity(CouponDTO dto);
 } 

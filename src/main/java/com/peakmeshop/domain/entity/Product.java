@@ -1,6 +1,5 @@
 package com.peakmeshop.domain.entity;
 
-import com.peakmeshop.common.converter.StringListConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -62,12 +61,18 @@ public class Product {
     @JoinColumn(name = "supplier_id")
     private Supplier supplier;
 
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "inventory_id", nullable = false)
+    private Inventory inventory;
+
     @Column(name = "main_image")
     private String mainImage;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ElementCollection
+    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
+    @Column(name = "image_url")
     @Builder.Default
-    private List<ProductImage> images = new ArrayList<>();
+    private List<String> images = new ArrayList<>();
 
     private Integer stock;
 
@@ -109,10 +114,6 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<ProductVariant> variants = new ArrayList<>();
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private List<Review> reviews = new ArrayList<>();
 
     @ManyToMany
@@ -125,7 +126,11 @@ public class Product {
     private List<Tag> tags = new ArrayList<>();
 
     @OneToMany(mappedBy = "product")
+    @Builder.Default
     private List<OrderItem> orderItems = new ArrayList<>();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CartItem> cartItems = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
@@ -170,24 +175,6 @@ public class Product {
     public void clearOptions() {
         options.forEach(option -> option.setProduct(null));
         options.clear();
-    }
-
-    // 상품 변형 추가 메서드
-    public void addVariant(ProductVariant variant) {
-        variants.add(variant);
-        variant.setProduct(this);
-    }
-
-    // 상품 변형 제거 메서드
-    public void removeVariant(ProductVariant variant) {
-        variants.remove(variant);
-        variant.setProduct(null);
-    }
-
-    // 상품 변형 모두 제거 메서드
-    public void clearVariants() {
-        variants.forEach(variant -> variant.setProduct(null));
-        variants.clear();
     }
 
     // 태그 추가 메서드
@@ -235,5 +222,19 @@ public class Product {
         return orderItems.stream()
                 .map(item -> this.cost.multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getCurrentPrice() {
+        return salePrice != null ? salePrice : price;
+    }
+
+    public boolean isOnSale() {
+        return salePrice != null && salePrice.compareTo(price) < 0;
+    }
+
+    public BigDecimal getDiscountRate() {
+        if (!isOnSale()) return BigDecimal.ZERO;
+        return BigDecimal.ONE.subtract(salePrice.divide(price, 2, BigDecimal.ROUND_HALF_UP))
+                .multiply(new BigDecimal("100"));
     }
 }

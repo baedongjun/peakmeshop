@@ -542,9 +542,9 @@ public class RefundServiceImpl implements RefundService {
             item.setRefund(refund);
             item.setOrderItemId(itemDTO.getOrderItemId());
             item.setProductId(itemDTO.getProductId());
-            item.setProductVariantId(itemDTO.getProductVariantId());
+            item.setOptionId(itemDTO.getProductOptionId());
             item.setProductName(itemDTO.getProductName());
-            item.setVariantName(itemDTO.getVariantName());
+            item.setOptionName(itemDTO.getOptionName());
             item.setQuantity(itemDTO.getQuantity());
             item.setPrice(itemDTO.getPrice());
             item.setReason(itemDTO.getReason());
@@ -559,9 +559,9 @@ public class RefundServiceImpl implements RefundService {
         dto.setRefundId(item.getRefund().getId());
         dto.setOrderItemId(item.getOrderItemId());
         dto.setProductId(item.getProductId());
-        dto.setProductVariantId(item.getProductVariantId());
+        dto.setOrderId(item.getOptionId());
         dto.setProductName(item.getProductName());
-        dto.setVariantName(item.getVariantName());
+        dto.setOptionName(item.getOptionName());
         dto.setQuantity(item.getQuantity());
         dto.setPrice(item.getPrice());
         dto.setTotalPrice(item.getPrice().multiply(new BigDecimal(item.getQuantity())));

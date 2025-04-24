@@ -22,18 +22,14 @@ public interface MemberCouponRepository extends JpaRepository<MemberCoupon, Long
 
     boolean existsByMemberIdAndCouponId(Long memberId, Long couponId);
 
-    @Query("SELECT mc FROM MemberCoupon mc WHERE mc.member.id = :memberId AND mc.used = false AND mc.coupon.status = :status AND mc.coupon.endDate > :now")
-    List<MemberCoupon> findByMemberIdAndUsedFalseAndCouponStatusAndCouponEndDateAfter(
-            @Param("memberId") Long memberId,
-            @Param("status") String status,
-            @Param("now") LocalDateTime now);
+    @Query("SELECT mc FROM MemberCoupon mc WHERE mc.member.id = :memberId AND mc.used = false")
+    Page<MemberCoupon> findByMemberIdAndUsedFalse(@Param("memberId") Long memberId, Pageable pageable);
 
-    @Query("SELECT mc FROM MemberCoupon mc WHERE mc.member.id = :memberId AND mc.used = false AND mc.coupon.status = :status AND mc.coupon.endDate > :now")
-    Page<MemberCoupon> findByMemberIdAndUsedFalseAndCouponStatusAndCouponEndDateAfter(
+    @Query("SELECT mc FROM MemberCoupon mc WHERE mc.member.id = :memberId AND mc.used = false " +
+           "AND mc.coupon.startDate <= :now AND mc.coupon.endDate >= :now")
+    List<MemberCoupon> findByMemberIdAndUsedFalseAndCouponStartDateBeforeAndCouponEndDateAfter(
             @Param("memberId") Long memberId,
-            @Param("status") String status,
-            @Param("now") LocalDateTime now,
-            Pageable pageable);
+            @Param("now") LocalDateTime now);
 
     List<MemberCoupon> findByEndDateBeforeAndUsedFalse(LocalDateTime date);
 }

@@ -17,6 +17,7 @@ import com.peakmeshop.domain.entity.Notification;
 import com.peakmeshop.domain.repository.MemberRepository;
 import com.peakmeshop.domain.repository.NotificationRepository;
 import com.peakmeshop.domain.service.NotificationService;
+import com.peakmeshop.api.mapper.NotificationMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,6 +27,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final MemberRepository memberRepository;
+    private final NotificationMapper notificationMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -33,14 +35,14 @@ public class NotificationServiceImpl implements NotificationService {
         Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Notification not found with id: " + id));
 
-        return convertToDTO(notification);
+        return notificationMapper.toDTO(notification);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<NotificationDTO> getNotificationsByMemberId(Long memberId, Pageable pageable) {
         Page<Notification> notifications = notificationRepository.findByMemberIdOrderByCreatedAtDesc(memberId, pageable);
-        return notifications.map(this::convertToDTO);
+        return notifications.map(notificationMapper::toDTO);
     }
 
     @Override
@@ -48,7 +50,7 @@ public class NotificationServiceImpl implements NotificationService {
     public List<NotificationDTO> getUnreadNotificationsByMemberId(Long memberId) {
         List<Notification> notifications = notificationRepository.findByMemberIdAndReadFalseOrderByCreatedAtDesc(memberId);
         return notifications.stream()
-                .map(this::convertToDTO)
+                .map(notificationMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -58,7 +60,7 @@ public class NotificationServiceImpl implements NotificationService {
         Notification notification = notificationRepository.findByIdAndMemberId(id, memberId)
                 .orElseThrow(() -> new EntityNotFoundException("Notification not found with id: " + id + " for member: " + memberId));
 
-        return convertToDTO(notification);
+        return notificationMapper.toDTO(notification);
     }
 
     @Override
@@ -71,7 +73,7 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setReadAt(LocalDateTime.now());
 
         Notification updatedNotification = notificationRepository.save(notification);
-        return convertToDTO(updatedNotification);
+        return notificationMapper.toDTO(updatedNotification);
     }
 
     @Override
@@ -102,35 +104,17 @@ public class NotificationServiceImpl implements NotificationService {
         Member member = memberRepository.findById(notificationDTO.getMemberId())
                 .orElseThrow(() -> new EntityNotFoundException("Member not found with id: " + notificationDTO.getMemberId()));
 
-        Notification notification = Notification.builder()
-                .member(member)
-                .title(notificationDTO.getTitle())
-                .message(notificationDTO.getMessage())
-                .type(notificationDTO.getType())
-                .read(false)
-                .createdAt(LocalDateTime.now())
-                .build();
+        Notification notification = notificationMapper.toEntity(notificationDTO);
+        notification.setMember(member);
+        notification.setCreatedAt(LocalDateTime.now());
 
         Notification savedNotification = notificationRepository.save(notification);
-        return convertToDTO(savedNotification);
+        return notificationMapper.toDTO(savedNotification);
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getUnreadCount(Long memberId) {
         return notificationRepository.countByMemberIdAndReadFalse(memberId);
-    }
-
-    private NotificationDTO convertToDTO(Notification notification) {
-        return NotificationDTO.builder()
-                .id(notification.getId())
-                .memberId(notification.getMember().getId())
-                .title(notification.getTitle())
-                .message(notification.getMessage())
-                .type(notification.getType())
-                .read(notification.isRead())
-                .createdAt(notification.getCreatedAt())
-                .readAt(notification.getReadAt())
-                .build();
     }
 }

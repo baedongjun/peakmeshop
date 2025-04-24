@@ -60,7 +60,6 @@ public class AuthenticationEventListener {
                 .userAgent(userAgent)
                 .ipAddress(ipAddress)
                 .userId(userId)
-                .memberId(memberId)
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -133,7 +132,6 @@ public class AuthenticationEventListener {
                 .userAgent(userAgent)
                 .ipAddress(ipAddress)
                 .userId(userId)
-                .memberId(memberId)
                 .createdAt(LocalDateTime.now())
                 .build();
 

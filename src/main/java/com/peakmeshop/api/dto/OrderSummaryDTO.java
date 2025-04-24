@@ -15,7 +15,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderSummaryDTO {
+    private Long id;
+    private String orderNumber;
     private String memberName;
+    private String status;
+    private BigDecimal totalAmount;
+    private Integer totalItems;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private long totalOrders;
     private long monthlyOrders;
     private long dailyOrders;

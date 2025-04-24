@@ -30,7 +30,8 @@ public class CategoryDTO {
         private List<String> filterableAttributes;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
-        private Long productCount;
+        private Integer productCount;
+        private Integer childCount;
         private Integer depth;
 
 }

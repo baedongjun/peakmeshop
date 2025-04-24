@@ -1,44 +1,45 @@
 package com.peakmeshop.domain.service.impl;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.peakmeshop.api.dto.StatisticsDTO;
+import com.peakmeshop.domain.entity.Statistics;
+import com.peakmeshop.domain.enums.OrderStatus;
 import com.peakmeshop.domain.repository.MemberRepository;
 import com.peakmeshop.domain.repository.OrderItemRepository;
 import com.peakmeshop.domain.repository.OrderRepository;
 import com.peakmeshop.domain.repository.ProductRepository;
+import com.peakmeshop.domain.repository.StatisticsRepository;
 import com.peakmeshop.domain.service.StatisticsService;
+import com.peakmeshop.api.mapper.StatisticsMapper;
+import lombok.RequiredArgsConstructor;
 
 @Service
-@Transactional
+@RequiredArgsConstructor
 public class StatisticsServiceImpl implements StatisticsService {
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
     private final MemberRepository memberRepository;
-
-    public StatisticsServiceImpl(
-            OrderRepository orderRepository,
-            OrderItemRepository orderItemRepository,
-            ProductRepository productRepository,
-            MemberRepository memberRepository) {
-        this.orderRepository = orderRepository;
-        this.orderItemRepository = orderItemRepository;
-        this.productRepository = productRepository;
-        this.memberRepository = memberRepository;
-    }
+    private final StatisticsRepository statisticsRepository;
+    private final StatisticsMapper statisticsMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -250,31 +251,70 @@ public class StatisticsServiceImpl implements StatisticsService {
     @Override
     @Transactional
     public void generateDailyStatistics() {
-        // 일별 통계 생성 로직 구현
-        // 예: 어제 날짜의 통계를 생성하고 저장
         LocalDate yesterday = LocalDate.now().minusDays(1);
         StatisticsDTO statistics = getDailyStatistics(yesterday);
-        // 통계 저장 로직 (필요시 구현)
+        
+        Statistics entity = Statistics.builder()
+                .type("DAILY")
+                .date(yesterday)
+                .totalSales(statistics.totalSales())
+                .totalOrders(statistics.totalOrders())
+                .newCustomers(statistics.newCustomers())
+                .conversionRate(statistics.conversionRate())
+                .salesByCategory(statistics.salesByCategory())
+                .salesByProduct(statistics.salesByProduct())
+                .ordersByStatus(statistics.ordersByStatus())
+                .salesByPaymentMethod(statistics.salesByPaymentMethod())
+                .salesByRegion(statistics.salesByRegion())
+                .build();
+                
+        statisticsRepository.save(entity);
     }
 
     @Override
     @Transactional
     public void generateMonthlyStatistics() {
-        // 월별 통계 생성 로직 구현
-        // 예: 지난 달의 통계를 생성하고 저장
         LocalDate lastMonth = LocalDate.now().minusMonths(1);
         StatisticsDTO statistics = getMonthlyStatistics(lastMonth.getYear(), lastMonth.getMonthValue());
-        // 통계 저장 로직 (필요시 구현)
+        
+        Statistics entity = Statistics.builder()
+                .type("MONTHLY")
+                .date(lastMonth.withDayOfMonth(1))
+                .totalSales(statistics.totalSales())
+                .totalOrders(statistics.totalOrders())
+                .newCustomers(statistics.newCustomers())
+                .conversionRate(statistics.conversionRate())
+                .salesByCategory(statistics.salesByCategory())
+                .salesByProduct(statistics.salesByProduct())
+                .ordersByStatus(statistics.ordersByStatus())
+                .salesByPaymentMethod(statistics.salesByPaymentMethod())
+                .salesByRegion(statistics.salesByRegion())
+                .build();
+                
+        statisticsRepository.save(entity);
     }
 
     @Override
     @Transactional
     public void generateYearlyStatistics() {
-        // 연간 통계 생성 로직 구현
-        // 예: 지난 해의 통계를 생성하고 저장
         int lastYear = LocalDate.now().getYear() - 1;
         StatisticsDTO statistics = getYearlyStatistics(lastYear);
-        // 통계 저장 로직 (필요시 구현)
+        
+        Statistics entity = Statistics.builder()
+                .type("YEARLY")
+                .date(LocalDate.of(lastYear, 1, 1))
+                .totalSales(statistics.totalSales())
+                .totalOrders(statistics.totalOrders())
+                .newCustomers(statistics.newCustomers())
+                .conversionRate(statistics.conversionRate())
+                .salesByCategory(statistics.salesByCategory())
+                .salesByProduct(statistics.salesByProduct())
+                .ordersByStatus(statistics.ordersByStatus())
+                .salesByPaymentMethod(statistics.salesByPaymentMethod())
+                .salesByRegion(statistics.salesByRegion())
+                .build();
+                
+        statisticsRepository.save(entity);
     }
 
     @Override
@@ -377,75 +417,90 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     // 헬퍼 메서드들
     private double calculateTotalSales(LocalDateTime startDateTime, LocalDateTime endDateTime) {
-        // OrderRepository에 해당 메서드 추가 필요
-        // return orderRepository.calculateSalesAmountBetween(startDateTime, endDateTime);
-
-        // 임시 구현 (실제로는 OrderRepository에 적절한 메서드 추가 필요)
-        return 0.0;
+        return orderRepository.findByCreatedAtBetweenAndStatusNot(
+                startDateTime, 
+                endDateTime, 
+                OrderStatus.CANCELLED
+            )
+            .stream()
+            .mapToDouble(order -> order.getTotalAmount())
+            .sum();
     }
 
     private int calculateTotalOrders(LocalDateTime startDateTime, LocalDateTime endDateTime) {
-        // OrderRepository에 해당 메서드 추가 필요
-        // return orderRepository.countByCreatedAtBetween(startDateTime, endDateTime);
-
-        // 임시 구현 (실제로는 OrderRepository에 적절한 메서드 추가 필요)
-        return 0;
+        return (int) orderRepository.countByCreatedAtBetween(startDateTime, endDateTime);
     }
 
     private int calculateNewCustomers(LocalDateTime startDateTime, LocalDateTime endDateTime) {
-        // MemberRepository에 해당 메서드 추가 필요
-        // return memberRepository.countByCreatedAtBetween(startDateTime, endDateTime);
-
-        // 임시 구현 (실제로는 MemberRepository에 적절한 메서드 추가 필요)
-        return 0;
+        return (int) memberRepository.countByCreatedAtBetween(startDateTime, endDateTime);
     }
 
     private double calculateConversionRate(LocalDateTime startDateTime, LocalDateTime endDateTime) {
-        // 전환율 계산 로직 구현
-        // 예: 주문 수 / 방문자 수 * 100
         int orders = calculateTotalOrders(startDateTime, endDateTime);
-        int visits = 0; // 방문자 수를 가져오는 로직 필요
-
+        int visits = getVisitCount(startDateTime, endDateTime);
         return visits > 0 ? (double) orders / visits * 100 : 0.0;
     }
 
-    private Map<String, Double> calculateSalesByCategory(LocalDateTime startDateTime, LocalDateTime endDateTime) {
-        // 카테고리별 매출 계산 로직 구현
-        // OrderRepository 또는 OrderItemRepository에 해당 메서드 추가 필요
+    private int getVisitCount(LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        // TODO: 실제 방문자 수를 가져오는 로직 구현
+        // 예: Google Analytics API 또는 자체 로깅 시스템에서 데이터 조회
+        return 100; // 임시 값
+    }
 
-        // 임시 구현 (실제로는 적절한 리포지토리 메서드 추가 필요)
-        return new HashMap<>();
+    private Map<String, Double> calculateSalesByCategory(LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        return orderItemRepository.findByOrder_CreatedAtBetweenAndOrder_StatusCompleted(startDateTime, endDateTime)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        item -> item.getProduct().getCategory().getName(),
+                        Collectors.summingDouble(item -> 
+                            item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())).doubleValue())
+                ));
     }
 
     private Map<String, Double> calculateSalesByProduct(LocalDateTime startDateTime, LocalDateTime endDateTime, int limit) {
-        // 상품별 매출 계산 로직 구현
-        // OrderItemRepository에 해당 메서드 추가 필요
-
-        // 임시 구현 (실제로는 적절한 리포지토리 메서드 추가 필요)
-        return new HashMap<>();
+        return orderItemRepository.findByOrder_CreatedAtBetweenAndOrder_StatusCompleted(startDateTime, endDateTime)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        item -> item.getProduct().getName(),
+                        Collectors.summingDouble(item -> 
+                            item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())).doubleValue())
+                ))
+                .entrySet()
+                .stream()
+                .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+                .limit(limit)
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                ));
     }
 
     private Map<String, Integer> calculateOrdersByStatus(LocalDateTime startDateTime, LocalDateTime endDateTime) {
-        // 주문 상태별 주문 수 계산 로직 구현
-        // OrderRepository에 해당 메서드 추가 필요
-
-        // 임시 구현 (실제로는 적절한 리포지토리 메서드 추가 필요)
-        return new HashMap<>();
+        return orderRepository.findAllByCreatedAtBetween(startDateTime, endDateTime)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        order -> order.getStatus().name(),
+                        Collectors.collectingAndThen(Collectors.counting(), Long::intValue)
+                ));
     }
 
     private Map<String, Double> calculateSalesByPaymentMethod(LocalDateTime startDateTime, LocalDateTime endDateTime) {
-        // 결제 방법별 매출 계산 로직 구현
-        // OrderRepository에 해당 메서드 추가 필요
-
-        // 임시 구현 (실제로는 적절한 리포지토리 메서드 추가 필요)
-        return new HashMap<>();
+        return orderRepository.findAllByCreatedAtBetween(startDateTime, endDateTime)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        order -> order.getPaymentMethod().name(),
+                        Collectors.summingDouble(order -> order.getTotalAmount())
+                ));
     }
 
     private Map<String, Double> calculateSalesByRegion(LocalDateTime startDateTime, LocalDateTime endDateTime) {
-        // 지역별 매출 계산 로직 구현
-        // OrderRepository에 해당 메서드 추가 필요
-
-        // 임시 구현 (실제로는 적절한 리포지토리 메서드 추가 필요)
-        return new HashMap<>();
+        return orderRepository.findAllByCreatedAtBetween(startDateTime, endDateTime)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        order -> order.getRecipientAddress().split(" ")[0], // 첫 번째 행정구역을 기준으로 집계
+                        Collectors.summingDouble(order -> order.getTotalAmount())
+                ));
     }
 }

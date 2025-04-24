@@ -20,6 +20,5 @@ public interface ReviewMapper {
 
     @Mapping(target = "product", ignore = true)
     @Mapping(target = "member", ignore = true)
-    @Mapping(target = "reviewImages", ignore = true)
     Review toEntity(ReviewDTO dto);
 } 

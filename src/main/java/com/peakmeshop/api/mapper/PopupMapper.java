@@ -14,5 +14,6 @@ public interface PopupMapper {
     
     PopupDTO toDTO(Popup popup);
 
+    @Mapping(target = "active", constant = "true")
     Popup toEntity(PopupDTO dto);
 } 

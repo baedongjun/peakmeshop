@@ -41,11 +41,11 @@ public class GuestCartItem {
     @Column(name = "product_name", nullable = false)
     private String productName;
 
-    @Column(name = "variant_id")
-    private Long variantId;
+    @Column(name = "option_id")
+    private Long optionId;
 
-    @Column(name = "variant_name")
-    private String variantName;
+    @Column(name = "option_name")
+    private String optionName;
 
     @Column(nullable = false)
     private Integer price;

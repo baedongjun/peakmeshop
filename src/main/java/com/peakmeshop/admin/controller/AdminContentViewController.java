@@ -147,11 +147,11 @@ public class AdminContentViewController {
 
     // FAQ 등록/수정 처리
     @PostMapping("/faqs/save")
-    public String saveFaq(@ModelAttribute Faq faq) {
-        if (faq.getId() != null) {
-            faqService.updateFaq(faq.getId(), faq);
+    public String saveFaq(@ModelAttribute FaqDTO faqDTO) {
+        if (faqDTO.id() != null) {
+            faqService.updateFaq(faqDTO.id(), faqDTO);
         } else {
-            faqService.createFaq(faq);
+            faqService.createFaq(faqDTO);
         }
         return "redirect:/admin/faqs";
     }

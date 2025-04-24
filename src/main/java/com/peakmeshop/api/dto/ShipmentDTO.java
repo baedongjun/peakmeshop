@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.peakmeshop.api.dto.ShipmentTrackingDTO;
+import com.peakmeshop.domain.enums.ShipmentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,7 +23,7 @@ public class ShipmentDTO {
     private String carrier;
     private String trackingNumber;
     private String shippingMethod;
-    private String status;
+    private ShipmentStatus status;
     private LocalDate estimatedDeliveryDate;
     private String shippingAddress;
     private String shippingCity;

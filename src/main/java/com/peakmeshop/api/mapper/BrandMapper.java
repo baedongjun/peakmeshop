@@ -12,6 +12,7 @@ import org.mapstruct.*;
 )
 public interface BrandMapper {
     
+    @Mapping(target = "productCount", expression = "java(brand.getProducts().size())")
     BrandDTO toDTO(Brand brand);
 
     @Mapping(target = "products", ignore = true)

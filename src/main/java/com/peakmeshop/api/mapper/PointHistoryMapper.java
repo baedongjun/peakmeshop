@@ -6,14 +6,15 @@ import org.mapstruct.*;
 
 @Mapper(
     componentModel = "spring",
-    uses = {BaseMapper.class, MemberMapper.class},
+    uses = {BaseMapper.class},
     nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
     nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
 )
 public interface PointHistoryMapper {
     
     @Mapping(target = "memberId", source = "member.id")
-    PointHistoryDTO toDTO(PointHistory pointHistory);
+    @Mapping(target = "memberName", source = "member.name")
+    PointHistoryDTO toDTO(PointHistory history);
 
     @Mapping(target = "member", ignore = true)
     PointHistory toEntity(PointHistoryDTO dto);

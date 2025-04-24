@@ -1,12 +1,10 @@
 package com.peakmeshop.domain.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +13,9 @@ import java.util.List;
 @Table(name = "product_options")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProductOption {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,37 +28,34 @@ public class ProductOption {
     @Column(nullable = false)
     private String name;
 
-    @Column(name = "additional_price")
-    private BigDecimal additionalPrice;
+    private String description;
+
+    @Column(name = "display_name")
+    private String displayName;
+
+    private Integer sortOrder;
+
+    @Column(columnDefinition = "boolean default true")
+    private boolean enabled;
 
     @OneToMany(mappedBy = "option", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductOptionValue> values = new ArrayList<>();
-
-    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
-    private boolean isRequired;
+    private List<ProductOptionValue> optionValues = new ArrayList<>();
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-        if (additionalPrice == null) {
-            additionalPrice = BigDecimal.ZERO;
-        }
-        if (isRequired) {
-            isRequired = false; // 기본값 설정
-        }
+    public void addValue(ProductOptionValue value) {
+        optionValues.add(value);
+        value.setOption(this);
     }
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+    public void removeValue(ProductOptionValue value) {
+        optionValues.remove(value);
+        value.setOption(null);
     }
 }

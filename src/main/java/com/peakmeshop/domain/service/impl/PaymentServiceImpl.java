@@ -4,12 +4,15 @@ import java.math.BigDecimal;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.peakmeshop.payment.IamportClient;
 import com.peakmeshop.payment.KakaoPayClient;
 import com.peakmeshop.payment.PaymentClient;
 import com.peakmeshop.payment.TossPaymentsClient;
 import com.peakmeshop.domain.service.PaymentService;
+import com.peakmeshop.api.mapper.PaymentMapper;
+import com.peakmeshop.api.dto.PaymentDTO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,34 +20,40 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class PaymentServiceImpl implements PaymentService {
 
     private final IamportClient iamportClient;
     private final KakaoPayClient kakaoPayClient;
     private final TossPaymentsClient tossPaymentsClient;
+    private final PaymentMapper paymentMapper;
 
     @Override
-    public Map<String, Object> requestPayment(String paymentMethod, Map<String, Object> paymentInfo) {
+    public PaymentDTO requestPayment(String paymentMethod, Map<String, Object> paymentInfo) {
         PaymentClient client = getPaymentClient(paymentMethod);
-        return client.requestPayment(paymentInfo);
+        Map<String, Object> result = client.requestPayment(paymentInfo);
+        return paymentMapper.fromMap(result);
     }
 
     @Override
-    public Map<String, Object> verifyPayment(String paymentMethod, String paymentKey, String orderId, Long amount) {
+    public PaymentDTO verifyPayment(String paymentMethod, String paymentKey, String orderId, Long amount) {
         PaymentClient client = getPaymentClient(paymentMethod);
-        return client.verifyPayment(paymentKey, orderId, amount);
+        Map<String, Object> result = client.verifyPayment(paymentKey, orderId, amount);
+        return paymentMapper.fromMap(result);
     }
 
     @Override
-    public Map<String, Object> cancelPayment(String paymentMethod, String paymentKey, Map<String, Object> cancelInfo) {
+    public PaymentDTO cancelPayment(String paymentMethod, String paymentKey, Map<String, Object> cancelInfo) {
         PaymentClient client = getPaymentClient(paymentMethod);
-        return client.cancelPayment(paymentKey, cancelInfo);
+        Map<String, Object> result = client.cancelPayment(paymentKey, cancelInfo);
+        return paymentMapper.fromMap(result);
     }
 
     @Override
-    public Map<String, Object> getPaymentDetails(String paymentMethod, String paymentKey) {
+    public PaymentDTO getPaymentDetails(String paymentMethod, String paymentKey) {
         PaymentClient client = getPaymentClient(paymentMethod);
-        return client.getPaymentDetails(paymentKey);
+        Map<String, Object> result = client.getPaymentDetails(paymentKey);
+        return paymentMapper.fromMap(result);
     }
 
     private PaymentClient getPaymentClient(String paymentMethod) {

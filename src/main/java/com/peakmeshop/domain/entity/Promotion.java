@@ -52,6 +52,9 @@ public class Promotion {
     @Column(nullable = false)
     private boolean isActive;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean suspended;
+
     private String bannerImageUrl;
 
     @Column(unique = true)

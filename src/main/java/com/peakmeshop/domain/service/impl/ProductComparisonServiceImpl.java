@@ -105,19 +105,16 @@ public class ProductComparisonServiceImpl implements ProductComparisonService {
         if (comparisonOpt.isEmpty()) {
             return ProductComparisonDTO.builder()
                     .memberId(memberId)
-                    .products(new ArrayList<>())
+                    .productIds(new ArrayList<>())
                     .build();
         }
 
         ProductComparison comparison = comparisonOpt.get();
-        List<ProductDTO> productDTOs = comparison.getProducts().stream()
-                .map(productId -> productService.getProductById(productId))
-                .collect(Collectors.toList());
 
         return ProductComparisonDTO.builder()
                 .id(comparison.getId())
                 .memberId(memberId)
-                .products(productDTOs)
+                .productIds(comparison.getProducts())
                 .createdAt(comparison.getCreatedAt())
                 .updatedAt(comparison.getUpdatedAt())
                 .build();
@@ -224,7 +221,7 @@ public class ProductComparisonServiceImpl implements ProductComparisonService {
         comparisonData.put("name", products.stream().map(ProductDTO::getName).collect(Collectors.toList()));
         comparisonData.put("price", products.stream().map(ProductDTO::getPrice).collect(Collectors.toList()));
         comparisonData.put("discountedPrice", products.stream().map(ProductDTO::getDiscountedPrice).collect(Collectors.toList()));
-        comparisonData.put("brand", products.stream().map(ProductDTO::getBrand).collect(Collectors.toList()));
+        comparisonData.put("brand", products.stream().map(ProductDTO::getBrandId).collect(Collectors.toList()));
         comparisonData.put("category", products.stream().map(ProductDTO::getCategoryId).collect(Collectors.toList()));
         comparisonData.put("rating", products.stream().map(ProductDTO::getAverageRating).collect(Collectors.toList()));
         comparisonData.put("reviewCount", products.stream().map(ProductDTO::getReviewCount).collect(Collectors.toList()));

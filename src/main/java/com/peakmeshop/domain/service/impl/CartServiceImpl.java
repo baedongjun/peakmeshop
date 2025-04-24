@@ -1,6 +1,7 @@
 package com.peakmeshop.domain.service.impl;
 
 import com.peakmeshop.api.dto.*;
+import com.peakmeshop.api.mapper.*;
 import com.peakmeshop.common.exception.BadRequestException;
 import com.peakmeshop.domain.entity.*;
 import com.peakmeshop.domain.repository.*;
@@ -28,16 +29,21 @@ public class CartServiceImpl implements CartService {
     private final CartItemOptionRepository cartItemOptionRepository;
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
-    private final ProductVariantRepository productVariantRepository;
     private final ProductOptionRepository productOptionRepository;
     private final CouponRepository couponRepository;
+
+    private final CartMapper cartMapper;
+    private final CartItemMapper cartItemMapper;
+    private final MemberMapper memberMapper;
+    private final ProductMapper productMapper;
+    private final ProductOptionMapper productOptionMapper;
 
     @Override
     @Transactional(readOnly = true)
     public CartDTO getCartByMemberId(Long memberId) {
         Cart cart = cartRepository.findByMemberId(memberId)
                 .orElseThrow(() -> new EntityNotFoundException("장바구니를 찾을 수 없습니다."));
-        return convertToDTO(cart);
+        return cartMapper.toDTO(cart);
     }
 
     @Override
@@ -45,7 +51,7 @@ public class CartServiceImpl implements CartService {
     public CartDTO getCartByGuestId(String guestId) {
         Cart cart = cartRepository.findByGuestId(guestId)
                 .orElseThrow(() -> new EntityNotFoundException("장바구니를 찾을 수 없습니다."));
-        return convertToDTO(cart);
+        return cartMapper.toDTO(cart);
     }
 
     @Override
@@ -54,7 +60,7 @@ public class CartServiceImpl implements CartService {
         Optional<Cart> existingCart = cartRepository.findByMemberId(memberId);
 
         if (existingCart.isPresent()) {
-            return convertToDTO(existingCart.get());
+            return cartMapper.toDTO(existingCart.get());
         }
 
         Member member = memberRepository.findById(memberId)
@@ -67,15 +73,15 @@ public class CartServiceImpl implements CartService {
                 .build();
 
         Cart savedCart = cartRepository.save(newCart);
-        return convertToDTO(savedCart);
+        return cartMapper.toDTO(savedCart);
     }
 
     @Override
     @Transactional(readOnly = true)
     public CartDTO getCartBySessionId(String sessionId) {
         Cart cart = cartRepository.findByGuestId(sessionId)
-                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
-        return convertToDTO(cart);
+                .orElseThrow(() -> new EntityNotFoundException("장바구니를 찾을 수 없습니다."));
+        return cartMapper.toDTO(cart);
     }
 
     @Override
@@ -84,7 +90,7 @@ public class CartServiceImpl implements CartService {
         Optional<Cart> existingCart = cartRepository.findByGuestId(guestId);
 
         if (existingCart.isPresent()) {
-            return convertToDTO(existingCart.get());
+            return cartMapper.toDTO(existingCart.get());
         }
 
         Cart newCart = Cart.builder()
@@ -94,7 +100,7 @@ public class CartServiceImpl implements CartService {
                 .build();
 
         Cart savedCart = cartRepository.save(newCart);
-        return convertToDTO(savedCart);
+        return cartMapper.toDTO(savedCart);
     }
 
     @Override
@@ -136,17 +142,25 @@ public class CartServiceImpl implements CartService {
 
     private CartDTO addItemToCart(Cart cart, CartRequestDTO requestDTO) {
         Product product = productRepository.findById(requestDTO.getProductId())
-                .orElseThrow(() -> new UsernameNotFoundException("상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
 
-        ProductVariant variant = null;
-        if (requestDTO.getVariantId() != null) {
-            variant = productVariantRepository.findById(requestDTO.getVariantId())
-                    .orElseThrow(() -> new UsernameNotFoundException("상품 옵션을 찾을 수 없습니다."));
+        ProductOption option = null;
+        ProductOptionValue optionValue = null;
+        if (requestDTO.getOptionId() != null) {
+            option = productOptionRepository.findById(requestDTO.getOptionId())
+                    .orElseThrow(() -> new EntityNotFoundException("상품 옵션을 찾을 수 없습니다."));
+            
+            if (requestDTO.getOptionValueId() != null) {
+                optionValue = option.getOptionValues().stream()
+                        .filter(value -> value.getId().equals(requestDTO.getOptionValueId()))
+                        .findFirst()
+                        .orElseThrow(() -> new EntityNotFoundException("옵션 값을 찾을 수 없습니다."));
+            }
         }
 
         // 재고 확인
-        if (variant != null) {
-            if (variant.getStock() < requestDTO.getQuantity()) {
+        if (optionValue != null) {
+            if (optionValue.getStock() < requestDTO.getQuantity()) {
                 throw new BadRequestException("재고가 부족합니다.");
             }
         } else {
@@ -158,16 +172,19 @@ public class CartServiceImpl implements CartService {
         // 동일한 상품이 이미 장바구니에 있는지 확인
         boolean itemExists = false;
 
-        if (variant != null) {
-            for (CartItem item : cart.getItems()) {
+        if (option != null) {
+            for (CartItem item : cart.getCartItems()) {
                 if (item.getProduct().getId().equals(product.getId()) &&
-                        item.getVariant() != null &&
-                        item.getVariant().getId().equals(variant.getId())) {
+                        item.getOption() != null &&
+                        item.getOption().getId().equals(option.getId()) &&
+                        ((optionValue != null && item.getOptionValue() != null && 
+                          item.getOptionValue().getId().equals(optionValue.getId())) ||
+                         (optionValue == null && item.getOptionValue() == null))) {
 
                     // 옵션이 동일한지 확인
                     if (requestDTO.getOptions() != null && !requestDTO.getOptions().isEmpty()) {
                         List<Long> existingOptionIds = item.getOptions().stream()
-                                .map(option -> option.getProductOption().getId())
+                                .map(options -> options.getProductOption().getId())
                                 .collect(Collectors.toList());
 
                         List<Long> newOptionIds = requestDTO.getOptions().stream()
@@ -189,12 +206,14 @@ public class CartServiceImpl implements CartService {
                 }
             }
         } else {
-            for (CartItem item : cart.getItems()) {
-                if (item.getProduct().getId().equals(product.getId()) && item.getVariant() == null) {
+            for (CartItem item : cart.getCartItems()) {
+                if (item.getProduct().getId().equals(product.getId()) && 
+                    item.getOption() == null && 
+                    item.getOptionValue() == null) {
                     // 옵션이 동일한지 확인
                     if (requestDTO.getOptions() != null && !requestDTO.getOptions().isEmpty()) {
                         List<Long> existingOptionIds = item.getOptions().stream()
-                                .map(option -> option.getProductOption().getId())
+                                .map(options -> options.getProductOption().getId())
                                 .collect(Collectors.toList());
 
                         List<Long> newOptionIds = requestDTO.getOptions().stream()
@@ -218,12 +237,20 @@ public class CartServiceImpl implements CartService {
         }
 
         if (!itemExists) {
+            // 가격 계산
+            BigDecimal price = product.getPrice();
+            if (optionValue != null && optionValue.getAdditionalPrice() != null) {
+                price = price.add(optionValue.getAdditionalPrice());
+            }
+
             // 새 상품 추가
             CartItem cartItem = CartItem.builder()
                     .cart(cart)
                     .product(product)
-                    .variant(variant)
+                    .option(option)
+                    .optionValue(optionValue)
                     .quantity(requestDTO.getQuantity())
+                    .price(price)
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
                     .build();
@@ -234,7 +261,7 @@ public class CartServiceImpl implements CartService {
             if (requestDTO.getOptions() != null && !requestDTO.getOptions().isEmpty()) {
                 for (CartRequestDTO.CartOptionDTO optionDTO : requestDTO.getOptions()) {
                     ProductOption productOption = productOptionRepository.findById(optionDTO.getOptionId())
-                            .orElseThrow(() -> new UsernameNotFoundException("상품 옵션을 찾을 수 없습니다."));
+                            .orElseThrow(() -> new EntityNotFoundException("상품 옵션을 찾을 수 없습니다."));
 
                     CartItemOption cartItemOption = CartItemOption.builder()
                             .cartItem(cartItem)
@@ -246,21 +273,20 @@ public class CartServiceImpl implements CartService {
                 }
             }
 
-            cart.getItems().add(cartItem);
+            cart.getCartItems().add(cartItem);
         }
 
         cart.setUpdatedAt(LocalDateTime.now());
         Cart updatedCart = cartRepository.save(cart);
 
-        return convertToDTO(updatedCart);
+        return cartMapper.toDTO(updatedCart);
     }
 
     @Override
     @Transactional
     public CartDTO updateCartItem(Long memberId, CartUpdateDTO updateDTO) {
         Cart cart = cartRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
-
+                .orElseThrow(() -> new EntityNotFoundException("장바구니를 찾을 수 없습니다."));
         return updateCartItem(cart, updateDTO);
     }
 
@@ -268,46 +294,30 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartDTO updateGuestCartItem(String guestId, CartUpdateDTO updateDTO) {
         Cart cart = cartRepository.findByGuestId(guestId)
-                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
-
+                .orElseThrow(() -> new EntityNotFoundException("장바구니를 찾을 수 없습니다."));
         return updateCartItem(cart, updateDTO);
     }
 
     private CartDTO updateCartItem(Cart cart, CartUpdateDTO updateDTO) {
         CartItem cartItem = cartItemRepository.findById(updateDTO.getCartItemId())
-                .orElseThrow(() -> new UsernameNotFoundException("장바구니 상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("장바구니 상품을 찾을 수 없습니다."));
 
         if (!cartItem.getCart().getId().equals(cart.getId())) {
-            throw new BadRequestException("해당 장바구니에 상품이 존재하지 않습니다.");
-        }
-
-        // 재고 확인
-        if (cartItem.getVariant() != null) {
-            if (cartItem.getVariant().getStock() < updateDTO.getQuantity()) {
-                throw new BadRequestException("재고가 부족합니다.");
-            }
-        } else {
-            if (cartItem.getProduct().getStock() < updateDTO.getQuantity()) {
-                throw new BadRequestException("재고가 부족합니다.");
-            }
+            throw new BadRequestException("해당 장바구니에 속한 상품이 아닙니다.");
         }
 
         cartItem.setQuantity(updateDTO.getQuantity());
         cartItem.setUpdatedAt(LocalDateTime.now());
         cartItemRepository.save(cartItem);
 
-        cart.setUpdatedAt(LocalDateTime.now());
-        Cart updatedCart = cartRepository.save(cart);
-
-        return convertToDTO(updatedCart);
+        return cartMapper.toDTO(cart);
     }
 
     @Override
     @Transactional
     public CartDTO removeItemFromCart(Long memberId, Long cartItemId) {
         Cart cart = cartRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
-
+                .orElseThrow(() -> new EntityNotFoundException("장바구니를 찾을 수 없습니다."));
         return removeItemFromCart(cart, cartItemId);
     }
 
@@ -315,38 +325,29 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartDTO removeItemFromGuestCart(String guestId, Long cartItemId) {
         Cart cart = cartRepository.findByGuestId(guestId)
-                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
-
+                .orElseThrow(() -> new EntityNotFoundException("장바구니를 찾을 수 없습니다."));
         return removeItemFromCart(cart, cartItemId);
     }
 
     private CartDTO removeItemFromCart(Cart cart, Long cartItemId) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new UsernameNotFoundException("장바구니 상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("장바구니 상품을 찾을 수 없습니다."));
 
         if (!cartItem.getCart().getId().equals(cart.getId())) {
-            throw new BadRequestException("해당 장바구니에 상품이 존재하지 않습니다.");
+            throw new BadRequestException("해당 장바구니에 속한 상품이 아닙니다.");
         }
 
-        // 옵션 삭제
-        cartItemOptionRepository.deleteAll(cartItem.getOptions());
-
-        // 상품 삭제
         cartItemRepository.delete(cartItem);
-        cart.getItems().remove(cartItem);
+        cart.getCartItems().remove(cartItem);
 
-        cart.setUpdatedAt(LocalDateTime.now());
-        Cart updatedCart = cartRepository.save(cart);
-
-        return convertToDTO(updatedCart);
+        return cartMapper.toDTO(cart);
     }
 
     @Override
     @Transactional
     public CartDTO clearCart(Long memberId) {
         Cart cart = cartRepository.findByMemberId(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
-
+                .orElseThrow(() -> new EntityNotFoundException("장바구니를 찾을 수 없습니다."));
         return clearCart(cart);
     }
 
@@ -354,28 +355,18 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartDTO clearGuestCart(String guestId) {
         Cart cart = cartRepository.findByGuestId(guestId)
-                .orElseThrow(() -> new UsernameNotFoundException("장바구니를 찾을 수 없습니다."));
-
+                .orElseThrow(() -> new EntityNotFoundException("장바구니를 찾을 수 없습니다."));
         return clearCart(cart);
     }
 
     private CartDTO clearCart(Cart cart) {
-        // 모든 옵션 삭제
-        for (CartItem item : cart.getItems()) {
-            cartItemOptionRepository.deleteAll(item.getOptions());
-        }
-
-        // 모든 상품 삭제
-        cartItemRepository.deleteAll(cart.getItems());
-        cart.getItems().clear();
-
-        // 쿠폰 제거
+        cartItemRepository.deleteByCartId(cart.getId());
+        cart.getCartItems().clear();
         cart.setCoupon(null);
-
         cart.setUpdatedAt(LocalDateTime.now());
-        Cart updatedCart = cartRepository.save(cart);
-
-        return convertToDTO(updatedCart);
+        
+        Cart savedCart = cartRepository.save(cart);
+        return cartMapper.toDTO(savedCart);
     }
 
     @Override
@@ -428,7 +419,7 @@ public class CartServiceImpl implements CartService {
         cart.setUpdatedAt(LocalDateTime.now());
         Cart updatedCart = cartRepository.save(cart);
 
-        return convertToDTO(updatedCart);
+        return cartMapper.toDTO(updatedCart);
     }
 
     @Override
@@ -454,7 +445,7 @@ public class CartServiceImpl implements CartService {
         cart.setUpdatedAt(LocalDateTime.now());
         Cart updatedCart = cartRepository.save(cart);
 
-        return convertToDTO(updatedCart);
+        return cartMapper.toDTO(updatedCart);
     }
 
     @Override
@@ -478,15 +469,15 @@ public class CartServiceImpl implements CartService {
                 });
 
         // 게스트 장바구니의 상품을 회원 장바구니로 이동
-        for (CartItem guestItem : guestCart.getItems()) {
+        for (CartItem guestItem : guestCart.getCartItems()) {
             boolean itemExists = false;
 
             // 동일한 상품이 이미 회원 장바구니에 있는지 확인
-            for (CartItem memberItem : memberCart.getItems()) {
+            for (CartItem memberItem : memberCart.getCartItems()) {
                 if (guestItem.getProduct().getId().equals(memberItem.getProduct().getId()) &&
-                        ((guestItem.getVariant() == null && memberItem.getVariant() == null) ||
-                                (guestItem.getVariant() != null && memberItem.getVariant() != null &&
-                                        guestItem.getVariant().getId().equals(memberItem.getVariant().getId())))) {
+                        ((guestItem.getOption() == null && memberItem.getOption() == null) ||
+                                (guestItem.getOption() != null && memberItem.getOption() != null &&
+                                        guestItem.getOption().getId().equals(memberItem.getOption().getId())))) {
 
                     // 옵션이 동일한지 확인
                     List<Long> guestOptionIds = guestItem.getOptions().stream()
@@ -513,7 +504,7 @@ public class CartServiceImpl implements CartService {
                 CartItem newItem = CartItem.builder()
                         .cart(memberCart)
                         .product(guestItem.getProduct())
-                        .variant(guestItem.getVariant())
+                        .option(guestItem.getOption())
                         .quantity(guestItem.getQuantity())
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())
@@ -532,7 +523,7 @@ public class CartServiceImpl implements CartService {
                     cartItemOptionRepository.save(newOption);
                 }
 
-                memberCart.getItems().add(newItem);
+                memberCart.getCartItems().add(newItem);
             }
         }
 
@@ -548,192 +539,35 @@ public class CartServiceImpl implements CartService {
         clearCart(guestCart);
         cartRepository.delete(guestCart);
 
-        return convertToDTO(updatedMemberCart);
+        return cartMapper.toDTO(updatedMemberCart);
     }
 
     private BigDecimal calculateSubtotal(Cart cart) {
-        BigDecimal subtotal = BigDecimal.ZERO;
-
-        for (CartItem item : cart.getItems()) {
-            BigDecimal itemPrice;
-
-            if (item.getVariant() != null && item.getVariant().getPrice() != null) {
-                itemPrice = item.getVariant().getPrice();
-            } else {
-                itemPrice = item.getProduct().getPrice();
-            }
-
-            // 옵션 가격 추가
-            for (CartItemOption option : item.getOptions()) {
-                if (option.getProductOption().getAdditionalPrice() != null) {
-                    itemPrice = itemPrice.add(option.getProductOption().getAdditionalPrice());
-                }
-            }
-
-            BigDecimal itemTotal = itemPrice.multiply(new BigDecimal(item.getQuantity()));
-            subtotal = subtotal.add(itemTotal);
-        }
-
-        return subtotal;
+        return cart.getCartItems().stream()
+                .map(item -> item.getPrice().multiply(new BigDecimal(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private BigDecimal calculateDiscount(Cart cart) {
+        if (cart.getCoupon() == null) {
+            return BigDecimal.ZERO;
+        }
+
         BigDecimal subtotal = calculateSubtotal(cart);
         BigDecimal discount = BigDecimal.ZERO;
 
-        if (cart.getCoupon() != null) {
-            Coupon coupon = cart.getCoupon();
-
-            // 최소 주문 금액 확인
-            if (coupon.getMinOrderAmount() != null && subtotal.compareTo(coupon.getMinOrderAmount()) < 0) {
-                return BigDecimal.ZERO;
-            }
-
-            // 할인 계산
-            if (Coupon.DISCOUNT_TYPE_PERCENTAGE.equals(coupon.getDiscountType())) {
-                BigDecimal discountValue = coupon.getDiscountValue();
-                if (discountValue != null) {
-                    // Integer를 BigDecimal로 변환
-                    BigDecimal discountPercent = discountValue;
-                    // RoundingMode를 명시적으로 지정
-                    BigDecimal hundred = new BigDecimal(100);
-                    discount = subtotal.multiply(discountPercent).divide(hundred, 2, BigDecimal.ROUND_HALF_UP);
-
-                    // 최대 할인 금액 제한
-                    if (coupon.getMaxDiscountAmount() != null) {
-                        BigDecimal maxDiscount = coupon.getMaxDiscountAmount();
-                        if (discount.compareTo(maxDiscount) > 0) {
-                            discount = maxDiscount;
-                        }
-                    }
+        switch (cart.getCoupon().getDiscountType()) {
+            case Coupon.DISCOUNT_TYPE_PERCENTAGE:
+                discount = subtotal.multiply(cart.getCoupon().getDiscountValue().divide(new BigDecimal(100)));
+                if (cart.getCoupon().getMaxDiscountAmount() != null) {
+                    discount = discount.min(cart.getCoupon().getMaxDiscountAmount());
                 }
-            } else if (Coupon.DISCOUNT_TYPE_FIXED.equals(coupon.getDiscountType())) {
-                if (coupon.getDiscountValue() != null) {
-                    // Integer를 BigDecimal로 변환
-                    discount = coupon.getDiscountValue();
-
-                    // 할인 금액이 장바구니 합계보다 크면 장바구니 합계로 제한
-                    if (discount.compareTo(subtotal) > 0) {
-                        discount = subtotal;
-                    }
-                }
-            }
+                break;
+            case Coupon.DISCOUNT_TYPE_FIXED:
+                discount = cart.getCoupon().getDiscountValue();
+                break;
         }
 
         return discount;
-    }
-
-    private CartDTO convertToDTO(Cart cart) {
-        BigDecimal subtotal = calculateSubtotal(cart);
-        BigDecimal discount = calculateDiscount(cart);
-        BigDecimal total = subtotal.subtract(discount);
-
-        int itemCount = cart.getItems().stream()
-                .mapToInt(CartItem::getQuantity)
-                .sum();
-
-        CouponDTO couponDTO = null;
-        if (cart.getCoupon() != null) {
-            couponDTO = CouponDTO.builder()
-                    .id(cart.getCoupon().getId())
-                    .code(cart.getCoupon().getCode())
-                    .name(cart.getCoupon().getName())
-                    .description(cart.getCoupon().getDescription())
-                    .discountType(cart.getCoupon().getDiscountType())
-                    .discountValue(cart.getCoupon().getDiscountValue())
-                    .minOrderAmount(cart.getCoupon().getMinOrderAmount())
-                    .maxDiscountAmount(cart.getCoupon().getMaxDiscountAmount())
-                    .startDate(cart.getCoupon().getStartDate())
-                    .endDate(cart.getCoupon().getEndDate())
-                    .status(cart.getCoupon().getStatus())
-                    .build();
-        }
-
-        List<CartItemDTO> itemDTOs = cart.getItems().stream()
-                .map(this::convertToItemDTO)
-                .collect(Collectors.toList());
-
-        return CartDTO.builder()
-                .id(cart.getId())
-                .memberId(cart.getMember() != null ? cart.getMember().getId() : null)
-                .guestId(cart.getGuestId())
-                .items(itemDTOs)
-                .coupon(couponDTO)
-                .subtotal(subtotal)
-                .discount(discount)
-                .total(total)
-                .itemCount(itemCount)
-                .createdAt(cart.getCreatedAt())
-                .updatedAt(cart.getUpdatedAt())
-                .build();
-    }
-
-    private CartItemDTO convertToItemDTO(CartItem item) {
-        BigDecimal itemPrice;
-        String variantName = null;
-
-        if (item.getVariant() != null) {
-            itemPrice = item.getVariant().getPrice();
-            variantName = item.getVariant().getName();
-        } else {
-            itemPrice = item.getProduct().getPrice();
-        }
-
-        // 옵션 가격 추가
-        for (CartItemOption option : item.getOptions()) {
-            if (option.getProductOption().getAdditionalPrice() != null) {
-                itemPrice = itemPrice.add(option.getProductOption().getAdditionalPrice());
-            }
-        }
-
-        BigDecimal totalPrice = itemPrice.multiply(new BigDecimal(item.getQuantity()));
-
-        // 상품 이미지 URL 가져오기 - 수정된 부분
-        String thumbnailUrl = null;
-        if (!item.getProduct().getImages().isEmpty()) {
-            ProductImage thumbnail = item.getProduct().getImages().stream()
-                    .map(Images -> {
-                        ProductImage productImage = new ProductImage();
-                        productImage.setUrl(Images.getUrl());
-                        productImage.setThumbnail(Images.isThumbnail());
-                        return productImage;
-                    })
-                    .filter(image -> image.isThumbnail()) // 람다 표현식 사용
-                    .findFirst()
-                    .orElseGet(() -> {
-                        ProductImage defaultImage = new ProductImage();
-                        defaultImage.setUrl(item.getProduct().getMainImage());
-                        return defaultImage;
-                    });
-
-            thumbnailUrl = thumbnail.getUrl();
-
-        }
-
-        // 옵션 정보 변환
-        List<CartItemOptionDTO> optionDTOs = item.getOptions().stream()
-                .map(option -> CartItemOptionDTO.builder()
-                        .id(option.getId())
-                        .optionId(option.getProductOption().getId())
-                        .name(option.getProductOption().getName())
-                        .value(option.getValue())
-                        .additionalPrice(option.getProductOption().getAdditionalPrice())
-                        .build())
-                .collect(Collectors.toList());
-
-        return CartItemDTO.builder()
-                .id(item.getId())
-                .productId(item.getProduct().getId())
-                .productName(item.getProduct().getName())
-                .variantId(item.getVariant() != null ? item.getVariant().getId() : null)
-                .variantName(variantName)
-                .options(optionDTOs)
-                .quantity(item.getQuantity())
-                .price(itemPrice)
-                .totalPrice(totalPrice)
-                .thumbnailUrl(thumbnailUrl)
-                .createdAt(item.getCreatedAt())
-                .updatedAt(item.getUpdatedAt())
-                .build();
     }
 }

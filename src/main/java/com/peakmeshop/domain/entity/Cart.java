@@ -38,15 +38,18 @@ public class Cart {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CartItem> items = new ArrayList<>();
+    private List<CartItem> cartItems = new ArrayList<>();
+
+    @Column(name = "user_id")
+    private Long userId;
 
     public void addItem(CartItem item) {
-        items.add(item);
+        cartItems.add(item);
         item.setCart(this);
     }
 
     public void removeItem(CartItem item) {
-        items.remove(item);
+        cartItems.remove(item);
         item.setCart(null);
     }
 }

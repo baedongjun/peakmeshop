@@ -14,5 +14,7 @@ public interface NoticeMapper {
     
     NoticeDTO toDTO(Notice notice);
 
+    @Mapping(target = "viewCount", ignore = true)
+    @Mapping(target = "status", constant = "ACTIVE")
     Notice toEntity(NoticeDTO dto);
 } 

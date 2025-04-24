@@ -43,8 +43,9 @@ public class ActivityLog {
     @Column(name = "user_id", length = 50)
     private String userId;
 
-    @Column(name = "member_id")
-    private Long memberId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private Member member;
 
     @Column(name = "user_agent")
     private String userAgent;

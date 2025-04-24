@@ -16,15 +16,14 @@ public class ProductOptionValueDTO {
 
     private Long id;
     private Long optionId;
+    private String name;
     private String value;
-    private BigDecimal priceAdjustment;
-    private Integer stockQuantity;
-    private String sku;
-    private Boolean active;
+    private Integer sortOrder;
     private BigDecimal additionalPrice;
     private Integer stock;
-    private Integer displayOrder;
-    private Boolean isActive;
+    private String sku;
+    private boolean enabled;
+    private boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

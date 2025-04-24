@@ -17,6 +17,7 @@ import com.peakmeshop.domain.entity.Banner;
 import com.peakmeshop.domain.repository.BannerRepository;
 import com.peakmeshop.domain.service.BannerService;
 import com.peakmeshop.domain.service.FileStorageService;
+import com.peakmeshop.api.mapper.BannerMapper;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -26,18 +27,19 @@ public class BannerServiceImpl implements BannerService {
 
     private final BannerRepository bannerRepository;
     private final FileStorageService fileStorageService;
+    private final BannerMapper bannerMapper;
 
     @Override
     public Page<BannerDTO> getBanners(Pageable pageable) {
         return bannerRepository.findAll(pageable)
-                .map(this::convertToDTO);
+                .map(bannerMapper::toDTO);
     }
 
     @Override
     public Page<BannerDTO> getActiveBanners(Pageable pageable) {
         LocalDateTime now = LocalDateTime.now();
         return bannerRepository.findByStartDateBeforeAndEndDateAfterAndIsActiveTrue(now, now, pageable)
-                .map(this::convertToDTO);
+                .map(bannerMapper::toDTO);
     }
 
     @Override
@@ -45,21 +47,21 @@ public class BannerServiceImpl implements BannerService {
         LocalDateTime now = LocalDateTime.now();
         return bannerRepository.findByPositionAndStartDateBeforeAndEndDateAfterAndIsActiveTrue(position, now, now)
                 .stream()
-                .map(this::convertToDTO)
+                .map(bannerMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public BannerDTO getBannerById(Long id) {
         return bannerRepository.findById(id)
-                .map(this::convertToDTO)
+                .map(bannerMapper::toDTO)
                 .orElseThrow(() -> new IllegalArgumentException("Banner not found with id: " + id));
     }
 
     @Override
     public BannerDTO createBanner(BannerDTO bannerDTO) {
-        Banner banner = convertToEntity(bannerDTO);
-        return convertToDTO(bannerRepository.save(banner));
+        Banner banner = bannerMapper.toEntity(bannerDTO);
+        return bannerMapper.toDTO(bannerRepository.save(banner));
     }
 
     @Override
@@ -67,7 +69,7 @@ public class BannerServiceImpl implements BannerService {
         Banner existingBanner = bannerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Banner not found with id: " + id));
         
-        Banner updatedBanner = convertToEntity(bannerDTO);
+        Banner updatedBanner = bannerMapper.toEntity(bannerDTO);
         existingBanner.setTitle(updatedBanner.getTitle());
         existingBanner.setSubtitle(updatedBanner.getSubtitle());
         existingBanner.setDescription(updatedBanner.getDescription());
@@ -82,7 +84,7 @@ public class BannerServiceImpl implements BannerService {
         existingBanner.setBackgroundColor(updatedBanner.getBackgroundColor());
         existingBanner.setTextColor(updatedBanner.getTextColor());
         
-        return convertToDTO(bannerRepository.save(existingBanner));
+        return bannerMapper.toDTO(bannerRepository.save(existingBanner));
     }
 
     @Override
@@ -119,44 +121,5 @@ public class BannerServiceImpl implements BannerService {
                 .orElseThrow(() -> new IllegalArgumentException("Banner not found with id: " + id));
         banner.setActive(!banner.isActive());
         bannerRepository.save(banner);
-    }
-
-    private BannerDTO convertToDTO(Banner banner) {
-        return new BannerDTO(
-                banner.getId(),
-                banner.getTitle(),
-                banner.getSubtitle(),
-                banner.getDescription(),
-                banner.getImageUrl(),
-                banner.getLinkUrl(),
-                banner.getPosition(),
-                banner.getStatus(),
-                banner.getSortOrder(),
-                banner.getStartDate(),
-                banner.getEndDate(),
-                banner.isActive(),
-                banner.getBackgroundColor(),
-                banner.getTextColor(),
-                banner.getCreatedAt(),
-                banner.getUpdatedAt()
-        );
-    }
-
-    private Banner convertToEntity(BannerDTO bannerDTO) {
-        Banner banner = new Banner();
-        banner.setTitle(bannerDTO.title());
-        banner.setSubtitle(bannerDTO.subtitle());
-        banner.setDescription(bannerDTO.description());
-        banner.setImageUrl(bannerDTO.imageUrl());
-        banner.setLinkUrl(bannerDTO.linkUrl());
-        banner.setPosition(bannerDTO.position());
-        banner.setStatus(bannerDTO.status());
-        banner.setSortOrder(bannerDTO.sortOrder());
-        banner.setStartDate(bannerDTO.startDate());
-        banner.setEndDate(bannerDTO.endDate());
-        banner.setActive(bannerDTO.isActive());
-        banner.setBackgroundColor(bannerDTO.backgroundColor());
-        banner.setTextColor(bannerDTO.textColor());
-        return banner;
     }
 }

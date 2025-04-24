@@ -2,6 +2,8 @@ package com.peakmeshop.domain.service.impl;
 
 import com.peakmeshop.api.dto.InventoryDTO;
 import com.peakmeshop.api.dto.InventoryHistoryDTO;
+import com.peakmeshop.api.mapper.InventoryHistoryMapper;
+import com.peakmeshop.api.mapper.InventoryMapper;
 import com.peakmeshop.domain.entity.Inventory;
 import com.peakmeshop.domain.entity.InventoryHistory;
 import com.peakmeshop.domain.entity.Member;
@@ -33,6 +35,8 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryHistoryRepository inventoryHistoryRepository;
     private final ProductRepository productRepository;
     private final MemberRepository memberRepository;
+    private final InventoryMapper inventoryMapper;
+    private final InventoryHistoryMapper inventoryHistoryMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -208,7 +212,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional(readOnly = true)
     public List<InventoryDTO> getLowStockProducts() {
         return inventoryRepository.findLowStockProducts().stream()
-                .map(this::convertToDTO)
+                .map(inventoryMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -216,21 +220,21 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional(readOnly = true)
     public Page<InventoryDTO> getAllInventory(Pageable pageable) {
         return inventoryRepository.findAll(pageable)
-                .map(this::convertToDTO);
+                .map(inventoryMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<InventoryHistoryDTO> getInventoryHistory(Long productId, Pageable pageable) {
         return inventoryHistoryRepository.findByInventoryProductId(productId, pageable)
-                .map(this::convertToHistoryDTO);
+                .map(inventoryHistoryMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<InventoryHistoryDTO> getAllInventoryHistory(Pageable pageable) {
         return inventoryHistoryRepository.findAll(pageable)
-                .map(this::convertToHistoryDTO);
+                .map(inventoryHistoryMapper::toDTO);
     }
 
     @Override
@@ -302,43 +306,10 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     private InventoryDTO convertToDTO(Inventory inventory) {
-        Product product = inventory.getProduct();
-
-        return InventoryDTO.builder()
-                .id(inventory.getId())
-                .productId(product.getId())
-                .productName(product.getName())
-                .quantity(inventory.getQuantity())
-                .reservedQuantity(inventory.getReservedQuantity())
-                .availableQuantity(inventory.getQuantity() - inventory.getReservedQuantity())
-                .lowStockThreshold(inventory.getLowStockThreshold())
-                .isLowStock((inventory.getQuantity() - inventory.getReservedQuantity()) <= inventory.getLowStockThreshold())
-                .lastUpdated(inventory.getUpdatedAt())
-                .build();
+        return inventoryMapper.toDTO(inventory);
     }
 
     private InventoryHistoryDTO convertToHistoryDTO(InventoryHistory history) {
-        Product product = history.getInventory().getProduct();
-
-        InventoryHistoryDTO dto = InventoryHistoryDTO.builder()
-                .id(history.getId())
-                .productId(product.getId())
-                .productName(product.getName())
-                .quantityBefore(history.getQuantityBefore())
-                .quantityAfter(history.getQuantityAfter())
-                .quantityChanged(history.getQuantityChanged())
-                .reason(history.getReason())
-                .actionType(history.getActionType())
-                .orderId(history.getOrderId())
-                .createdAt(history.getCreatedAt())
-                .build();
-
-        if (history.getMember() != null) {
-            Member member = history.getMember();
-            dto.setUserId(member.getUserId());
-            dto.setUserName(member.getName());
-        }
-
-        return dto;
+        return inventoryHistoryMapper.toDTO(history);
     }
 }

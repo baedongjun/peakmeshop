@@ -32,4 +32,8 @@ public interface BaseMapper {
     default Long toLong(String value) {
         return value != null ? Long.parseLong(value) : null;
     }
+
+    default <T> T fromString(String str, Class<T> clazz) {
+        return str != null ? clazz.cast(str) : null;
+    }
 } 

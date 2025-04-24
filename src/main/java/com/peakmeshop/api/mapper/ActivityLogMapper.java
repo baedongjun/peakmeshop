@@ -12,7 +12,10 @@ import org.mapstruct.*;
 )
 public interface ActivityLogMapper {
     
+    @Mapping(target = "memberId", source = "member.id")
+    @Mapping(target = "userId", source = "member.userId")
     ActivityLogDTO toDTO(ActivityLog activityLog);
 
+    @Mapping(target = "member", ignore = true)
     ActivityLog toEntity(ActivityLogDTO dto);
 } 

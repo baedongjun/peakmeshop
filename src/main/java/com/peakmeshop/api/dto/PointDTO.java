@@ -15,9 +15,8 @@ import lombok.NoArgsConstructor;
 public class PointDTO {
 
     private Long id;
-    private Member member;
+    private Long memberId;
     private String memberName;
-    private String memberEmail;
     private Integer currentPoint;
     private Integer totalEarnedPoint;
     private Integer totalUsedPoint;

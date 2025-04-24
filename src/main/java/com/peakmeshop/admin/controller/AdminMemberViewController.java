@@ -68,7 +68,6 @@ public class AdminMemberViewController {
         model.addAttribute("isLast", members.isLast());
 
         // 기타 정보 추가
-        model.addAttribute("summary", memberService.getMemberSummary());
         model.addAttribute("grades", memberService.getAllGrades());
         
         return "admin/members/members";

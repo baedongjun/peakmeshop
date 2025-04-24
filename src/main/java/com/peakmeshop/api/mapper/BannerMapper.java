@@ -1,7 +1,8 @@
 package com.peakmeshop.api.mapper;
 
-import com.peakmeshop.domain.entity.Banner;
 import com.peakmeshop.api.dto.BannerDTO;
+import com.peakmeshop.domain.entity.Banner;
+
 import org.mapstruct.*;
 
 @Mapper(

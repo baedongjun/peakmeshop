@@ -54,9 +54,9 @@ public interface MemberService {
 
     MemberGradeDTO getGradeById(Long id);
 
-    Map<String, Long> getMemberSummary();
+    MemberSummaryDTO getTotalMemberSummary();
 
-    Map<String, Long> getMemberSummary(Long memberId);
+    MemberSummaryDTO getMemberSummary(Long memberId);
 
     Map<String, Object> getMemberStatistics(String period, String startDate, String endDate);
 

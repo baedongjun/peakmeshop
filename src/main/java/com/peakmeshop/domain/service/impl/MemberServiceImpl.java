@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.time.ZoneOffset;
 
 import com.peakmeshop.api.dto.*;
+import com.peakmeshop.api.mapper.MemberMapper;
 import com.peakmeshop.domain.repository.PointRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
@@ -43,13 +44,14 @@ public class MemberServiceImpl implements MemberService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final OrderRepository orderRepository;
+    private final MemberMapper memberMapper;
 
     @Override
     @Transactional(readOnly = true)
     public MemberDTO getMemberById(Long id) {
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
-        return convertToDTO(member);
+        return memberMapper.toDTO(member);
     }
 
     @Override
@@ -57,14 +59,14 @@ public class MemberServiceImpl implements MemberService {
     public MemberDTO getMemberByEmail(String email) {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
-        return convertToDTO(member);
+        return memberMapper.toDTO(member);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<MemberDTO> getAllMembers(Pageable pageable) {
         Page<Member> members = memberRepository.findAll(pageable);
-        return members.map(this::convertToDTO);
+        return members.map(memberMapper::toDTO);
     }
 
     @Override
@@ -77,21 +79,12 @@ public class MemberServiceImpl implements MemberService {
 
         // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(memberDTO.getPassword());
+        memberDTO.setPassword(encodedPassword);
 
-        Member member = Member.builder()
-                .userId(memberDTO.getUserId())
-                .email(memberDTO.getEmail())
-                .password(encodedPassword)
-                .name(memberDTO.getName())
-                .phone(memberDTO.getPhone())
-                .userRole(memberDTO.getUserRole() != null ? memberDTO.getUserRole() : "ROLE_USER")
-                .enabled(false)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .emailVerified(memberDTO.isEmailVerified())
-                .agreeTerms(memberDTO.isAgreeTerms())
-                .agreeMarketing(memberDTO.isAgreeMarketing())
-                .isWithdrawn(memberDTO.isWithdrawn()).build();
+        Member member = memberMapper.toEntity(memberDTO);
+        member.setEnabled(false);
+        member.setCreatedAt(LocalDateTime.now());
+        member.setUpdatedAt(LocalDateTime.now());
 
         Member savedMember = memberRepository.save(member);
 
@@ -108,7 +101,7 @@ public class MemberServiceImpl implements MemberService {
         // 인증 이메일 발송
         emailService.sendVerificationEmail(savedMember.getEmail(), token);
 
-        return convertToDTO(savedMember);
+        return memberMapper.toDTO(savedMember);
     }
 
     @Override
@@ -122,24 +115,17 @@ public class MemberServiceImpl implements MemberService {
             throw new BadRequestException("이미 사용 중인 이메일입니다.");
         }
 
-        member.setEmail(memberDTO.getEmail());
-
-        // 비밀번호가 제공된 경우에만 업데이트
+        // 비밀번호가 제공된 경우에만 암호화하여 업데이트
         if (memberDTO.getPassword() != null && !memberDTO.getPassword().isEmpty()) {
-            member.setPassword(passwordEncoder.encode(memberDTO.getPassword()));
+            memberDTO.setPassword(passwordEncoder.encode(memberDTO.getPassword()));
         }
 
-        member.setName(memberDTO.getName());
-        member.setPhone(memberDTO.getPhone());
+        Member updatedMember = memberMapper.toEntity(memberDTO);
+        updatedMember.setId(member.getId());
+        updatedMember.setUpdatedAt(LocalDateTime.now());
 
-        if (memberDTO.getUserRole() != null) {
-            member.setUserRole(memberDTO.getUserRole());
-        }
-
-        member.setUpdatedAt(LocalDateTime.now());
-
-        Member updatedMember = memberRepository.save(member);
-        return convertToDTO(updatedMember);
+        Member savedMember = memberRepository.save(updatedMember);
+        return memberMapper.toDTO(savedMember);
     }
 
     @Override
@@ -173,7 +159,7 @@ public class MemberServiceImpl implements MemberService {
         member.setUpdatedAt(LocalDateTime.now());
 
         Member updatedMember = memberRepository.save(member);
-        return convertToDTO(updatedMember);
+        return memberMapper.toDTO(updatedMember);
     }
 
     @Override
@@ -286,25 +272,11 @@ public class MemberServiceImpl implements MemberService {
     @Transactional(readOnly = true)
     public Page<MemberDTO> searchMembers(String keyword, Pageable pageable) {
         Page<Member> members = memberRepository.findByEmailContainingOrNameContaining(keyword, keyword, pageable);
-        return  members.map(this::convertToDTO);
+        return  members.map(memberMapper::toDTO);
     }
 
     private MemberDTO convertToDTO(Member member) {
-        return MemberDTO.builder()
-                .id(member.getId())
-                .userId(member.getUserId())
-                .email(member.getEmail())
-                .name(member.getName())
-                .phone(member.getPhone())
-                .userRole(member.getUserRole())
-                .enabled(member.isEnabled())
-                .status(member.getStatus())
-                .createdAt(member.getCreatedAt())
-                .updatedAt(member.getUpdatedAt())
-                .agreeTerms(member.isAgreeTerms())
-                .agreeMarketing(member.isAgreeMarketing())
-                .isEmailVerified(member.isEmailVerified())
-                .isWithdrawn(member.isWithdrawn()).build();
+        return memberMapper.toDTO(member);
     }
 
     @Override
@@ -312,7 +284,7 @@ public class MemberServiceImpl implements MemberService {
     public MemberDTO getMemberByUserId(String userId) {
         Member member = memberRepository.findByUserId(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
-        return convertToDTO(member);
+        return memberMapper.toDTO(member);
     }
 
     @Override
@@ -332,7 +304,7 @@ public class MemberServiceImpl implements MemberService {
         member.setUpdatedAt(LocalDateTime.now());
 
         Member updatedMember = memberRepository.save(member);
-        return convertToDTO(updatedMember);
+        return memberMapper.toDTO(updatedMember);
     }
 
     @Override
@@ -377,33 +349,6 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     @Transactional(readOnly = true)
-    public Map<String, Long> getMemberSummary() {
-        return Map.of(
-            "total", memberRepository.count(),
-            "active", memberRepository.countByStatus(Member.STATUS_ACTIVE),
-            "inactive", memberRepository.countByStatus(Member.STATUS_INACTIVE),
-            "blocked", memberRepository.countByStatus(Member.STATUS_BLOCKED),
-            "dormant", memberRepository.countByStatus(Member.STATUS_DORMANT)
-        );
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Map<String, Long> getMemberSummary(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
-
-        return Map.of(
-            "totalPoints", pointRepository.sumPointsByMemberId(memberId),
-            "totalOrders", orderRepository.countByMemberId(memberId),
-            "totalOrderAmount", orderRepository.sumTotalAmountByMemberId(memberId),
-            "lastOrderDate", member.getLastOrderDate() != null ? 
-                member.getLastOrderDate().toEpochSecond(ZoneOffset.UTC) : 0L
-        );
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Map<String, Object> getMemberStatistics(String period, String startDate, String endDate) {
         LocalDateTime start = LocalDateTime.parse(startDate, DateTimeFormatter.ISO_DATE_TIME);
         LocalDateTime end = LocalDateTime.parse(endDate, DateTimeFormatter.ISO_DATE_TIME);
@@ -426,77 +371,73 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public MemberSummaryDTO getMemberSummary(String period, String startDate, String endDate) {
-        LocalDateTime start;
-        LocalDateTime end;
+    @Transactional(readOnly = true)
+    public MemberSummaryDTO getTotalMemberSummary() {
+        return MemberSummaryDTO.createTotalSummary(
+            memberRepository.count(),
+            memberRepository.countByStatus(Member.STATUS_ACTIVE),
+            memberRepository.countByStatus(Member.STATUS_INACTIVE),
+            memberRepository.countByStatus(Member.STATUS_BLOCKED),
+            memberRepository.countByStatus(Member.STATUS_DORMANT)
+        );
+    }
 
-        // 기간 설정
-        if (startDate != null && endDate != null) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            start = LocalDate.parse(startDate, formatter).atStartOfDay();
-            end = LocalDate.parse(endDate, formatter).plusDays(1).atStartOfDay();
-        } else {
-            LocalDate now = LocalDate.now();
-            if (period != null) {
-                switch (period) {
-                    case "daily":
-                        start = now.atStartOfDay();
-                        end = now.plusDays(1).atStartOfDay();
-                        break;
-                    case "weekly":
-                        start = now.minusWeeks(1).atStartOfDay();
-                        end = now.plusDays(1).atStartOfDay();
-                        break;
-                    case "monthly":
-                        start = now.minusMonths(1).atStartOfDay();
-                        end = now.plusDays(1).atStartOfDay();
-                        break;
-                    case "yearly":
-                        start = now.minusYears(1).atStartOfDay();
-                        end = now.plusDays(1).atStartOfDay();
-                        break;
-                    default:
-                        start = now.minusMonths(1).atStartOfDay();
-                        end = now.plusDays(1).atStartOfDay();
-                }
-            } else {
-                // period가 null인 경우에 대한 기본 케이스 처리
-                start = now.minusMonths(1).atStartOfDay();
-                end = now.plusDays(1).atStartOfDay();
+    @Override
+    @Transactional(readOnly = true)
+    public MemberSummaryDTO getMemberSummary(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
+
+        return MemberSummaryDTO.createMemberSummary(
+            pointRepository.sumPointsByMemberId(memberId),
+            orderRepository.countByMemberId(memberId),
+            orderRepository.sumTotalAmountByMemberId(memberId),
+            member.getLastOrderDate()
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MemberSummaryDTO getMemberSummary(String period, String startDate, String endDate) {
+        LocalDateTime start = null;
+        LocalDateTime end = LocalDateTime.now();
+        
+        if (period != null) {
+            switch (period) {
+                case "daily":
+                    start = end.minusDays(30);
+                    break;
+                case "weekly":
+                    start = end.minusWeeks(12);
+                    break;
+                case "monthly":
+                    start = end.minusMonths(12);
+                    break;
+                case "yearly":
+                    start = end.minusYears(5);
+                    break;
+                default:
+                    start = LocalDate.parse(startDate).atStartOfDay();
+                    end = LocalDate.parse(endDate).atTime(23, 59, 59);
             }
+        } else {
+            start = LocalDate.parse(startDate).atStartOfDay();
+            end = LocalDate.parse(endDate).atTime(23, 59, 59);
         }
 
-        // 회원 데이터 조회
-        List<Member> members = memberRepository.findByCreatedAtBetween(start, end);
-        long totalMembers = memberRepository.count();
-        long activeMembers = memberRepository.countByStatus("ACTIVE");
-        long inactiveMembers = memberRepository.countByStatus("INACTIVE");
+        long newMembers = memberRepository.countByCreatedAtBetween(start, end);
+        long statusChanges = memberRepository.countStatusChangesBetween(start, end);
+        long activeMembers = memberRepository.countByStatus(Member.STATUS_ACTIVE);
+        long inactiveMembers = memberRepository.countByStatus(Member.STATUS_INACTIVE);
+        long blockedMembers = memberRepository.countByStatus(Member.STATUS_BLOCKED);
 
-        // 회원별 주문/매출 통계
-        double totalRevenue = orderRepository.calculateTotalRevenue(start, end);
-        long totalOrders = orderRepository.countByCreatedAtBetween(start, end);
-        double averageOrdersPerMember = totalMembers == 0 ? 0 : (double) totalOrders / totalMembers;
-        double averageRevenuePerMember = totalMembers == 0 ? 0 : totalRevenue / totalMembers;
-
-        // 포인트 통계
-        double totalPoints = pointRepository.calculateTotalPoints(LocalDateTime.now());
-        double averagePoints = totalMembers == 0 ? 0 : totalPoints / totalMembers;
-
-        return MemberSummaryDTO.builder()
-                .totalMembers(totalMembers)
-                .monthlyNewMembers(memberRepository.countByCreatedAtBetween(
-                        LocalDateTime.now().minusMonths(1),
-                        LocalDateTime.now()))
-                .dailyNewMembers(memberRepository.countByCreatedAtBetween(
-                        LocalDateTime.now().minusDays(1),
-                        LocalDateTime.now()))
-                .activeMembers(activeMembers)
-                .inactiveMembers(inactiveMembers)
-                .averageOrdersPerMember(averageOrdersPerMember)
-                .averageRevenuePerMember(averageRevenuePerMember)
-                .totalPoints(totalPoints)
-                .averagePoints(averagePoints)
-                .build();
+        return MemberSummaryDTO.createTotalSummary(
+            newMembers + activeMembers + inactiveMembers + blockedMembers,
+            activeMembers,
+            inactiveMembers,
+            blockedMembers,
+            memberRepository.countByStatus(Member.STATUS_DORMANT)
+        );
     }
 
     @Override
@@ -557,7 +498,7 @@ public class MemberServiceImpl implements MemberService {
             members = memberRepository.findByIsWithdrawnTrue(pageable);
         }
         
-        return members.map(this::convertToDTO);
+        return members.map(memberMapper::toDTO);
     }
 
     @Override
@@ -565,6 +506,6 @@ public class MemberServiceImpl implements MemberService {
     public Page<MemberDTO> getDormantMembers(Pageable pageable) {
         LocalDateTime threshold = LocalDateTime.now().minusMonths(12);
         return memberRepository.findDormantMembers(threshold, pageable)
-                .map(this::convertToDTO);
+                .map(memberMapper::toDTO);
     }
 }

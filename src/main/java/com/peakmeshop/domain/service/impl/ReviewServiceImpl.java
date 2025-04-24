@@ -17,6 +17,7 @@ import com.peakmeshop.domain.repository.MemberRepository;
 import com.peakmeshop.domain.repository.ProductRepository;
 import com.peakmeshop.domain.repository.ReviewRepository;
 import com.peakmeshop.domain.service.ReviewService;
+import com.peakmeshop.api.mapper.ReviewMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +28,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewRepository reviewRepository;
     private final ProductRepository productRepository;
     private final MemberRepository memberRepository;
+    private final ReviewMapper reviewMapper;
 
     @Override
     @Transactional
@@ -55,7 +57,7 @@ public class ReviewServiceImpl implements ReviewService {
         // 리뷰 저장
         Review savedReview = reviewRepository.save(review);
 
-        return convertToDTO(savedReview);
+        return reviewMapper.toDTO(savedReview);
     }
 
     @Override
@@ -64,28 +66,28 @@ public class ReviewServiceImpl implements ReviewService {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Review not found with id: " + id));
 
-        return convertToDTO(review);
+        return reviewMapper.toDTO(review);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ReviewDTO> getAllReviews(Pageable pageable) {
         return reviewRepository.findAll(pageable)
-                .map(this::convertToDTO);
+                .map(reviewMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ReviewDTO> getReviewsByProductId(Long productId, Pageable pageable) {
         return reviewRepository.findByProductId(productId, pageable)
-                .map(this::convertToDTO);
+                .map(reviewMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ReviewDTO> getReviewsByMemberId(Long memberId, Pageable pageable) {
         return reviewRepository.findByMemberId(memberId, pageable)
-                .map(this::convertToDTO);
+                .map(reviewMapper::toDTO);
     }
 
     @Override
@@ -106,7 +108,7 @@ public class ReviewServiceImpl implements ReviewService {
         review.setUpdatedAt(LocalDateTime.now());
 
         Review updatedReview = reviewRepository.save(review);
-        return convertToDTO(updatedReview);
+        return reviewMapper.toDTO(updatedReview);
     }
 
     @Override
@@ -119,7 +121,7 @@ public class ReviewServiceImpl implements ReviewService {
         review.setUpdatedAt(LocalDateTime.now());
 
         Review updatedReview = reviewRepository.save(review);
-        return convertToDTO(updatedReview);
+        return reviewMapper.toDTO(updatedReview);
     }
 
     @Override
@@ -134,7 +136,7 @@ public class ReviewServiceImpl implements ReviewService {
         review.setUpdatedAt(LocalDateTime.now());
 
         Review updatedReview = reviewRepository.save(review);
-        return convertToDTO(updatedReview);
+        return reviewMapper.toDTO(updatedReview);
     }
 
     @Override
@@ -144,26 +146,5 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new EntityNotFoundException("Review not found with id: " + id));
 
         reviewRepository.delete(review);
-    }
-
-    // Review 엔티티를 ReviewDTO로 변환하는 메서드
-    private ReviewDTO convertToDTO(Review review) {
-        return ReviewDTO.builder()
-                .id(review.getId())
-                .productId(review.getProduct().getId())
-                .productName(review.getProduct().getName())
-                .memberId(review.getMember().getId())
-                .memberName(review.getMember().getName())
-                .rating(review.getRating())
-                .title(review.getTitle())
-                .content(review.getContent())
-                .recommended(review.isRecommended())
-                .helpfulCount(review.getHelpfulCount())
-                .adminReplied(review.isAdminReplied())
-                .adminReply(review.getAdminReply())
-                .adminReplyDate(review.getAdminReplyDate())
-                .createdAt(review.getCreatedAt())
-                .updatedAt(review.getUpdatedAt())
-                .build();
     }
 }

@@ -12,5 +12,7 @@ public interface ShipmentTrackingRepository extends JpaRepository<ShipmentTracki
 
     List<ShipmentTracking> findByShipmentIdOrderByStatusChangedAtDesc(Long shipmentId);
 
+    List<ShipmentTracking> findByShipmentTrackingNumberOrderByStatusChangedAtDesc(String trackingNumber);
+
     void deleteByShipmentId(Long shipmentId);
 }

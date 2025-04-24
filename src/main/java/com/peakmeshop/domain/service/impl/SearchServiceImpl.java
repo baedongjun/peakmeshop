@@ -18,22 +18,17 @@ import com.peakmeshop.domain.repository.CategoryRepository;
 import com.peakmeshop.domain.repository.ProductRepository;
 import com.peakmeshop.domain.service.ProductService;
 import com.peakmeshop.domain.service.SearchService;
+import com.peakmeshop.api.mapper.ProductMapper;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class SearchServiceImpl implements SearchService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ProductService productService;
-
-    public SearchServiceImpl(
-            ProductRepository productRepository,
-            CategoryRepository categoryRepository,
-            ProductService productService) {
-        this.productRepository = productRepository;
-        this.categoryRepository = categoryRepository;
-        this.productService = productService;
-    }
+    private final ProductMapper productMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -114,7 +109,7 @@ public class SearchServiceImpl implements SearchService {
 
         // 결과를 DTO로 변환
         List<ProductDTO> productDTOs = filteredPage.getContent().stream()
-                .map(this::convertToDTO)
+                .map(productMapper::toDTO)
                 .collect(Collectors.toList());
 
         return new PageImpl<>(productDTOs, pageable, filteredPage.getTotalElements());
@@ -127,7 +122,7 @@ public class SearchServiceImpl implements SearchService {
                 keyword, keyword, pageable);
 
         List<ProductDTO> productDTOs = productPage.getContent().stream()
-                .map(this::convertToDTO)
+                .map(productMapper::toDTO)
                 .collect(Collectors.toList());
 
         return new PageImpl<>(productDTOs, pageable, productPage.getTotalElements());
@@ -139,7 +134,7 @@ public class SearchServiceImpl implements SearchService {
         Page<Product> productPage = productRepository.findByCategoryId(categoryId, pageable);
 
         List<ProductDTO> productDTOs = productPage.getContent().stream()
-                .map(this::convertToDTO)
+                .map(productMapper::toDTO)
                 .collect(Collectors.toList());
 
         return new PageImpl<>(productDTOs, pageable, productPage.getTotalElements());
@@ -151,7 +146,7 @@ public class SearchServiceImpl implements SearchService {
         Page<Product> productPage = productRepository.findByBrandId(brandId, pageable);
 
         List<ProductDTO> productDTOs = productPage.getContent().stream()
-                .map(this::convertToDTO)
+                .map(productMapper::toDTO)
                 .collect(Collectors.toList());
 
         return new PageImpl<>(productDTOs, pageable, productPage.getTotalElements());
@@ -164,7 +159,7 @@ public class SearchServiceImpl implements SearchService {
                 BigDecimal.valueOf(minPrice), BigDecimal.valueOf(maxPrice), pageable);
 
         List<ProductDTO> productDTOs = productPage.getContent().stream()
-                .map(this::convertToDTO)
+                .map(productMapper::toDTO)
                 .collect(Collectors.toList());
 
         return new PageImpl<>(productDTOs, pageable, productPage.getTotalElements());
@@ -190,7 +185,7 @@ public class SearchServiceImpl implements SearchService {
         }
 
         List<ProductDTO> productDTOs = productPage.getContent().stream()
-                .map(this::convertToDTO)
+                .map(productMapper::toDTO)
                 .collect(Collectors.toList());
 
         return new PageImpl<>(productDTOs, pageable, productPage.getTotalElements());
@@ -208,7 +203,7 @@ public class SearchServiceImpl implements SearchService {
         }
 
         List<ProductDTO> productDTOs = productPage.getContent().stream()
-                .map(this::convertToDTO)
+                .map(productMapper::toDTO)
                 .collect(Collectors.toList());
 
         return new PageImpl<>(productDTOs, pageable, productPage.getTotalElements());
@@ -233,30 +228,5 @@ public class SearchServiceImpl implements SearchService {
     public void removeProductFromIndex(Long productId) {
         // 상품 인덱스 제거 로직 구현
         // 검색 엔진 사용 시 필요
-    }
-
-    // 엔티티를 DTO로 변환
-    private ProductDTO convertToDTO(Product product) {
-        ProductDTO dto = new ProductDTO();
-        dto.setId(product.getId());
-        dto.setCode(product.getCode());
-        dto.setName(product.getName());
-        dto.setDescription(product.getDescription());
-        dto.setPrice(product.getPrice());
-        dto.setSalePrice(product.getSalePrice());
-        dto.setBrand(product.getBrand());
-        dto.setCategory(product.getCategory());
-        dto.setSupplier(product.getSupplier());
-        dto.setMainImage(product.getMainImage());
-        dto.setStock(product.getStock());
-        dto.setStatus(product.getStatus());
-        dto.setIsActive(product.getIsActive());
-        dto.setIsFeatured(product.getIsFeatured());
-        dto.setAverageRating(product.getAverageRating());
-        dto.setReviewCount(product.getReviewCount());
-        dto.setSalesCount(product.getSalesCount());
-        dto.setCreatedAt(product.getCreatedAt());
-        dto.setUpdatedAt(product.getUpdatedAt());
-        return dto;
     }
 }

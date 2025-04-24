@@ -29,14 +29,14 @@ public class RefundItem {
     @Column(name = "product_id", nullable = false)
     private Long productId;
 
-    @Column(name = "product_variant_id")
-    private Long productVariantId;
+    @Column(name = "option_id")
+    private Long optionId;
 
     @Column(name = "product_name", nullable = false)
     private String productName;
 
-    @Column(name = "variant_name")
-    private String variantName;
+    @Column(name = "option_name")
+    private String optionName;
 
     @Column(nullable = false)
     private Integer quantity;

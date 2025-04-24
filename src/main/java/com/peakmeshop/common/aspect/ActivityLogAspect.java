@@ -104,7 +104,6 @@ public class ActivityLogAspect {
                     .ipAddress(ipAddress)
                     .additionalData(additionalData)
                     .userId(userId)
-                    .memberId(memberId)
                     .createdAt(LocalDateTime.now())
                     .build();
 

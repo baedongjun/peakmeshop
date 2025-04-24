@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.peakmeshop.api.dto.QnaDTO;
+import com.peakmeshop.api.mapper.QnaMapper;
 import com.peakmeshop.domain.entity.Member;
 import com.peakmeshop.domain.entity.Product;
 import com.peakmeshop.domain.entity.Qna;
@@ -19,51 +20,44 @@ import com.peakmeshop.domain.repository.QnaRepository;
 import com.peakmeshop.domain.service.EmailService;
 import com.peakmeshop.domain.service.QnaService;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class QnaServiceImpl implements QnaService {
 
     private final QnaRepository qnaRepository;
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
     private final EmailService emailService;
-
-    public QnaServiceImpl(
-            QnaRepository qnaRepository,
-            MemberRepository memberRepository,
-            ProductRepository productRepository,
-            EmailService emailService) {
-        this.qnaRepository = qnaRepository;
-        this.memberRepository = memberRepository;
-        this.productRepository = productRepository;
-        this.emailService = emailService;
-    }
+    private final QnaMapper qnaMapper;
 
     @Override
     @Transactional(readOnly = true)
     public Page<QnaDTO> getAllQnas(Pageable pageable) {
         return qnaRepository.findAll(pageable)
-                .map(this::convertToDTO);
+                .map(qnaMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<QnaDTO> getQnasByProductId(Long productId, Pageable pageable) {
         return qnaRepository.findByProductId(productId, pageable)
-                .map(this::convertToDTO);
+                .map(qnaMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<QnaDTO> getQnasByMemberId(Long memberId, Pageable pageable) {
         return qnaRepository.findByMemberId(memberId, pageable)
-                .map(this::convertToDTO);
+                .map(qnaMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<QnaDTO> getQnaById(Long id) {
         return qnaRepository.findById(id)
-                .map(this::convertToDTO);
+                .map(qnaMapper::toDTO);
     }
 
     @Override
@@ -81,13 +75,9 @@ public class QnaServiceImpl implements QnaService {
         }
 
         // Q&A 생성
-        Qna qna = new Qna();
+        Qna qna = qnaMapper.toEntity(qnaDTO);
         qna.setMember(member);
         qna.setProduct(product);
-        qna.setTitle(qnaDTO.title());
-        qna.setContent(qnaDTO.content());
-        qna.setSecret(qnaDTO.isSecret());
-        qna.setStatus("PENDING");
         qna.setCreatedAt(LocalDateTime.now());
         qna.setUpdatedAt(LocalDateTime.now());
 
@@ -95,9 +85,9 @@ public class QnaServiceImpl implements QnaService {
 
         // 관리자에게 새 Q&A 알림 이메일 발송
         // 실제 구현에서는 관리자 이메일 주소를 설정 파일에서 가져오거나 관리자 계정에서 조회
-        // emailService.sendNewQnaNotificationEmail("admin@peakmeshop.com", convertToDTO(savedQna));
+        // emailService.sendNewQnaNotificationEmail("admin@peakmeshop.com", qnaMapper.toDTO(savedQna));
 
-        return convertToDTO(savedQna);
+        return qnaMapper.toDTO(savedQna);
     }
 
     @Override
@@ -116,13 +106,14 @@ public class QnaServiceImpl implements QnaService {
             throw new IllegalStateException("답변이 달린 Q&A는 수정할 수 없습니다.");
         }
 
-        existingQna.setTitle(qnaDTO.title());
-        existingQna.setContent(qnaDTO.content());
-        existingQna.setSecret(qnaDTO.isSecret());
-        existingQna.setUpdatedAt(LocalDateTime.now());
+        Qna qna = qnaMapper.toEntity(qnaDTO);
+        qna.setId(id);
+        qna.setMember(existingQna.getMember());
+        qna.setProduct(existingQna.getProduct());
+        qna.setUpdatedAt(LocalDateTime.now());
 
-        Qna updatedQna = qnaRepository.save(existingQna);
-        return convertToDTO(updatedQna);
+        Qna updatedQna = qnaRepository.save(qna);
+        return qnaMapper.toDTO(updatedQna);
     }
 
     @Override
@@ -149,10 +140,10 @@ public class QnaServiceImpl implements QnaService {
 
         // 질문 작성자에게 답변 알림 이메일 발송
         if (qna.getMember() != null && qna.getMember().getEmail() != null) {
-            // emailService.sendQnaAnswerNotificationEmail(qna.getMember().getEmail(), convertToDTO(answeredQna));
+            // emailService.sendQnaAnswerNotificationEmail(qna.getMember().getEmail(), qnaMapper.toDTO(answeredQna));
         }
 
-        return convertToDTO(answeredQna);
+        return qnaMapper.toDTO(answeredQna);
     }
 
     @Override
@@ -177,27 +168,6 @@ public class QnaServiceImpl implements QnaService {
     @Transactional(readOnly = true)
     public Page<QnaDTO> getQnasByStatus(String status, Pageable pageable) {
         return qnaRepository.findByStatus(status, pageable)
-                .map(this::convertToDTO);
-    }
-
-    // 엔티티를 DTO로 변환
-    private QnaDTO convertToDTO(Qna qna) {
-        return new QnaDTO(
-                qna.getId(),
-                qna.getMember().getId(),
-                qna.getMember().getName(),
-                qna.getProduct() != null ? qna.getProduct().getId() : null,
-                qna.getProduct() != null ? qna.getProduct().getName() : null,
-                qna.getTitle(),
-                qna.getContent(),
-                qna.isSecret(),
-                qna.getStatus(),
-                qna.getAnswer(),
-                qna.getAnsweredBy() != null ? qna.getAnsweredBy().getId() : null,
-                qna.getAnsweredBy() != null ? qna.getAnsweredBy().getName() : null,
-                qna.getAnsweredAt(),
-                qna.getCreatedAt(),
-                qna.getUpdatedAt()
-        );
+                .map(qnaMapper::toDTO);
     }
 }

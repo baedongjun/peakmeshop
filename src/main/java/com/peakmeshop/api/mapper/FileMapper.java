@@ -6,7 +6,6 @@ import org.mapstruct.*;
 
 @Mapper(
     componentModel = "spring",
-    uses = {BaseMapper.class},
     nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
     nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
 )

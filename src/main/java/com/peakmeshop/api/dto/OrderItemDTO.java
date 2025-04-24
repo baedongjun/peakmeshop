@@ -18,11 +18,15 @@ public class OrderItemDTO {
     private Long id;
     private Long orderId;
     private Long productId;
-    private String name;
-    private BigDecimal price;
-    private BigDecimal cost;
+    private String productName;
+    private String productImage;
+    private Long optionValueId;
+    private String optionValueName;
     private Integer quantity;
-    private Map<String, String> options;
+    private BigDecimal price;
+    private BigDecimal discount;
+    private BigDecimal totalPrice;
+    private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

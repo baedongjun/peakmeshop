@@ -11,15 +11,19 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.Builder;
 
 @Entity
-@Table(name = "shippings")
+@Table(name = "shipping")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Shipping {
@@ -29,36 +33,32 @@ public class Shipping {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false, unique = true)
+    @JoinColumn(name = "order_id")
     private Order order;
 
-    @Column(nullable = false, unique = true)
-    private String trackingNumber;
-
-    @Column(nullable = false)
-    private String carrier;
-
-    @Column(nullable = false)
-    private String status;
-
-    @Column(nullable = false)
-    private String shippingAddress;
-
-    @Column(nullable = false)
+    private String address;
+    private String detailAddress;
+    private String zipCode;
     private String recipientName;
-
-    @Column(nullable = false)
     private String recipientPhone;
+    private String message;
+    private String status;
+    private String trackingNumber;
+    private String shippingCompany;
 
-    private LocalDateTime shippingDate;
-
-    private LocalDateTime estimatedDeliveryDate;
-
-    private LocalDateTime deliveryDate;
-
-    @Column(nullable = false)
+    private LocalDateTime shippedAt;
+    private LocalDateTime deliveredAt;
     private LocalDateTime createdAt;
-
-    @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

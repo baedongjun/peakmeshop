@@ -4,6 +4,7 @@ import com.peakmeshop.api.dto.ActivityLogDTO;
 import com.peakmeshop.domain.entity.ActivityLog;
 import com.peakmeshop.domain.repository.ActivityLogRepository;
 import com.peakmeshop.domain.service.ActivityLogService;
+import com.peakmeshop.api.mapper.ActivityLogMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 public class ActivityLogServiceImpl implements ActivityLogService {
 
     private final ActivityLogRepository activityLogRepository;
+    private final ActivityLogMapper activityLogMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -32,7 +34,7 @@ public class ActivityLogServiceImpl implements ActivityLogService {
 
         // DTO로 변환하고 시간순으로 정렬합니다.
         return activityLogs.stream()
-                .map(this::convertToDTO)
+                .map(activityLogMapper::toDTO)
                 .sorted(Comparator.comparing(ActivityLogDTO::getCreatedAt).reversed())
                 .limit(limit)
                 .collect(Collectors.toList());
@@ -46,7 +48,7 @@ public class ActivityLogServiceImpl implements ActivityLogService {
 
         // DTO로 변환하고 시간순으로 정렬합니다.
         return activityLogs.stream()
-                .map(this::convertToDTO)
+                .map(activityLogMapper::toDTO)
                 .sorted(Comparator.comparing(ActivityLogDTO::getCreatedAt).reversed())
                 .limit(limit)
                 .collect(Collectors.toList());
@@ -56,32 +58,22 @@ public class ActivityLogServiceImpl implements ActivityLogService {
     @Transactional(readOnly = true)
     public Page<ActivityLogDTO> getActivityLogs(String type, String userId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
         return activityLogRepository.findByTypeAndUserIdAndCreatedAtBetween(type, userId, startDate, endDate, pageable)
-                .map(this::convertToDTO);
+                .map(activityLogMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public ActivityLogDTO getActivityLog(Long id) {
         return activityLogRepository.findById(id)
-                .map(this::convertToDTO)
+                .map(activityLogMapper::toDTO)
                 .orElseThrow(() -> new IllegalArgumentException("Activity log not found"));
     }
 
     @Override
     @Transactional
     public ActivityLogDTO createActivityLog(ActivityLogDTO activityLogDTO) {
-        ActivityLog activityLog = ActivityLog.builder()
-                .type(activityLogDTO.getType())
-                .description(activityLogDTO.getDescription())
-                .referenceId(activityLogDTO.getReferenceId())
-                .referenceType(activityLogDTO.getReferenceType())
-                .createdAt(LocalDateTime.now())
-                .userId(activityLogDTO.getUserId())
-                .memberId(activityLogDTO.getMemberId())
-                .userAgent(activityLogDTO.getUserAgent())
-                .build();
-
-        return convertToDTO(activityLogRepository.save(activityLog));
+        ActivityLog activityLog = activityLogMapper.toEntity(activityLogDTO);
+        return activityLogMapper.toDTO(activityLogRepository.save(activityLog));
     }
 
     @Override
@@ -141,22 +133,6 @@ public class ActivityLogServiceImpl implements ActivityLogService {
         }
 
         return result;
-    }
-
-    public ActivityLogDTO convertToDTO(ActivityLog activityLog) {
-        return ActivityLogDTO.builder()
-                .id(activityLog.getId())
-                .type(activityLog.getType())
-                .description(activityLog.getDescription())
-                .referenceType(activityLog.getReferenceType())
-                .referenceId(activityLog.getReferenceId())
-                .userAgent(activityLog.getUserAgent())
-                .ipAddress(activityLog.getIpAddress())
-                .additionalData(activityLog.getAdditionalData())
-                .userId(activityLog.getUserId())
-                .memberId(activityLog.getMemberId())
-                .createdAt(activityLog.getCreatedAt())
-                .build();
     }
 
     /**

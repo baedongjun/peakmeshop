@@ -4,10 +4,10 @@ import com.peakmeshop.api.dto.NoticeDTO;
 import com.peakmeshop.domain.entity.Notice;
 import com.peakmeshop.domain.repository.NoticeRepository;
 import com.peakmeshop.domain.service.NoticeService;
+import com.peakmeshop.api.mapper.NoticeMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,22 +27,15 @@ import java.util.stream.Stream;
 public class NoticeServiceImpl implements NoticeService {
 
     private final NoticeRepository noticeRepository;
+    private final NoticeMapper noticeMapper;
 
     @Override
     @Transactional
     public NoticeDTO createNotice(NoticeDTO noticeDTO) {
-        Notice notice = Notice.builder()
-                .title(noticeDTO.getTitle())
-                .content(noticeDTO.getContent())
-                .category(noticeDTO.getCategory())
-                .important(noticeDTO.getImportant())
-                .status("ACTIVE")
-                .viewCount(0)
-                .createdAt(LocalDateTime.now())
-                .build();
-        
+        Notice notice = noticeMapper.toEntity(noticeDTO);
+        notice.setCreatedAt(LocalDateTime.now());
         Notice savedNotice = noticeRepository.save(notice);
-        return convertToDTO(savedNotice);
+        return noticeMapper.toDTO(savedNotice);
     }
 
     @Override
@@ -59,7 +52,7 @@ public class NoticeServiceImpl implements NoticeService {
         );
 
         Notice updatedNotice = noticeRepository.save(notice);
-        return convertToDTO(updatedNotice);
+        return noticeMapper.toDTO(updatedNotice);
     }
 
     @Override
@@ -74,20 +67,20 @@ public class NoticeServiceImpl implements NoticeService {
     public NoticeDTO getNoticeById(Long id) {
         Notice notice = noticeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("공지사항을 찾을 수 없습니다."));
-        return convertToDTO(notice);
+        return noticeMapper.toDTO(notice);
     }
 
     @Override
     public Page<NoticeDTO> getAllNotices(Pageable pageable) {
         Page<Notice> noticePage = noticeRepository.findAllByOrderByImportantDescCreatedAtDesc(pageable);
-        return noticePage.map(this::convertToDTO);
+        return noticePage.map(noticeMapper::toDTO);
     }
 
     @Override
     public List<NoticeDTO> getAllNotices() {
         List<Notice> notices = noticeRepository.findAllByOrderByImportantDescCreatedAtDesc();
         return notices.stream()
-                .map(this::convertToDTO)
+                .map(noticeMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -95,7 +88,7 @@ public class NoticeServiceImpl implements NoticeService {
     public List<NoticeDTO> getImportantNotices() {
         List<Notice> notices = noticeRepository.findByImportantTrueAndStatusOrderByCreatedAtDesc("ACTIVE");
         return notices.stream()
-                .map(this::convertToDTO)
+                .map(noticeMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -103,14 +96,14 @@ public class NoticeServiceImpl implements NoticeService {
     public Page<NoticeDTO> getNoticesByCategory(String category, Pageable pageable) {
         Page<Notice> noticePage = noticeRepository.findByCategoryAndStatusOrderByImportantDescCreatedAtDesc(
             category, "ACTIVE", pageable);
-        return noticePage.map(this::convertToDTO);
+        return noticePage.map(noticeMapper::toDTO);
     }
 
     @Override
     public Page<NoticeDTO> searchNotices(String keyword, Pageable pageable) {
         Page<Notice> noticePage = noticeRepository.findByTitleContainingOrContentContainingOrderByCreatedAtDesc(
             keyword, keyword, pageable);
-        return noticePage.map(this::convertToDTO);
+        return noticePage.map(noticeMapper::toDTO);
     }
 
     @Override
@@ -129,7 +122,7 @@ public class NoticeServiceImpl implements NoticeService {
                 .orElseThrow(() -> new EntityNotFoundException("공지사항을 찾을 수 없습니다."));
         notice.setStatus(status);
         Notice updatedNotice = noticeRepository.save(notice);
-        return convertToDTO(updatedNotice);
+        return noticeMapper.toDTO(updatedNotice);
     }
 
     @Override
@@ -139,7 +132,7 @@ public class NoticeServiceImpl implements NoticeService {
                 .orElseThrow(() -> new EntityNotFoundException("공지사항을 찾을 수 없습니다."));
         notice.setImportant(!notice.getImportant());
         Notice updatedNotice = noticeRepository.save(notice);
-        return convertToDTO(updatedNotice);
+        return noticeMapper.toDTO(updatedNotice);
     }
 
     @Override
@@ -150,14 +143,14 @@ public class NoticeServiceImpl implements NoticeService {
 
         Page<Notice> noticePage = noticeRepository.findByCreatedAtBetweenOrderByCreatedAtDesc(
             start, end, pageable);
-        return noticePage.map(this::convertToDTO);
+        return noticePage.map(noticeMapper::toDTO);
     }
 
     @Override
     public List<NoticeDTO> getRecentNotices(int limit) {
         List<Notice> notices = noticeRepository.findByStatusOrderByCreatedAtDesc("ACTIVE", Pageable.ofSize(limit));
         return notices.stream()
-                .map(this::convertToDTO)
+                .map(noticeMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -169,7 +162,7 @@ public class NoticeServiceImpl implements NoticeService {
         return Stream.concat(importantNotices.stream(), recentNotices.stream())
                 .distinct()
                 .limit(5)
-                .map(this::convertToDTO)
+                .map(noticeMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -207,19 +200,5 @@ public class NoticeServiceImpl implements NoticeService {
         statistics.put("avgViewCount", avgViewCount);
 
         return statistics;
-    }
-
-    private NoticeDTO convertToDTO(Notice notice) {
-        return NoticeDTO.builder()
-                .id(notice.getId())
-                .title(notice.getTitle())
-                .content(notice.getContent())
-                .category(notice.getCategory())
-                .important(notice.getImportant())
-                .status(notice.getStatus())
-                .viewCount(notice.getViewCount())
-                .createdAt(notice.getCreatedAt())
-                .updatedAt(notice.getUpdatedAt())
-                .build();
     }
 } 

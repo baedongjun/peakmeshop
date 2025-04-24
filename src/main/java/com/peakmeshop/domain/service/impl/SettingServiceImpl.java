@@ -6,6 +6,7 @@ import com.peakmeshop.api.dto.SettingDTO;
 import com.peakmeshop.domain.entity.Setting;
 import com.peakmeshop.domain.repository.SettingRepository;
 import com.peakmeshop.domain.service.SettingService;
+import com.peakmeshop.api.mapper.SettingMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,11 +26,12 @@ public class SettingServiceImpl implements SettingService {
 
     private final SettingRepository settingRepository;
     private final ObjectMapper objectMapper;
+    private final SettingMapper settingMapper;
 
     @Override
     public SettingDTO getSetting(String key) {
         return settingRepository.findByKey(key)
-                .map(this::convertToDTO)
+                .map(settingMapper::toDTO)
                 .orElse(null);
     }
 
@@ -37,21 +39,21 @@ public class SettingServiceImpl implements SettingService {
     public List<SettingDTO> getSettingsByGroup(String group) {
         return settingRepository.findByGroupOrderByIdAsc(group)
                 .stream()
-                .map(this::convertToDTO)
+                .map(settingMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public Page<SettingDTO> getAllSettings(Pageable pageable) {
         return settingRepository.findAll(pageable)
-                .map(this::convertToDTO);
+                .map(settingMapper::toDTO);
     }
 
     @Override
     public List<SettingDTO> getPublicSettings() {
         return settingRepository.findByIsPublic(true)
                 .stream()
-                .map(this::convertToDTO)
+                .map(settingMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -61,8 +63,8 @@ public class SettingServiceImpl implements SettingService {
         if (settingRepository.existsByKey(settingDTO.getKey())) {
             throw new IllegalArgumentException("이미 존재하는 설정 키입니다: " + settingDTO.getKey());
         }
-        Setting setting = convertToEntity(settingDTO);
-        return convertToDTO(settingRepository.save(setting));
+        Setting setting = settingMapper.toEntity(settingDTO);
+        return settingMapper.toDTO(settingRepository.save(setting));
     }
 
     @Override
@@ -76,7 +78,7 @@ public class SettingServiceImpl implements SettingService {
         setting.setIsPublic(settingDTO.getIsPublic());
         setting.setIsRequired(settingDTO.getIsRequired());
         
-        return convertToDTO(settingRepository.save(setting));
+        return settingMapper.toDTO(settingRepository.save(setting));
     }
 
     @Override
@@ -353,36 +355,5 @@ public class SettingServiceImpl implements SettingService {
             default:
                 return true;
         }
-    }
-
-    private SettingDTO convertToDTO(Setting setting) {
-        return SettingDTO.builder()
-                .id(setting.getId())
-                .key(setting.getKey())
-                .value(setting.getValue())
-                .group(setting.getGroup())
-                .label(setting.getLabel())
-                .type(setting.getType())
-                .description(setting.getDescription())
-                .isRequired(setting.getIsRequired())
-                .isPublic(setting.getIsPublic())
-                .validationRules(setting.getValidationRules())
-                .createdAt(setting.getCreatedAt())
-                .updatedAt(setting.getUpdatedAt())
-                .build();
-    }
-
-    private Setting convertToEntity(SettingDTO dto) {
-        return Setting.builder()
-                .key(dto.getKey())
-                .value(dto.getValue())
-                .group(dto.getGroup())
-                .label(dto.getLabel())
-                .type(dto.getType())
-                .description(dto.getDescription())
-                .isRequired(dto.getIsRequired())
-                .isPublic(dto.getIsPublic())
-                .validationRules(dto.getValidationRules())
-                .build();
     }
 } 

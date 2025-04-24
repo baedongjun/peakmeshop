@@ -1,5 +1,6 @@
 package com.peakmeshop.domain.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import io.lettuce.core.dynamic.annotation.Param;
@@ -71,5 +72,17 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      */
     @Query("SELECT oi.product.id, SUM(oi.quantity) FROM OrderItem oi GROUP BY oi.product.id")
     List<Object[]> findProductSalesQuantity();
+
+    @Query("SELECT oi FROM OrderItem oi WHERE oi.order.createdAt BETWEEN :startDateTime AND :endDateTime")
+    List<OrderItem> findByOrder_CreatedAtBetween(
+        @Param("startDateTime") LocalDateTime startDateTime,
+        @Param("endDateTime") LocalDateTime endDateTime
+    );
+    
+    @Query("SELECT oi FROM OrderItem oi WHERE oi.order.createdAt BETWEEN :startDateTime AND :endDateTime AND oi.order.status = 'COMPLETED'")
+    List<OrderItem> findByOrder_CreatedAtBetweenAndOrder_StatusCompleted(
+        @Param("startDateTime") LocalDateTime startDateTime,
+        @Param("endDateTime") LocalDateTime endDateTime
+    );
 
 }

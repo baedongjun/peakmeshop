@@ -26,13 +26,6 @@ public interface ActivityLogService {
     List<ActivityLogDTO> getAdminActivities(Long adminId, int limit);
 
     /**
-     * ActivityLog 엔티티를 ActivityLogDTO로 변환합니다.
-     * @param activityLog ActivityLog 엔티티
-     * @return ActivityLogDTO
-     */
-    ActivityLogDTO convertToDTO(ActivityLog activityLog);
-
-    /**
      * 활동 로그 목록을 조회합니다.
      * @param type 활동 유형
      * @param userId 사용자

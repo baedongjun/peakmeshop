@@ -17,10 +17,10 @@ public interface FaqService {
     FaqDTO getFaqById(Long id);
     
     // FAQ 생성
-    FaqDTO createFaq(Faq faq);
+    FaqDTO createFaq(FaqDTO faqDTO);
     
     // FAQ 수정
-    FaqDTO updateFaq(Long id, Faq faq);
+    FaqDTO updateFaq(Long id, FaqDTO faqDTO);
     
     // FAQ 삭제
     void deleteFaq(Long id);

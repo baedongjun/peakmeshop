@@ -18,6 +18,7 @@ import com.peakmeshop.api.dto.BrandDTO;
 import com.peakmeshop.domain.entity.Brand;
 import com.peakmeshop.domain.repository.BrandRepository;
 import com.peakmeshop.domain.service.BrandService;
+import com.peakmeshop.api.mapper.BrandMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,15 +27,16 @@ import lombok.RequiredArgsConstructor;
 public class BrandServiceImpl implements BrandService {
 
     private final BrandRepository brandRepository;
+    private final BrandMapper brandMapper;
 
     @Override
     @Transactional
     public BrandDTO createBrand(BrandDTO brandDTO) {
-        Brand brand = mapToEntity(brandDTO);
+        Brand brand = brandMapper.toEntity(brandDTO);
         brand.setCreatedAt(LocalDateTime.now());
         brand.setUpdatedAt(LocalDateTime.now());
         Brand savedBrand = brandRepository.save(brand);
-        return mapToDTO(savedBrand);
+        return brandMapper.toDTO(savedBrand);
     }
 
     @Override
@@ -43,17 +45,18 @@ public class BrandServiceImpl implements BrandService {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("Brand not found with id: " + id));
 
-        brand.setName(brandDTO.name());
-        brand.setSlug(brandDTO.slug());
-        brand.setDescription(brandDTO.description());
-        brand.setLogoUrl(brandDTO.logoUrl());
-        brand.setWebsite(brandDTO.website());
-        brand.setIsActive(brandDTO.isActive());
-        brand.setIsFeatured(brandDTO.isFeatured());
+        Brand updatedBrand = brandMapper.toEntity(brandDTO);
+        brand.setName(updatedBrand.getName());
+        brand.setSlug(updatedBrand.getSlug());
+        brand.setDescription(updatedBrand.getDescription());
+        brand.setLogoUrl(updatedBrand.getLogoUrl());
+        brand.setWebsite(updatedBrand.getWebsite());
+        brand.setIsActive(updatedBrand.getIsActive());
+        brand.setIsFeatured(updatedBrand.getIsFeatured());
         brand.setUpdatedAt(LocalDateTime.now());
 
-        Brand updatedBrand = brandRepository.save(brand);
-        return mapToDTO(updatedBrand);
+        Brand savedBrand = brandRepository.save(brand);
+        return brandMapper.toDTO(savedBrand);
     }
 
     @Override
@@ -61,13 +64,13 @@ public class BrandServiceImpl implements BrandService {
     public BrandDTO getBrandById(Long id) {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("Brand not found with id: " + id));
-        return mapToDTO(brand);
+        return brandMapper.toDTO(brand);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<BrandDTO> getBrandBySlug(String slug) {
-        return brandRepository.findBySlug(slug).map(this::mapToDTO);
+        return brandRepository.findBySlug(slug).map(brandMapper::toDTO);
     }
 
     @Override
@@ -79,14 +82,14 @@ public class BrandServiceImpl implements BrandService {
     @Transactional(readOnly = true)
     public Page<BrandDTO> getAllBrands(Pageable pageable) {
         Page<Brand> brandsPage = brandRepository.findAll(pageable);
-        return brandsPage.map(this::mapToDTO);
+        return brandsPage.map(brandMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<BrandDTO> getAllBrands() {
         return brandRepository.findAll().stream()
-                .map(this::mapToDTO)
+                .map(brandMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -104,7 +107,7 @@ public class BrandServiceImpl implements BrandService {
     @Transactional(readOnly = true)
     public List<BrandDTO> getActiveBrands() {
         return brandRepository.findByIsActiveTrueOrderByNameAsc().stream()
-                .map(this::mapToDTO)
+                .map(brandMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -112,7 +115,7 @@ public class BrandServiceImpl implements BrandService {
     @Transactional(readOnly = true)
     public List<BrandDTO> getFeaturedBrands() {
         return brandRepository.findByIsFeaturedTrueAndIsActiveTrueOrderByNameAsc().stream()
-                .map(this::mapToDTO)
+                .map(brandMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -120,14 +123,14 @@ public class BrandServiceImpl implements BrandService {
     @Transactional(readOnly = true)
     public Page<BrandDTO> getActiveBrandsPaged(Pageable pageable) {
         Page<Brand> brandsPage = brandRepository.findByIsActiveTrue(pageable);
-        return brandsPage.map(this::mapToDTO);
+        return brandsPage.map(brandMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<BrandDTO> getFeaturedBrandsPaged(Pageable pageable) {
         Page<Brand> brandsPage = brandRepository.findByIsFeaturedTrue(pageable);
-        return brandsPage.map(this::mapToDTO);
+        return brandsPage.map(brandMapper::toDTO);
     }
 
     @Override
@@ -140,7 +143,7 @@ public class BrandServiceImpl implements BrandService {
         brand.setUpdatedAt(LocalDateTime.now());
 
         Brand updatedBrand = brandRepository.save(brand);
-        return mapToDTO(updatedBrand);
+        return brandMapper.toDTO(updatedBrand);
     }
 
     @Override
@@ -153,14 +156,14 @@ public class BrandServiceImpl implements BrandService {
         brand.setUpdatedAt(LocalDateTime.now());
 
         Brand updatedBrand = brandRepository.save(brand);
-        return mapToDTO(updatedBrand);
+        return brandMapper.toDTO(updatedBrand);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<BrandDTO> searchBrands(String keyword, Pageable pageable) {
         Page<Brand> brandsPage = brandRepository.searchBrands(keyword, pageable);
-        return brandsPage.map(this::mapToDTO);
+        return brandsPage.map(brandMapper::toDTO);
     }
 
     @Override
@@ -168,7 +171,7 @@ public class BrandServiceImpl implements BrandService {
     public List<BrandDTO> getTopBrandsByProductCount(int limit) {
         Pageable pageable = Pageable.ofSize(limit);
         return brandRepository.findTopBrandsByProductCount(pageable).stream()
-                .map(this::mapToDTO)
+                .map(brandMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -193,7 +196,6 @@ public class BrandServiceImpl implements BrandService {
             return true;
         }
 
-        // 이름이 존재하지만 현재 브랜드의 이름인 경우
         if (brandId != null) {
             Brand brand = brandRepository.findById(brandId).orElse(null);
             return brand != null && brand.getName().equals(name);
@@ -242,98 +244,57 @@ public class BrandServiceImpl implements BrandService {
     public Map<String, Object> getBrandStatistics(String period, String startDate, String endDate) {
         Map<String, Object> statistics = new HashMap<>();
         
-        // 기간별 통계 데이터 수집
         LocalDateTime start = null;
         LocalDateTime end = LocalDateTime.now();
         
         if (period != null) {
             switch (period) {
                 case "daily":
-                    start = end.minusDays(1);
+                    start = end.minusDays(30);
+                    statistics.put("dailyNewBrands", brandRepository.getDailyNewBrands(start, end));
+                    statistics.put("dailySales", brandRepository.getDailySales(start, end));
                     break;
                 case "weekly":
-                    start = end.minusWeeks(1);
+                    start = end.minusWeeks(12);
+                    statistics.put("weeklyNewBrands", brandRepository.getWeeklyNewBrands(start, end));
+                    statistics.put("weeklySales", brandRepository.getWeeklySales(start, end));
                     break;
                 case "monthly":
-                    start = end.minusMonths(1);
+                    start = end.minusMonths(12);
+                    statistics.put("monthlyNewBrands", brandRepository.getMonthlyNewBrands(start, end));
+                    statistics.put("monthlySales", brandRepository.getMonthlySales(start, end));
                     break;
                 case "yearly":
-                    start = end.minusYears(1);
+                    start = end.minusYears(5);
+                    statistics.put("yearlyNewBrands", brandRepository.getYearlyNewBrands(start, end));
+                    statistics.put("yearlySales", brandRepository.getYearlySales(start, end));
                     break;
-                default:
-                    start = end.minusMonths(1); // 기본값: 1개월
             }
         } else if (startDate != null && endDate != null) {
-            // 날짜 형식: yyyy-MM-dd
             start = LocalDate.parse(startDate).atStartOfDay();
             end = LocalDate.parse(endDate).atTime(23, 59, 59);
-        } else {
-            start = end.minusMonths(1); // 기본값: 1개월
+            statistics.put("customPeriodNewBrands", brandRepository.getCustomPeriodNewBrands(start, end));
+            statistics.put("customPeriodSales", brandRepository.getCustomPeriodSales(start, end));
         }
 
-        // 브랜드별 통계 수집
-        List<Brand> brands = brandRepository.findAll();
-        final LocalDateTime finalStart = start;
-        final LocalDateTime finalEnd = end;
-        List<Map<String, Object>> brandStats = brands.stream()
-            .map(brand -> {
-                Map<String, Object> stat = new HashMap<>();
-                stat.put("id", brand.getId());
-                stat.put("name", brand.getName());
-                stat.put("productCount", getProductCountByBrandId(brand.getId()));
-                stat.put("orderCount", brandRepository.countOrdersByBrandIdAndDateRange(brand.getId(), finalStart, finalEnd));
-                stat.put("totalSales", brandRepository.calculateTotalSalesByBrandIdAndDateRange(brand.getId(), finalStart, finalEnd));
-                return stat;
-            })
-            .collect(Collectors.toList());
-
-        statistics.put("brands", brandStats);
-        statistics.put("totalBrands", brands.size());
-        statistics.put("activeBrands", brandRepository.countByIsActiveTrue());
-        statistics.put("featuredBrands", brandRepository.countByIsFeaturedTrue());
-        statistics.put("period", period);
-        statistics.put("startDate", start);
-        statistics.put("endDate", end);
+        if (start != null) {
+            statistics.put("topBrands", brandRepository.getTopBrandsByRevenue(start, end, 10));
+            statistics.put("brandCategories", brandRepository.getBrandCategoriesDistribution(start, end));
+            statistics.put("brandGrowth", calculateBrandGrowth(start, end));
+        }
 
         return statistics;
     }
 
-    // Entity -> DTO 변환
-    private BrandDTO mapToDTO(Brand brand) {
-        int productCount = brand.getProducts() != null ? brand.getProducts().size() : 0;
-
-        return new BrandDTO(
-                brand.getId(),
-                brand.getName(),
-                brand.getNameEn(),
-                brand.getSlug(),
-                brand.getDescription(),
-                brand.getLogoUrl(),
-                brand.getWebsite(),
-                brand.getIsActive() != null ? brand.getIsActive() : false,
-                brand.getIsFeatured() != null ? brand.getIsFeatured() : false,
-                0, // displayOrder - 엔티티에 없는 필드
-                "", // metaTitle - 엔티티에 없는 필드
-                "", // metaDescription - 엔티티에 없는 필드
-                "", // metaKeywords - 엔티티에 없는 필드
-                productCount,
-                brand.getCreatedAt(),
-                brand.getUpdatedAt()
-        );
-    }
-
-    // DTO -> Entity 변환
-    private Brand mapToEntity(BrandDTO brandDTO) {
-        Brand brand = new Brand();
-        brand.setName(brandDTO.name());
-        brand.setNameEn(brandDTO.nameEn());
-        brand.setSlug(brandDTO.slug());
-        brand.setDescription(brandDTO.description());
-        brand.setLogoUrl(brandDTO.logoUrl());
-        brand.setWebsite(brandDTO.website());
-        brand.setIsActive(brandDTO.isActive());
-        brand.setIsFeatured(brandDTO.isFeatured());
-        return brand;
+    private double calculateBrandGrowth(LocalDateTime start, LocalDateTime end) {
+        long previousPeriodBrands = brandRepository.countBrandsBeforePeriod(start);
+        long currentPeriodBrands = brandRepository.countBrandsInPeriod(start, end);
+        
+        if (previousPeriodBrands == 0) {
+            return currentPeriodBrands > 0 ? 100.0 : 0.0;
+        }
+        
+        return ((double) (currentPeriodBrands - previousPeriodBrands) / previousPeriodBrands) * 100;
     }
 }
 

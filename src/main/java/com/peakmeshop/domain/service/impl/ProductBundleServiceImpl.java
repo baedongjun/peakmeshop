@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.peakmeshop.api.dto.ProductBundleDTO;
-import com.peakmeshop.api.dto.ProductBundleItemDTO;
+import com.peakmeshop.api.mapper.ProductBundleMapper;
 import com.peakmeshop.domain.entity.Product;
 import com.peakmeshop.domain.entity.ProductBundle;
 import com.peakmeshop.domain.entity.ProductBundleItem;
@@ -30,13 +30,14 @@ public class ProductBundleServiceImpl implements ProductBundleService {
     private final ProductBundleRepository bundleRepository;
     private final ProductBundleItemRepository bundleItemRepository;
     private final ProductRepository productRepository;
+    private final ProductBundleMapper productBundleMapper;
 
     @Override
     @Transactional(readOnly = true)
     public ProductBundleDTO getBundleById(Long id) {
         ProductBundle bundle = bundleRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product bundle not found with id: " + id));
-        return convertToDTO(bundle);
+        return productBundleMapper.toDTO(bundle);
     }
 
     @Override
@@ -44,7 +45,7 @@ public class ProductBundleServiceImpl implements ProductBundleService {
     public List<ProductBundleDTO> getAllBundles() {
         List<ProductBundle> bundles = bundleRepository.findAll();
         return bundles.stream()
-                .map(this::convertToDTO)
+                .map(productBundleMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -52,30 +53,21 @@ public class ProductBundleServiceImpl implements ProductBundleService {
     @Transactional(readOnly = true)
     public Page<ProductBundleDTO> getAllBundles(Pageable pageable) {
         Page<ProductBundle> bundles = bundleRepository.findAll(pageable);
-        return bundles.map(this::convertToDTO);
+        return bundles.map(productBundleMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ProductBundleDTO> getActiveBundles(Pageable pageable) {
         Page<ProductBundle> bundles = bundleRepository.findByIsActiveTrue(pageable);
-        return bundles.map(this::convertToDTO);
+        return bundles.map(productBundleMapper::toDTO);
     }
 
     @Override
     @Transactional
     public ProductBundleDTO createBundle(ProductBundleDTO bundleDTO) {
-        ProductBundle bundle = ProductBundle.builder()
-                .name(bundleDTO.getName())
-                .description(bundleDTO.getDescription())
-                .discountRate(bundleDTO.getDiscountRate())
-                .discountAmount(bundleDTO.getDiscountAmount())
-                .isActive(bundleDTO.isActive())
-                .startDate(bundleDTO.getStartDate())
-                .endDate(bundleDTO.getEndDate())
-                .createdAt(LocalDateTime.now())
-                .build();
-
+        ProductBundle bundle = productBundleMapper.toEntity(bundleDTO);
+        bundle.setCreatedAt(LocalDateTime.now());
         ProductBundle savedBundle = bundleRepository.save(bundle);
 
         // 번들 아이템 저장
@@ -100,19 +92,14 @@ public class ProductBundleServiceImpl implements ProductBundleService {
     @Override
     @Transactional
     public ProductBundleDTO updateBundle(Long id, ProductBundleDTO bundleDTO) {
-        ProductBundle bundle = bundleRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("Product bundle not found with id: " + id));
+        if (!bundleRepository.existsById(id)) {
+            throw new EntityNotFoundException("Product bundle not found with id: " + id);
+        }
 
-        bundle.setName(bundleDTO.getName());
-        bundle.setDescription(bundleDTO.getDescription());
-        bundle.setDiscountRate(bundleDTO.getDiscountRate());
-        bundle.setDiscountAmount(bundleDTO.getDiscountAmount());
-        bundle.setActive(bundleDTO.isActive());
-        bundle.setStartDate(bundleDTO.getStartDate());
-        bundle.setEndDate(bundleDTO.getEndDate());
-        bundle.setUpdatedAt(LocalDateTime.now());
-
-        bundleRepository.save(bundle);
+        ProductBundle updatedBundle = productBundleMapper.toEntity(bundleDTO);
+        updatedBundle.setId(id);
+        updatedBundle.setUpdatedAt(LocalDateTime.now());
+        bundleRepository.save(updatedBundle);
 
         // 기존 번들 아이템 삭제
         bundleItemRepository.deleteByBundleId(id);
@@ -121,10 +108,10 @@ public class ProductBundleServiceImpl implements ProductBundleService {
         if (bundleDTO.getItems() != null) {
             for (ProductBundleItem items : bundleDTO.getItems()) {
                 Product product = productRepository.findById(items.getProduct().getId())
-                        .orElseThrow(() -> new UsernameNotFoundException("Product not found with id: " + items.getProduct().getId()));
+                        .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + items.getProduct().getId()));
 
                 ProductBundleItem item = ProductBundleItem.builder()
-                        .bundle(bundle)
+                        .bundle(updatedBundle)
                         .product(product)
                         .quantity(items.getQuantity())
                         .build();
@@ -140,7 +127,7 @@ public class ProductBundleServiceImpl implements ProductBundleService {
     @Transactional
     public void deleteBundle(Long id) {
         if (!bundleRepository.existsById(id)) {
-            throw new UsernameNotFoundException("Product bundle not found with id: " + id);
+            throw new EntityNotFoundException("Product bundle not found with id: " + id);
         }
 
         // 번들 아이템 삭제
@@ -154,7 +141,7 @@ public class ProductBundleServiceImpl implements ProductBundleService {
     @Transactional
     public void activateBundle(Long id) {
         ProductBundle bundle = bundleRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("Product bundle not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Product bundle not found with id: " + id));
 
         bundle.setActive(true);
         bundle.setUpdatedAt(LocalDateTime.now());
@@ -166,43 +153,11 @@ public class ProductBundleServiceImpl implements ProductBundleService {
     @Transactional
     public void deactivateBundle(Long id) {
         ProductBundle bundle = bundleRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("Product bundle not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Product bundle not found with id: " + id));
 
         bundle.setActive(false);
         bundle.setUpdatedAt(LocalDateTime.now());
 
         bundleRepository.save(bundle);
-    }
-
-    private ProductBundleDTO convertToDTO(ProductBundle bundle) {
-        List<ProductBundleItem> items = bundle.getItems();
-
-        return ProductBundleDTO.builder()
-                .id(bundle.getId())
-                .name(bundle.getName())
-                .description(bundle.getDescription())
-                .discountRate(bundle.getDiscountRate())
-                .discountAmount(bundle.getDiscountAmount())
-                .active(bundle.isActive())
-                .startDate(bundle.getStartDate())
-                .endDate(bundle.getEndDate())
-                .createdAt(bundle.getCreatedAt())
-                .updatedAt(bundle.getUpdatedAt())
-                .items(items)
-                .build();
-    }
-
-    private ProductBundleItemDTO convertToItemDTO(ProductBundleItem item) {
-        Product product = item.getProduct();
-
-        return ProductBundleItemDTO.builder()
-                .id(item.getId())
-                .bundleId(item.getBundle().getId())
-                .productId(product.getId())
-                .productName(product.getName())
-                .productImage(product.getMainImage())
-                .price(product.getPrice())
-                .quantity(item.getQuantity())
-                .build();
     }
 }

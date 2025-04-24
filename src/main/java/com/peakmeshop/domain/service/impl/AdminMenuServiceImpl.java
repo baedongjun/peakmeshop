@@ -4,6 +4,7 @@ import com.peakmeshop.api.dto.AdminMenuDTO;
 import com.peakmeshop.domain.entity.AdminMenu;
 import com.peakmeshop.domain.repository.AdminMenuRepository;
 import com.peakmeshop.domain.service.AdminMenuService;
+import com.peakmeshop.api.mapper.AdminMenuMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,12 +20,13 @@ import java.util.stream.Collectors;
 public class AdminMenuServiceImpl implements AdminMenuService {
 
     private final AdminMenuRepository adminMenuRepository;
+    private final AdminMenuMapper adminMenuMapper;
 
     @Override
     public List<AdminMenuDTO> getAllMenus() {
         List<AdminMenu> menus = adminMenuRepository.findAll();
         return menus.stream()
-                .map(this::convertToDTO)
+                .map(adminMenuMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -32,7 +34,7 @@ public class AdminMenuServiceImpl implements AdminMenuService {
     public List<AdminMenuDTO> getRootMenus() {
         List<AdminMenu> menus = adminMenuRepository.findByParentIsNull();
         return menus.stream()
-                .map(this::convertToDTO)
+                .map(adminMenuMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -40,16 +42,25 @@ public class AdminMenuServiceImpl implements AdminMenuService {
     public List<AdminMenuDTO> getChildMenus(Long parentId) {
         List<AdminMenu> menus = adminMenuRepository.findByParentId(parentId);
         return menus.stream()
-                .map(this::convertToDTO)
+                .map(adminMenuMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
     public AdminMenuDTO createMenu(AdminMenuDTO menuDTO) {
-        AdminMenu menu = convertToEntity(menuDTO);
+        AdminMenu menu = adminMenuMapper.toEntity(menuDTO);
+        menu.setCreatedAt(LocalDateTime.now());
+        menu.setUpdatedAt(LocalDateTime.now());
+
+        if (menuDTO.getParentId() != null) {
+            AdminMenu parent = adminMenuRepository.findById(menuDTO.getParentId())
+                    .orElseThrow(() -> new EntityNotFoundException("Parent menu not found with id: " + menuDTO.getParentId()));
+            menu.setParent(parent);
+        }
+
         menu = adminMenuRepository.save(menu);
-        return convertToDTO(menu);
+        return adminMenuMapper.toDTO(menu);
     }
 
     @Override
@@ -58,22 +69,19 @@ public class AdminMenuServiceImpl implements AdminMenuService {
         AdminMenu menu = adminMenuRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Menu not found with id: " + id));
 
-        menu.setName(menuDTO.getName());
-        menu.setUrl(menuDTO.getUrl());
-        menu.setIcon(menuDTO.getIcon());
-        menu.setSortOrder(menuDTO.getSortOrder());
-        menu.setIsVisible(menuDTO.getIsVisible());
+        AdminMenu updatedMenu = adminMenuMapper.toEntity(menuDTO);
+        updatedMenu.setId(menu.getId());
+        updatedMenu.setCreatedAt(menu.getCreatedAt());
+        updatedMenu.setUpdatedAt(LocalDateTime.now());
 
         if (menuDTO.getParentId() != null) {
             AdminMenu parent = adminMenuRepository.findById(menuDTO.getParentId())
                     .orElseThrow(() -> new EntityNotFoundException("Parent menu not found with id: " + menuDTO.getParentId()));
-            menu.setParent(parent);
-        } else {
-            menu.setParent(null);
+            updatedMenu.setParent(parent);
         }
 
-        menu = adminMenuRepository.save(menu);
-        return convertToDTO(menu);
+        menu = adminMenuRepository.save(updatedMenu);
+        return adminMenuMapper.toDTO(menu);
     }
 
     @Override
@@ -90,6 +98,7 @@ public class AdminMenuServiceImpl implements AdminMenuService {
                     AdminMenu menu = adminMenuRepository.findById(dto.getId())
                             .orElseThrow(() -> new EntityNotFoundException("Menu not found with id: " + dto.getId()));
                     menu.setSortOrder(dto.getSortOrder());
+                    menu.setUpdatedAt(LocalDateTime.now());
                     
                     if (dto.getParentId() != null) {
                         AdminMenu parent = adminMenuRepository.findById(dto.getParentId())
@@ -105,7 +114,7 @@ public class AdminMenuServiceImpl implements AdminMenuService {
 
         menus = adminMenuRepository.saveAll(menus);
         return menus.stream()
-                .map(this::convertToDTO)
+                .map(adminMenuMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -113,42 +122,7 @@ public class AdminMenuServiceImpl implements AdminMenuService {
     public List<AdminMenuDTO> getActiveMenus() {
         List<AdminMenu> menus = adminMenuRepository.findByIsVisibleTrue();
         return menus.stream()
-                .map(this::convertToDTO)
+                .map(adminMenuMapper::toDTO)
                 .collect(Collectors.toList());
-    }
-
-    private AdminMenuDTO convertToDTO(AdminMenu menu) {
-        return AdminMenuDTO.builder()
-                .id(menu.getId())
-                .name(menu.getName())
-                .url(menu.getUrl())
-                .icon(menu.getIcon())
-                .sortOrder(menu.getSortOrder())
-                .isVisible(menu.getIsVisible())
-                .parentId(menu.getParent() != null ? menu.getParent().getId() : null)
-                .parentName(menu.getParent() != null ? menu.getParent().getName() : null)
-                .createdAt(menu.getCreatedAt())
-                .updatedAt(menu.getUpdatedAt())
-                .children(menu.getChildren().stream()
-                        .map(this::convertToDTO)
-                        .collect(Collectors.toList()))
-                .build();
-    }
-
-    private AdminMenu convertToEntity(AdminMenuDTO dto) {
-        AdminMenu menu = new AdminMenu();
-        menu.setName(dto.getName());
-        menu.setUrl(dto.getUrl());
-        menu.setIcon(dto.getIcon());
-        menu.setSortOrder(dto.getSortOrder());
-        menu.setIsVisible(dto.getIsVisible());
-
-        if (dto.getParentId() != null) {
-            AdminMenu parent = adminMenuRepository.findById(dto.getParentId())
-                    .orElseThrow(() -> new EntityNotFoundException("Parent menu not found with id: " + dto.getParentId()));
-            menu.setParent(parent);
-        }
-
-        return menu;
     }
 } 

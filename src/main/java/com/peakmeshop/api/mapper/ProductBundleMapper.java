@@ -6,7 +6,7 @@ import org.mapstruct.*;
 
 @Mapper(
     componentModel = "spring",
-    uses = {BaseMapper.class, ProductBundleItemMapper.class},
+    uses = {BaseMapper.class, ProductMapper.class},
     nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
     nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
 )
@@ -14,6 +14,5 @@ public interface ProductBundleMapper {
     
     ProductBundleDTO toDTO(ProductBundle productBundle);
 
-    @Mapping(target = "items", ignore = true)
     ProductBundle toEntity(ProductBundleDTO dto);
 } 

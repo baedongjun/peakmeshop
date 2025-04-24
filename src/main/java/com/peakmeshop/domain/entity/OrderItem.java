@@ -2,7 +2,6 @@ package com.peakmeshop.domain.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Map;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,19 +12,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name = "order_items")
@@ -41,30 +36,29 @@ public class OrderItem {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id")
+    @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id")
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    private String name;
-    private String productImage;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_option_value_id")
+    private ProductOptionValue productOptionValue;
 
-    @Column(precision = 10)
-    private BigDecimal price;
-
-    @Column(precision = 10)
-    private BigDecimal cost;
-
-    @Column(precision = 10)
-    private BigDecimal discount;
-
+    @Column(nullable = false)
     private Integer quantity;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "json")
-    private Map<String, String> options;
+    @Column(nullable = false)
+    private BigDecimal price;
+
+    private BigDecimal discount;
+
+    @Column(name = "total_price", nullable = false)
+    private BigDecimal totalPrice;
+
+    private String status;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -86,11 +80,7 @@ public class OrderItem {
     }
 
     public String getProductName() {
-        return name;
-    }
-
-    public String getProductImage() {
-        return productImage;
+        return product.getName();
     }
 
     public BigDecimal getDiscount() {
@@ -102,6 +92,6 @@ public class OrderItem {
     }
 
     public BigDecimal getProfit() {
-        return getSubtotal().subtract(cost.multiply(BigDecimal.valueOf(quantity)));
+        return getSubtotal().subtract(product.getCost().multiply(BigDecimal.valueOf(quantity)));
     }
 }

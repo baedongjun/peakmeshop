@@ -17,10 +17,11 @@ import lombok.NoArgsConstructor;
 public class CartItemDTO {
 
     private Long id;
+    private Long cartId;
     private Long productId;
+    private Long optionId;
     private String productName;
-    private Long variantId;
-    private String variantName;
+    private String optionName;
     private List<CartItemOptionDTO> options;
     private int quantity;
     private BigDecimal price;

@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ProductAttributeDTO {
     private Long id;
+    private Long productId;
     private String name;
     private String code;
     private String description;

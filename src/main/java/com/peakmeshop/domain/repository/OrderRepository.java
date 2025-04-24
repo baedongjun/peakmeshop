@@ -29,6 +29,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findByStatusAndCreatedAtBefore(OrderStatus status, LocalDateTime dateTime);
 
+    List<Order> findTop5ByOrderByCreatedAtDesc();
+
     long countByStatus(OrderStatus status);
 
     @Query("SELECT o FROM Order o WHERE o.member.id = :memberId AND o.createdAt BETWEEN :startDate AND :endDate")
@@ -112,11 +114,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                                @Param("endDate") LocalDateTime endDate);
 
     /**
-     * 기간별 주문 수 조회
-     */
-    long countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
-
-    /**
      * 특정 상태이고 특정 시간 이후에 업데이트된 주문을 조회합니다.
      * @param status 주문 상태
      * @param updatedAt 업데이트 시간
@@ -131,7 +128,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @param pageable 페이징 정보
      * @return 조건에 맞는 주문 목록
      */
-    Page<Order> findByStatus(String status, Pageable pageable);
+    Page<Order> findByStatus(OrderStatus status, Pageable pageable);
 
     /**
      * 특정 회원의 주문을 조회합니다.
@@ -165,5 +162,22 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     
     @Query("SELECT COALESCE(SUM(o.totalPrice), 0) FROM Order o WHERE o.member.id = :memberId")
     long sumTotalAmountByMemberId(@Param("memberId") Long memberId);
+
+    List<Order> findAllByCreatedAtBetween(LocalDateTime startDateTime, LocalDateTime endDateTime);
+    
+    long countByCreatedAtBetween(LocalDateTime startDateTime, LocalDateTime endDateTime);
+    
+    List<Order> findByCreatedAtBetweenAndStatusNot(
+        LocalDateTime startDateTime, 
+        LocalDateTime endDateTime,
+        OrderStatus status
+    );
+    
+    @Query("SELECT o FROM Order o WHERE o.createdAt BETWEEN :startDateTime AND :endDateTime AND o.status = :status")
+    List<Order> findByCreatedAtBetweenAndStatus(
+        @Param("startDateTime") LocalDateTime startDateTime,
+        @Param("endDateTime") LocalDateTime endDateTime,
+        @Param("status") OrderStatus status
+    );
 
 }

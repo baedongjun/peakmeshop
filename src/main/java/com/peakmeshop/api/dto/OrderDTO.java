@@ -4,8 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.peakmeshop.domain.enums.OrderStatus;
 import com.peakmeshop.domain.enums.PaymentMethod;
+import com.peakmeshop.domain.enums.OrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,8 +20,8 @@ public class OrderDTO {
     private Long id;
     private String orderNumber;
     private Long memberId;
+    private Long paymentId;
     private String memberName;
-    private String memberEmail;
     private OrderStatus status;
     private BigDecimal totalPrice;
     private BigDecimal discount;
@@ -47,8 +47,16 @@ public class OrderDTO {
     private LocalDateTime completedAt;
     private List<OrderItemDTO> items;
 
-    private Long shippingAddressId;
-    private Long billingAddressId;
-    private AddressDTO shippingAddress;
-    private AddressDTO billingAddress;
+    private Long shippingId;
+    private String shippingAddress;
+    private String billingAddress;
+
+    private String paymentMethodString;
+    private String paymentStatus;
+    private String shippingStatus;
+    private BigDecimal totalAmount;
+    private BigDecimal discountAmount;
+    private BigDecimal shippingFee;
+    private BigDecimal finalAmount;
+    private String statusString;
 }

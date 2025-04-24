@@ -9,6 +9,7 @@ import com.peakmeshop.domain.repository.ProductRepository;
 import com.peakmeshop.domain.repository.StockNotificationRepository;
 import com.peakmeshop.domain.service.EmailService;
 import com.peakmeshop.domain.service.StockNotificationService;
+import com.peakmeshop.api.mapper.StockNotificationMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -27,16 +28,19 @@ public class StockNotificationServiceImpl implements StockNotificationService {
     private final ProductRepository productRepository;
     private final MemberRepository memberRepository;
     private final EmailService emailService;
+    private final StockNotificationMapper stockNotificationMapper;
 
     public StockNotificationServiceImpl(
             StockNotificationRepository stockNotificationRepository,
             ProductRepository productRepository,
             MemberRepository memberRepository,
-            EmailService emailService) {
+            EmailService emailService,
+            StockNotificationMapper stockNotificationMapper) {
         this.stockNotificationRepository = stockNotificationRepository;
         this.productRepository = productRepository;
         this.memberRepository = memberRepository;
         this.emailService = emailService;
+        this.stockNotificationMapper = stockNotificationMapper;
     }
 
     @Override
@@ -99,7 +103,7 @@ public class StockNotificationServiceImpl implements StockNotificationService {
         List<StockNotification> notifications = stockNotificationRepository.findByMemberIdAndIsActiveTrue(memberId);
 
         return notifications.stream()
-                .map(this::convertToDTO)
+                .map(stockNotificationMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -109,7 +113,7 @@ public class StockNotificationServiceImpl implements StockNotificationService {
         List<StockNotification> notifications = stockNotificationRepository.findByProductIdAndIsActiveTrue(productId);
 
         return notifications.stream()
-                .map(this::convertToDTO)
+                .map(stockNotificationMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -177,20 +181,5 @@ public class StockNotificationServiceImpl implements StockNotificationService {
         int deletedCount = stockNotificationRepository.deleteOldNotifications(thirtyDaysAgo);
 
         log.info("Cleaned up {} old stock notifications", deletedCount);
-    }
-
-    private StockNotificationDTO convertToDTO(StockNotification notification) {
-        return new StockNotificationDTO(
-                notification.getId(),
-                notification.getProduct().getId(),
-                notification.getProduct().getName(),
-                notification.getProduct().getMainImage(),
-                notification.getMember().getId(),
-                notification.getMember().getName(),
-                notification.getMember().getEmail(),
-                notification.getCreatedAt(),
-                notification.getNotifiedAt(),
-                notification.isActive()
-        );
     }
 }

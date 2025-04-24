@@ -6,14 +6,13 @@ import org.mapstruct.*;
 
 @Mapper(
     componentModel = "spring",
-    uses = {BaseMapper.class, OrderMapper.class},
+    uses = {BaseMapper.class},
     nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
     nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
 )
 public interface ShipmentMapper {
     
     @Mapping(target = "orderId", source = "order.id")
-    @Mapping(target = "orderNumber", source = "order.orderNumber")
     ShipmentDTO toDTO(Shipment shipment);
 
     @Mapping(target = "order", ignore = true)

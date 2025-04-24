@@ -23,25 +23,32 @@ public class ProductDTO {
     private String code; // 상품 코드
     private String name;
     private String description;
+    private String shortDescription;
     private BigDecimal price;
     private BigDecimal cost;
     private BigDecimal salePrice; // 판매가 (할인가)
     private BigDecimal discountedPrice; // 할인가 (다른 이름)
-    private Brand brand; // 브랜드
     private Long categoryId;
     private String categoryName;
-    private Supplier supplier;
+    private Long brandId;
+    private String brandName;
+    private Long supplierId;
+    private String supplierName;
+    private Long inventoryId;
     private String mainImage;
     private Integer stock;
     private Integer stockAlert;
     private Integer maxPurchaseQuantity;
-    private String shortDescription;
     private String status; // 상품 상태 (ACTIVE, INACTIVE, OUT_OF_STOCK 등)
     private Boolean isActive; // 활성화 여부
     private Boolean isFeatured; // 추천 상품 여부
     private Double averageRating;
     private Integer reviewCount;
     private Integer salesCount; // 판매 수량
+    private String slug;
+    private List<String> images;
+    private List<ProductOptionDTO> options;
+    private List<Long> tagIds;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -49,16 +56,7 @@ public class ProductDTO {
     private Map<String, Object> attributes = new HashMap<>(); // 상품 속성
 
     @Builder.Default
-    private List<ProductOptionDTO> options = new ArrayList<>();
-
-    @Builder.Default
-    private List<ProductVariantDTO> variants = new ArrayList<>();
-
-    @Builder.Default
     private List<ReviewDTO> reviews = new ArrayList<>();
-
-    @Builder.Default
-    private List<ProductImageDTO> images = new ArrayList<>();
 
     // 할인율 계산
     public BigDecimal getDiscountRate() {

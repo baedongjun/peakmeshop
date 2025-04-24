@@ -10,7 +10,7 @@ public interface GuestCartItemRepository extends JpaRepository<GuestCartItem, Lo
 
     Optional<GuestCartItem> findByGuestCartIdAndProductId(Long guestCartId, Long productId);
 
-    Optional<GuestCartItem> findByGuestCartIdAndProductIdAndVariantId(Long guestCartId, Long productId, Long variantId);
+    Optional<GuestCartItem> findByGuestCartIdAndProductIdAndOptionId(Long guestCartId, Long productId, Long optionId);
 
     void deleteByGuestCartId(Long guestCartId);
 }

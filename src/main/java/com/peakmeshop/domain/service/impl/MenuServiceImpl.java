@@ -4,6 +4,7 @@ import com.peakmeshop.domain.service.MenuService;
 import com.peakmeshop.domain.entity.Menu;
 import com.peakmeshop.domain.repository.MenuRepository;
 import com.peakmeshop.api.dto.MenuDTO;
+import com.peakmeshop.api.mapper.MenuMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,12 +18,13 @@ import java.util.stream.Collectors;
 public class MenuServiceImpl implements MenuService {
 
     private final MenuRepository menuRepository;
+    private final MenuMapper menuMapper;
 
     @Override
     public List<MenuDTO> getMenus() {
         return menuRepository.findAll()
                 .stream()
-                .map(this::convertToDTO)
+                .map(menuMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -31,7 +33,7 @@ public class MenuServiceImpl implements MenuService {
     public List<MenuDTO> getMenusByType(String type) {
         return menuRepository.findAllByType(type)
                 .stream()
-                .map(this::convertToDTO)
+                .map(menuMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -53,14 +55,14 @@ public class MenuServiceImpl implements MenuService {
     @Override
     public MenuDTO getMenuById(Long id) {
         return menuRepository.findById(id)
-                .map(this::convertToDTO)
+                .map(menuMapper::toDTO)
                 .orElseThrow(() -> new IllegalArgumentException("Menu not found with id: " + id));
     }
 
     @Override
     public MenuDTO createMenu(MenuDTO menuDTO) {
-        Menu menu = convertToEntity(menuDTO);
-        return convertToDTO(menuRepository.save(menu));
+        Menu menu = menuMapper.toEntity(menuDTO);
+        return menuMapper.toDTO(menuRepository.save(menu));
     }
 
     @Override
@@ -68,15 +70,10 @@ public class MenuServiceImpl implements MenuService {
         Menu existingMenu = menuRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Menu not found with id: " + id));
         
-        Menu updatedMenu = convertToEntity(menuDTO);
-        existingMenu.setName(updatedMenu.getName());
-        existingMenu.setUrl(updatedMenu.getUrl());
-        existingMenu.setType(updatedMenu.getType());
-        existingMenu.setParentId(updatedMenu.getParentId());
-        existingMenu.setSortOrder(updatedMenu.getSortOrder());
-        existingMenu.setActive(updatedMenu.isActive());
+        Menu updatedMenu = menuMapper.toEntity(menuDTO);
+        updatedMenu.setId(existingMenu.getId());
         
-        return convertToDTO(menuRepository.save(existingMenu));
+        return menuMapper.toDTO(menuRepository.save(updatedMenu));
     }
 
     @Override
@@ -114,30 +111,7 @@ public class MenuServiceImpl implements MenuService {
     public List<MenuDTO> getActiveMenus() {
         return menuRepository.findByIsActiveTrueOrderBySortOrderAsc()
                 .stream()
-                .map(this::convertToDTO)
+                .map(menuMapper::toDTO)
                 .collect(Collectors.toList());
-    }
-
-    private MenuDTO convertToDTO(Menu menu) {
-        return new MenuDTO(
-                menu.getId(),
-                menu.getName(),
-                menu.getUrl(),
-                menu.getType(),
-                menu.getParentId(),
-                menu.getSortOrder(),
-                menu.isActive()
-        );
-    }
-
-    private Menu convertToEntity(MenuDTO menuDTO) {
-        Menu menu = new Menu();
-        menu.setName(menuDTO.name());
-        menu.setUrl(menuDTO.url());
-        menu.setType(menuDTO.type());
-        menu.setParentId(menuDTO.parentId());
-        menu.setSortOrder(menuDTO.sortOrder());
-        menu.setActive(menuDTO.isActive());
-        return menu;
     }
 } 

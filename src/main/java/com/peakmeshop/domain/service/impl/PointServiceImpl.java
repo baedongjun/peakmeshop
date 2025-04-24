@@ -22,6 +22,8 @@ import com.peakmeshop.domain.repository.MemberRepository;
 import com.peakmeshop.domain.repository.PointHistoryRepository;
 import com.peakmeshop.domain.repository.PointRepository;
 import com.peakmeshop.domain.service.PointService;
+import com.peakmeshop.api.mapper.PointMapper;
+import com.peakmeshop.api.mapper.PointHistoryMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -39,6 +41,8 @@ public class PointServiceImpl implements PointService {
     private final PointRepository pointRepository;
     private final PointHistoryRepository pointHistoryRepository;
     private final MemberRepository memberRepository;
+    private final PointMapper pointMapper;
+    private final PointHistoryMapper pointHistoryMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -54,7 +58,7 @@ public class PointServiceImpl implements PointService {
                         .totalUsedPoint(0)
                         .build());
 
-        return convertToDTO(point);
+        return pointMapper.toDTO(point);
     }
 
     @Override
@@ -64,7 +68,7 @@ public class PointServiceImpl implements PointService {
                 .orElseThrow(() -> new EntityNotFoundException("Member not found with id: " + memberId));
 
         Page<PointHistory> pointHistories = pointHistoryRepository.findByMemberIdOrderByCreatedAtDesc(memberId, pageable);
-        return pointHistories.map(this::convertToHistoryDTO);
+        return pointHistories.map(pointHistoryMapper::toDTO);
     }
 
     @Override
@@ -104,7 +108,7 @@ public class PointServiceImpl implements PointService {
 
         PointHistory savedHistory = pointHistoryRepository.save(pointHistory);
 
-        return convertToHistoryDTO(savedHistory);
+        return pointHistoryMapper.toDTO(savedHistory);
     }
 
     @Override
@@ -138,7 +142,7 @@ public class PointServiceImpl implements PointService {
 
         PointHistory savedHistory = pointHistoryRepository.save(pointHistory);
 
-        return convertToHistoryDTO(savedHistory);
+        return pointHistoryMapper.toDTO(savedHistory);
     }
 
     @Override
@@ -178,7 +182,7 @@ public class PointServiceImpl implements PointService {
 
         PointHistory savedHistory = pointHistoryRepository.save(pointHistory);
 
-        return convertToHistoryDTO(savedHistory);
+        return pointHistoryMapper.toDTO(savedHistory);
     }
 
     @Override
@@ -186,7 +190,7 @@ public class PointServiceImpl implements PointService {
     public List<PointDTO> getAllMemberPoints() {
         List<Point> points = pointRepository.findAll();
         return points.stream()
-                .map(this::convertToDTO)
+                .map(pointMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -212,7 +216,7 @@ public class PointServiceImpl implements PointService {
                 .build();
 
         Point savedPoint = pointRepository.save(point);
-        return convertToDTO(savedPoint);
+        return pointMapper.toDTO(savedPoint);
     }
 
     @Override
@@ -232,7 +236,6 @@ public class PointServiceImpl implements PointService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
 
-
         // 포인트 사용
         Point point = Point.builder()
                 .member(member)
@@ -243,7 +246,7 @@ public class PointServiceImpl implements PointService {
                 .build();
 
         Point savedPoint = pointRepository.save(point);
-        return convertToDTO(savedPoint);
+        return pointMapper.toDTO(savedPoint);
     }
 
     @Override
@@ -257,7 +260,6 @@ public class PointServiceImpl implements PointService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다."));
 
-
         // 포인트 환불
         Point point = Point.builder()
                 .member(member)
@@ -268,7 +270,7 @@ public class PointServiceImpl implements PointService {
                 .build();
 
         Point savedPoint = pointRepository.save(point);
-        return convertToDTO(savedPoint);
+        return pointMapper.toDTO(savedPoint);
     }
 
     @Override
@@ -279,7 +281,7 @@ public class PointServiceImpl implements PointService {
     @Override
     public List<PointDTO> getExpiringPoints(LocalDateTime start, LocalDateTime end) {
         List<Point> points = pointRepository.findExpiringPoints(start, end);
-        return points.stream().map(this::convertToDTO).toList();
+        return points.stream().map(pointMapper::toDTO).toList();
     }
 
     @Override
@@ -375,31 +377,5 @@ public class PointServiceImpl implements PointService {
                                              LocalDateTime endDate, Pageable pageable) {
         // TODO: 구현 필요
         return Page.empty();
-    }
-
-    private PointDTO convertToDTO(Point point) {
-        return PointDTO.builder()
-                .id(point.getId())
-                .memberId(point.getMember().getId())
-                .amount(point.getAmount())
-                .reason(point.getReason())
-                .type(point.getType())
-                .expiredAt(point.getExpiryAt())
-                .createdAt(point.getCreatedAt())
-                .build();
-    }
-
-    private PointHistoryDTO convertToHistoryDTO(PointHistory history) {
-        return PointHistoryDTO.builder()
-                .id(history.getId())
-                .memberId(history.getMember().getId())
-                .memberName(history.getMember().getName())
-                .amount(history.getAmount())
-                .type(history.getType())
-                .reason(history.getReason())
-                .balanceAfter(history.getBalanceAfter())
-                .createdAt(history.getCreatedAt())
-                .orderId(history.getOrderId())
-                .build();
     }
 }

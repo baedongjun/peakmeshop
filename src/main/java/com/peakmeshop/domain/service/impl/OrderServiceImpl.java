@@ -1,15 +1,10 @@
 package com.peakmeshop.domain.service.impl;
 
 import com.peakmeshop.api.dto.*;
-import com.peakmeshop.domain.entity.Member;
-import com.peakmeshop.domain.entity.Order;
-import com.peakmeshop.domain.entity.OrderItem;
-import com.peakmeshop.domain.entity.Product;
+import com.peakmeshop.api.mapper.*;
+import com.peakmeshop.domain.entity.*;
 import com.peakmeshop.domain.enums.OrderStatus;
-import com.peakmeshop.domain.repository.MemberRepository;
-import com.peakmeshop.domain.repository.OrderItemRepository;
-import com.peakmeshop.domain.repository.OrderRepository;
-import com.peakmeshop.domain.repository.ProductRepository;
+import com.peakmeshop.domain.repository.*;
 import com.peakmeshop.domain.service.EmailService;
 import com.peakmeshop.domain.service.OrderService;
 import jakarta.persistence.EntityNotFoundException;
@@ -24,6 +19,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -43,28 +39,60 @@ public class OrderServiceImpl implements OrderService {
     private final EmailService emailService;
     private final Random random = new Random();
 
+    private final OrderMapper orderMapper;
+    private final OrderItemMapper orderItemMapper;
+    private final MemberMapper memberMapper;
+    private final ProductMapper productMapper;
+
     @Override
+    @Transactional(readOnly = true)
     public Order getOrderById(Long id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
-        return order;
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public OrderDTO getOrderByOrderNumber(String orderNumber) {
-        return null;
+        Order order = orderRepository.findByOrderNumber(orderNumber)
+                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
+        return orderMapper.toDTO(order);
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<OrderDTO> getOrdersByMemberId(Long memberId) {
+        return orderRepository.findByMemberIdOrderByCreatedAtDesc(memberId).stream()
+                .map(orderMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<OrderDTO> getOrdersByMemberId(Long memberId, Pageable pageable) {
-        Page<Order> orders = orderRepository.findByMemberIdOrderByCreatedAtDesc(memberId, pageable);
-        return orders.map(this::convertToDTO);
+        return orderRepository.findByMemberIdOrderByCreatedAtDesc(memberId, pageable)
+                .map(orderMapper::toDTO);
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<OrderDTO> getAllOrders(Pageable pageable) {
+        return orderRepository.findAll(pageable)
+                .map(orderMapper::toDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OrderDTO> getOrdersByStatus(OrderStatus status, Pageable pageable) {
+        return orderRepository.findByStatus(status, pageable)
+                .map(orderMapper::toDTO);
+    }
+
+    @Override
+    @Transactional
     public OrderDTO createOrder(Long memberId, OrderRequestDTO orderRequestDTO) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new UsernameNotFoundException("Member not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
 
         Order order = Order.builder()
                 .member(member)
@@ -80,26 +108,25 @@ public class OrderServiceImpl implements OrderService {
                 .recipientDetailAddress(orderRequestDTO.getRecipientDetailAddress())
                 .recipientMessage(orderRequestDTO.getRecipientMessage())
                 .paymentMethod(orderRequestDTO.getPaymentMethod())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
 
         order = orderRepository.save(order);
 
         for (OrderItemDTO itemDTO : orderRequestDTO.getItems()) {
             Product product = productRepository.findById(itemDTO.getProductId())
-                    .orElseThrow(() -> new UsernameNotFoundException("Product not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
 
             if (product.getStock() < itemDTO.getQuantity()) {
-                throw new IllegalArgumentException("Insufficient stock for product: " + product.getName());
+                throw new IllegalArgumentException("상품의 재고가 부족합니다: " + product.getName());
             }
 
             OrderItem orderItem = OrderItem.builder()
                     .order(order)
                     .product(product)
-                    .name(product.getName())
                     .price(product.getPrice())
-                    .cost(product.getCost())
                     .quantity(itemDTO.getQuantity())
-                    .options(itemDTO.getOptions())
                     .build();
 
             orderItemRepository.save(orderItem);
@@ -108,199 +135,88 @@ public class OrderServiceImpl implements OrderService {
             productRepository.save(product);
         }
 
-        return convertToDTO(order);
+        return orderMapper.toDTO(order);
     }
 
     @Override
-    public OrderDTO updateOrderStatus(Long orderId, OrderStatusUpdateDTO statusUpdateDTO) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new UsernameNotFoundException("Order not found"));
+    @Transactional
+    public OrderDTO updateOrderStatus(Long id, OrderStatusUpdateDTO statusUpdateDTO) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
 
         order.setStatus(statusUpdateDTO.getStatus());
+        order.setUpdatedAt(LocalDateTime.now());
 
-        if (statusUpdateDTO.getStatus() == OrderStatus.PAID) {
-            order.setPaidAt(LocalDateTime.now());
-        } else if (statusUpdateDTO.getStatus() == OrderStatus.SHIPPING) {
-            order.setShippedAt(LocalDateTime.now());
+        if (statusUpdateDTO.getTrackingNumber() != null) {
             order.setTrackingNumber(statusUpdateDTO.getTrackingNumber());
+        }
+        if (statusUpdateDTO.getShippingCompany() != null) {
             order.setShippingCompany(statusUpdateDTO.getShippingCompany());
-        } else if (statusUpdateDTO.getStatus() == OrderStatus.DELIVERED) {
-            order.setDeliveredAt(LocalDateTime.now());
-        } else if (statusUpdateDTO.getStatus() == OrderStatus.CANCELLED) {
-            order.setCancelledAt(LocalDateTime.now());
-            order.setCancelReason(statusUpdateDTO.getReason());
-            restoreProductStock(order);
-        } else if (statusUpdateDTO.getStatus() == OrderStatus.REFUNDED) {
-            order.setRefundedAt(LocalDateTime.now());
-            order.setRefundReason(statusUpdateDTO.getReason());
-            restoreProductStock(order);
         }
 
-        order = orderRepository.save(order);
-        return convertToDTO(order);
+        Order savedOrder = orderRepository.save(order);
+        return orderMapper.toDTO(savedOrder);
     }
 
     @Override
-    public OrderDTO updateOrderStatus(Long orderId, OrderStatus status) {
-        OrderStatusUpdateDTO statusUpdateDTO = OrderStatusUpdateDTO.builder()
-                .status(status)
-                .build();
-        return updateOrderStatus(orderId, statusUpdateDTO);
+    @Transactional
+    public OrderDTO updateOrderStatus(Long id, OrderStatus status) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
+
+        order.setStatus(status);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        Order savedOrder = orderRepository.save(order);
+        return orderMapper.toDTO(savedOrder);
     }
 
     @Override
-    public OrderDTO updateTrackingInfo(Long orderId, String trackingNumber, String shippingCompany) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new UsernameNotFoundException("Order not found with id: " + orderId));
+    @Transactional
+    public OrderDTO updateTrackingInfo(Long id, String trackingNumber, String shippingCompany) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
+
         order.setTrackingNumber(trackingNumber);
         order.setShippingCompany(shippingCompany);
-        return convertToDTO(orderRepository.save(order));
+        order.setUpdatedAt(LocalDateTime.now());
+
+        Order savedOrder = orderRepository.save(order);
+        return orderMapper.toDTO(savedOrder);
     }
 
     @Override
-    public Page<OrderDTO> getOrdersByStatus(OrderStatus status, Pageable pageable) {
-        Page<Order> orders = orderRepository.findAllByStatus(status, pageable);
-        return orders.map(this::convertToDTO);
-    }
+    @Transactional
+    public OrderDTO refundOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
 
-    @Override
-    public Page<OrderDTO> getCancelledOrders(Pageable pageable) {
-        Page<Order> orders = orderRepository.findByStatusOrderByCreatedAtDesc(OrderStatus.CANCELLED, pageable);
-        return orders.map(this::convertToDTO);
-    }
+        order.setStatus(OrderStatus.REFUNDED);
+        order.setUpdatedAt(LocalDateTime.now());
 
-    @Override
-    public OrderDTO refundOrder(Long orderId) {
-        OrderStatusUpdateDTO statusUpdateDTO = OrderStatusUpdateDTO.builder()
-                .status(OrderStatus.REFUNDED)
-                .build();
-        return updateOrderStatus(orderId, statusUpdateDTO);
-    }
-
-    private String generateOrderNumber() {
-        return "ORD" + System.currentTimeMillis();
-    }
-
-    private String generateRefundNumber() {
-        return "REF" + System.currentTimeMillis();
-    }
-
-    private void restoreProductStock(Order order) {
-        for (OrderItem item : order.getOrderItems()) {
-            Product product = item.getProduct();
-            product.setStock(product.getStock() + item.getQuantity());
-            productRepository.save(product);
-        }
-    }
-
-    private Map<String, String> convertOptionsToMap(String options) {
-        if (options == null || options.isEmpty()) {
-            return new HashMap<>();
-        }
-        Map<String, String> optionsMap = new HashMap<>();
-        String[] pairs = options.split(",");
-        for (String pair : pairs) {
-            String[] keyValue = pair.split(":");
-            if (keyValue.length == 2) {
-                optionsMap.put(keyValue[0].trim(), keyValue[1].trim());
-            }
-        }
-        return optionsMap;
-    }
-
-    private String convertOptionsToString(Map<String, String> options) {
-        if (options == null || options.isEmpty()) {
-            return "";
-        }
-        return options.entrySet().stream()
-                .map(entry -> entry.getKey() + ":" + entry.getValue())
-                .collect(Collectors.joining(","));
-    }
-
-    private OrderDTO convertToDTO(Order order) {
-        return OrderDTO.builder()
-                .id(order.getId())
-                .orderNumber(order.getOrderNumber())
-                .memberId(order.getMember().getId())
-                .memberName(order.getMember().getName())
-                .status(order.getStatus())
-                .totalPrice(order.getTotalPrice())
-                .discount(order.getDiscount())
-                .deliveryFee(order.getDeliveryFee())
-                .finalPrice(order.getFinalPrice())
-                .recipientName(order.getRecipientName())
-                .recipientTel(order.getRecipientTel())
-                .recipientAddress(order.getRecipientAddress())
-                .recipientDetailAddress(order.getRecipientDetailAddress())
-                .recipientMessage(order.getRecipientMessage())
-                .paymentMethod(order.getPaymentMethod())
-                .trackingNumber(order.getTrackingNumber())
-                .shippingCompany(order.getShippingCompany())
-                .cancelReason(order.getCancelReason())
-                .refundReason(order.getRefundReason())
-                .paidAt(order.getPaidAt())
-                .shippedAt(order.getShippedAt())
-                .deliveredAt(order.getDeliveredAt())
-                .cancelledAt(order.getCancelledAt())
-                .refundedAt(order.getRefundedAt())
-                .createdAt(order.getCreatedAt())
-                .updatedAt(order.getUpdatedAt())
-                .items(order.getOrderItems().stream()
-                        .map(this::convertToItemDTO)
-                        .collect(Collectors.toList()))
-                .build();
-    }
-
-    private OrderItemDTO convertToItemDTO(OrderItem item) {
-        return OrderItemDTO.builder()
-                .id(item.getId())
-                .orderId(item.getOrder().getId())
-                .productId(item.getProduct().getId())
-                .name(item.getName())
-                .price(item.getPrice())
-                .cost(item.getCost())
-                .quantity(item.getQuantity())
-                .options(item.getOptions())
-                .createdAt(item.getCreatedAt())
-                .updatedAt(item.getUpdatedAt())
-                .build();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<OrderDTO> getOrdersByMemberId(Long memberId) {
-        List<Order> orders = orderRepository.findByMemberIdOrderByCreatedAtDesc(memberId);
-        return orders.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<OrderDTO> getAllOrders(Pageable pageable) {
-        Page<Order> orders = orderRepository.findAllByOrderByCreatedAtDesc(pageable);
-        return orders.map(this::convertToDTO);
+        Order savedOrder = orderRepository.save(order);
+        return orderMapper.toDTO(savedOrder);
     }
 
     @Override
     @Transactional
     public void deleteOrder(Long id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("Order not found with id: " + id));
+        orderRepository.deleteById(id);
+    }
 
-        // 주문 항목 삭제
-        orderItemRepository.deleteByOrderId(id);
-
-        // 주문 삭제
-        orderRepository.delete(order);
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OrderDTO> getCancelledOrders(Pageable pageable) {
+        Page<Order> orders = orderRepository.findByStatusOrderByCreatedAtDesc(OrderStatus.CANCELLED, pageable);
+        return orders.map(orderMapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<OrderItemDTO> getOrderItems(Long orderId) {
-        List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
-        return orderItems.stream()
-                .map(this::convertToItemDTO)
+        List<OrderItem> items = orderItemRepository.findByOrderId(orderId);
+        return items.stream()
+                .map(orderItemMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -350,7 +266,7 @@ public class OrderServiceImpl implements OrderService {
         Page<Order> orders = orderRepository.findAll(pageable);
 
         return orders.getContent().stream()
-                .map(this::convertToDTO)
+                .map(orderMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -436,15 +352,22 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getOrderStatistics(String period, String startDate, String endDate) {
+        Map<String, Object> statistics = new HashMap<>();
+        
         LocalDateTime start = startDate != null ? LocalDateTime.parse(startDate) : null;
         LocalDateTime end = endDate != null ? LocalDateTime.parse(endDate) : null;
 
-        Map<String, Object> statistics = new HashMap<>();
         statistics.put("orderCount", orderRepository.countByCreatedAtBetween(start, end));
         statistics.put("statusDistribution", getOrderStatusDistribution());
         statistics.put("dailySales", getDailySales(start, end));
         statistics.put("monthlySales", getMonthlySales(start, end));
 
+        // Convert entities to DTOs using mappers
+        List<Order> recentOrders = orderRepository.findTop5ByOrderByCreatedAtDesc();
+        statistics.put("recentOrders", recentOrders.stream()
+                .map(orderMapper::toDTO)
+                .collect(Collectors.toList()));
+                
         return statistics;
     }
 
@@ -476,30 +399,30 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public Page<RefundDTO> getRefunds(Pageable pageable) {
-        Page<Order> orders = orderRepository.findByStatusOrderByCreatedAtDesc(OrderStatus.REFUNDED, pageable);
-        return orders.map(this::convertToRefundDTO);
+        Page<Order> refunds = orderRepository.findByStatusOrderByCreatedAtDesc(OrderStatus.REFUNDED, pageable);
+        return refunds.map(this::convertToRefundDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public RefundDTO getRefundById(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("환불 정보를 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("환불 정보를 찾을 수 없습니다."));
         return convertToRefundDTO(order);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<CancellationDTO> getCancellations(Pageable pageable) {
-        Page<Order> orders = orderRepository.findByStatusOrderByCreatedAtDesc(OrderStatus.CANCELLED, pageable);
-        return orders.map(this::convertToCancellationDTO);
+        Page<Order> cancellations = orderRepository.findByStatusOrderByCreatedAtDesc(OrderStatus.CANCELLED, pageable);
+        return cancellations.map(this::convertToCancellationDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
     public CancellationDTO getCancellationById(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("취소 정보를 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("취소 정보를 찾을 수 없습니다."));
         return convertToCancellationDTO(order);
     }
 
@@ -507,10 +430,12 @@ public class OrderServiceImpl implements OrderService {
         return RefundDTO.builder()
                 .id(order.getId())
                 .orderNumber(order.getOrderNumber())
+                .refundNumber(generateRefundNumber())
                 .memberId(order.getMember().getId())
                 .memberName(order.getMember().getName())
-                .totalAmount(order.getFinalPrice())
-                .refundedAt(order.getUpdatedAt())
+                .amount(new BigDecimal(order.getFinalPrice()))
+                .reason(order.getRefundReason())
+                .refundedAt(order.getRefundedAt())
                 .build();
     }
 
@@ -520,8 +445,9 @@ public class OrderServiceImpl implements OrderService {
                 .orderNumber(order.getOrderNumber())
                 .memberId(order.getMember().getId())
                 .memberName(order.getMember().getName())
-                .totalAmount(order.getFinalPrice())
-                .cancelledAt(order.getUpdatedAt())
+                .amount(new BigDecimal(order.getFinalPrice()))
+                .reason(order.getCancelReason())
+                .cancelledAt(order.getCancelledAt())
                 .build();
     }
 
@@ -635,6 +561,14 @@ public class OrderServiceImpl implements OrderService {
             memberRepository.save(member);
         }
         
-        return convertToDTO(orderRepository.save(order));
+        return orderMapper.toDTO(orderRepository.save(order));
+    }
+
+    private String generateOrderNumber() {
+        return "ORD" + System.currentTimeMillis();
+    }
+
+    private String generateRefundNumber() {
+        return "REF" + System.currentTimeMillis();
     }
 }

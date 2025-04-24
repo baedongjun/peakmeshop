@@ -35,6 +35,7 @@ public class SupplierDTO {
     private String website;
     private String description;
     private String status;
+    private Boolean isActive;
     private Long productCount;
     private Long totalSales;
     private LocalDateTime createdAt;
