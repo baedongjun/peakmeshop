@@ -174,12 +174,12 @@
                                        th:text="${product.name}">상품명</a>
                                 </td>
                                 <td>
-                                    <a th:href="@{/admin/categories/{id}(id=${product.category.id})}"
-                                       th:text="${product.category.name}">카테고리</a>
+                                    <a th:href="@{/admin/categories/{id}(id=${product.categoryId})}"
+                                       th:text="${product.categoryName}">카테고리</a>
                                 </td>
                                 <td>
-                                    <a th:href="@{/admin/suppliers/{id}(id=${product.supplier.id})}"
-                                       th:text="${product.supplier.name}">공급사</a>
+                                    <a th:href="@{/admin/suppliers/{id}(id=${product.supplierId})}"
+                                       th:text="${product.supplierName}">공급사</a>
                                 </td>
                                 <td th:text="${#numbers.formatInteger(product.price, 0, 'COMMA')} + '원'">10,000원</td>
                                 <td>

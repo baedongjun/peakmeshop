@@ -161,12 +161,12 @@
                                 </td>
                                 <td>
                                     <span th:class="${'badge bg-' + 
-                                        (member.grade == 'DIAMOND' ? 'info' :
-                                        (member.grade == 'PLATINUM' ? 'primary' :
-                                        (member.grade == 'GOLD' ? 'warning' :
-                                        (member.grade == 'SILVER' ? 'secondary' : 'dark'))))}">
+                                        (member.gradeName == 'DIAMOND' ? 'info' :
+                                        (member.gradeName == 'PLATINUM' ? 'primary' :
+                                        (member.gradeName == 'GOLD' ? 'warning' :
+                                        (member.gradeName == 'SILVER' ? 'secondary' : 'dark'))))}">
                                         <i class="fas fa-crown me-1"></i>
-                                        <span th:text="${member.grade}"></span>
+                                        <span th:text="${member.gradeName}"></span>
                                     </span>
                                     <br>
                                     <span th:class="${'badge bg-' + 
@@ -304,7 +304,7 @@
                         document.getElementById('memberEmail').textContent = data.email;
                         document.getElementById('memberPhone').textContent = data.phone;
                         document.getElementById('memberStatus').textContent = data.status;
-                        document.getElementById('memberGrade').textContent = data.grade;
+                        document.getElementById('memberGrade').textContent = data.gradeName;
                         document.getElementById('memberPoints').textContent = data.points.toLocaleString();
                         document.getElementById('memberCreatedAt').textContent = new Date(data.createdAt).toLocaleString();
                         

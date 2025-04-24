@@ -26,15 +26,14 @@
             <ul class="list-unstyled components">
                 <li th:each="menu : ${adminMenus}" th:if="${menu.parentId == null}" th:class="${not menu.children.isEmpty() ? 'has-submenu' : ''}">
                     <!-- 상위 메뉴 -->
-                    <a th:if="${menu.children.isEmpty()}" 
+                    <a th:if="${menu.children.isEmpty()}"
                        th:href="${menu.url}" 
                        th:class="${#req.startsWith(menu.url) ? 'active' : ''}">
                         <i th:class="${menu.icon}"></i>
                         <span th:text="${menu.name}"></span>
                     </a>
-                    
                     <!-- 하위 메뉴가 있는 경우 -->
-                    <a th:if="${not menu.children.isEmpty()}" 
+                    <a th:if="${not menu.children.isEmpty()}"
                        href="#" 
                        th:data-toggle="collapse" 
                        th:data-target="'#submenu-' + ${menu.id}" 
@@ -46,7 +45,7 @@
                     </a>
                     
                     <!-- 하위 메뉴 목록 -->
-                    <ul th:if="${not menu.children.isEmpty()}" 
+                    <ul th:if="${not menu.children.isEmpty()}"
                         class="collapse list-unstyled" 
                         th:id="'submenu-' + ${menu.id}">
                         <li th:each="submenu : ${menu.children}">
