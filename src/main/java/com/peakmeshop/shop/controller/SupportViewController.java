@@ -4,6 +4,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
  * 고객 지원, 공지사항, FAQ 등 관련 뷰 컨트롤러
@@ -16,7 +17,7 @@ public class SupportViewController {
      */
     @GetMapping("/notice")
     public String noticeList() {
-        return "shop/notice-list";
+        return "shop/support/notice-list";
     }
 
     /**
@@ -25,7 +26,7 @@ public class SupportViewController {
     @GetMapping("/notice/{id}")
     public String noticeDetail(@PathVariable Long id, Model model) {
         model.addAttribute("noticeId", id);
-        return "shop/notice-detail";
+        return "shop/support/notice-detail";
     }
 
     /**
@@ -33,7 +34,7 @@ public class SupportViewController {
      */
     @GetMapping("/faq")
     public String faq() {
-        return "shop/faq";
+        return "shop/support/faq";
     }
 
     /**
@@ -41,7 +42,7 @@ public class SupportViewController {
      */
     @GetMapping("/inquiry")
     public String inquiry() {
-        return "shop/inquiry";
+        return "shop/support/inquiry";
     }
 
     /**
@@ -49,7 +50,7 @@ public class SupportViewController {
      */
     @GetMapping("/terms")
     public String terms() {
-        return "shop/terms";
+        return "shop/support/terms";
     }
 
     /**
@@ -57,32 +58,7 @@ public class SupportViewController {
      */
     @GetMapping("/privacy")
     public String privacy() {
-        return "shop/privacy";
-    }
-
-    /**
-     * 이벤트 목록
-     */
-    @GetMapping("/events")
-    public String eventList() {
-        return "shop/event-list";
-    }
-
-    /**
-     * 이벤트 상세
-     */
-    @GetMapping("/events/{id}")
-    public String eventDetail(@PathVariable Long id, Model model) {
-        model.addAttribute("eventId", id);
-        return "shop/event-detail";
-    }
-
-    /**
-     * 프로모션 목록
-     */
-    @GetMapping("/promotions")
-    public String promotionList() {
-        return "shop/promotion-list";
+        return "shop/support/privacy";
     }
 }
 

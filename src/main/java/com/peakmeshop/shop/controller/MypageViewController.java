@@ -18,7 +18,7 @@ public class MypageViewController {
      */
     @GetMapping
     public String myPage() {
-        return "shop/mypage";
+        return "shop/mypage/index";
     }
 
     /**
@@ -26,7 +26,7 @@ public class MypageViewController {
      */
     @GetMapping("/profile")
     public String myProfile() {
-        return "shop/my-profile";
+        return "shop/mypage/my-profile";
     }
 
     /**
@@ -34,7 +34,7 @@ public class MypageViewController {
      */
     @GetMapping("/orders")
     public String myOrders() {
-        return "shop/my-orders";
+        return "shop/mypage/my-orders";
     }
 
     /**
@@ -43,7 +43,7 @@ public class MypageViewController {
     @GetMapping("/orders/{id}")
     public String myOrderDetail(@PathVariable Long id, Model model) {
         model.addAttribute("orderId", id);
-        return "shop/order-detail";
+        return "shop/mypage/my-order-detail";
     }
 
     /**
@@ -51,7 +51,15 @@ public class MypageViewController {
      */
     @GetMapping("/addresses")
     public String myAddresses() {
-        return "shop/my-addresses";
+        return "shop/mypage/my-addresses";
+    }
+
+    /**
+     * 배송 정보 페이지
+     */
+    @GetMapping("/shipping")
+    public String myShipping() {
+        return "shop/mypage/my-shipping";
     }
 
     /**
@@ -59,7 +67,7 @@ public class MypageViewController {
      */
     @GetMapping("/reviews")
     public String myReviews() {
-        return "shop/my-reviews";
+        return "shop/mypage/my-reviews";
     }
 
     /**
@@ -67,7 +75,7 @@ public class MypageViewController {
      */
     @GetMapping("/points")
     public String myPoints() {
-        return "shop/my-points";
+        return "shop/mypage/my-points";
     }
 
     /**
@@ -75,7 +83,7 @@ public class MypageViewController {
      */
     @GetMapping("/coupons")
     public String myCoupons() {
-        return "shop/my-coupons";
+        return "shop/mypage/my-coupons";
     }
 
     /**
@@ -83,7 +91,7 @@ public class MypageViewController {
      */
     @GetMapping("/wishlist")
     public String myWishlist() {
-        return "shop/my-wishlist";
+        return "shop/mypage/my-wishlist";
     }
 
     /**
@@ -91,7 +99,7 @@ public class MypageViewController {
      */
     @GetMapping("/inquiries")
     public String myInquiries() {
-        return "shop/my-inquiries";
+        return "shop/mypage/my-inquiries";
     }
 
     /**
@@ -99,7 +107,7 @@ public class MypageViewController {
      */
     @GetMapping("/inquiries/new")
     public String newInquiry() {
-        return "shop/inquiry-form";
+        return "shop/mypage/my-inquiry-form";
     }
 
     /**
@@ -108,7 +116,43 @@ public class MypageViewController {
     @GetMapping("/inquiries/{id}")
     public String inquiryDetail(@PathVariable Long id, Model model) {
         model.addAttribute("inquiryId", id);
-        return "shop/inquiry-detail";
+        return "shop/mypage/my-inquiry-detail";
+    }
+
+    /**
+     * 주문 취소 페이지
+     */
+    @GetMapping("/orders/{orderId}/cancel")
+    public String cancelOrder(@PathVariable Long orderId, Model model) {
+        model.addAttribute("orderId", orderId);
+        return "shop/mypage/my-order-cancel";
+    }
+
+    /**
+     * 환불 신청 페이지
+     */
+    @GetMapping("/orders/{orderId}/refund")
+    public String refundOrder(@PathVariable Long orderId, Model model) {
+        model.addAttribute("orderId", orderId);
+        return "shop/mypage/my-order-refund";
+    }
+
+    /**
+     * 반품 신청 페이지
+     */
+    @GetMapping("/orders/{orderId}/return")
+    public String returnOrder(@PathVariable Long orderId, Model model) {
+        model.addAttribute("orderId", orderId);
+        return "shop/mypage/my-order-return";
+    }
+
+    /**
+     * 교환 신청 페이지
+     */
+    @GetMapping("/orders/{orderId}/exchange")
+    public String exchangeOrder(@PathVariable Long orderId, Model model) {
+        model.addAttribute("orderId", orderId);
+        return "shop/mypage/my-order-exchange";
     }
 }
 
