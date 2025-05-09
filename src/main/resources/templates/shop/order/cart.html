@@ -72,8 +72,6 @@
     </th:block>
 </head>
 <body>
-<!-- 헤더 포함 -->
-<div th:replace="fragments/header :: header"></div>
 
 <!-- 페이지 타이틀 -->
 <div class="page-title-area">
@@ -171,9 +169,6 @@
         </div>
     </section>
 </main>
-
-<!-- 푸터 포함 -->
-<div th:replace="fragments/footer :: footer"></div>
 
 <th:block layout:fragment="script">
     <script src="/js/jquery.min.js"></script>

@@ -6,16 +6,469 @@
 <head>
     <title>배송지 관리</title>
     <th:block layout:fragment="css">
-
+        <style>
+            .address-section {
+                padding: 2rem;
+                background-color: #fff;
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            }
+            .address-title {
+                margin-bottom: 1.5rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid #eee;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .address-card {
+                border-radius: 0.75rem;
+                border: 1px solid #e9ecef;
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+                position: relative;
+                transition: all 0.3s ease;
+            }
+            .address-card:hover {
+                border-color: var(--primary-color);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            }
+            .address-card.default {
+                border-color: var(--primary-color);
+                background-color: rgba(13, 110, 253, 0.05);
+            }
+            .default-badge {
+                position: absolute;
+                top: 1rem;
+                right: 1rem;
+                background-color: var(--primary-color);
+                color: white;
+                font-size: 0.75rem;
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.25rem;
+            }
+            .address-actions {
+                margin-top: 1rem;
+                display: flex;
+                gap: 0.5rem;
+            }
+            .empty-address {
+                text-align: center;
+                padding: 3rem 0;
+            }
+            .empty-address i {
+                font-size: 4rem;
+                color: var(--gray-300);
+                margin-bottom: 1.5rem;
+            }
+            .modal-body .form-group {
+                margin-bottom: 1rem;
+            }
+        </style>
     </th:block>
 </head>
 <body>
 <main layout:fragment="content">
-
+    <section class="py-5">
+        <div class="container">
+            <div class="row">
+                <!-- 마이페이지 사이드바 -->
+                <div class="col-lg-3 mb-4 mb-lg-0">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="text-center mb-4">
+                                <img th:src="${member != null && member.profileImage != null ? member.profileImage : '/placeholder.svg?height=100&width=100'}" 
+                                     alt="프로필 이미지" class="rounded-circle mb-3" width="80" height="80">
+                                <h5 class="mb-0" sec:authentication="name">사용자명</h5>
+                                <p class="text-muted small mb-0">일반회원</p>
+                            </div>
+                            
+                            <div class="list-group list-group-flush">
+                                <a th:href="@{/mypage}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-home me-2"></i> 마이페이지 홈
+                                </a>
+                                <a th:href="@{/mypage/orders}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-shopping-bag me-2"></i> 주문 내역
+                                </a>
+                                <a th:href="@{/mypage/wishlist}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-heart me-2"></i> 위시리스트
+                                </a>
+                                <a th:href="@{/mypage/reviews}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-star me-2"></i> 내 리뷰
+                                </a>
+                                <a th:href="@{/mypage/points}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-coins me-2"></i> 포인트
+                                </a>
+                                <a th:href="@{/mypage/coupons}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-ticket-alt me-2"></i> 쿠폰
+                                </a>
+                                <a th:href="@{/mypage/inquiries}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-question-circle me-2"></i> 문의 내역
+                                </a>
+                                <a th:href="@{/mypage/profile}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-user-edit me-2"></i> 회원정보 관리
+                                </a>
+                                <a th:href="@{/mypage/addresses}" class="list-group-item list-group-item-action active">
+                                    <i class="fas fa-map-marker-alt me-2"></i> 배송지 관리
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 배송지 내용 -->
+                <div class="col-lg-9">
+                    <div class="address-section">
+                        <div class="address-title">
+                            <h3>배송지 관리</h3>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                                <i class="fas fa-plus me-1"></i> 배송지 추가
+                            </button>
+                        </div>
+                        
+                        <!-- 알림 메시지 -->
+                        <div th:if="${successMessage}" class="alert alert-success">
+                            <p th:text="${successMessage}">배송지가 성공적으로 추가되었습니다.</p>
+                        </div>
+                        <div th:if="${errorMessage}" class="alert alert-danger">
+                            <p th:text="${errorMessage}">배송지 추가 중 오류가 발생했습니다.</p>
+                        </div>
+                        
+                        <!-- 배송지 목록 -->
+                        <div th:if="${#lists.isEmpty(addresses)}" class="empty-address">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <h3>등록된 배송지가 없습니다</h3>
+                            <p class="text-muted mb-4">배송지를 추가하여 더 빠르게 주문을 완료하세요.</p>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                                <i class="fas fa-plus me-1"></i> 배송지 추가
+                            </button>
+                        </div>
+                        
+                        <div th:unless="${#lists.isEmpty(addresses)}" class="address-list">
+                            <!-- 배송지 카드 -->
+                            <div th:each="address, stat : ${addresses != null ? addresses : {
+                                      {1, '홍길동', '02-123-4567', '01012345678', '서울특별시 강남구 테헤란로 123', '삼성동', '12345', '회사', true},
+                                      {2, '홍길동', '02-987-6543', '01098765432', '서울특별시 서초구 서초대로 45', '서초동', '54321', '자택', false}
+                                  }}" 
+                                 th:class="${'address-card ' + (address[7] ? 'default' : '')}" data-id="${address[0]}">
+                                
+                                <span th:if="${address[7]}" class="default-badge">기본 배송지</span>
+                                
+                                <h5 th:text="${address[6]}">배송지명</h5>
+                                <div class="recipient-info">
+                                    <p class="mb-1"><strong>수령인:</strong> <span th:text="${address[1]}">홍길동</span></p>
+                                    <p class="mb-1"><strong>연락처:</strong> <span th:text="${address[3]}">01012345678</span></p>
+                                    <p class="mb-0">
+                                        <strong>주소:</strong> 
+                                        <span th:text="${'(' + address[5] + ') ' + address[4] + ' ' + (address[4] != null ? address[4] : '')}">
+                                            (12345) 서울특별시 강남구 테헤란로 123 삼성동
+                                        </span>
+                                    </p>
+                                </div>
+                                
+                                <div class="address-actions">
+                                    <button th:unless="${address[7]}" class="btn btn-sm btn-outline-primary set-default-btn"
+                                            th:data-id="${address[0]}">기본 배송지로 설정</button>
+                                    <button class="btn btn-sm btn-outline-secondary edit-address-btn" 
+                                            th:data-id="${address[0]}" 
+                                            th:data-name="${address[6]}"
+                                            th:data-recipient="${address[1]}"
+                                            th:data-tel="${address[2]}"
+                                            th:data-mobile="${address[3]}"
+                                            th:data-address="${address[4]}"
+                                            th:data-detail="${address[4] != null ? address[4] : ''}"
+                                            th:data-zipcode="${address[5]}"
+                                            data-bs-toggle="modal" data-bs-target="#editAddressModal">
+                                        수정
+                                    </button>
+                                    <button th:unless="${address[7]}" class="btn btn-sm btn-outline-danger delete-address-btn"
+                                            th:data-id="${address[0]}">삭제</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 배송지 추가 모달 -->
+    <div class="modal fade" id="addAddressModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">배송지 추가</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addAddressForm" th:action="@{/api/member/addresses}" method="post">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="addressName" class="form-label">배송지명</label>
+                                    <input type="text" class="form-control" id="addressName" name="addressName" placeholder="예: 집, 회사" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="recipient" class="form-label">수령인</label>
+                                    <input type="text" class="form-control" id="recipient" name="recipient" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="tel" class="form-label">전화번호</label>
+                                    <input type="tel" class="form-control" id="tel" name="tel" placeholder="02-123-4567">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="mobile" class="form-label">휴대폰 번호</label>
+                                    <input type="tel" class="form-control" id="mobile" name="mobile" placeholder="010-1234-5678" required>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="zipcode" class="form-label">우편번호</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="zipcode" name="zipcode" readonly required>
+                                        <button type="button" class="btn btn-outline-secondary" id="findAddressBtn">주소 찾기</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="address" class="form-label">주소</label>
+                                    <input type="text" class="form-control" id="address" name="address" readonly required>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="addressDetail" class="form-label">상세주소</label>
+                                    <input type="text" class="form-control" id="addressDetail" name="addressDetail">
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check mt-3">
+                                    <input class="form-check-input" type="checkbox" id="setDefault" name="setDefault">
+                                    <label class="form-check-label" for="setDefault">
+                                        기본 배송지로 설정
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="saveAddressBtn">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 배송지 수정 모달 -->
+    <div class="modal fade" id="editAddressModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">배송지 수정</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editAddressForm" th:action="@{/api/member/addresses}" method="post">
+                        <input type="hidden" id="editAddressId" name="addressId">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="editAddressName" class="form-label">배송지명</label>
+                                    <input type="text" class="form-control" id="editAddressName" name="addressName" placeholder="예: 집, 회사" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="editRecipient" class="form-label">수령인</label>
+                                    <input type="text" class="form-control" id="editRecipient" name="recipient" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="editTel" class="form-label">전화번호</label>
+                                    <input type="tel" class="form-control" id="editTel" name="tel" placeholder="02-123-4567">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="editMobile" class="form-label">휴대폰 번호</label>
+                                    <input type="tel" class="form-control" id="editMobile" name="mobile" placeholder="010-1234-5678" required>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="editZipcode" class="form-label">우편번호</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="editZipcode" name="zipcode" readonly required>
+                                        <button type="button" class="btn btn-outline-secondary" id="editFindAddressBtn">주소 찾기</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="editAddress" class="form-label">주소</label>
+                                    <input type="text" class="form-control" id="editAddress" name="address" readonly required>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="editAddressDetail" class="form-label">상세주소</label>
+                                    <input type="text" class="form-control" id="editAddressDetail" name="addressDetail">
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check mt-3">
+                                    <input class="form-check-input" type="checkbox" id="editSetDefault" name="setDefault">
+                                    <label class="form-check-label" for="editSetDefault">
+                                        기본 배송지로 설정
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="updateAddressBtn">수정</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <th:block layout:fragment="script">
+    <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 다음 주소 검색 API
+            function openDaumPostcode(zipEl, addrEl) {
+                new daum.Postcode({
+                    oncomplete: function(data) {
+                        let fullAddr = data.roadAddress;
+                        let extraAddr = '';
 
+                        if(data.bname !== '' && /[동|로|가]$/g.test(data.bname)){
+                            extraAddr += data.bname;
+                        }
+                        
+                        if(data.buildingName !== '' && data.apartment === 'Y'){
+                            extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+                        }
+                        
+                        if(extraAddr !== ''){
+                            fullAddr += ' (' + extraAddr + ')';
+                        }
+
+                        zipEl.value = data.zonecode;
+                        addrEl.value = fullAddr;
+                    }
+                }).open();
+            }
+
+            // 주소 찾기 버튼 이벤트
+            document.getElementById('findAddressBtn').addEventListener('click', function() {
+                openDaumPostcode(
+                    document.getElementById('zipcode'),
+                    document.getElementById('address')
+                );
+            });
+
+            document.getElementById('editFindAddressBtn').addEventListener('click', function() {
+                openDaumPostcode(
+                    document.getElementById('editZipcode'),
+                    document.getElementById('editAddress')
+                );
+            });
+
+            // 배송지 저장 버튼 이벤트
+            document.getElementById('saveAddressBtn').addEventListener('click', function() {
+                document.getElementById('addAddressForm').submit();
+            });
+
+            // 배송지 수정 모달 데이터 설정
+            const editButtons = document.querySelectorAll('.edit-address-btn');
+            editButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const name = this.getAttribute('data-name');
+                    const recipient = this.getAttribute('data-recipient');
+                    const tel = this.getAttribute('data-tel');
+                    const mobile = this.getAttribute('data-mobile');
+                    const address = this.getAttribute('data-address');
+                    const detail = this.getAttribute('data-detail');
+                    const zipcode = this.getAttribute('data-zipcode');
+                    
+                    document.getElementById('editAddressId').value = id;
+                    document.getElementById('editAddressName').value = name;
+                    document.getElementById('editRecipient').value = recipient;
+                    document.getElementById('editTel').value = tel;
+                    document.getElementById('editMobile').value = mobile;
+                    document.getElementById('editAddress').value = address;
+                    document.getElementById('editAddressDetail').value = detail;
+                    document.getElementById('editZipcode').value = zipcode;
+                });
+            });
+
+            // 배송지 수정 버튼 이벤트
+            document.getElementById('updateAddressBtn').addEventListener('click', function() {
+                document.getElementById('editAddressForm').submit();
+            });
+
+            // 기본 배송지 설정 버튼 이벤트
+            const setDefaultButtons = document.querySelectorAll('.set-default-btn');
+            setDefaultButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    
+                    // AJAX 요청 또는 폼 제출
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/api/member/addresses/' + id + '/default';
+                    
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_csrf';
+                    csrfInput.value = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                    form.appendChild(csrfInput);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                });
+            });
+
+            // 배송지 삭제 버튼 이벤트
+            const deleteButtons = document.querySelectorAll('.delete-address-btn');
+            deleteButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    if(confirm('정말 이 배송지를 삭제하시겠습니까?')) {
+                        const id = this.getAttribute('data-id');
+                        
+                        // AJAX 요청 또는 폼 제출
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '/api/member/addresses/' + id + '/delete';
+                        
+                        const csrfInput = document.createElement('input');
+                        csrfInput.type = 'hidden';
+                        csrfInput.name = '_csrf';
+                        csrfInput.value = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                        form.appendChild(csrfInput);
+                        
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
 </th:block>
 </body>
 </html>

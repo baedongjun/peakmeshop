@@ -4,18 +4,437 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/main-layout}">
 <head>
-    <title>쿠폰 관리</title>
+    <title>내 쿠폰</title>
     <th:block layout:fragment="css">
-
+        <style>
+            .coupon-section {
+                padding: 2rem;
+                background-color: #fff;
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            }
+            .coupon-title {
+                margin-bottom: 1.5rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid #eee;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .coupon-card {
+                position: relative;
+                height: 150px;
+                border-radius: 0.75rem;
+                margin-bottom: 1.5rem;
+                overflow: hidden;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: stretch;
+            }
+            .coupon-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            }
+            .coupon-left {
+                width: 35%;
+                height: 100%;
+                background-color: var(--primary-color);
+                color: white;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                padding: 1rem;
+                position: relative;
+            }
+            .coupon-left::before,
+            .coupon-left::after {
+                content: '';
+                position: absolute;
+                width: 20px;
+                height: 20px;
+                background-color: white;
+                border-radius: 50%;
+                right: -10px;
+            }
+            .coupon-left::before {
+                top: -10px;
+            }
+            .coupon-left::after {
+                bottom: -10px;
+            }
+            .coupon-amount {
+                font-size: 1.8rem;
+                font-weight: 700;
+            }
+            .coupon-type {
+                font-size: 0.9rem;
+                margin-top: 0.25rem;
+            }
+            .coupon-right {
+                width: 65%;
+                padding: 1rem 1.5rem;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            .coupon-name {
+                font-weight: 600;
+                font-size: 1.1rem;
+                margin-bottom: 0.5rem;
+            }
+            .coupon-info {
+                font-size: 0.85rem;
+                color: var(--gray-600);
+                margin-bottom: 0.25rem;
+            }
+            .coupon-validity {
+                font-size: 0.85rem;
+                color: var(--gray-500);
+                margin-top: 0.5rem;
+            }
+            .coupon-use-btn {
+                position: absolute;
+                bottom: 1rem;
+                right: 1rem;
+            }
+            .expired {
+                filter: grayscale(1);
+                opacity: 0.7;
+            }
+            .expired::before {
+                content: '만료됨';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(-45deg);
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: var(--danger-color);
+                z-index: 1;
+                background-color: rgba(255, 255, 255, 0.8);
+                padding: 0.25rem 1rem;
+                border-radius: 0.25rem;
+            }
+            .empty-coupons {
+                text-align: center;
+                padding: 3rem 0;
+            }
+            .empty-coupons i {
+                font-size: 4rem;
+                color: var(--gray-300);
+                margin-bottom: 1.5rem;
+            }
+            .tab-buttons {
+                display: flex;
+                gap: 1rem;
+                margin-bottom: 2rem;
+            }
+            .tab-btn {
+                padding: 0.5rem 1.5rem;
+                border-radius: 0.5rem;
+                background-color: transparent;
+                border: 1px solid var(--gray-300);
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            .tab-btn.active {
+                background-color: var(--primary-color);
+                color: white;
+                border-color: var(--primary-color);
+            }
+            .filter-form {
+                display: flex;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+            }
+            .filter-form select {
+                min-width: 150px;
+            }
+        </style>
     </th:block>
 </head>
 <body>
 <main layout:fragment="content">
-
+    <section class="py-5">
+        <div class="container">
+            <div class="row">
+                <!-- 마이페이지 사이드바 -->
+                <div class="col-lg-3 mb-4 mb-lg-0">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="text-center mb-4">
+                                <img th:src="${member != null && member.profileImage != null ? member.profileImage : '/placeholder.svg?height=100&width=100'}" 
+                                     alt="프로필 이미지" class="rounded-circle mb-3" width="80" height="80">
+                                <h5 class="mb-0" sec:authentication="name">사용자명</h5>
+                                <p class="text-muted small mb-0">일반회원</p>
+                            </div>
+                            
+                            <div class="list-group list-group-flush">
+                                <a th:href="@{/mypage}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-home me-2"></i> 마이페이지 홈
+                                </a>
+                                <a th:href="@{/mypage/orders}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-shopping-bag me-2"></i> 주문 내역
+                                </a>
+                                <a th:href="@{/mypage/wishlist}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-heart me-2"></i> 위시리스트
+                                </a>
+                                <a th:href="@{/mypage/reviews}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-star me-2"></i> 내 리뷰
+                                </a>
+                                <a th:href="@{/mypage/points}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-coins me-2"></i> 포인트
+                                </a>
+                                <a th:href="@{/mypage/coupons}" class="list-group-item list-group-item-action active">
+                                    <i class="fas fa-ticket-alt me-2"></i> 쿠폰
+                                </a>
+                                <a th:href="@{/mypage/inquiries}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-question-circle me-2"></i> 문의 내역
+                                </a>
+                                <a th:href="@{/mypage/profile}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-user-edit me-2"></i> 회원정보 관리
+                                </a>
+                                <a th:href="@{/mypage/addresses}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-map-marker-alt me-2"></i> 배송지 관리
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 쿠폰 내용 -->
+                <div class="col-lg-9">
+                    <div class="coupon-section">
+                        <div class="coupon-title">
+                            <h3>내 쿠폰</h3>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registerCouponModal">
+                                <i class="fas fa-plus me-1"></i> 쿠폰 등록
+                            </button>
+                        </div>
+                        
+                        <!-- 알림 메시지 -->
+                        <div th:if="${successMessage}" class="alert alert-success">
+                            <p th:text="${successMessage}">쿠폰이 성공적으로 등록되었습니다.</p>
+                        </div>
+                        <div th:if="${errorMessage}" class="alert alert-danger">
+                            <p th:text="${errorMessage}">쿠폰 등록 중 오류가 발생했습니다.</p>
+                        </div>
+                        
+                        <!-- 쿠폰 탭 -->
+                        <div class="tab-buttons">
+                            <button type="button" class="tab-btn active" data-tab="available">사용 가능한 쿠폰</button>
+                            <button type="button" class="tab-btn" data-tab="used">사용한 쿠폰</button>
+                            <button type="button" class="tab-btn" data-tab="expired">만료된 쿠폰</button>
+                        </div>
+                        
+                        <!-- 필터링 -->
+                        <div class="filter-form">
+                            <select id="couponType" class="form-select">
+                                <option value="all">모든 쿠폰</option>
+                                <option value="product">상품 쿠폰</option>
+                                <option value="category">카테고리 쿠폰</option>
+                                <option value="shipping">배송비 쿠폰</option>
+                            </select>
+                            <select id="discountType" class="form-select">
+                                <option value="all">모든 할인 유형</option>
+                                <option value="percent">비율 할인</option>
+                                <option value="fixed">정액 할인</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 빈 쿠폰 리스트 -->
+                        <div th:if="${#lists.isEmpty(coupons)}" class="empty-coupons">
+                            <i class="fas fa-ticket-alt"></i>
+                            <h3>보유한 쿠폰이 없습니다</h3>
+                            <p class="text-muted mb-4">쿠폰을 등록하거나 이벤트에 참여해 쿠폰을 받아보세요!</p>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registerCouponModal">
+                                <i class="fas fa-plus me-1"></i> 쿠폰 등록
+                            </button>
+                        </div>
+                        
+                        <!-- 쿠폰 리스트 -->
+                        <div th:unless="${#lists.isEmpty(coupons)}" class="coupon-list-container">
+                            <!-- 사용 가능한 쿠폰 탭 -->
+                            <div id="available" class="coupon-tab active">
+                                <div th:if="${#lists.isEmpty(availableCoupons)}" class="text-center my-4">
+                                    <p>사용 가능한 쿠폰이 없습니다.</p>
+                                </div>
+                                
+                                <!-- 사용 가능한 쿠폰 목록 (예시 데이터) -->
+                                <div th:each="coupon, stat : ${availableCoupons != null ? availableCoupons : {
+                                        {1, '신규 회원 할인', '10% 할인', 'percent', 10, 'all', 50000, '2023-12-31', 'AVAILABLE', 'general'},
+                                        {2, '여름 세일 쿠폰', '5,000원 할인', 'fixed', 5000, 'clothing', 30000, '2023-12-15', 'AVAILABLE', 'category'},
+                                        {3, '생일 축하 쿠폰', '15% 할인', 'percent', 15, 'all', 10000, '2023-12-20', 'AVAILABLE', 'product'}
+                                    }}" class="coupon-card" th:data-type="${coupon[9]}" th:data-discount-type="${coupon[3]}">
+                                    <div class="coupon-left">
+                                        <div class="coupon-amount" th:text="${coupon[3] == 'percent' ? coupon[4] + '%' : '₩' + #numbers.formatInteger(coupon[4], 0, 'COMMA')}">10%</div>
+                                        <div class="coupon-type" th:text="${coupon[2]}">10% 할인</div>
+                                    </div>
+                                    <div class="coupon-right">
+                                        <div class="coupon-name" th:text="${coupon[1]}">신규 회원 할인</div>
+                                        <div class="coupon-info" th:text="${'적용 범위: ' + (coupon[5] == 'all' ? '전체 상품' : coupon[5] == 'clothing' ? '의류' : '특정 상품')}">적용 범위: 전체 상품</div>
+                                        <div class="coupon-info" th:text="${'최소 주문 금액: ₩' + #numbers.formatInteger(coupon[6], 0, 'COMMA')}">최소 주문 금액: ₩50,000</div>
+                                        <div class="coupon-validity" th:text="${'유효기간: ~ ' + coupon[7]}">유효기간: ~ 2023-12-31</div>
+                                        <a th:href="@{/products}" class="btn btn-sm btn-outline-primary coupon-use-btn">쿠폰 사용하기</a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 사용한 쿠폰 탭 -->
+                            <div id="used" class="coupon-tab" style="display: none;">
+                                <div th:if="${#lists.isEmpty(usedCoupons)}" class="text-center my-4">
+                                    <p>사용한 쿠폰이 없습니다.</p>
+                                </div>
+                                
+                                <!-- 사용한 쿠폰 목록 (예시 데이터) -->
+                                <div th:each="coupon, stat : ${usedCoupons != null ? usedCoupons : {
+                                        {4, '첫 구매 할인', '20% 할인', 'percent', 20, 'all', 10000, '2023-11-30', 'USED', 'general', '2023-11-15'}
+                                    }}" class="coupon-card" th:data-type="${coupon[9]}" th:data-discount-type="${coupon[3]}">
+                                    <div class="coupon-left">
+                                        <div class="coupon-amount" th:text="${coupon[3] == 'percent' ? coupon[4] + '%' : '₩' + #numbers.formatInteger(coupon[4], 0, 'COMMA')}">20%</div>
+                                        <div class="coupon-type" th:text="${coupon[2]}">20% 할인</div>
+                                    </div>
+                                    <div class="coupon-right">
+                                        <div class="coupon-name" th:text="${coupon[1]}">첫 구매 할인</div>
+                                        <div class="coupon-info" th:text="${'적용 범위: ' + (coupon[5] == 'all' ? '전체 상품' : coupon[5] == 'clothing' ? '의류' : '특정 상품')}">적용 범위: 전체 상품</div>
+                                        <div class="coupon-info" th:text="${'최소 주문 금액: ₩' + #numbers.formatInteger(coupon[6], 0, 'COMMA')}">최소 주문 금액: ₩10,000</div>
+                                        <div class="coupon-validity" th:text="${'사용일: ' + coupon[10]}">사용일: 2023-11-15</div>
+                                        <span class="badge bg-secondary coupon-use-btn">사용 완료</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 만료된 쿠폰 탭 -->
+                            <div id="expired" class="coupon-tab" style="display: none;">
+                                <div th:if="${#lists.isEmpty(expiredCoupons)}" class="text-center my-4">
+                                    <p>만료된 쿠폰이 없습니다.</p>
+                                </div>
+                                
+                                <!-- 만료된 쿠폰 목록 (예시 데이터) -->
+                                <div th:each="coupon, stat : ${expiredCoupons != null ? expiredCoupons : {
+                                        {5, '블랙 프라이데이', '30% 할인', 'percent', 30, 'all', 20000, '2023-11-30', 'EXPIRED', 'general'}
+                                    }}" class="coupon-card expired" th:data-type="${coupon[9]}" th:data-discount-type="${coupon[3]}">
+                                    <div class="coupon-left">
+                                        <div class="coupon-amount" th:text="${coupon[3] == 'percent' ? coupon[4] + '%' : '₩' + #numbers.formatInteger(coupon[4], 0, 'COMMA')}">30%</div>
+                                        <div class="coupon-type" th:text="${coupon[2]}">30% 할인</div>
+                                    </div>
+                                    <div class="coupon-right">
+                                        <div class="coupon-name" th:text="${coupon[1]}">블랙 프라이데이</div>
+                                        <div class="coupon-info" th:text="${'적용 범위: ' + (coupon[5] == 'all' ? '전체 상품' : coupon[5] == 'clothing' ? '의류' : '특정 상품')}">적용 범위: 전체 상품</div>
+                                        <div class="coupon-info" th:text="${'최소 주문 금액: ₩' + #numbers.formatInteger(coupon[6], 0, 'COMMA')}">최소 주문 금액: ₩20,000</div>
+                                        <div class="coupon-validity" th:text="${'만료일: ' + coupon[7]}">만료일: 2023-11-30</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 페이지네이션 -->
+                        <nav th:if="${totalPages != null && totalPages > 1}" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                <li th:class="${'page-item' + (currentPage == 1 ? ' disabled' : '')}">
+                                    <a class="page-link" th:href="@{/mypage/coupons(page=${currentPage - 1})}">이전</a>
+                                </li>
+                                <li th:each="pageNum : ${#numbers.sequence(1, totalPages)}" 
+                                    th:class="${'page-item' + (pageNum == currentPage ? ' active' : '')}">
+                                    <a class="page-link" th:href="@{/mypage/coupons(page=${pageNum})}" th:text="${pageNum}">1</a>
+                                </li>
+                                <li th:class="${'page-item' + (currentPage == totalPages ? ' disabled' : '')}">
+                                    <a class="page-link" th:href="@{/mypage/coupons(page=${currentPage + 1})}">다음</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 쿠폰 등록 모달 -->
+    <div class="modal fade" id="registerCouponModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">쿠폰 등록</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerCouponForm" th:action="@{/api/member/coupons/register}" method="post">
+                        <div class="mb-3">
+                            <label for="couponCode" class="form-label">쿠폰 코드</label>
+                            <input type="text" class="form-control" id="couponCode" name="couponCode" required placeholder="쿠폰 코드를 입력하세요">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="registerCouponBtn">등록하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <th:block layout:fragment="script">
-
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 탭 기능
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabs = document.querySelectorAll('.coupon-tab');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // 탭 버튼 활성화
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 탭 콘텐츠 활성화
+                    const tabId = this.getAttribute('data-tab');
+                    tabs.forEach(tab => {
+                        tab.style.display = 'none';
+                        if (tab.id === tabId) {
+                            tab.style.display = 'block';
+                        }
+                    });
+                    
+                    // 필터 초기화
+                    document.getElementById('couponType').value = 'all';
+                    document.getElementById('discountType').value = 'all';
+                });
+            });
+            
+            // 필터링 기능
+            function filterCoupons() {
+                const couponType = document.getElementById('couponType').value;
+                const discountType = document.getElementById('discountType').value;
+                const activeCoupons = document.querySelector('.coupon-tab.active').querySelectorAll('.coupon-card');
+                
+                activeCoupons.forEach(coupon => {
+                    const type = coupon.getAttribute('data-type');
+                    const dType = coupon.getAttribute('data-discount-type');
+                    
+                    let typeMatch = couponType === 'all' || type === couponType;
+                    let discountMatch = discountType === 'all' || dType === discountType;
+                    
+                    if (typeMatch && discountMatch) {
+                        coupon.style.display = 'flex';
+                    } else {
+                        coupon.style.display = 'none';
+                    }
+                });
+            }
+            
+            // 필터 변경 이벤트
+            document.getElementById('couponType').addEventListener('change', filterCoupons);
+            document.getElementById('discountType').addEventListener('change', filterCoupons);
+            
+            // 쿠폰 등록 버튼 이벤트
+            document.getElementById('registerCouponBtn').addEventListener('click', function() {
+                document.getElementById('registerCouponForm').submit();
+            });
+        });
+    </script>
 </th:block>
 </body>
 </html>

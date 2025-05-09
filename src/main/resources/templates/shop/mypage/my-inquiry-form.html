@@ -4,18 +4,380 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/main-layout}">
 <head>
-    <title>문의하기</title>
+    <title>1:1 문의 작성</title>
     <th:block layout:fragment="css">
-
+        <style>
+            .inquiry-card {
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+                border: none;
+                margin-bottom: 1.5rem;
+                overflow: hidden;
+            }
+            .inquiry-header {
+                background-color: var(--gray-100);
+                padding: 1rem 1.5rem;
+                border-bottom: 1px solid var(--gray-200);
+            }
+            .inquiry-body {
+                padding: 1.5rem;
+            }
+            .required-mark {
+                color: var(--danger-color);
+                margin-left: 0.25rem;
+            }
+            .form-label {
+                font-weight: 500;
+            }
+            .ck-editor__editable {
+                min-height: 250px;
+            }
+            .help-text {
+                font-size: 0.85rem;
+                color: var(--gray-600);
+            }
+        </style>
     </th:block>
 </head>
 <body>
 <main layout:fragment="content">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>1:1 문의 작성</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a th:href="@{/}">홈</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/mypage}">마이페이지</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/mypage/inquiries}">1:1 문의</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">문의 작성</li>
+                </ol>
+            </nav>
+        </div>
 
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- 문의 작성 폼 -->
+                <div class="inquiry-card">
+                    <div class="inquiry-header">
+                        <h5 class="mb-0">문의 작성</h5>
+                    </div>
+                    <div class="inquiry-body">
+                        <form id="inquiryForm" th:action="@{/api/inquiries/new}" method="post" enctype="multipart/form-data">
+                            <!-- 문의 유형 선택 -->
+                            <div class="mb-4">
+                                <label for="inquiryType" class="form-label">문의 유형<span class="required-mark">*</span></label>
+                                <select class="form-select" id="inquiryType" name="inquiryType" required>
+                                    <option value="">문의 유형을 선택해주세요</option>
+                                    <option value="PRODUCT">상품 문의</option>
+                                    <option value="ORDER">주문/결제 문의</option>
+                                    <option value="DELIVERY">배송 문의</option>
+                                    <option value="CANCEL">취소/환불 문의</option>
+                                    <option value="EXCHANGE">교환/반품 문의</option>
+                                    <option value="MEMBER">회원 정보 문의</option>
+                                    <option value="SYSTEM">시스템 오류 문의</option>
+                                    <option value="OTHER">기타 문의</option>
+                                </select>
+                            </div>
+                            
+                            <!-- 주문 선택 (선택사항) -->
+                            <div class="mb-4" id="orderSelectDiv">
+                                <label for="orderId" class="form-label">관련 주문 (선택사항)</label>
+                                <select class="form-select" id="orderId" name="orderId">
+                                    <option value="">선택하지 않음</option>
+                                    <option value="12345678">주문번호: #12345678 (2023-05-12)</option>
+                                    <option value="12345677">주문번호: #12345677 (2023-04-25)</option>
+                                    <option value="12345676">주문번호: #12345676 (2023-03-15)</option>
+                                </select>
+                                <small class="help-text">주문 관련 문의인 경우 해당 주문을 선택해주세요.</small>
+                            </div>
+                            
+                            <!-- 제목 입력 -->
+                            <div class="mb-4">
+                                <label for="inquiryTitle" class="form-label">제목<span class="required-mark">*</span></label>
+                                <input type="text" class="form-control" id="inquiryTitle" name="inquiryTitle" placeholder="문의 제목을 입력해주세요" required>
+                            </div>
+                            
+                            <!-- 내용 입력 -->
+                            <div class="mb-4">
+                                <label for="inquiryContent" class="form-label">내용<span class="required-mark">*</span></label>
+                                <textarea class="form-control" id="inquiryContent" name="inquiryContent" rows="8" placeholder="문의 내용을 자세히 입력해주세요" required></textarea>
+                                <small class="help-text d-block mt-2">
+                                    * 문의 내용에 개인정보(주민번호, 카드번호 등)가 포함되지 않도록 주의해주세요.<br>
+                                    * 욕설, 비방, 광고 등 부적절한 내용이 포함된 경우 통보 없이 삭제될 수 있습니다.
+                                </small>
+                            </div>
+                            
+                            <!-- 이미지 첨부 -->
+                            <div class="mb-4">
+                                <label for="inquiryImageFile" class="form-label">이미지 첨부 (선택사항)</label>
+                                <input type="file" class="form-control" id="inquiryImageFile" name="inquiryImageFile" accept="image/*" multiple>
+                                <small class="help-text">최대 3장까지 첨부 가능합니다. (파일당 5MB 이하)</small>
+                            </div>
+                            
+                            <!-- 답변 알림 설정 -->
+                            <div class="mb-4">
+                                <label class="form-label">답변 알림 설정</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="EMAIL" id="notifyEmail" name="notifyMethods" checked>
+                                    <label class="form-check-label" for="notifyEmail">
+                                        이메일로 답변 알림 받기
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="SMS" id="notifySMS" name="notifyMethods" checked>
+                                    <label class="form-check-label" for="notifySMS">
+                                        SMS로 답변 알림 받기
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- 비밀글 설정 -->
+                            <div class="mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="true" id="isPrivate" name="isPrivate">
+                                    <label class="form-check-label" for="isPrivate">
+                                        비밀글로 작성하기
+                                    </label>
+                                    <small class="help-text d-block mt-1">비밀글로 작성 시 관리자와 작성자만 확인 가능합니다.</small>
+                                </div>
+                            </div>
+                            
+                            <!-- 개인정보 수집 동의 -->
+                            <div class="mb-4">
+                                <div class="card p-3 bg-light">
+                                    <h6 class="card-title">개인정보 수집 및 이용 동의<span class="required-mark">*</span></h6>
+                                    <div class="card-text small">
+                                        <p>문의 접수 및 처리를 위해 다음과 같이 개인정보를 수집 및 이용합니다.</p>
+                                        <ul>
+                                            <li>수집항목: 이름, 이메일, 연락처</li>
+                                            <li>수집목적: 문의 접수 및 답변, 처리결과 안내</li>
+                                            <li>보유기간: 문의 처리 완료 후 3년</li>
+                                        </ul>
+                                        <p class="mb-0">동의를 거부할 권리가 있으며, 동의 거부 시 문의 접수가 제한됩니다.</p>
+                                    </div>
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" id="agreePrivacy" required>
+                                        <label class="form-check-label" for="agreePrivacy">
+                                            개인정보 수집 및 이용에 동의합니다.
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 버튼 -->
+                            <div class="d-flex justify-content-between">
+                                <a th:href="@{/mypage/inquiries}" class="btn btn-outline-secondary">취소</a>
+                                <button type="submit" class="btn btn-primary">문의 등록하기</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <!-- 문의 안내사항 -->
+                <div class="inquiry-card">
+                    <div class="inquiry-header">
+                        <h5 class="mb-0">문의 안내사항</h5>
+                    </div>
+                    <div class="inquiry-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-3">
+                                <i class="fas fa-info-circle text-primary me-2"></i>
+                                <span>1:1 문의는 24시간 접수 가능하며, 접수된 문의는 운영시간 내에 순차적으로 답변해드립니다.</span>
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-clock text-primary me-2"></i>
+                                <span>문의 답변은 평일 기준 1-2일 이내 처리되며, 복잡한 사항은 추가 시간이 소요될 수 있습니다.</span>
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                <span>주문 취소/교환/반품 문의는 마이페이지 > 주문내역에서 직접 신청하시면 더 빠르게 처리됩니다.</span>
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-ban text-danger me-2"></i>
+                                <span>욕설, 비방, 광고 등 부적절한 내용이 포함된 문의는 통보 없이 삭제될 수 있습니다.</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-lock text-secondary me-2"></i>
+                                <span>개인정보(주민번호, 카드번호 등)가 포함되지 않도록 주의해주세요.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- 자주 묻는 질문 -->
+                <div class="inquiry-card">
+                    <div class="inquiry-header">
+                        <h5 class="mb-0">자주 묻는 질문</h5>
+                    </div>
+                    <div class="inquiry-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item px-0">
+                                <a href="#" class="text-decoration-none">
+                                    <i class="fas fa-question-circle me-2 text-primary"></i>
+                                    주문 취소는 어떻게 하나요?
+                                </a>
+                            </li>
+                            <li class="list-group-item px-0">
+                                <a href="#" class="text-decoration-none">
+                                    <i class="fas fa-question-circle me-2 text-primary"></i>
+                                    배송 조회는 어디서 확인하나요?
+                                </a>
+                            </li>
+                            <li class="list-group-item px-0">
+                                <a href="#" class="text-decoration-none">
+                                    <i class="fas fa-question-circle me-2 text-primary"></i>
+                                    교환/반품 신청 방법이 궁금해요
+                                </a>
+                            </li>
+                            <li class="list-group-item px-0">
+                                <a href="#" class="text-decoration-none">
+                                    <i class="fas fa-question-circle me-2 text-primary"></i>
+                                    적립금은 어떻게 사용하나요?
+                                </a>
+                            </li>
+                            <li class="list-group-item px-0 border-bottom-0">
+                                <a href="#" class="text-decoration-none">
+                                    <i class="fas fa-question-circle me-2 text-primary"></i>
+                                    회원정보 변경은 어디서 하나요?
+                                </a>
+                            </li>
+                        </ul>
+                        <div class="text-center mt-3">
+                            <a href="#" class="btn btn-sm btn-outline-primary">FAQ 더보기</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 고객센터 -->
+                <div class="inquiry-card">
+                    <div class="inquiry-header">
+                        <h5 class="mb-0">고객센터</h5>
+                    </div>
+                    <div class="inquiry-body">
+                        <p><i class="fas fa-phone me-2"></i> 02-123-4567</p>
+                        <p><i class="fas fa-envelope me-2"></i> support@peakmeshop.com</p>
+                        <p class="mb-0"><i class="fas fa-clock me-2"></i> 평일 09:00 - 18:00 (주말/공휴일 휴무)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <th:block layout:fragment="script">
-
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 문의 유형에 따른 주문 선택 필드 표시/숨김
+            const inquiryTypeSelect = document.getElementById('inquiryType');
+            const orderSelectDiv = document.getElementById('orderSelectDiv');
+            const orderIdSelect = document.getElementById('orderId');
+            
+            inquiryTypeSelect.addEventListener('change', function() {
+                // 주문 관련 문의일 경우 주문 선택 필드 표시
+                const orderRelatedTypes = ['ORDER', 'DELIVERY', 'CANCEL', 'EXCHANGE'];
+                if (orderRelatedTypes.includes(this.value)) {
+                    orderSelectDiv.style.display = 'block';
+                    if (orderRelatedTypes.includes(this.value) && this.value !== 'OTHER') {
+                        orderIdSelect.setAttribute('required', 'required');
+                    }
+                } else {
+                    orderSelectDiv.style.display = 'none';
+                    orderIdSelect.removeAttribute('required');
+                }
+            });
+            
+            // 폼 제출 전 유효성 검사
+            const inquiryForm = document.getElementById('inquiryForm');
+            
+            inquiryForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+                // 필수 필드 검사
+                if (inquiryTypeSelect.value === '') {
+                    alert('문의 유형을 선택해주세요.');
+                    return;
+                }
+                
+                const inquiryTitle = document.getElementById('inquiryTitle').value.trim();
+                if (inquiryTitle === '') {
+                    alert('문의 제목을 입력해주세요.');
+                    return;
+                }
+                
+                const inquiryContent = document.getElementById('inquiryContent').value.trim();
+                if (inquiryContent === '') {
+                    alert('문의 내용을 입력해주세요.');
+                    return;
+                }
+                
+                // 개인정보 수집 동의 확인
+                if (!document.getElementById('agreePrivacy').checked) {
+                    alert('개인정보 수집 및 이용에 동의해주세요.');
+                    return;
+                }
+                
+                // 주문 관련 문의에서 주문 선택 확인
+                const orderRelatedTypes = ['ORDER', 'DELIVERY', 'CANCEL', 'EXCHANGE'];
+                if (orderRelatedTypes.includes(inquiryTypeSelect.value) && 
+                    orderIdSelect.hasAttribute('required') && 
+                    orderIdSelect.value === '') {
+                    alert('관련 주문을 선택해주세요.');
+                    return;
+                }
+                
+                // 이미지 파일 크기 및 개수 확인
+                const imageFiles = document.getElementById('inquiryImageFile').files;
+                if (imageFiles.length > 3) {
+                    alert('이미지는 최대 3개까지 첨부 가능합니다.');
+                    return;
+                }
+                
+                for (let i = 0; i < imageFiles.length; i++) {
+                    if (imageFiles[i].size > 5 * 1024 * 1024) { // 5MB
+                        alert('이미지 파일 크기는 5MB 이하만 가능합니다.');
+                        return;
+                    }
+                }
+                
+                // 알림 방법 확인
+                const notifyMethods = document.querySelectorAll('input[name="notifyMethods"]:checked');
+                if (notifyMethods.length === 0) {
+                    alert('최소 하나 이상의 알림 방법을 선택해주세요.');
+                    return;
+                }
+                
+                // FormData 객체 생성
+                const formData = new FormData(inquiryForm);
+                
+                // 문의 등록 확인
+                if (confirm('문의를 등록하시겠습니까?')) {
+                    // 실제 제출 진행
+                    fetch(inquiryForm.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.getAttribute('content')
+                        },
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('문의가 등록되었습니다.');
+                            window.location.href = '/mypage/inquiries';
+                        } else {
+                            alert('문의 등록 중 오류가 발생했습니다: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('문의 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+                    });
+                }
+            });
+        });
+    </script>
 </th:block>
 </body>
 </html>

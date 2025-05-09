@@ -4,18 +4,370 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/main-layout}">
 <head>
-    <title>문의내역</title>
+    <title>문의 내역</title>
     <th:block layout:fragment="css">
-
+        <style>
+            .inquiry-section {
+                padding: 2rem;
+                background-color: #fff;
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            }
+            .inquiry-title {
+                margin-bottom: 1.5rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid #eee;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .inquiry-table th {
+                background-color: var(--gray-100);
+                font-weight: 600;
+            }
+            .inquiry-status {
+                display: inline-block;
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.25rem;
+                font-size: 0.8rem;
+                font-weight: 600;
+            }
+            .status-pending {
+                background-color: var(--warning-color-light);
+                color: var(--warning-color-dark);
+            }
+            .status-answered {
+                background-color: var(--success-color-light);
+                color: var(--success-color-dark);
+            }
+            .status-closed {
+                background-color: var(--gray-200);
+                color: var(--gray-700);
+            }
+            .inquiry-type {
+                display: inline-block;
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.25rem;
+                font-size: 0.8rem;
+                background-color: var(--info-color-light);
+                color: var(--info-color-dark);
+            }
+            .empty-inquiries {
+                text-align: center;
+                padding: 3rem 0;
+            }
+            .empty-inquiries i {
+                font-size: 4rem;
+                color: var(--gray-300);
+                margin-bottom: 1.5rem;
+            }
+            .inquiry-detail {
+                background-color: var(--gray-50);
+                border-radius: 0.5rem;
+                padding: 1.5rem;
+                margin-top: 1rem;
+                margin-bottom: 1rem;
+            }
+            .inquiry-content {
+                white-space: pre-line;
+                margin-bottom: 1rem;
+            }
+            .answer-box {
+                background-color: white;
+                border-radius: 0.5rem;
+                padding: 1.5rem;
+                margin-top: 1rem;
+                border-left: 4px solid var(--success-color);
+            }
+            .inquiry-images {
+                display: flex;
+                gap: 0.5rem;
+                margin-top: 1rem;
+            }
+            .inquiry-image {
+                width: 80px;
+                height: 80px;
+                border-radius: 0.25rem;
+                object-fit: cover;
+                cursor: pointer;
+            }
+            .modal-image {
+                max-width: 100%;
+                max-height: 80vh;
+            }
+        </style>
     </th:block>
 </head>
 <body>
 <main layout:fragment="content">
-
+    <section class="py-5">
+        <div class="container">
+            <div class="row">
+                <!-- 마이페이지 사이드바 -->
+                <div class="col-lg-3 mb-4 mb-lg-0">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="text-center mb-4">
+                                <img th:src="${member != null && member.profileImage != null ? member.profileImage : '/placeholder.svg?height=100&width=100'}" 
+                                     alt="프로필 이미지" class="rounded-circle mb-3" width="80" height="80">
+                                <h5 class="mb-0" sec:authentication="name">사용자명</h5>
+                                <p class="text-muted small mb-0">일반회원</p>
+                            </div>
+                            
+                            <div class="list-group list-group-flush">
+                                <a th:href="@{/mypage}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-home me-2"></i> 마이페이지 홈
+                                </a>
+                                <a th:href="@{/mypage/orders}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-shopping-bag me-2"></i> 주문 내역
+                                </a>
+                                <a th:href="@{/mypage/wishlist}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-heart me-2"></i> 위시리스트
+                                </a>
+                                <a th:href="@{/mypage/reviews}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-star me-2"></i> 내 리뷰
+                                </a>
+                                <a th:href="@{/mypage/points}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-coins me-2"></i> 포인트
+                                </a>
+                                <a th:href="@{/mypage/coupons}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-ticket-alt me-2"></i> 쿠폰
+                                </a>
+                                <a th:href="@{/mypage/inquiries}" class="list-group-item list-group-item-action active">
+                                    <i class="fas fa-question-circle me-2"></i> 문의 내역
+                                </a>
+                                <a th:href="@{/mypage/profile}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-user-edit me-2"></i> 회원정보 관리
+                                </a>
+                                <a th:href="@{/mypage/addresses}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-map-marker-alt me-2"></i> 배송지 관리
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 문의 내역 -->
+                <div class="col-lg-9">
+                    <div class="inquiry-section">
+                        <div class="inquiry-title">
+                            <h3>문의 내역</h3>
+                            <a th:href="@{/cs/inquiry}" class="btn btn-primary">
+                                <i class="fas fa-edit me-1"></i> 새 문의 작성
+                            </a>
+                        </div>
+                        
+                        <!-- 알림 메시지 -->
+                        <div th:if="${successMessage}" class="alert alert-success">
+                            <p th:text="${successMessage}">문의가 성공적으로 등록되었습니다.</p>
+                        </div>
+                        <div th:if="${errorMessage}" class="alert alert-danger">
+                            <p th:text="${errorMessage}">문의 등록 중 오류가 발생했습니다.</p>
+                        </div>
+                        
+                        <!-- 빈 문의 내역 -->
+                        <div th:if="${#lists.isEmpty(inquiries)}" class="empty-inquiries">
+                            <i class="fas fa-question-circle"></i>
+                            <h3>문의 내역이 없습니다</h3>
+                            <p class="text-muted mb-4">궁금한 점이 있으시면 언제든지 문의해주세요!</p>
+                            <a th:href="@{/cs/inquiry}" class="btn btn-primary">
+                                <i class="fas fa-edit me-1"></i> 새 문의 작성
+                            </a>
+                        </div>
+                        
+                        <!-- 문의 내역 테이블 -->
+                        <div th:unless="${#lists.isEmpty(inquiries)}" class="table-responsive">
+                            <table class="table inquiry-table">
+                                <thead>
+                                    <tr>
+                                        <th width="15%">유형</th>
+                                        <th width="40%">제목</th>
+                                        <th width="15%">작성일</th>
+                                        <th width="15%">상태</th>
+                                        <th width="15%">관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- 문의 내역 목록 (예시 데이터) -->
+                                    <tr th:each="inquiry, stat : ${inquiries != null ? inquiries : {
+                                              {1, '배송 문의', '주문한 상품이 아직 안 왔어요', '2023-12-15', 'ANSWERED'},
+                                              {2, '상품 문의', '제품 사이즈가 어떻게 되나요?', '2023-12-10', 'ANSWERED'},
+                                              {3, '교환/반품', '상품 교환 문의드립니다', '2023-12-05', 'PENDING'},
+                                              {4, '결제 문의', '결제 후 영수증을 못받았어요', '2023-11-30', 'CLOSED'}
+                                          }}">
+                                        <td>
+                                            <span class="inquiry-type" th:text="${inquiry[1]}">배송 문의</span>
+                                        </td>
+                                        <td>
+                                            <a href="#" class="text-decoration-none inquiry-toggle" th:data-id="${inquiry[0]}">
+                                                <span th:text="${inquiry[2]}">주문한 상품이 아직 안 왔어요</span>
+                                            </a>
+                                        </td>
+                                        <td th:text="${inquiry[3]}">2023-12-15</td>
+                                        <td>
+                                            <span th:class="${'inquiry-status ' + (inquiry[4] == 'PENDING' ? 'status-pending' : inquiry[4] == 'ANSWERED' ? 'status-answered' : 'status-closed')}"
+                                                  th:text="${inquiry[4] == 'PENDING' ? '답변 대기' : inquiry[4] == 'ANSWERED' ? '답변 완료' : '문의 종료'}">
+                                                  답변 완료
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                                    th:if="${inquiry[4] == 'PENDING'}" 
+                                                    th:onclick="'deleteInquiry(' + ${inquiry[0]} + ')'">
+                                                삭제
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <!-- 문의 상세 내용 (토글로 표시) -->
+                            <div th:each="inquiry, stat : ${inquiries != null ? inquiries : {
+                                      {1, '배송 문의', '주문한 상품이 아직 안 왔어요', '2023-12-15', 'ANSWERED'},
+                                      {2, '상품 문의', '제품 사이즈가 어떻게 되나요?', '2023-12-10', 'ANSWERED'},
+                                      {3, '교환/반품', '상품 교환 문의드립니다', '2023-12-05', 'PENDING'},
+                                      {4, '결제 문의', '결제 후 영수증을 못받았어요', '2023-11-30', 'CLOSED'}
+                                  }}" th:id="${'inquiry-detail-' + inquiry[0]}" class="inquiry-detail" style="display: none;">
+                                <h5 class="mb-3" th:text="${inquiry[2]}">주문한 상품이 아직 안 왔어요</h5>
+                                <div class="inquiry-content">
+                                    안녕하세요,<br>
+                                    <span th:if="${inquiry[0] == 1}">
+                                        12월 10일에 주문한 상품(주문번호: 20231210-12345)이 아직 도착하지 않았습니다.<br>
+                                        배송 상태를 확인해주시기 바랍니다.
+                                    </span>
+                                    <span th:if="${inquiry[0] == 2}">
+                                        프리미엄 데님 자켓의 실제 사이즈가 궁금합니다.<br>
+                                        평소 100 사이즈를 입는데 어떤 사이즈를 선택해야 할지 조언 부탁드립니다.
+                                    </span>
+                                    <span th:if="${inquiry[0] == 3}">
+                                        구매한 상품의 색상이 제가 생각했던 것과 달라서 교환을 원합니다.<br>
+                                        교환 절차를 안내해주세요.
+                                    </span>
+                                    <span th:if="${inquiry[0] == 4}">
+                                        결제는 완료되었는데 영수증을 받지 못했습니다.<br>
+                                        영수증 발급 방법을 알려주세요.
+                                    </span>
+                                </div>
+                                
+                                <!-- 첨부 이미지 (있는 경우만 표시) -->
+                                <div th:if="${inquiry[0] == 3}" class="inquiry-images">
+                                    <img src="/placeholder.svg?height=80&width=80" alt="첨부 이미지" class="inquiry-image" data-bs-toggle="modal" data-bs-target="#imageModal">
+                                    <img src="/placeholder.svg?height=80&width=80" alt="첨부 이미지" class="inquiry-image" data-bs-toggle="modal" data-bs-target="#imageModal">
+                                </div>
+                                
+                                <!-- 답변 (답변 완료인 경우만 표시) -->
+                                <div th:if="${inquiry[4] == 'ANSWERED'}" class="answer-box">
+                                    <h6 class="mb-2"><i class="fas fa-comment-dots me-2"></i>답변</h6>
+                                    <p th:if="${inquiry[0] == 1}">
+                                        안녕하세요, 고객님.<br>
+                                        불편을 드려 죄송합니다. 해당 주문은 현재 배송 중이며 내일(12/16) 도착 예정입니다.<br>
+                                        배송 지연에 대해 진심으로 사과드립니다.<br>
+                                        추가 문의사항이 있으시면 언제든지 연락 주세요.
+                                    </p>
+                                    <p th:if="${inquiry[0] == 2}">
+                                        안녕하세요, 고객님.<br>
+                                        프리미엄 데님 자켓의 경우 정사이즈로 제작되었습니다.<br>
+                                        평소 100 사이즈를 입으신다면 100 사이즈를 추천드립니다.<br>
+                                        상세 사이즈는 상품 페이지의 사이즈 가이드를 참고해주세요.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 페이지네이션 -->
+                        <nav th:if="${totalPages != null && totalPages > 1}" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                <li th:class="${'page-item' + (currentPage == 1 ? ' disabled' : '')}">
+                                    <a class="page-link" th:href="@{/mypage/inquiries(page=${currentPage - 1})}">이전</a>
+                                </li>
+                                <li th:each="pageNum : ${#numbers.sequence(1, totalPages)}" 
+                                    th:class="${'page-item' + (pageNum == currentPage ? ' active' : '')}">
+                                    <a class="page-link" th:href="@{/mypage/inquiries(page=${pageNum})}" th:text="${pageNum}">1</a>
+                                </li>
+                                <li th:class="${'page-item' + (currentPage == totalPages ? ' disabled' : '')}">
+                                    <a class="page-link" th:href="@{/mypage/inquiries(page=${currentPage + 1})}">다음</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 이미지 모달 -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">첨부 이미지</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modalImage" src="/placeholder.svg?height=400&width=600" alt="첨부 이미지" class="modal-image">
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <th:block layout:fragment="script">
-
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 문의 내용 토글
+            const inquiryToggles = document.querySelectorAll('.inquiry-toggle');
+            inquiryToggles.forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const inquiryId = this.getAttribute('data-id');
+                    const detailElement = document.getElementById('inquiry-detail-' + inquiryId);
+                    
+                    // 현재 열려있는 다른 문의 내용 닫기
+                    document.querySelectorAll('.inquiry-detail').forEach(detail => {
+                        if (detail.id !== 'inquiry-detail-' + inquiryId) {
+                            detail.style.display = 'none';
+                        }
+                    });
+                    
+                    // 토글
+                    if (detailElement.style.display === 'none') {
+                        detailElement.style.display = 'block';
+                    } else {
+                        detailElement.style.display = 'none';
+                    }
+                });
+            });
+            
+            // 이미지 모달
+            const inquiryImages = document.querySelectorAll('.inquiry-image');
+            const modalImage = document.getElementById('modalImage');
+            
+            inquiryImages.forEach(image => {
+                image.addEventListener('click', function() {
+                    modalImage.src = this.src;
+                });
+            });
+            
+            // 문의 삭제 함수
+            window.deleteInquiry = function(inquiryId) {
+                if (confirm('정말로 이 문의를 삭제하시겠습니까?')) {
+                    // AJAX 요청 또는 폼 제출
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/api/member/inquiries/' + inquiryId + '/delete';
+                    
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_csrf';
+                    csrfInput.value = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                    form.appendChild(csrfInput);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            };
+        });
+    </script>
 </th:block>
 </body>
 </html>

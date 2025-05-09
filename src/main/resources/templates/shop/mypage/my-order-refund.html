@@ -4,18 +4,431 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/main-layout}">
 <head>
-    <title>주문 환불</title>
+    <title>환불 신청</title>
     <th:block layout:fragment="css">
-
+        <style>
+            .refund-card {
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+                border: none;
+                margin-bottom: 1.5rem;
+                overflow: hidden;
+            }
+            .refund-header {
+                background-color: var(--gray-100);
+                padding: 1rem 1.5rem;
+                border-bottom: 1px solid var(--gray-200);
+            }
+            .refund-body {
+                padding: 1.5rem;
+            }
+            .order-product {
+                border-bottom: 1px solid var(--gray-200);
+                padding-bottom: 1rem;
+                margin-bottom: 1rem;
+            }
+            .order-product:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+            .order-status {
+                display: inline-block;
+                padding: 0.25rem 0.75rem;
+                border-radius: 50rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+            .status-preparing {
+                background-color: var(--warning-color);
+                color: white;
+            }
+            .status-canceled {
+                background-color: var(--danger-color);
+                color: white;
+            }
+            .product-img {
+                width: 80px;
+                height: 80px;
+                object-fit: cover;
+                border-radius: 0.5rem;
+            }
+            .refund-reason label {
+                font-weight: 500;
+                display: block;
+                margin-bottom: 0.5rem;
+            }
+            .required-mark {
+                color: var(--danger-color);
+                margin-left: 0.25rem;
+            }
+            .refund-summary dt {
+                font-weight: 500;
+                margin-bottom: 0.25rem;
+            }
+            .refund-summary dd {
+                margin-bottom: 1rem;
+            }
+        </style>
     </th:block>
 </head>
 <body>
 <main layout:fragment="content">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>환불 신청</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a th:href="@{/}">홈</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/mypage}">마이페이지</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/mypage/orders}">주문 내역</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">환불 신청</li>
+                </ol>
+            </nav>
+        </div>
 
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- 주문 정보 -->
+                <div class="refund-card">
+                    <div class="refund-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">주문번호: #<span th:text="${orderId}">12345678</span></h5>
+                            <small class="text-muted">2023-05-12 주문</small>
+                        </div>
+                        <span class="order-status status-preparing">상품 준비중</span>
+                    </div>
+                    <div class="refund-body">
+                        <h6 class="mb-3">환불 신청 상품</h6>
+                        
+                        <!-- 환불 신청 상품 목록 -->
+                        <div class="order-product d-flex">
+                            <div class="me-3">
+                                <img src="https://via.placeholder.com/150" class="product-img" alt="상품 이미지">
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">프리미엄 스포츠 티셔츠</h6>
+                                <p class="text-muted small mb-1">옵션: 블랙 / M 사이즈</p>
+                                <p class="mb-0">수량: 1개</p>
+                            </div>
+                            <div class="text-end">
+                                <p class="mb-0 fw-bold">39,000원</p>
+                            </div>
+                        </div>
+                        
+                        <div class="order-product d-flex">
+                            <div class="me-3">
+                                <img src="https://via.placeholder.com/150" class="product-img" alt="상품 이미지">
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">스포츠 양말 3세트</h6>
+                                <p class="text-muted small mb-1">옵션: 화이트</p>
+                                <p class="mb-0">수량: 1개</p>
+                            </div>
+                            <div class="text-end">
+                                <p class="mb-0 fw-bold">12,000원</p>
+                            </div>
+                        </div>
+
+                        <!-- 주문 합계 -->
+                        <div class="d-flex justify-content-between border-top mt-3 pt-3">
+                            <h6>주문 합계</h6>
+                            <h6>51,000원</h6>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 환불 정보 입력 -->
+                <div class="refund-card">
+                    <div class="refund-header">
+                        <h5 class="mb-0">환불 정보</h5>
+                    </div>
+                    <div class="refund-body">
+                        <form id="refundForm" th:action="@{/api/orders/{orderId}/refund(orderId=${orderId})}" method="post">
+                            <!-- 환불 사유 선택 -->
+                            <div class="mb-4 refund-reason">
+                                <label for="refundReason">환불 사유<span class="required-mark">*</span></label>
+                                <select class="form-select" id="refundReason" name="refundReason" required>
+                                    <option value="">환불 사유를 선택해주세요</option>
+                                    <option value="단순변심">단순변심</option>
+                                    <option value="재주문">재주문</option>
+                                    <option value="배송지연">배송지연</option>
+                                    <option value="품절">품절</option>
+                                    <option value="서비스불만족">서비스불만족</option>
+                                    <option value="기타">기타</option>
+                                </select>
+                            </div>
+                            
+                            <!-- 기타 사유 입력 -->
+                            <div class="mb-4" id="otherReasonDiv" style="display: none;">
+                                <label for="otherReason">기타 사유<span class="required-mark">*</span></label>
+                                <textarea class="form-control" id="otherReason" name="otherReason" rows="3" placeholder="환불 사유를 자세히 입력해주세요"></textarea>
+                            </div>
+                            
+                            <!-- 환불 계좌 정보 (무통장 입금인 경우) -->
+                            <div class="mb-4" id="refundAccountSection">
+                                <h6 class="mb-3">환불 계좌 정보</h6>
+                                <div class="card p-3 bg-light">
+                                    <div class="mb-3">
+                                        <label for="bankName">은행명<span class="required-mark">*</span></label>
+                                        <select class="form-select" id="bankName" name="bankName">
+                                            <option value="">선택하세요</option>
+                                            <option value="KB국민은행">KB국민은행</option>
+                                            <option value="신한은행">신한은행</option>
+                                            <option value="우리은행">우리은행</option>
+                                            <option value="하나은행">하나은행</option>
+                                            <option value="NH농협은행">NH농협은행</option>
+                                            <option value="기업은행">기업은행</option>
+                                            <option value="카카오뱅크">카카오뱅크</option>
+                                            <option value="토스뱅크">토스뱅크</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="accountNumber">계좌번호<span class="required-mark">*</span></label>
+                                        <input type="text" class="form-control" id="accountNumber" name="accountNumber" placeholder="숫자만 입력해주세요">
+                                    </div>
+                                    <div class="mb-0">
+                                        <label for="accountHolder">예금주명<span class="required-mark">*</span></label>
+                                        <input type="text" class="form-control" id="accountHolder" name="accountHolder" placeholder="예금주명을 입력해주세요">
+                                    </div>
+                                    <p class="text-muted small mt-3 mb-0">
+                                        ※ 환불 계좌는 주문자 본인 명의의 계좌만 가능합니다.<br>
+                                        ※ 카드 결제의 경우 결제 취소 후 카드사 정책에 따라 환불됩니다.
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- 추가 요청사항 -->
+                            <div class="mb-4">
+                                <label for="refundDetail">추가 요청사항</label>
+                                <textarea class="form-control" id="refundDetail" name="refundDetail" rows="3" placeholder="추가 요청사항이 있으면 입력해주세요"></textarea>
+                            </div>
+                            
+                            <!-- 환불 안내 -->
+                            <div class="alert alert-warning">
+                                <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>환불 안내</h6>
+                                <p class="mb-0">환불 신청 시 아래 사항을 확인해주세요.</p>
+                                <ul class="mb-0 mt-2">
+                                    <li>상품 준비중 단계에서만 환불이 가능합니다.</li>
+                                    <li>이미 출고된 상품은 취소가 불가능하며 반품 절차를 통해 환불 받으실 수 있습니다.</li>
+                                    <li>카드 결제의 경우 카드사 정책에 따라 환불 처리기간이 3-7일 소요될 수 있습니다.</li>
+                                    <li>무통장 입금의 경우 입력하신 계좌로 1-2영업일 내 환불됩니다.</li>
+                                    <li>할인 쿠폰 및 적립금은 환불 후 재발급/재적립됩니다.</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- 동의 체크박스 -->
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="agreeRefund" required>
+                                <label class="form-check-label" for="agreeRefund">
+                                    위 내용을 모두 확인하였으며, 환불 신청에 동의합니다.
+                                </label>
+                            </div>
+                            
+                            <!-- 버튼 -->
+                            <div class="d-flex justify-content-between">
+                                <a th:href="@{/mypage/orders/{id}(id=${orderId})}" class="btn btn-outline-secondary">취소</a>
+                                <button type="submit" class="btn btn-primary">환불 신청하기</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <!-- 환불 예상 금액 -->
+                <div class="refund-card">
+                    <div class="refund-header">
+                        <h5 class="mb-0">환불 예상 금액</h5>
+                    </div>
+                    <div class="refund-body refund-summary">
+                        <dl class="row mb-0">
+                            <dt class="col-7">상품 금액</dt>
+                            <dd class="col-5 text-end">51,000원</dd>
+                            
+                            <dt class="col-7">할인 금액</dt>
+                            <dd class="col-5 text-end">- 5,000원</dd>
+                            
+                            <dt class="col-7">배송비</dt>
+                            <dd class="col-5 text-end">3,000원</dd>
+                            
+                            <dt class="col-7">적립금 사용</dt>
+                            <dd class="col-5 text-end">- 2,000원</dd>
+                            
+                            <dt class="col-7 border-top pt-2 fw-bold">총 환불 예상액</dt>
+                            <dd class="col-5 text-end border-top pt-2 fw-bold">47,000원</dd>
+                        </dl>
+                        <p class="small text-muted mt-3 mb-0">
+                            ※ 환불 금액은 결제 수단에 따라 다르게 적용될 수 있습니다.<br>
+                            ※ 카드사 정책에 따라 환불 처리기간이 다를 수 있습니다.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- 환불 절차 안내 -->
+                <div class="refund-card">
+                    <div class="refund-header">
+                        <h5 class="mb-0">환불 절차</h5>
+                    </div>
+                    <div class="refund-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item px-0 d-flex align-items-center">
+                                <span class="badge bg-primary rounded-pill me-3">1</span>
+                                <div>
+                                    <h6 class="mb-1">환불 신청</h6>
+                                    <p class="text-muted mb-0 small">환불 사유와 정보를 입력하여 신청</p>
+                                </div>
+                            </li>
+                            <li class="list-group-item px-0 d-flex align-items-center">
+                                <span class="badge bg-primary rounded-pill me-3">2</span>
+                                <div>
+                                    <h6 class="mb-1">신청 접수 및 검토</h6>
+                                    <p class="text-muted mb-0 small">환불 신청을 검토하고 승인</p>
+                                </div>
+                            </li>
+                            <li class="list-group-item px-0 d-flex align-items-center">
+                                <span class="badge bg-primary rounded-pill me-3">3</span>
+                                <div>
+                                    <h6 class="mb-1">주문 취소 처리</h6>
+                                    <p class="text-muted mb-0 small">주문 취소 및 결제 취소 진행</p>
+                                </div>
+                            </li>
+                            <li class="list-group-item px-0 d-flex align-items-center border-bottom-0">
+                                <span class="badge bg-success rounded-pill me-3">4</span>
+                                <div>
+                                    <h6 class="mb-1">환불 완료</h6>
+                                    <p class="text-muted mb-0 small">결제 수단에 따라 환불 완료</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- 고객센터 -->
+                <div class="refund-card">
+                    <div class="refund-header">
+                        <h5 class="mb-0">고객센터</h5>
+                    </div>
+                    <div class="refund-body">
+                        <p><i class="fas fa-phone me-2"></i> 02-123-4567</p>
+                        <p><i class="fas fa-envelope me-2"></i> support@peakmeshop.com</p>
+                        <p class="mb-0"><i class="fas fa-clock me-2"></i> 평일 09:00 - 18:00 (주말/공휴일 휴무)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <th:block layout:fragment="script">
-
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 환불 사유가 '기타'일 경우 추가 입력창 표시
+            const refundReasonSelect = document.getElementById('refundReason');
+            const otherReasonDiv = document.getElementById('otherReasonDiv');
+            const otherReasonInput = document.getElementById('otherReason');
+            
+            refundReasonSelect.addEventListener('change', function() {
+                if (this.value === '기타') {
+                    otherReasonDiv.style.display = 'block';
+                    otherReasonInput.setAttribute('required', 'required');
+                } else {
+                    otherReasonDiv.style.display = 'none';
+                    otherReasonInput.removeAttribute('required');
+                }
+            });
+            
+            // 폼 제출 전 유효성 검사
+            const refundForm = document.getElementById('refundForm');
+            
+            refundForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+                // 환불 사유 확인
+                if (refundReasonSelect.value === '') {
+                    alert('환불 사유를 선택해주세요.');
+                    return;
+                }
+                
+                // 기타 사유 확인
+                if (refundReasonSelect.value === '기타' && otherReasonInput.value.trim() === '') {
+                    alert('기타 사유를 입력해주세요.');
+                    return;
+                }
+                
+                // 환불 계좌 정보 확인 (무통장 입금일 경우)
+                const bankName = document.getElementById('bankName').value;
+                const accountNumber = document.getElementById('accountNumber').value;
+                const accountHolder = document.getElementById('accountHolder').value;
+                
+                // 환불 계좌정보가 하나라도 입력된 경우 모두 입력되었는지 확인
+                if (bankName || accountNumber || accountHolder) {
+                    if (!bankName) {
+                        alert('은행명을 선택해주세요.');
+                        return;
+                    }
+                    if (!accountNumber) {
+                        alert('계좌번호를 입력해주세요.');
+                        return;
+                    }
+                    if (!accountHolder) {
+                        alert('예금주명을 입력해주세요.');
+                        return;
+                    }
+                }
+                
+                // 동의 여부 확인
+                if (!document.getElementById('agreeRefund').checked) {
+                    alert('환불 신청 동의사항에 체크해주세요.');
+                    return;
+                }
+                
+                // 환불 신청 정보 수집
+                const refundData = {
+                    orderId: /*[[${orderId}]]*/ '12345678',
+                    reason: refundReasonSelect.value === '기타' ? otherReasonInput.value : refundReasonSelect.value,
+                    detail: document.getElementById('refundDetail').value,
+                    bankInfo: {}
+                };
+                
+                // 환불 계좌 정보가 있는 경우 추가
+                if (bankName && accountNumber && accountHolder) {
+                    refundData.bankInfo = {
+                        bankName: bankName,
+                        accountNumber: accountNumber,
+                        accountHolder: accountHolder
+                    };
+                }
+                
+                // 환불 신청 확인
+                if (confirm('환불을 신청하시겠습니까?')) {
+                    // 실제 제출 진행
+                    fetch(refundForm.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.getAttribute('content')
+                        },
+                        body: JSON.stringify(refundData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('환불 신청이 접수되었습니다.');
+                            window.location.href = '/mypage/orders';
+                        } else {
+                            alert('환불 신청 처리 중 오류가 발생했습니다: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('환불 신청 처리 중 오류가 발생했습니다. 고객센터로 문의해주세요.');
+                    });
+                }
+            });
+        });
+    </script>
 </th:block>
 </body>
 </html>

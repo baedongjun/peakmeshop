@@ -4,18 +4,444 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/main-layout}">
 <head>
-    <title>후기 관리</title>
+    <title>내 리뷰</title>
     <th:block layout:fragment="css">
-
+        <style>
+            .review-section {
+                padding: 2rem;
+                background-color: #fff;
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            }
+            .review-title {
+                margin-bottom: 1.5rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid #eee;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .review-card {
+                border-radius: 0.75rem;
+                border: 1px solid #e9ecef;
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+                transition: all 0.3s ease;
+            }
+            .review-card:hover {
+                border-color: var(--primary-color);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            }
+            .review-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1rem;
+            }
+            .review-product {
+                display: flex;
+                align-items: center;
+                margin-bottom: 1rem;
+            }
+            .product-image {
+                width: 60px;
+                height: 60px;
+                border-radius: 0.5rem;
+                object-fit: cover;
+                margin-right: 1rem;
+                border: 1px solid #e9ecef;
+            }
+            .product-name {
+                font-weight: 600;
+                margin-bottom: 0.25rem;
+            }
+            .review-date {
+                color: var(--gray-600);
+                font-size: 0.85rem;
+            }
+            .review-rating {
+                color: var(--warning-color);
+                font-size: 1.25rem;
+                margin-bottom: 0.5rem;
+            }
+            .review-content {
+                color: var(--gray-800);
+                margin-bottom: 1rem;
+                white-space: pre-line;
+            }
+            .review-images {
+                display: flex;
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            }
+            .review-image {
+                width: 80px;
+                height: 80px;
+                border-radius: 0.25rem;
+                object-fit: cover;
+                cursor: pointer;
+            }
+            .modal-image {
+                max-width: 100%;
+                max-height: 80vh;
+            }
+            .review-actions {
+                display: flex;
+                gap: 0.5rem;
+                margin-top: 1rem;
+                justify-content: flex-end;
+            }
+            .empty-reviews {
+                text-align: center;
+                padding: 3rem 0;
+            }
+            .empty-reviews i {
+                font-size: 4rem;
+                color: var(--gray-300);
+                margin-bottom: 1.5rem;
+            }
+            .review-help {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: var(--gray-600);
+                margin-top: 0.5rem;
+            }
+            .review-help button {
+                border: none;
+                background: none;
+                color: var(--gray-600);
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                transition: color 0.3s ease;
+            }
+            .review-help button:hover {
+                color: var(--primary-color);
+            }
+            .review-help-count {
+                font-size: 0.85rem;
+                margin-left: 0.25rem;
+            }
+            .tab-buttons {
+                display: flex;
+                gap: 1rem;
+                margin-bottom: 2rem;
+            }
+            .tab-btn {
+                padding: 0.5rem 1.5rem;
+                border-radius: 0.5rem;
+                background-color: transparent;
+                border: 1px solid var(--gray-300);
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            .tab-btn.active {
+                background-color: var(--primary-color);
+                color: white;
+                border-color: var(--primary-color);
+            }
+        </style>
     </th:block>
 </head>
 <body>
 <main layout:fragment="content">
-
+    <section class="py-5">
+        <div class="container">
+            <div class="row">
+                <!-- 마이페이지 사이드바 -->
+                <div class="col-lg-3 mb-4 mb-lg-0">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="text-center mb-4">
+                                <img th:src="${member != null && member.profileImage != null ? member.profileImage : '/placeholder.svg?height=100&width=100'}" 
+                                     alt="프로필 이미지" class="rounded-circle mb-3" width="80" height="80">
+                                <h5 class="mb-0" sec:authentication="name">사용자명</h5>
+                                <p class="text-muted small mb-0">일반회원</p>
+                            </div>
+                            
+                            <div class="list-group list-group-flush">
+                                <a th:href="@{/mypage}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-home me-2"></i> 마이페이지 홈
+                                </a>
+                                <a th:href="@{/mypage/orders}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-shopping-bag me-2"></i> 주문 내역
+                                </a>
+                                <a th:href="@{/mypage/wishlist}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-heart me-2"></i> 위시리스트
+                                </a>
+                                <a th:href="@{/mypage/reviews}" class="list-group-item list-group-item-action active">
+                                    <i class="fas fa-star me-2"></i> 내 리뷰
+                                </a>
+                                <a th:href="@{/mypage/points}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-coins me-2"></i> 포인트
+                                </a>
+                                <a th:href="@{/mypage/coupons}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-ticket-alt me-2"></i> 쿠폰
+                                </a>
+                                <a th:href="@{/mypage/inquiries}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-question-circle me-2"></i> 문의 내역
+                                </a>
+                                <a th:href="@{/mypage/profile}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-user-edit me-2"></i> 회원정보 관리
+                                </a>
+                                <a th:href="@{/mypage/addresses}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-map-marker-alt me-2"></i> 배송지 관리
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 리뷰 내용 -->
+                <div class="col-lg-9">
+                    <div class="review-section">
+                        <div class="review-title">
+                            <h3>내 리뷰</h3>
+                            <a th:href="@{/mypage/orders}" class="btn btn-outline-primary">
+                                <i class="fas fa-edit me-1"></i> 리뷰 작성 가능한 상품
+                            </a>
+                        </div>
+                        
+                        <!-- 알림 메시지 -->
+                        <div th:if="${successMessage}" class="alert alert-success">
+                            <p th:text="${successMessage}">리뷰가 성공적으로 수정되었습니다.</p>
+                        </div>
+                        <div th:if="${errorMessage}" class="alert alert-danger">
+                            <p th:text="${errorMessage}">리뷰 수정 중 오류가 발생했습니다.</p>
+                        </div>
+                        
+                        <!-- 리뷰 탭 -->
+                        <div class="tab-buttons">
+                            <button type="button" class="tab-btn active" data-tab="all">전체 리뷰</button>
+                            <button type="button" class="tab-btn" data-tab="photo">포토 리뷰</button>
+                        </div>
+                        
+                        <!-- 빈 리뷰 목록 -->
+                        <div th:if="${#lists.isEmpty(reviews)}" class="empty-reviews">
+                            <i class="fas fa-star"></i>
+                            <h3>작성한 리뷰가 없습니다</h3>
+                            <p class="text-muted mb-4">구매한 상품에 대한 솔직한 리뷰를 남겨주세요!</p>
+                            <a th:href="@{/mypage/orders}" class="btn btn-primary">
+                                <i class="fas fa-edit me-1"></i> 리뷰 작성하기
+                            </a>
+                        </div>
+                        
+                        <!-- 리뷰 목록 -->
+                        <div th:unless="${#lists.isEmpty(reviews)}" id="review-list">
+                            <!-- 전체 리뷰 탭 -->
+                            <div id="all" class="review-tab">
+                                <!-- 리뷰 카드 (예시 데이터) -->
+                                <div th:each="review, stat : ${reviews != null ? reviews : {
+                                        {1, '프리미엄 데님 자켓', '/placeholder.svg?height=60&width=60', '프리미엄 데님 자켓 구매 후기입니다.', 5, '2023-12-10', true, 3, 12, 1},
+                                        {2, '슬림핏 청바지', '/placeholder.svg?height=60&width=60', '사이즈가 딱 맞고 착용감이 좋아요!\n배송도 빨라서 만족합니다.', 4, '2023-12-05', false, 2, 5, 2},
+                                        {3, '캐주얼 티셔츠', '/placeholder.svg?height=60&width=60', '색상이 사진과 약간 다르네요. 그래도 품질은 괜찮습니다.', 3, '2023-11-30', true, 1, 2, 3}
+                                    }}" class="review-card" th:data-has-photo="${review[6]}">
+                                    <div class="review-header">
+                                        <span class="review-date" th:text="${review[5]}">2023-12-10</span>
+                                        <div class="review-rating">
+                                            <i class="fas fa-star"></i>
+                                            <i class="fas fa-star" th:if="${review[4] >= 2}"></i>
+                                            <i class="fas fa-star" th:if="${review[4] >= 3}"></i>
+                                            <i class="fas fa-star" th:if="${review[4] >= 4}"></i>
+                                            <i class="fas fa-star" th:if="${review[4] >= 5}"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="review-product">
+                                        <img th:src="${review[2]}" alt="상품 이미지" class="product-image">
+                                        <div>
+                                            <h5 class="product-name" th:text="${review[1]}">프리미엄 데님 자켓</h5>
+                                            <a th:href="@{'/products/' + ${review[9]}}" class="btn btn-sm btn-link p-0">상품 보기</a>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="review-content" th:text="${review[3]}">
+                                        프리미엄 데님 자켓 구매 후기입니다.
+                                    </div>
+                                    
+                                    <!-- 이미지가 있는 경우에만 표시 -->
+                                    <div th:if="${review[6]}" class="review-images">
+                                        <img src="/placeholder.svg?height=80&width=80" alt="리뷰 이미지" class="review-image" 
+                                             data-bs-toggle="modal" data-bs-target="#imageModal">
+                                        <img th:if="${review[0] == 1}" src="/placeholder.svg?height=80&width=80" alt="리뷰 이미지" 
+                                             class="review-image" data-bs-toggle="modal" data-bs-target="#imageModal">
+                                        <img th:if="${review[0] == 1}" src="/placeholder.svg?height=80&width=80" alt="리뷰 이미지" 
+                                             class="review-image" data-bs-toggle="modal" data-bs-target="#imageModal">
+                                    </div>
+                                    
+                                    <div class="review-help">
+                                        <span>이 리뷰가 도움이 되었나요?</span>
+                                        <button type="button" class="review-help-btn" th:data-review-id="${review[0]}">
+                                            <i class="far fa-thumbs-up"></i>
+                                            <span class="review-help-count" th:text="${review[7]}">3</span>
+                                        </button>
+                                        <span class="ms-2">조회수</span>
+                                        <span class="review-help-count" th:text="${review[8]}">12</span>
+                                    </div>
+                                    
+                                    <div class="review-actions">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                th:onclick="'editReview(' + ${review[0]} + ')'">
+                                            수정
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                th:onclick="'deleteReview(' + ${review[0]} + ')'">
+                                            삭제
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 포토 리뷰 탭 -->
+                            <div id="photo" class="review-tab" style="display: none;">
+                                <!-- 포토 리뷰가 없는 경우 -->
+                                <div th:if="${#lists.isEmpty(photoReviews)}" class="text-center my-4">
+                                    <p>작성한 포토 리뷰가 없습니다.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 페이지네이션 -->
+                        <nav th:if="${totalPages != null && totalPages > 1}" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                <li th:class="${'page-item' + (currentPage == 1 ? ' disabled' : '')}">
+                                    <a class="page-link" th:href="@{/mypage/reviews(page=${currentPage - 1})}">이전</a>
+                                </li>
+                                <li th:each="pageNum : ${#numbers.sequence(1, totalPages)}" 
+                                    th:class="${'page-item' + (pageNum == currentPage ? ' active' : '')}">
+                                    <a class="page-link" th:href="@{/mypage/reviews(page=${pageNum})}" th:text="${pageNum}">1</a>
+                                </li>
+                                <li th:class="${'page-item' + (currentPage == totalPages ? ' disabled' : '')}">
+                                    <a class="page-link" th:href="@{/mypage/reviews(page=${currentPage + 1})}">다음</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 이미지 모달 -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">리뷰 이미지</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modalImage" src="/placeholder.svg?height=400&width=600" alt="리뷰 이미지" class="modal-image">
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <th:block layout:fragment="script">
-
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 탭 기능
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const reviewCards = document.querySelectorAll('.review-card');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // 탭 버튼 활성화
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // 리뷰 필터링
+                    if (tabId === 'all') {
+                        reviewCards.forEach(card => {
+                            card.style.display = 'block';
+                        });
+                    } else if (tabId === 'photo') {
+                        reviewCards.forEach(card => {
+                            if (card.getAttribute('data-has-photo') === 'true') {
+                                card.style.display = 'block';
+                            } else {
+                                card.style.display = 'none';
+                            }
+                        });
+                    }
+                });
+            });
+            
+            // 이미지 모달
+            const reviewImages = document.querySelectorAll('.review-image');
+            const modalImage = document.getElementById('modalImage');
+            
+            reviewImages.forEach(image => {
+                image.addEventListener('click', function() {
+                    modalImage.src = this.src;
+                });
+            });
+            
+            // 도움이 됐어요 버튼
+            const helpButtons = document.querySelectorAll('.review-help-btn');
+            helpButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const reviewId = this.getAttribute('data-review-id');
+                    const countElement = this.querySelector('.review-help-count');
+                    let count = parseInt(countElement.textContent);
+                    
+                    // 아이콘 변경 및 카운트 증가
+                    if (this.classList.contains('clicked')) {
+                        this.classList.remove('clicked');
+                        this.querySelector('i').className = 'far fa-thumbs-up';
+                        count--;
+                    } else {
+                        this.classList.add('clicked');
+                        this.querySelector('i').className = 'fas fa-thumbs-up';
+                        count++;
+                    }
+                    
+                    countElement.textContent = count;
+                    
+                    // AJAX 요청
+                    fetch('/api/reviews/' + reviewId + '/helpful', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').getAttribute('content')
+                        }
+                    }).catch(error => {
+                        console.error('Error:', error);
+                    });
+                });
+            });
+            
+            // 리뷰 수정 함수
+            window.editReview = function(reviewId) {
+                window.location.href = '/mypage/reviews/' + reviewId + '/edit';
+            };
+            
+            // 리뷰 삭제 함수
+            window.deleteReview = function(reviewId) {
+                if (confirm('정말로 이 리뷰를 삭제하시겠습니까?')) {
+                    // AJAX 요청 또는 폼 제출
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/api/reviews/' + reviewId + '/delete';
+                    
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_csrf';
+                    csrfInput.value = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                    form.appendChild(csrfInput);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            };
+        });
+    </script>
 </th:block>
 </body>
 </html>

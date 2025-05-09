@@ -4,18 +4,499 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/main-layout}">
 <head>
-    <title>주문 교환</title>
+    <title>교환 신청</title>
     <th:block layout:fragment="css">
-
+        <style>
+            .exchange-card {
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+                border: none;
+                margin-bottom: 1.5rem;
+                overflow: hidden;
+            }
+            .exchange-header {
+                background-color: var(--gray-100);
+                padding: 1rem 1.5rem;
+                border-bottom: 1px solid var(--gray-200);
+            }
+            .exchange-body {
+                padding: 1.5rem;
+            }
+            .order-product {
+                border-bottom: 1px solid var(--gray-200);
+                padding-bottom: 1rem;
+                margin-bottom: 1rem;
+            }
+            .order-product:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+            .order-status {
+                display: inline-block;
+                padding: 0.25rem 0.75rem;
+                border-radius: 50rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+            .status-delivered {
+                background-color: var(--success-color);
+                color: white;
+            }
+            .product-img {
+                width: 80px;
+                height: 80px;
+                object-fit: cover;
+                border-radius: 0.5rem;
+            }
+            .exchange-reason label {
+                font-weight: 500;
+                display: block;
+                margin-bottom: 0.5rem;
+            }
+            .required-mark {
+                color: var(--danger-color);
+                margin-left: 0.25rem;
+            }
+            .product-checkbox {
+                padding: 0.5rem;
+                border: 1px solid var(--gray-300);
+                border-radius: 0.5rem;
+                margin-bottom: 0.5rem;
+            }
+            .product-checkbox:hover {
+                background-color: var(--gray-100);
+            }
+        </style>
     </th:block>
 </head>
 <body>
 <main layout:fragment="content">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>교환 신청</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a th:href="@{/}">홈</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/mypage}">마이페이지</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/mypage/orders}">주문 내역</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">교환 신청</li>
+                </ol>
+            </nav>
+        </div>
 
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- 주문 정보 -->
+                <div class="exchange-card">
+                    <div class="exchange-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">주문번호: #<span th:text="${orderNumber}">12345678</span></h5>
+                            <small class="text-muted" th:text="${#temporals.format(orderDate, 'yyyy-MM-dd')} + ' 주문'">2023-05-12 주문</small>
+                        </div>
+                        <span class="badge bg-success">배송 완료</span>
+                    </div>
+                    <div class="exchange-body">
+                        <h6 class="mb-3">교환할 상품 선택</h6>
+                        
+                        <div th:if="${exchangeableItems == null || #lists.isEmpty(exchangeableItems)}" class="alert alert-warning">
+                            교환 가능한 상품이 없습니다. 교환 기간(배송완료 후 7일 이내)이 지났거나 이미 교환/반품이 진행 중인 상품은 선택할 수 없습니다.
+                        </div>
+                        
+                        <!-- 교환할 상품 선택 목록 -->
+                        <div th:unless="${exchangeableItems == null || #lists.isEmpty(exchangeableItems)}">
+                            <div class="product-checkbox" th:each="item : ${exchangeableItems}">
+                                <div class="form-check d-flex align-items-center">
+                                    <input class="form-check-input me-3" type="checkbox" th:value="${item.id}" th:id="${'product-' + item.id}" name="exchangeProducts">
+                                    <label class="form-check-label d-flex flex-grow-1 align-items-center" th:for="${'product-' + item.id}">
+                                        <div class="me-3">
+                                            <img th:src="${item.imageUrl}" src="https://via.placeholder.com/150" class="product-img" alt="상품 이미지">
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1" th:text="${item.productName}">프리미엄 스포츠 티셔츠</h6>
+                                            <p class="text-muted small mb-1" th:text="${item.optionText}">옵션: 블랙 / M 사이즈</p>
+                                            <p class="mb-0" th:text="'수량: ' + ${item.quantity} + '개'">수량: 1개</p>
+                                        </div>
+                                        <div class="text-end">
+                                            <p class="mb-0 fw-bold" th:text="${#numbers.formatInteger(item.price, 0, 'COMMA') + '원'}">39,000원</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 교환 정보 입력 -->
+                <div class="exchange-card" th:unless="${exchangeableItems == null || #lists.isEmpty(exchangeableItems)}">
+                    <div class="exchange-header">
+                        <h5 class="mb-0">교환 정보</h5>
+                    </div>
+                    <div class="exchange-body">
+                        <form id="exchangeForm" th:action="@{/api/orders/exchange}" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="orderNumber" th:value="${orderNumber}">
+                            <input type="hidden" id="selectedItems" name="itemIds">
+                            
+                            <!-- 교환 사유 선택 -->
+                            <div class="mb-4">
+                                <label for="exchangeReason" class="form-label">교환 사유<span class="required-mark">*</span></label>
+                                <select class="form-select" id="exchangeReason" name="exchangeReason" required>
+                                    <option value="">교환 사유를 선택해주세요</option>
+                                    <option value="SIZE_MISMATCH">사이즈가 맞지 않음</option>
+                                    <option value="COLOR_DIFFERENCE">색상이 다름</option>
+                                    <option value="DAMAGED">상품 하자/파손</option>
+                                    <option value="WRONG_ITEM">다른 상품 배송됨</option>
+                                    <option value="QUALITY_ISSUE">품질 문제</option>
+                                    <option value="OTHER">기타</option>
+                                </select>
+                            </div>
+                            
+                            <!-- 기타 사유 입력 -->
+                            <div class="mb-4" id="otherReasonDiv" style="display: none;">
+                                <label for="otherReason" class="form-label">기타 사유<span class="required-mark">*</span></label>
+                                <textarea class="form-control" id="otherReason" name="otherReason" rows="3" placeholder="교환 사유를 자세히 입력해주세요"></textarea>
+                            </div>
+                            
+                            <!-- 교환 상품 옵션 선택 -->
+                            <div class="mb-4" id="exchangeOptionsContainer">
+                                <label class="form-label">교환 원하는 옵션<span class="required-mark">*</span></label>
+                                <div id="optionSelectors" class="mb-3">
+                                    <!-- 옵션 선택기는 자바스크립트로 동적 생성됩니다 -->
+                                </div>
+                            </div>
+                            
+                            <!-- 상세 설명 -->
+                            <div class="mb-4">
+                                <label for="exchangeDetail" class="form-label">상세 설명</label>
+                                <textarea class="form-control" id="exchangeDetail" name="exchangeDetail" rows="3" placeholder="교환 사유에 대한 자세한 설명이나 추가 요청사항을 입력해주세요"></textarea>
+                            </div>
+                            
+                            <!-- 이미지 첨부 -->
+                            <div class="mb-4">
+                                <label for="exchangeImageFile" class="form-label">이미지 첨부 (선택사항)</label>
+                                <input type="file" class="form-control" id="exchangeImageFile" name="exchangeImageFile" accept="image/*" multiple>
+                                <small class="text-muted">상품 하자나 파손의 경우 사진을 첨부하시면 빠른 처리에 도움이 됩니다. (최대 3장, 각 5MB 이하)</small>
+                            </div>
+                            
+                            <!-- 교환 배송 정보 -->
+                            <div class="mb-4">
+                                <h6 class="mb-3">교환 배송 정보</h6>
+                                <div class="card p-3 bg-light">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="sameAsOrderAddress" name="sameAsOrderAddress" checked>
+                                        <label class="form-check-label" for="sameAsOrderAddress">
+                                            주문 시 배송지와 동일하게 사용
+                                        </label>
+                                    </div>
+                                    
+                                    <div id="newAddressForm" style="display: none;">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label for="recipientName" class="form-label">수령인 이름<span class="required-mark">*</span></label>
+                                                <input type="text" class="form-control" id="recipientName" name="recipientName">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="recipientPhone" class="form-label">연락처<span class="required-mark">*</span></label>
+                                                <input type="text" class="form-control" id="recipientPhone" name="recipientPhone" placeholder="'-' 없이 숫자만 입력">
+                                            </div>
+                                            <div class="col-md-8">
+                                                <label for="zipcode" class="form-label">우편번호<span class="required-mark">*</span></label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" id="zipcode" name="zipcode" readonly>
+                                                    <button class="btn btn-outline-secondary" type="button" id="searchZipcode">주소 찾기</button>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <label for="address1" class="form-label">주소<span class="required-mark">*</span></label>
+                                                <input type="text" class="form-control" id="address1" name="address1" readonly>
+                                            </div>
+                                            <div class="col-12">
+                                                <label for="address2" class="form-label">상세주소<span class="required-mark">*</span></label>
+                                                <input type="text" class="form-control" id="address2" name="address2">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 교환 안내 -->
+                            <div class="alert alert-warning">
+                                <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>교환 안내</h6>
+                                <p class="mb-0">교환 신청 시 아래 사항을 확인해주세요.</p>
+                                <ul class="mb-0 mt-2">
+                                    <li>상품 수령 후 7일 이내에만 교환이 가능합니다.</li>
+                                    <li>상품 하자 또는 오배송의 경우, 판매자 부담으로 교환이 진행됩니다.</li>
+                                    <li>고객 변심으로 인한 교환의 경우, 왕복 배송비 5,000원이 부과됩니다.</li>
+                                    <li>교환 상품이 품절될 경우, 교환이 불가능하며 반품으로 처리될 수 있습니다.</li>
+                                    <li>상품 사용 흔적이 있거나 포장이 훼손된 경우 교환이 제한될 수 있습니다.</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- 동의 체크박스 -->
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="agreeExchange" required>
+                                <label class="form-check-label" for="agreeExchange">
+                                    위 내용을 모두 확인하였으며, 교환 신청에 동의합니다.
+                                </label>
+                            </div>
+                            
+                            <!-- 버튼 -->
+                            <div class="d-flex justify-content-between">
+                                <a th:href="@{/mypage/orders/{id}(id=${orderId})}" class="btn btn-outline-secondary">취소</a>
+                                <button type="submit" class="btn btn-primary">교환 신청하기</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <!-- 교환 절차 안내 -->
+                <div class="exchange-card">
+                    <div class="exchange-header">
+                        <h5 class="mb-0">교환 절차</h5>
+                    </div>
+                    <div class="exchange-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item px-0 d-flex align-items-center">
+                                <span class="badge bg-primary rounded-pill me-3">1</span>
+                                <div>
+                                    <h6 class="mb-1">교환 신청</h6>
+                                    <p class="text-muted mb-0 small">교환할 상품과 사유를 선택하여 신청</p>
+                                </div>
+                            </li>
+                            <li class="list-group-item px-0 d-flex align-items-center">
+                                <span class="badge bg-primary rounded-pill me-3">2</span>
+                                <div>
+                                    <h6 class="mb-1">판매자 승인</h6>
+                                    <p class="text-muted mb-0 small">판매자가 교환 요청을 확인하고 승인</p>
+                                </div>
+                            </li>
+                            <li class="list-group-item px-0 d-flex align-items-center">
+                                <span class="badge bg-primary rounded-pill me-3">3</span>
+                                <div>
+                                    <h6 class="mb-1">상품 반송</h6>
+                                    <p class="text-muted mb-0 small">택배사를 통해 상품을 판매자에게 반송</p>
+                                </div>
+                            </li>
+                            <li class="list-group-item px-0 d-flex align-items-center">
+                                <span class="badge bg-primary rounded-pill me-3">4</span>
+                                <div>
+                                    <h6 class="mb-1">상품 검수</h6>
+                                    <p class="text-muted mb-0 small">반송된 상품의 상태를 확인</p>
+                                </div>
+                            </li>
+                            <li class="list-group-item px-0 border-bottom-0 d-flex align-items-center">
+                                <span class="badge bg-success rounded-pill me-3">5</span>
+                                <div>
+                                    <h6 class="mb-1">교환 상품 발송</h6>
+                                    <p class="text-muted mb-0 small">검수 완료 후 교환 상품 발송</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- 교환/반품 정책 -->
+                <div class="exchange-card">
+                    <div class="exchange-header">
+                        <h5 class="mb-0">교환/반품 정책</h5>
+                    </div>
+                    <div class="exchange-body">
+                        <div class="mb-3">
+                            <h6>교환/반품이 가능한 경우</h6>
+                            <ul class="mb-0">
+                                <li>상품 수령 후 7일 이내 (단, 상품이 훼손되지 않은 경우)</li>
+                                <li>상품 하자 및 오배송의 경우</li>
+                            </ul>
+                        </div>
+                        <div class="mb-3">
+                            <h6>교환/반품이 불가능한 경우</h6>
+                            <ul class="mb-0">
+                                <li>고객의 책임 있는 사유로 상품이 훼손된 경우</li>
+                                <li>포장을 개봉하여 사용 또는 설치가 완료된 경우</li>
+                                <li>시간이 경과되어 재판매가 곤란한 경우</li>
+                                <li>구성품이 누락되거나 훼손된 경우</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h6>교환/반품 배송비</h6>
+                            <ul class="mb-0">
+                                <li>고객 변심: 왕복 배송비 5,000원 고객 부담</li>
+                                <li>판매자 귀책사유: 왕복 배송비 판매자 부담</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 고객센터 -->
+                <div class="exchange-card">
+                    <div class="exchange-header">
+                        <h5 class="mb-0">고객센터</h5>
+                    </div>
+                    <div class="exchange-body">
+                        <p><i class="fas fa-phone me-2"></i> 02-123-4567</p>
+                        <p><i class="fas fa-envelope me-2"></i> support@peakmeshop.com</p>
+                        <p class="mb-0"><i class="fas fa-clock me-2"></i> 평일 09:00 - 18:00 (주말/공휴일 휴무)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <th:block layout:fragment="script">
-
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 교환 사유가 '기타'일 경우 추가 입력창 표시
+            const exchangeReasonSelect = document.getElementById('exchangeReason');
+            const otherReasonDiv = document.getElementById('otherReasonDiv');
+            const otherReasonInput = document.getElementById('otherReason');
+            
+            exchangeReasonSelect.addEventListener('change', function() {
+                if (this.value === 'OTHER') {
+                    otherReasonDiv.style.display = 'block';
+                    otherReasonInput.setAttribute('required', 'required');
+                } else {
+                    otherReasonDiv.style.display = 'none';
+                    otherReasonInput.removeAttribute('required');
+                }
+            });
+            
+            // 주소 동일 체크박스 이벤트
+            const sameAsOrderAddress = document.getElementById('sameAsOrderAddress');
+            const newAddressForm = document.getElementById('newAddressForm');
+            
+            sameAsOrderAddress.addEventListener('change', function() {
+                if (this.checked) {
+                    newAddressForm.style.display = 'none';
+                    // 새 주소 필드의 required 속성 제거
+                    document.querySelectorAll('#newAddressForm input').forEach(input => {
+                        input.removeAttribute('required');
+                    });
+                } else {
+                    newAddressForm.style.display = 'block';
+                    // 새 주소 필드에 required 속성 추가
+                    document.querySelectorAll('#newAddressForm input:not([readonly])').forEach(input => {
+                        if (input.id !== 'address2') { // 상세주소는 필수가 아닐 수 있음
+                            input.setAttribute('required', 'required');
+                        }
+                    });
+                }
+            });
+            
+            // 주소 검색 버튼 이벤트
+            document.getElementById('searchZipcode').addEventListener('click', function() {
+                // Daum 우편번호 검색 API 사용
+                new daum.Postcode({
+                    oncomplete: function(data) {
+                        document.getElementById('zipcode').value = data.zonecode;
+                        document.getElementById('address1').value = data.address;
+                        document.getElementById('address2').focus();
+                    }
+                }).open();
+            });
+            
+            // 체크박스 선택 시 옵션 선택기 업데이트
+            const productCheckboxes = document.querySelectorAll('input[name="exchangeProducts"]');
+            const optionSelectors = document.getElementById('optionSelectors');
+            const selectedItemsInput = document.getElementById('selectedItems');
+            
+            productCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateOptionSelectors);
+            });
+            
+            function updateOptionSelectors() {
+                optionSelectors.innerHTML = '';
+                const selectedItems = [];
+                
+                productCheckboxes.forEach(checkbox => {
+                    if (checkbox.checked) {
+                        selectedItems.push(checkbox.value);
+                        const productId = checkbox.value;
+                        const productName = checkbox.nextElementSibling.querySelector('h6').textContent;
+                        
+                        // 상품별 옵션 선택기 생성
+                        const optionContainer = document.createElement('div');
+                        optionContainer.className = 'card mb-3';
+                        optionContainer.innerHTML = `
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">${productName}</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">사이즈</label>
+                                        <select class="form-select" name="exchangeOptions[${productId}][size]" required>
+                                            <option value="">선택하세요</option>
+                                            <option value="S">S</option>
+                                            <option value="M">M</option>
+                                            <option value="L">L</option>
+                                            <option value="XL">XL</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">색상</label>
+                                        <select class="form-select" name="exchangeOptions[${productId}][color]" required>
+                                            <option value="">선택하세요</option>
+                                            <option value="BLACK">블랙</option>
+                                            <option value="WHITE">화이트</option>
+                                            <option value="NAVY">네이비</option>
+                                            <option value="GRAY">그레이</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-text">교환하려는 상품의 새로운 옵션을 선택해주세요.</div>
+                            </div>
+                        `;
+                        
+                        optionSelectors.appendChild(optionContainer);
+                    }
+                });
+                
+                // 선택된 상품 ID 설정
+                selectedItemsInput.value = selectedItems.join(',');
+            }
+            
+            // 폼 제출 전 유효성 검사
+            const exchangeForm = document.getElementById('exchangeForm');
+            
+            exchangeForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+                // 상품 선택 확인
+                const selectedItems = selectedItemsInput.value;
+                if (!selectedItems) {
+                    alert('교환할 상품을 선택해주세요.');
+                    return;
+                }
+                
+                // 교환 사유 확인
+                if (exchangeReasonSelect.value === '') {
+                    alert('교환 사유를 선택해주세요.');
+                    return;
+                }
+                
+                // 기타 사유 확인
+                if (exchangeReasonSelect.value === 'OTHER' && otherReasonInput.value.trim() === '') {
+                    alert('기타 사유를 입력해주세요.');
+                    return;
+                }
+                
+                // 동의 여부 확인
+                if (!document.getElementById('agreeExchange').checked) {
+                    alert('교환 신청 동의사항에 체크해주세요.');
+                    return;
+                }
+                
+                // 교환 신청 확인
+                if (confirm('선택한 상품으로 교환을 신청하시겠습니까?')) {
+                    this.submit();
+                }
+            });
+        });
+    </script>
 </th:block>
 </body>
 </html>

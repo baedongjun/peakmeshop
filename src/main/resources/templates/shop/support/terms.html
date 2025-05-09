@@ -6,16 +6,406 @@
 <head>
     <title>이용약관</title>
     <th:block layout:fragment="css">
-
+        <style>
+            .terms-card {
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+                border: none;
+                margin-bottom: 1.5rem;
+                overflow: hidden;
+            }
+            .terms-header {
+                background-color: var(--gray-100);
+                padding: 1rem 1.5rem;
+                border-bottom: 1px solid var(--gray-200);
+            }
+            .terms-body {
+                padding: 1.5rem;
+            }
+            .terms-content {
+                max-height: 500px;
+                overflow-y: auto;
+                padding-right: 1rem;
+                line-height: 1.7;
+            }
+            .terms-content h1, .terms-content h2, .terms-content h3,
+            .terms-content h4, .terms-content h5, .terms-content h6 {
+                margin-top: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            .terms-content p {
+                margin-bottom: 1rem;
+            }
+            .terms-content ul, .terms-content ol {
+                margin-bottom: 1rem;
+                padding-left: 1.5rem;
+            }
+            .terms-content li {
+                margin-bottom: 0.5rem;
+            }
+            .terms-nav .nav-link {
+                border-radius: 0;
+                padding: 1rem 1.5rem;
+                font-weight: 500;
+                border: 1px solid var(--gray-200);
+                margin-bottom: -1px;
+                transition: all 0.2s ease;
+            }
+            .terms-nav .nav-link.active {
+                background-color: var(--primary-color);
+                color: white;
+                border-color: var(--primary-color);
+            }
+            .terms-nav .nav-link:hover:not(.active) {
+                background-color: var(--gray-100);
+            }
+            .terms-info {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding-bottom: 1rem;
+                margin-bottom: 1.5rem;
+                border-bottom: 1px solid var(--gray-200);
+            }
+            .terms-date {
+                color: var(--gray-600);
+                font-size: 0.875rem;
+            }
+            .terms-history {
+                margin-top: 2rem;
+                padding-top: 1.5rem;
+                border-top: 1px solid var(--gray-200);
+            }
+            .history-item {
+                display: flex;
+                margin-bottom: 1rem;
+            }
+            .history-date {
+                flex-shrink: 0;
+                width: 120px;
+                font-weight: 500;
+            }
+            .update-mark {
+                display: inline-block;
+                padding: 0.25rem 0.5rem;
+                border-radius: 50rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                background-color: var(--warning-color);
+                color: white;
+                margin-left: 0.5rem;
+            }
+        </style>
     </th:block>
 </head>
 <body>
 <main layout:fragment="content">
-
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>이용약관</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a th:href="@{/}">홈</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">이용약관</li>
+                </ol>
+            </nav>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-3">
+                <!-- 약관 내비게이션 -->
+                <div class="terms-nav nav flex-column mb-4">
+                    <a class="nav-link active" id="terms-service-tab" data-bs-toggle="pill" href="#terms-service" role="tab">이용약관</a>
+                    <a class="nav-link" id="terms-privacy-tab" data-bs-toggle="pill" href="#terms-privacy" role="tab">개인정보처리방침</a>
+                    <a class="nav-link" id="terms-location-tab" data-bs-toggle="pill" href="#terms-location" role="tab">위치정보이용약관</a>
+                    <a class="nav-link" id="terms-marketing-tab" data-bs-toggle="pill" href="#terms-marketing" role="tab">마케팅정보 수신동의</a>
+                    <a class="nav-link" id="terms-youth-tab" data-bs-toggle="pill" href="#terms-youth" role="tab">청소년보호정책</a>
+                </div>
+                
+                <!-- 고객센터 -->
+                <div class="terms-card">
+                    <div class="terms-header">
+                        <h5 class="mb-0">고객센터</h5>
+                    </div>
+                    <div class="terms-body">
+                        <p><i class="fas fa-phone me-2"></i> 02-123-4567</p>
+                        <p><i class="fas fa-envelope me-2"></i> support@peakmeshop.com</p>
+                        <p><i class="fas fa-clock me-2"></i> 평일 09:00 - 18:00</p>
+                        <p class="text-muted small mb-0">(주말/공휴일 휴무)</p>
+                    </div>
+                </div>
+                
+                <!-- 자주 찾는 메뉴 -->
+                <div class="terms-card d-none d-lg-block">
+                    <div class="terms-header">
+                        <h5 class="mb-0">자주 찾는 메뉴</h5>
+                    </div>
+                    <div class="terms-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item px-0 py-2">
+                                <a th:href="@{/faq}" class="text-decoration-none">
+                                    <i class="fas fa-question-circle me-2 text-primary"></i>자주 묻는 질문
+                                </a>
+                            </li>
+                            <li class="list-group-item px-0 py-2">
+                                <a th:href="@{/notice}" class="text-decoration-none">
+                                    <i class="fas fa-bullhorn me-2 text-primary"></i>공지사항
+                                </a>
+                            </li>
+                            <li class="list-group-item px-0 py-2">
+                                <a th:href="@{/inquiry}" class="text-decoration-none">
+                                    <i class="fas fa-comment-dots me-2 text-primary"></i>1:1 문의
+                                </a>
+                            </li>
+                            <li class="list-group-item px-0 py-2 border-bottom-0">
+                                <a th:href="@{/privacy}" class="text-decoration-none">
+                                    <i class="fas fa-shield-alt me-2 text-primary"></i>개인정보처리방침
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-9">
+                <!-- 약관 콘텐츠 -->
+                <div class="tab-content">
+                    <!-- 이용약관 -->
+                    <div class="tab-pane fade show active" id="terms-service" role="tabpanel">
+                        <div class="terms-card">
+                            <div class="terms-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">이용약관</h5>
+                                    <a th:href="@{/terms/pdf/service}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-file-pdf me-1"></i> PDF 다운로드
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="terms-body">
+                                <div class="terms-info">
+                                    <div>
+                                        <span class="terms-date">시행일: <span th:text="${terms != null ? #temporals.format(terms.effectiveDate, 'yyyy년 MM월 dd일') : '2023년 01월 01일'}">2023년 01월 01일</span></span>
+                                        <span class="update-mark" th:if="${terms != null && terms.isUpdated}">개정</span>
+                                    </div>
+                                    <div class="text-muted small">
+                                        최종 수정일: <span th:text="${terms != null ? #temporals.format(terms.updatedAt, 'yyyy-MM-dd') : '2023-01-01'}">2023-01-01</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="terms-content" th:utext="${terms != null ? terms.content : defaultTerms}">
+                                    <h4>제1장 총칙</h4>
+                                    
+                                    <h5>제1조 (목적)</h5>
+                                    <p>이 약관은 PeakMeShop(이하 "회사"라 함)이 운영하는 인터넷 쇼핑몰에서 제공하는 서비스(이하 "서비스"라 함)를 이용함에 있어 회사와 이용자의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.</p>
+                                    
+                                    <h5>제2조 (정의)</h5>
+                                    <ol>
+                                        <li>"몰"이란 회사가 재화 또는 용역을 이용자에게 제공하기 위하여 컴퓨터 등 정보통신설비를 이용하여 재화 또는 용역을 거래할 수 있도록 설정한 가상의 영업장을 말합니다.</li>
+                                        <li>"이용자"란 "몰"에 접속하여 이 약관에 따라 "몰"이 제공하는 서비스를 받는 회원 및 비회원을 말합니다.</li>
+                                        <li>"회원"이라 함은 "몰"에 개인정보를 제공하여 회원등록을 한 자로서, "몰"의 정보를 지속적으로 제공받으며, "몰"이 제공하는 서비스를 계속적으로 이용할 수 있는 자를 말합니다.</li>
+                                        <li>"비회원"이라 함은 회원에 가입하지 않고 "몰"이 제공하는 서비스를 이용하는 자를 말합니다.</li>
+                                    </ol>
+                                    
+                                    <h5>제3조 (약관의 명시와 개정)</h5>
+                                    <ol>
+                                        <li>회사는 이 약관의 내용과 상호, 영업소 소재지, 대표자의 성명, 사업자등록번호, 연락처(전화, 팩스, 전자우편 주소 등) 등을 이용자가 알 수 있도록 "몰"의 초기 서비스 화면에 게시합니다.</li>
+                                        <li>회사는 약관의 규제에 관한 법률, 전자상거래 등에서의 소비자 보호에 관한 법률, 정보통신망 이용촉진 및 정보보호 등에 관한 법률 등 관련법을 위배하지 않는 범위에서 이 약관을 개정할 수 있습니다.</li>
+                                        <li>회사가 약관을 개정할 경우에는 적용일자 및 개정사유를 명시하여 현행약관과 함께 "몰"의 초기화면에 그 적용일자 7일 이전부터 적용일자 전일까지 공지합니다.</li>
+                                        <li>회원은 개정된 약관에 동의하지 않을 경우 회원 탈퇴(해지)를 요청할 수 있으며, 변경된 약관의 효력 발생일로부터 7일 이후에도 거부의사를 표시하지 아니하고 서비스를 계속 이용할 경우 약관의 변경 사항에 동의한 것으로 간주됩니다.</li>
+                                    </ol>
+                                    
+                                    <h4>제2장 회원가입 및 관리</h4>
+                                    
+                                    <h5>제4조 (회원가입)</h5>
+                                    <ol>
+                                        <li>이용자는 "몰"이 정한 가입 양식에 따라 회원정보를 기입한 후 이 약관에 동의한다는 의사표시를 함으로서 회원가입을 신청합니다.</li>
+                                        <li>회사는 제1항과 같이 회원으로 가입할 것을 신청한 이용자 중 다음 각호에 해당하지 않는 한 회원으로 등록합니다.</li>
+                                        <ol>
+                                            <li>가입신청자가 이 약관 제7조 제3항에 의하여 이전에 회원자격을 상실한 적이 있는 경우, 다만 제7조 제3항에 의한 회원자격 상실 후 3년이 경과한 자로서 "몰"의 회원재가입 승낙을 얻은 경우에는 예외로 한다.</li>
+                                            <li>등록 내용에 허위, 기재누락, 오기가 있는 경우</li>
+                                            <li>기타 회원으로 등록하는 것이 "몰"의 기술상 현저히 지장이 있다고 판단되는 경우</li>
+                                        </ol>
+                                        <li>회원가입계약의 성립시기는 "몰"의 승낙이 회원에게 도달한 시점으로 합니다.</li>
+                                        <li>회원은 제1항에 의한 등록사항에 변경이 있는 경우, 즉시 "몰"에서 온라인으로 개인정보를 수정하거나 전자우편 또는 기타 방법으로 "몰"에 그 변경사항을 알려야 합니다.</li>
+                                    </ol>
+                                    
+                                    <h5>제5조 (회원 탈퇴 및 자격 상실 등)</h5>
+                                    <ol>
+                                        <li>회원은 "몰"에 언제든지 탈퇴를 요청할 수 있으며 "몰"은 즉시 회원탈퇴를 처리합니다.</li>
+                                        <li>회원이 다음 각호의 사유에 해당하는 경우, "몰"은 회원자격을 제한 및 정지시킬 수 있습니다.</li>
+                                        <ol>
+                                            <li>가입 신청시에 허위 내용을 등록한 경우</li>
+                                            <li>"몰"을 이용하여 구입한 재화 등의 대금, 기타 "몰" 이용에 관련하여 회원이 부담하는 채무를 기일에 지급하지 않는 경우</li>
+                                            <li>다른 사람의 "몰" 이용을 방해하거나 그 정보를 도용하는 등 전자상거래 질서를 위협하는 경우</li>
+                                            <li>"몰"을 이용하여 법령 또는 이 약관이 금지하거나 공서양속에 반하는 행위를 하는 경우</li>
+                                        </ol>
+                                    </ol>
+                                </div>
+                                
+                                <!-- 약관 개정 내역 -->
+                                <div class="terms-history">
+                                    <h6 class="mb-3">개정 이력</h6>
+                                    <div class="history-item" th:each="history : ${termsHistories}">
+                                        <div class="history-date" th:text="${#temporals.format(history.effectiveDate, 'yyyy.MM.dd')}">2023.01.01</div>
+                                        <div th:text="${history.description}">서비스 이용약관 최초 제정</div>
+                                    </div>
+                                    <!-- 기본 데이터 -->
+                                    <div class="history-item" th:if="${termsHistories == null || #lists.isEmpty(termsHistories)}">
+                                        <div class="history-date">2023.01.01</div>
+                                        <div>서비스 이용약관 최초 제정</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 개인정보처리방침 -->
+                    <div class="tab-pane fade" id="terms-privacy" role="tabpanel">
+                        <div class="terms-card">
+                            <div class="terms-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">개인정보처리방침</h5>
+                                    <a th:href="@{/privacy}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-external-link-alt me-1"></i> 상세 보기
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="terms-body">
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    개인정보처리방침은 <a th:href="@{/privacy}" class="alert-link">여기</a>에서 확인하실 수 있습니다.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 위치정보이용약관 -->
+                    <div class="tab-pane fade" id="terms-location" role="tabpanel">
+                        <div class="terms-card">
+                            <div class="terms-header">
+                                <h5 class="mb-0">위치정보이용약관</h5>
+                            </div>
+                            <div class="terms-body">
+                                <div class="terms-info">
+                                    <div>
+                                        <span class="terms-date">시행일: 2023년 01월 01일</span>
+                                    </div>
+                                    <div class="text-muted small">
+                                        최종 수정일: 2023-01-01
+                                    </div>
+                                </div>
+                                
+                                <div class="terms-content">
+                                    <h5>제1조 (목적)</h5>
+                                    <p>이 약관은 PeakMeShop(이하 "회사")이 제공하는 위치기반서비스와 관련하여 회사와 개인위치정보주체와의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.</p>
+                                    
+                                    <h5>제2조 (이용약관의 효력 및 변경)</h5>
+                                    <ol>
+                                        <li>본 약관은 서비스를 신청한 고객 또는 개인위치정보주체가 본 약관에 동의하고 회사가 정한 소정의 절차에 따라 서비스의 이용자로 등록함으로써 효력이 발생합니다.</li>
+                                        <li>회사는 본 약관의 내용을 변경할 수 있으며, 변경된 약관은 회사 홈페이지에 공지함으로써 효력이 발생합니다.</li>
+                                    </ol>
+                                    
+                                    <h5>제3조 (위치정보 수집방법)</h5>
+                                    <p>회사는 다음과 같은 방식으로 개인위치정보를 수집합니다.</p>
+                                    <ol>
+                                        <li>휴대폰 등 이동통신기기의 GPS칩이 내장된 단말기를 통해 수집되는 위치정보</li>
+                                        <li>Wi-Fi 무선인터넷 관련 위치정보</li>
+                                        <li>회원이 입력한 배송지 정보</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 마케팅정보 수신동의 -->
+                    <div class="tab-pane fade" id="terms-marketing" role="tabpanel">
+                        <div class="terms-card">
+                            <div class="terms-header">
+                                <h5 class="mb-0">마케팅정보 수신동의</h5>
+                            </div>
+                            <div class="terms-body">
+                                <div class="terms-content">
+                                    <h5>마케팅정보 수신동의</h5>
+                                    <p>PeakMeShop은 회원님께 유익한 정보(이벤트, 신상품 안내 등)를 전달하기 위해 다음과 같이 마케팅 정보를 전송하고 있습니다.</p>
+                                    
+                                    <h6>1. 마케팅 수신동의 안내</h6>
+                                    <p>PeakMeShop은 고객님께서 마케팅 수신 동의를 해주시면, 상품/서비스 정보 및 이벤트 안내 등의 정보를 제공해 드립니다. 마케팅 수신 동의는 홈페이지 가입 시 및 마이페이지 내 정보 수정에서 변경 가능합니다.</p>
+                                    
+                                    <h6>2. 마케팅 정보 수신 채널</h6>
+                                    <ul>
+                                        <li>이메일: 신상품 소식, 이벤트 안내, 맞춤형 상품 추천 등 정보 제공</li>
+                                        <li>SMS/알림톡: 주문/배송 상태 안내, 이벤트 및 쿠폰 정보 등 제공</li>
+                                        <li>앱 푸시알림: 모바일 앱 사용 시 이벤트 및 프로모션 정보 제공</li>
+                                    </ul>
+                                    
+                                    <h6>3. 수신동의 변경 및 철회</h6>
+                                    <p>마케팅 정보 수신 동의는 언제든지 변경 또는 철회하실 수 있습니다. 수신 동의를 철회하셔도 회원 자격에는 영향이 없으며, 주문/배송 관련 정보 등 필수적인 안내 사항은 수신 동의 여부와 관계없이 발송됩니다.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 청소년보호정책 -->
+                    <div class="tab-pane fade" id="terms-youth" role="tabpanel">
+                        <div class="terms-card">
+                            <div class="terms-header">
+                                <h5 class="mb-0">청소년보호정책</h5>
+                            </div>
+                            <div class="terms-body">
+                                <div class="terms-content">
+                                    <h5>청소년보호정책</h5>
+                                    <p>PeakMeShop은 청소년이 안전하게 인터넷을 이용할 수 있도록 청소년보호정책을 수립하여 시행하고 있습니다.</p>
+                                    
+                                    <h6>1. 청소년 보호를 위한 목표</h6>
+                                    <p>회사는 청소년이 유해정보에 접근할 수 없도록 방지하고, 청소년의 개인정보를 보호하며, 청소년의 건전한 인터넷 사용을 위해 노력합니다.</p>
+                                    
+                                    <h6>2. 청소년 유해상품에 대한 조치</h6>
+                                    <ul>
+                                        <li>청소년 유해상품은 성인인증을 거친 후에만 구매 가능하도록 조치합니다.</li>
+                                        <li>청소년 유해상품 판매 시 상품 상세페이지에 "청소년 유해상품"임을 명시합니다.</li>
+                                        <li>청소년 유해상품은 메인페이지 및 일반 카테고리에 노출되지 않도록 관리합니다.</li>
+                                    </ul>
+                                    
+                                    <h6>3. 청소년 보호를 위한 기술적 조치</h6>
+                                    <ul>
+                                        <li>성인인증 시스템을 통해 연령 확인</li>
+                                        <li>청소년 접근제한 및 관리조치 시행</li>
+                                        <li>청소년 유해정보로부터의 청소년 보호를 위한 필터링 시스템 운영</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <th:block layout:fragment="script">
-
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // URL 해시 값에 따라 탭 활성화
+            const hash = window.location.hash;
+            if (hash) {
+                const triggerEl = document.querySelector('a[href="' + hash + '"]');
+                if (triggerEl) {
+                    const tab = new bootstrap.Tab(triggerEl);
+                    tab.show();
+                }
+            }
+            
+            // 탭 변경 시 URL 해시 업데이트
+            const tabs = document.querySelectorAll('.terms-nav .nav-link');
+            tabs.forEach(tab => {
+                tab.addEventListener('shown.bs.tab', function(e) {
+                    const id = e.target.getAttribute('href');
+                    history.pushState(null, null, id);
+                });
+            });
+        });
+    </script>
 </th:block>
 </body>
 </html>

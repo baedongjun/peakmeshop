@@ -4,18 +4,257 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/main-layout}">
 <head>
-    <title>포인트 관리</title>
+    <title>포인트 내역</title>
     <th:block layout:fragment="css">
-
+        <style>
+            .point-section {
+                padding: 2rem;
+                background-color: #fff;
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            }
+            .point-title {
+                margin-bottom: 1.5rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid #eee;
+            }
+            .point-summary {
+                padding: 1.5rem;
+                background-color: rgba(13, 110, 253, 0.05);
+                border-radius: 1rem;
+                margin-bottom: 2rem;
+                border: 1px solid rgba(13, 110, 253, 0.1);
+            }
+            .point-amount {
+                font-size: 2rem;
+                font-weight: 700;
+                color: var(--primary-color);
+            }
+            .point-table th {
+                background-color: var(--gray-100);
+                font-weight: 600;
+            }
+            .point-increase {
+                color: var(--success-color);
+                font-weight: 600;
+            }
+            .point-decrease {
+                color: var(--danger-color);
+                font-weight: 600;
+            }
+            .filter-buttons {
+                margin-bottom: 1.5rem;
+            }
+            .filter-buttons .btn {
+                margin-right: 0.5rem;
+                margin-bottom: 0.5rem;
+            }
+            .empty-points {
+                text-align: center;
+                padding: 3rem 0;
+            }
+            .empty-points i {
+                font-size: 4rem;
+                color: var(--gray-300);
+                margin-bottom: 1.5rem;
+            }
+        </style>
     </th:block>
 </head>
 <body>
 <main layout:fragment="content">
-
+    <section class="py-5">
+        <div class="container">
+            <div class="row">
+                <!-- 마이페이지 사이드바 -->
+                <div class="col-lg-3 mb-4 mb-lg-0">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="text-center mb-4">
+                                <img th:src="${member != null && member.profileImage != null ? member.profileImage : '/placeholder.svg?height=100&width=100'}" 
+                                     alt="프로필 이미지" class="rounded-circle mb-3" width="80" height="80">
+                                <h5 class="mb-0" sec:authentication="name">사용자명</h5>
+                                <p class="text-muted small mb-0">일반회원</p>
+                            </div>
+                            
+                            <div class="list-group list-group-flush">
+                                <a th:href="@{/mypage}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-home me-2"></i> 마이페이지 홈
+                                </a>
+                                <a th:href="@{/mypage/orders}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-shopping-bag me-2"></i> 주문 내역
+                                </a>
+                                <a th:href="@{/mypage/wishlist}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-heart me-2"></i> 위시리스트
+                                </a>
+                                <a th:href="@{/mypage/reviews}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-star me-2"></i> 내 리뷰
+                                </a>
+                                <a th:href="@{/mypage/points}" class="list-group-item list-group-item-action active">
+                                    <i class="fas fa-coins me-2"></i> 포인트
+                                </a>
+                                <a th:href="@{/mypage/coupons}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-ticket-alt me-2"></i> 쿠폰
+                                </a>
+                                <a th:href="@{/mypage/inquiries}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-question-circle me-2"></i> 문의 내역
+                                </a>
+                                <a th:href="@{/mypage/profile}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-user-edit me-2"></i> 회원정보 관리
+                                </a>
+                                <a th:href="@{/mypage/addresses}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-map-marker-alt me-2"></i> 배송지 관리
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 포인트 내역 -->
+                <div class="col-lg-9">
+                    <div class="point-section">
+                        <h3 class="point-title">포인트 내역</h3>
+                        
+                        <!-- 포인트 요약 -->
+                        <div class="point-summary">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <h4>사용 가능한 포인트</h4>
+                                    <div class="point-amount" th:text="${point != null ? #numbers.formatInteger(point.availablePoints, 0, 'COMMA') + ' P' : '5,000 P'}">5,000 P</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
+                                        <span>적립 예정 포인트</span>
+                                        <span th:text="${point != null ? #numbers.formatInteger(point.pendingPoints, 0, 'COMMA') + ' P' : '2,000 P'}">2,000 P</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between border-bottom pb-2 mb-2">
+                                        <span>소멸 예정 포인트</span>
+                                        <span th:text="${point != null ? #numbers.formatInteger(point.expiringPoints, 0, 'COMMA') + ' P' : '1,000 P'}">1,000 P</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>소멸 예정일</span>
+                                        <span th:text="${point != null && point.expirationDate != null ? #dates.format(point.expirationDate, 'yyyy.MM.dd') : '2024.12.31'}">2024.12.31</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 필터 버튼 -->
+                        <div class="filter-buttons">
+                            <button type="button" class="btn btn-sm btn-primary active" data-filter="all">전체</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-filter="earn">적립</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-filter="use">사용</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-filter="expire">소멸</button>
+                        </div>
+                        
+                        <!-- 포인트 내역 테이블 -->
+                        <div th:if="${#lists.isEmpty(pointHistories)}" class="empty-points">
+                            <i class="fas fa-coins"></i>
+                            <h3>포인트 내역이 없습니다</h3>
+                            <p class="text-muted mb-4">상품 구매 및 리뷰 작성을 통해 포인트를 적립해보세요!</p>
+                            <a th:href="@{/products}" class="btn btn-primary">쇼핑하기</a>
+                        </div>
+                        
+                        <div th:unless="${#lists.isEmpty(pointHistories)}" class="table-responsive">
+                            <table class="table point-table">
+                                <thead>
+                                    <tr>
+                                        <th width="15%">날짜</th>
+                                        <th width="15%">구분</th>
+                                        <th width="40%">내용</th>
+                                        <th width="15%">포인트</th>
+                                        <th width="15%">상태</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- 포인트 내역 목록 (예시 데이터) -->
+                                    <tr th:each="history, stat : ${pointHistories != null ? pointHistories : {
+                                              {'2023-11-15', 'EARN', '회원가입 보너스', 2000, 'EARNED'},
+                                              {'2023-11-20', 'EARN', '리뷰 작성', 500, 'EARNED'},
+                                              {'2023-11-25', 'EARN', '이벤트 참여', 1000, 'EARNED'},
+                                              {'2023-12-05', 'USE', '상품 구매 사용', -3000, 'USED'},
+                                              {'2023-12-10', 'EARN', '첫 구매 보너스', 3000, 'PENDING'},
+                                              {'2023-12-15', 'EARN', '생일 축하 포인트', 1000, 'EARNED'},
+                                              {'2023-12-20', 'EXPIRE', '기간 만료', -500, 'EXPIRED'}
+                                          }}" 
+                                         th:class="${history[1]}" th:data-type="${history[1]}">
+                                        <td th:text="${history[0]}">2023-11-15</td>
+                                        <td>
+                                            <span th:if="${history[1] == 'EARN'}" class="badge bg-success">적립</span>
+                                            <span th:if="${history[1] == 'USE'}" class="badge bg-danger">사용</span>
+                                            <span th:if="${history[1] == 'EXPIRE'}" class="badge bg-secondary">소멸</span>
+                                        </td>
+                                        <td th:text="${history[2]}">회원가입 보너스</td>
+                                        <td>
+                                            <span th:if="${history[3] > 0}" class="point-increase" th:text="${'+' + #numbers.formatInteger(history[3], 0, 'COMMA') + ' P'}">+2,000 P</span>
+                                            <span th:if="${history[3] <= 0}" class="point-decrease" th:text="${#numbers.formatInteger(history[3], 0, 'COMMA') + ' P'}">-3,000 P</span>
+                                        </td>
+                                        <td>
+                                            <span th:if="${history[4] == 'EARNED'}" class="badge bg-primary">적립완료</span>
+                                            <span th:if="${history[4] == 'PENDING'}" class="badge bg-warning text-dark">적립예정</span>
+                                            <span th:if="${history[4] == 'USED'}" class="badge bg-dark">사용완료</span>
+                                            <span th:if="${history[4] == 'EXPIRED'}" class="badge bg-secondary">소멸</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- 페이지네이션 -->
+                        <nav th:if="${totalPages != null && totalPages > 1}" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                <li th:class="${'page-item' + (currentPage == 1 ? ' disabled' : '')}">
+                                    <a class="page-link" th:href="@{/mypage/points(page=${currentPage - 1})}">이전</a>
+                                </li>
+                                <li th:each="pageNum : ${#numbers.sequence(1, totalPages)}" 
+                                    th:class="${'page-item' + (pageNum == currentPage ? ' active' : '')}">
+                                    <a class="page-link" th:href="@{/mypage/points(page=${pageNum})}" th:text="${pageNum}">1</a>
+                                </li>
+                                <li th:class="${'page-item' + (currentPage == totalPages ? ' disabled' : '')}">
+                                    <a class="page-link" th:href="@{/mypage/points(page=${currentPage + 1})}">다음</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </main>
 
 <th:block layout:fragment="script">
-
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 필터 버튼 기능
+            const filterButtons = document.querySelectorAll('[data-filter]');
+            const pointRows = document.querySelectorAll('[data-type]');
+            
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // 활성화된 버튼 변경
+                    filterButtons.forEach(btn => {
+                        btn.classList.remove('active');
+                        btn.classList.remove('btn-primary');
+                        btn.classList.add('btn-outline-primary');
+                    });
+                    this.classList.add('active');
+                    this.classList.add('btn-primary');
+                    this.classList.remove('btn-outline-primary');
+                    
+                    const filter = this.getAttribute('data-filter');
+                    
+                    // 필터링 적용
+                    pointRows.forEach(row => {
+                        if (filter === 'all' || row.getAttribute('data-type') === filter.toUpperCase()) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
 </th:block>
 </body>
 </html>

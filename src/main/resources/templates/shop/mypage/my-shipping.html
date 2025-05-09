@@ -4,18 +4,410 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/main-layout}">
 <head>
-    <title>배송정보</title>
+    <title>배송 정보</title>
     <th:block layout:fragment="css">
-
+        <style>
+            .shipping-card {
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+                border: none;
+                margin-bottom: 1.5rem;
+                overflow: hidden;
+            }
+            .shipping-header {
+                background-color: var(--gray-100);
+                padding: 1rem 1.5rem;
+                border-bottom: 1px solid var(--gray-200);
+            }
+            .shipping-body {
+                padding: 1.5rem;
+            }
+            .delivery-status {
+                display: inline-block;
+                padding: 0.25rem 0.75rem;
+                border-radius: 50rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+            .status-preparing {
+                background-color: var(--primary-color);
+                color: white;
+            }
+            .status-shipping {
+                background-color: var(--warning-color);
+                color: white;
+            }
+            .status-delivered {
+                background-color: var(--success-color);
+                color: white;
+            }
+            .delivery-progress {
+                position: relative;
+                padding: 2rem 0;
+            }
+            .progress-track {
+                position: relative;
+                height: 4px;
+                background-color: var(--gray-200);
+                margin: 1.5rem 0;
+            }
+            .progress-step {
+                position: absolute;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                background-color: var(--gray-200);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                top: -13px;
+                color: white;
+                font-weight: bold;
+                z-index: 2;
+            }
+            .progress-step.active {
+                background-color: var(--primary-color);
+            }
+            .progress-step.completed {
+                background-color: var(--success-color);
+            }
+            .progress-track-fill {
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 4px;
+                background-color: var(--success-color);
+                z-index: 1;
+            }
+            .step-label {
+                position: absolute;
+                top: -45px;
+                transform: translateX(-50%);
+                font-size: 0.8rem;
+                font-weight: 500;
+                text-align: center;
+                width: 80px;
+            }
+            .step-date {
+                position: absolute;
+                bottom: -35px;
+                transform: translateX(-50%);
+                font-size: 0.75rem;
+                color: var(--gray-600);
+                width: 80px;
+                text-align: center;
+            }
+        </style>
     </th:block>
 </head>
 <body>
 <main layout:fragment="content">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>배송 정보</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a th:href="@{/}">홈</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/mypage}">마이페이지</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">배송 정보</li>
+                </ol>
+            </nav>
+        </div>
 
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- 배송 정책 안내 -->
+                <div class="shipping-card">
+                    <div class="shipping-header">
+                        <h5 class="mb-0">배송 정책 안내</h5>
+                    </div>
+                    <div class="shipping-body">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">국내 배송</div>
+                            <div class="card-body">
+                                <p class="mb-2">• 배송 방법: 택배</p>
+                                <p class="mb-2">• 배송 지역: 전국</p>
+                                <p class="mb-2">• 배송 비용: 3,000원 (30,000원 이상 구매 시 무료배송)</p>
+                                <p class="mb-2">• 평균 배송 기간: 2~3일 (주말/공휴일 제외)</p>
+                                <p>• 주문 후 배송 준비 기간: 최대 3일 (재고 상황에 따라 달라질 수 있음)</p>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">해외 배송</div>
+                            <div class="card-body">
+                                <p class="mb-2">• 배송 가능 국가: 아시아, 북미, 유럽 주요 국가</p>
+                                <p class="mb-2">• 배송 비용: 국가 및 무게에 따라 차등 적용</p>
+                                <p class="mb-0">• 평균 배송 기간: 7~14일 (국가별 상이)</p>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <h6>배송 지연 안내</h6>
+                            <p class="mb-0">명절, 연말 등 특정 기간에는 배송이 지연될 수 있습니다. 공지사항을 통해 안내드리오니 참고 부탁드립니다.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 진행 중인 배송 목록 -->
+                <div class="shipping-card">
+                    <div class="shipping-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">진행 중인 배송</h5>
+                        <a th:href="@{/mypage/orders}" class="btn btn-sm btn-outline-primary">주문 내역 보기</a>
+                    </div>
+                    <div class="shipping-body">
+                        <div th:if="${#lists.isEmpty(ongoingDeliveries)}" class="alert alert-info">
+                            <p class="mb-0">현재 진행 중인 배송이 없습니다.</p>
+                        </div>
+                        
+                        <div th:unless="${#lists.isEmpty(ongoingDeliveries)}" class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>주문 정보</th>
+                                        <th>배송 상태</th>
+                                        <th>운송장 정보</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="delivery : ${ongoingDeliveries}">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img th:src="${delivery.productThumbnail}" alt="Product Thumbnail" class="rounded me-3" style="width: 64px; height: 64px; object-fit: cover;">
+                                                <div>
+                                                    <p class="mb-1 fw-semibold">
+                                                        <a th:href="@{/mypage/orders/{id}(id=${delivery.orderId})}" th:text="${delivery.productName}">프리미엄 스포츠 티셔츠</a>
+                                                    </p>
+                                                    <small class="text-muted">
+                                                        주문번호: #<span th:text="${delivery.orderNumber}">12345678</span><br>
+                                                        주문일: <span th:text="${#temporals.format(delivery.orderDate, 'yyyy-MM-dd')}">2023-05-12</span>
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span th:class="${
+                                                delivery.status == '배송준비중' ? 'delivery-status status-preparing' : 
+                                                delivery.status == '배송중' ? 'delivery-status status-shipping' : 
+                                                delivery.status == '배송완료' ? 'delivery-status status-delivered' : 
+                                                'delivery-status'
+                                            }" th:text="${delivery.status}">배송중</span>
+                                        </td>
+                                        <td>
+                                            <p class="mb-1" th:text="${delivery.courier}">CJ대한통운</p>
+                                            <small th:text="${delivery.trackingNumber}">123456789012</small>
+                                        </td>
+                                        <td>
+                                            <a th:href="@{/tracking(courier=${delivery.courier}, trackingNumber=${delivery.trackingNumber})}" 
+                                               class="btn btn-sm btn-primary" target="_blank">배송조회</a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 배송 현황 상세 (특정 주문을 선택했을 때 표시) -->
+                <div class="shipping-card" th:if="${selectedDelivery != null}">
+                    <div class="shipping-header">
+                        <h5 class="mb-0">배송 현황 상세</h5>
+                    </div>
+                    <div class="shipping-body">
+                        <div class="delivery-progress">
+                            <div class="progress-track">
+                                <div class="progress-track-fill" th:style="${
+                                    selectedDelivery.status == '배송준비중' ? 'width: 25%' : 
+                                    selectedDelivery.status == '배송중' ? 'width: 60%' : 
+                                    selectedDelivery.status == '배송완료' ? 'width: 100%' : 
+                                    'width: 0%'
+                                }"></div>
+                                
+                                <!-- 주문 완료 -->
+                                <div class="progress-step completed" style="left: 0%">
+                                    <i class="fas fa-check"></i>
+                                    <span class="step-label">주문 완료</span>
+                                    <span class="step-date" th:text="${#temporals.format(selectedDelivery.orderDate, 'MM/dd')}">05/12</span>
+                                </div>
+                                
+                                <!-- 상품 준비중 -->
+                                <div th:class="${selectedDelivery.status != '주문접수' ? 'progress-step completed' : 'progress-step'}" style="left: 25%">
+                                    <i class="fas fa-box"></i>
+                                    <span class="step-label">상품 준비중</span>
+                                    <span class="step-date" th:text="${selectedDelivery.preparingDate != null ? #temporals.format(selectedDelivery.preparingDate, 'MM/dd') : '-'}">05/13</span>
+                                </div>
+                                
+                                <!-- 배송중 -->
+                                <div th:class="${selectedDelivery.status == '배송중' || selectedDelivery.status == '배송완료' ? 'progress-step completed' : 'progress-step'}" style="left: 60%">
+                                    <i class="fas fa-truck"></i>
+                                    <span class="step-label">배송중</span>
+                                    <span class="step-date" th:text="${selectedDelivery.shippingDate != null ? #temporals.format(selectedDelivery.shippingDate, 'MM/dd') : '-'}">05/14</span>
+                                </div>
+                                
+                                <!-- 배송 완료 -->
+                                <div th:class="${selectedDelivery.status == '배송완료' ? 'progress-step completed' : 'progress-step'}" style="left: 100%">
+                                    <i class="fas fa-home"></i>
+                                    <span class="step-label">배송 완료</span>
+                                    <span class="step-date" th:text="${selectedDelivery.deliveredDate != null ? #temporals.format(selectedDelivery.deliveredDate, 'MM/dd') : '-'}">05/15</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mt-4">
+                            <div class="card-header bg-light">배송지 정보</div>
+                            <div class="card-body">
+                                <p class="mb-2"><strong>수령인:</strong> <span th:text="${selectedDelivery.recipient}">홍길동</span></p>
+                                <p class="mb-2"><strong>연락처:</strong> <span th:text="${selectedDelivery.recipientPhone}">010-1234-5678</span></p>
+                                <p class="mb-2"><strong>주소:</strong> <span th:text="${selectedDelivery.address}">서울특별시 강남구 테헤란로 123, 456동 789호</span></p>
+                                <p class="mb-0"><strong>배송 메모:</strong> <span th:text="${selectedDelivery.deliveryNote}">부재시 경비실에 맡겨주세요.</span></p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4" th:if="${!#lists.isEmpty(selectedDelivery.trackingDetails)}">
+                            <h6 class="mb-3">배송 추적 내역</h6>
+                            <ul class="list-group">
+                                <li class="list-group-item d-flex justify-content-between align-items-start" 
+                                    th:each="detail : ${selectedDelivery.trackingDetails}">
+                                    <div class="ms-2 me-auto">
+                                        <div class="fw-bold" th:text="${detail.status}">집화처리</div>
+                                        <div th:text="${detail.location}">서울 강남구 물류센터</div>
+                                    </div>
+                                    <small th:text="${#temporals.format(detail.datetime, 'yyyy-MM-dd HH:mm')}">2023-05-14 14:30</small>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <!-- 배송 FAQ -->
+                <div class="shipping-card">
+                    <div class="shipping-header">
+                        <h5 class="mb-0">자주 묻는 질문</h5>
+                    </div>
+                    <div class="shipping-body">
+                        <div class="accordion" id="faqAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faqOne">
+                                        배송 조회는 어떻게 하나요?
+                                    </button>
+                                </h2>
+                                <div id="faqOne" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        주문 후 배송이 시작되면 '진행 중인 배송' 목록에 운송장번호가 자동으로 등록됩니다. 
+                                        '배송조회' 버튼을 클릭하면 해당 택배사 배송조회 페이지로 이동하여 실시간 배송 현황을 확인하실 수 있습니다.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqTwo">
+                                        배송이 지연되고 있어요. 어떻게 해야 하나요?
+                                    </button>
+                                </h2>
+                                <div id="faqTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        주문 후 3일 이상 배송 상태가 변경되지 않거나, 운송장번호가 생성되었으나 배송 상태가 변경되지 않을 경우 
+                                        고객센터(1234-5678)로 문의해 주시거나, 1:1 문의하기를 통해 문의해 주시면 신속하게 확인 후 안내해 드리겠습니다.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqThree">
+                                        배송 주소를 변경할 수 있나요?
+                                    </button>
+                                </h2>
+                                <div id="faqThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        '배송준비중' 상태일 경우에만 배송지 변경이 가능합니다. 
+                                        '주문내역' 페이지에서 해당 주문의 '배송지 변경' 버튼을 클릭하여 변경하시거나, 
+                                        빠른 처리를 위해 고객센터(1234-5678)로 문의해 주시기 바랍니다.
+                                        이미 '배송중' 상태일 경우에는 배송지 변경이 불가능합니다.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqFour">
+                                        해외 배송도 가능한가요?
+                                    </button>
+                                </h2>
+                                <div id="faqFour" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        네, 해외 배송도 가능합니다. 주문 시 배송지를 해외로 선택하시면 국가별 배송비와 예상 배송 기간이 안내됩니다. 
+                                        해외 배송의 경우 배송 국가에 따라 관세가 부과될 수 있으며, 이는 고객님께서 부담하셔야 합니다.
+                                        자세한 사항은 '해외배송 안내' 페이지를 참고해 주시기 바랍니다.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqFive">
+                                        배송완료로 표시되었지만 상품을 받지 못했어요.
+                                    </button>
+                                </h2>
+                                <div id="faqFive" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        배송완료로 표시되었으나 상품을 수령하지 못하신 경우, 다음과 같은 경우를 확인해 주세요:
+                                        <ul>
+                                            <li>경비실, 택배함, 문 앞 등 대체 장소에 배송되었을 수 있습니다.</li>
+                                            <li>가족이나 동거인이 대신 수령했을 수 있습니다.</li>
+                                        </ul>
+                                        위 사항 확인 후에도 상품을 찾을 수 없는 경우, 즉시 고객센터로 연락해 주시기 바랍니다.
+                                        택배사와 협력하여 배송 상황을 확인 후 안내해 드리겠습니다.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 고객센터 안내 -->
+                <div class="shipping-card">
+                    <div class="shipping-header">
+                        <h5 class="mb-0">고객센터</h5>
+                    </div>
+                    <div class="shipping-body">
+                        <p><i class="fas fa-phone me-2"></i> 02-123-4567</p>
+                        <p><i class="fas fa-envelope me-2"></i> support@peakmeshop.com</p>
+                        <p class="mb-0"><i class="fas fa-clock me-2"></i> 평일 09:00 - 18:00 (주말/공휴일 휴무)</p>
+                    </div>
+                </div>
+                
+                <!-- 배송조회 서비스 안내 -->
+                <div class="shipping-card">
+                    <div class="shipping-header">
+                        <h5 class="mb-0">배송조회 바로가기</h5>
+                    </div>
+                    <div class="shipping-body">
+                        <div class="d-grid gap-2">
+                            <a href="https://www.cjlogistics.com/ko/tool/parcel/tracking" target="_blank" class="btn btn-outline-secondary">CJ대한통운</a>
+                            <a href="https://www.lotteglogis.com/home/reservation/tracking/index" target="_blank" class="btn btn-outline-secondary">롯데택배</a>
+                            <a href="https://www.hanjin.com/kor/CMS/DeliveryMgr/WaybillResult.do" target="_blank" class="btn btn-outline-secondary">한진택배</a>
+                            <a href="https://www.epost.go.kr/search.RetrieveRegiPrclDeliv.postal" target="_blank" class="btn btn-outline-secondary">우체국택배</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <th:block layout:fragment="script">
-
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 여기에 필요한 자바스크립트 코드 추가
+        });
+    </script>
 </th:block>
 </body>
 </html>

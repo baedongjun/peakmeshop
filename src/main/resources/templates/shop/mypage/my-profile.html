@@ -6,16 +6,306 @@
 <head>
     <title>회원정보 관리</title>
     <th:block layout:fragment="css">
-
+        <style>
+            .profile-section {
+                padding: 2rem;
+                background-color: #fff;
+                border-radius: 1rem;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            }
+            .profile-title {
+                margin-bottom: 1.5rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid #eee;
+            }
+            .form-group {
+                margin-bottom: 1.5rem;
+            }
+            .profile-image {
+                width: 150px;
+                height: 150px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 5px solid #f8f9fa;
+                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+            }
+            .image-upload-container {
+                position: relative;
+                width: 150px;
+                margin: 0 auto;
+            }
+            .image-upload-btn {
+                position: absolute;
+                bottom: 0;
+                right: 0;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background-color: var(--primary-color);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 2px solid white;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .image-upload-btn:hover {
+                background-color: var(--bs-primary-dark);
+            }
+        </style>
     </th:block>
 </head>
 <body>
 <main layout:fragment="content">
-
+    <section class="py-5">
+        <div class="container">
+            <div class="row">
+                <!-- 마이페이지 사이드바 -->
+                <div class="col-lg-3 mb-4 mb-lg-0">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="text-center mb-4">
+                                <img th:src="${member != null && member.profileImage != null ? member.profileImage : '/placeholder.svg?height=100&width=100'}" 
+                                     alt="프로필 이미지" class="rounded-circle mb-3" width="80" height="80">
+                                <h5 class="mb-0" sec:authentication="name">사용자명</h5>
+                                <p class="text-muted small mb-0">일반회원</p>
+                            </div>
+                            
+                            <div class="list-group list-group-flush">
+                                <a th:href="@{/mypage}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-home me-2"></i> 마이페이지 홈
+                                </a>
+                                <a th:href="@{/mypage/orders}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-shopping-bag me-2"></i> 주문 내역
+                                </a>
+                                <a th:href="@{/mypage/wishlist}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-heart me-2"></i> 위시리스트
+                                </a>
+                                <a th:href="@{/mypage/reviews}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-star me-2"></i> 내 리뷰
+                                </a>
+                                <a th:href="@{/mypage/points}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-coins me-2"></i> 포인트
+                                </a>
+                                <a th:href="@{/mypage/coupons}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-ticket-alt me-2"></i> 쿠폰
+                                </a>
+                                <a th:href="@{/mypage/inquiries}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-question-circle me-2"></i> 문의 내역
+                                </a>
+                                <a th:href="@{/mypage/profile}" class="list-group-item list-group-item-action active">
+                                    <i class="fas fa-user-edit me-2"></i> 회원정보 관리
+                                </a>
+                                <a th:href="@{/mypage/addresses}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-map-marker-alt me-2"></i> 배송지 관리
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 프로필 내용 -->
+                <div class="col-lg-9">
+                    <div class="profile-section">
+                        <h3 class="profile-title">회원정보 관리</h3>
+                        
+                        <!-- 알림 메시지 -->
+                        <div th:if="${successMessage}" class="alert alert-success">
+                            <p th:text="${successMessage}">회원정보가 성공적으로 수정되었습니다.</p>
+                        </div>
+                        <div th:if="${errorMessage}" class="alert alert-danger">
+                            <p th:text="${errorMessage}">회원정보 수정 중 오류가 발생했습니다.</p>
+                        </div>
+                        
+                        <form th:action="@{/api/member/profile}" method="post" enctype="multipart/form-data" th:object="${profileForm}">
+                            <!-- 프로필 이미지 업로드 -->
+                            <div class="text-center mb-4">
+                                <div class="image-upload-container">
+                                    <img id="profileImagePreview" th:src="${member != null && member.profileImage != null ? member.profileImage : '/placeholder.svg?height=150&width=150'}" 
+                                         alt="프로필 이미지" class="profile-image mb-3">
+                                    <label for="profileImageInput" class="image-upload-btn">
+                                        <i class="fas fa-camera"></i>
+                                    </label>
+                                    <input type="file" id="profileImageInput" name="profileImage" class="d-none" accept="image/*">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <!-- 기본 정보 -->
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="name" class="form-label">이름</label>
+                                        <input type="text" class="form-control" id="name" name="name" 
+                                               th:value="${member != null ? member.name : '사용자 이름'}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="nickname" class="form-label">닉네임</label>
+                                        <input type="text" class="form-control" id="nickname" name="nickname" 
+                                               th:value="${member != null ? member.nickname : '사용자 닉네임'}">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="email" class="form-label">이메일</label>
+                                        <input type="email" class="form-control" id="email" name="email" 
+                                               th:value="${member != null ? member.email : 'user@example.com'}" required readonly>
+                                        <small class="text-muted">이메일은 변경할 수 없습니다.</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="phone" class="form-label">휴대폰 번호</label>
+                                        <input type="tel" class="form-control" id="phone" name="phone" 
+                                               th:value="${member != null ? member.phone : '01012345678'}" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <div class="form-group mb-4">
+                                        <label for="birthday" class="form-label">생년월일</label>
+                                        <input type="date" class="form-control" id="birthday" name="birthday" 
+                                               th:value="${member != null && member.birthday != null ? #dates.format(member.birthday, 'yyyy-MM-dd') : ''}">
+                                    </div>
+                                </div>
+                                
+                                <!-- 버튼 -->
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">정보 수정</button>
+                                    <button type="button" class="btn btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                                        비밀번호 변경
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary ms-2" data-bs-toggle="modal" data-bs-target="#withdrawModal">
+                                        회원 탈퇴
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 비밀번호 변경 모달 -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">비밀번호 변경</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="passwordChangeForm" th:action="@{/api/member/password}" method="post">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">현재 비밀번호</label>
+                            <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">새 비밀번호</label>
+                            <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                            <div class="form-text">8자 이상의 영문, 숫자, 특수문자 조합으로 입력해주세요.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">비밀번호 확인</label>
+                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" id="changePasswordBtn">변경하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 회원 탈퇴 모달 -->
+    <div class="modal fade" id="withdrawModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">회원 탈퇴</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-danger">회원 탈퇴 시 모든 개인정보와 주문 내역, 적립금 등이 삭제됩니다. 정말 탈퇴하시겠습니까?</p>
+                    <form id="withdrawForm" th:action="@{/api/member/withdraw}" method="post">
+                        <div class="mb-3">
+                            <label for="withdrawPassword" class="form-label">비밀번호 확인</label>
+                            <input type="password" class="form-control" id="withdrawPassword" name="password" required>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="confirmWithdraw" required>
+                            <label class="form-check-label" for="confirmWithdraw">
+                                회원 탈퇴 시 모든 정보가 삭제되며 복구할 수 없음을 이해했습니다.
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-danger" id="withdrawBtn">탈퇴하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <th:block layout:fragment="script">
-
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 프로필 이미지 미리보기
+            const profileImageInput = document.getElementById('profileImageInput');
+            const profileImagePreview = document.getElementById('profileImagePreview');
+            
+            profileImageInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        profileImagePreview.src = e.target.result;
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+            
+            // 비밀번호 변경
+            const changePasswordBtn = document.getElementById('changePasswordBtn');
+            const passwordChangeForm = document.getElementById('passwordChangeForm');
+            
+            changePasswordBtn.addEventListener('click', function() {
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                if (newPassword !== confirmPassword) {
+                    alert('새 비밀번호와 비밀번호 확인이 일치하지 않습니다.');
+                    return;
+                }
+                
+                passwordChangeForm.submit();
+            });
+            
+            // 회원 탈퇴
+            const withdrawBtn = document.getElementById('withdrawBtn');
+            const withdrawForm = document.getElementById('withdrawForm');
+            
+            withdrawBtn.addEventListener('click', function() {
+                const confirmWithdraw = document.getElementById('confirmWithdraw').checked;
+                
+                if (!confirmWithdraw) {
+                    alert('회원 탈퇴 확인 체크박스를 선택해주세요.');
+                    return;
+                }
+                
+                if (confirm('정말로 탈퇴하시겠습니까? 이 작업은 취소할 수 없습니다.')) {
+                    withdrawForm.submit();
+                }
+            });
+        });
+    </script>
 </th:block>
 </body>
 </html>
