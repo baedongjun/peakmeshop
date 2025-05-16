@@ -36,13 +36,9 @@ public class OrderServiceImpl implements OrderService {
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
     private final OrderItemRepository orderItemRepository;
-    private final EmailService emailService;
-    private final Random random = new Random();
 
     private final OrderMapper orderMapper;
     private final OrderItemMapper orderItemMapper;
-    private final MemberMapper memberMapper;
-    private final ProductMapper productMapper;
 
     @Override
     @Transactional(readOnly = true)

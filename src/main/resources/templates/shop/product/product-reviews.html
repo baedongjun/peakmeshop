@@ -6,16 +6,360 @@
 <head>
     <title>상품 후기</title>
     <th:block layout:fragment="css">
-
+        <style>
+            .reviews-container {
+                min-height: 60vh;
+            }
+            .review-card {
+                border-radius: 0.5rem;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+                margin-bottom: 1.5rem;
+                transition: transform 0.2s ease;
+            }
+            .review-card:hover {
+                transform: translateY(-3px);
+            }
+            .review-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1rem;
+            }
+            .reviewer-info {
+                display: flex;
+                align-items: center;
+            }
+            .reviewer-avatar {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background-color: #f1f3f5;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 0.75rem;
+                color: #6c757d;
+            }
+            .review-rating {
+                color: #ffc107;
+                margin-top: 0.25rem;
+            }
+            .review-date {
+                color: #6c757d;
+                font-size: 0.8rem;
+            }
+            .review-images {
+                display: flex;
+                gap: 0.5rem;
+                margin: 1rem 0;
+                overflow-x: auto;
+                padding-bottom: 0.5rem;
+            }
+            .review-image {
+                width: 80px;
+                height: 80px;
+                border-radius: 0.25rem;
+                object-fit: cover;
+                cursor: pointer;
+                border: 1px solid #dee2e6;
+            }
+            .review-actions {
+                margin-top: 1rem;
+                display: flex;
+                align-items: center;
+            }
+            .helpful-btn {
+                background: none;
+                border: none;
+                display: flex;
+                align-items: center;
+                color: #6c757d;
+                cursor: pointer;
+                transition: color 0.2s ease;
+            }
+            .helpful-btn:hover {
+                color: #0d6efd;
+            }
+            .helpful-count {
+                margin-left: 0.25rem;
+                font-size: 0.9rem;
+            }
+            .empty-reviews {
+                text-align: center;
+                padding: 3rem 0;
+            }
+            .empty-reviews i {
+                font-size: 5rem;
+                color: #dee2e6;
+                margin-bottom: 1.5rem;
+            }
+            .admin-reply {
+                background-color: #f8f9fa;
+                border-radius: 0.25rem;
+                padding: 1rem;
+                margin-top: 1rem;
+                border-left: 3px solid #0d6efd;
+            }
+            .verified-badge {
+                display: inline-block;
+                font-size: 0.7rem;
+                padding: 0.1rem 0.4rem;
+                border-radius: 0.25rem;
+                background-color: #198754;
+                color: white;
+                margin-left: 0.5rem;
+            }
+            .pagination-container {
+                margin-top: 2rem;
+            }
+            .write-review-btn {
+                margin-bottom: 1.5rem;
+            }
+        </style>
     </th:block>
 </head>
 <body>
 <main layout:fragment="content">
-
+    <section class="py-5">
+        <div class="container">
+            <!-- 페이지 헤더 -->
+            <div class="mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/}">홈</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/products}">상품</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/products/{id}(id=${productId})}">상품 상세</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">상품 후기</li>
+                    </ol>
+                </nav>
+                <h2 class="mb-0">상품 후기</h2>
+            </div>
+            
+            <div class="reviews-container">
+                <!-- 리뷰 작성 버튼 -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="reviews-summary">
+                        <h5>
+                            전체 <span th:text="${reviews != null ? reviews.totalElements : 0}">0</span>개 후기
+                            <span class="ms-2">
+                                <i class="fas fa-star text-warning"></i>
+                                <span th:text="${averageRating != null ? #numbers.formatDecimal(averageRating, 1, 1) : 0}">0.0</span>
+                            </span>
+                        </h5>
+                    </div>
+                    <a th:href="@{/products/{id}/review(id=${productId})}" 
+                       class="btn btn-primary write-review-btn" 
+                       sec:authorize="isAuthenticated()">
+                        <i class="fas fa-pen me-1"></i> 후기 작성하기
+                    </a>
+                    <a th:href="@{/login}" 
+                       class="btn btn-outline-primary write-review-btn" 
+                       sec:authorize="!isAuthenticated()">
+                        로그인하고 후기 작성하기
+                    </a>
+                </div>
+                
+                <!-- 리뷰 필터링 옵션 -->
+                <div class="mb-4">
+                    <select id="filter-reviews" class="form-select form-select-sm w-auto">
+                        <option value="recent">최신순</option>
+                        <option value="rating-high">평점 높은순</option>
+                        <option value="rating-low">평점 낮은순</option>
+                        <option value="helpful">도움이 많은순</option>
+                    </select>
+                </div>
+                
+                <!-- 리뷰 목록 -->
+                <div th:if="${reviews != null && !reviews.empty}">
+                    <div class="review-list">
+                        <!-- 각 리뷰 카드 -->
+                        <div class="card review-card" th:each="review : ${reviews.content}">
+                            <div class="card-body">
+                                <div class="review-header">
+                                    <div class="reviewer-info">
+                                        <div class="reviewer-avatar">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0" th:text="${review.memberName}">사용자 이름</h6>
+                                            <div class="review-rating">
+                                                <th:block th:each="i : ${#numbers.sequence(1, 5)}">
+                                                    <i th:class="${i <= review.rating ? 'fas fa-star' : 'far fa-star'}"></i>
+                                                </th:block>
+                                                <span th:if="${review.verifiedPurchase}" class="verified-badge">구매 확인</span>
+                                            </div>
+                                            <small class="review-date" th:text="${#temporals.format(review.createdDate, 'yyyy.MM.dd')}">2023.05.01</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <h5 class="card-title" th:text="${review.title}">리뷰 제목</h5>
+                                <p class="card-text" th:text="${review.content}">리뷰 내용</p>
+                                
+                                <!-- 리뷰 이미지 -->
+                                <div class="review-images" th:if="${review.images != null && !review.images.empty}">
+                                    <img th:each="image : ${review.images}" 
+                                         th:src="${image.imageUrl}" 
+                                         class="review-image" 
+                                         alt="리뷰 이미지">
+                                </div>
+                                
+                                <!-- 리뷰 액션 -->
+                                <div class="review-actions">
+                                    <button class="helpful-btn" th:data-review-id="${review.id}">
+                                        <i class="far fa-thumbs-up me-1"></i> 도움이 됐어요
+                                        <span class="helpful-count" th:text="${review.helpfulCount}">0</span>
+                                    </button>
+                                </div>
+                                
+                                <!-- 관리자 답변 -->
+                                <div th:if="${review.adminReplied}" class="admin-reply">
+                                    <h6 class="mb-2"><i class="fas fa-comments me-1"></i> 판매자 답변</h6>
+                                    <p class="mb-1" th:text="${review.adminReply}">관리자 답변 내용입니다.</p>
+                                    <small class="text-muted" th:text="${#temporals.format(review.adminReplyDate, 'yyyy.MM.dd')}">2023.05.02</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 페이지네이션 -->
+                    <div class="pagination-container d-flex justify-content-center" th:if="${reviews.totalPages > 1}">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination">
+                                <li class="page-item" th:classappend="${reviews.first ? 'disabled' : ''}">
+                                    <a class="page-link" th:href="@{/products/{id}/reviews(id=${productId}, page=0)}" aria-label="First">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item" th:classappend="${reviews.first ? 'disabled' : ''}">
+                                    <a class="page-link" th:href="@{/products/{id}/reviews(id=${productId}, page=${reviews.number - 1})}" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item" th:each="i : ${#numbers.sequence(0, reviews.totalPages - 1)}" 
+                                    th:if="${i >= reviews.number - 2 && i <= reviews.number + 2}"
+                                    th:classappend="${i == reviews.number ? 'active' : ''}">
+                                    <a class="page-link" th:href="@{/products/{id}/reviews(id=${productId}, page=${i})}" th:text="${i + 1}">1</a>
+                                </li>
+                                <li class="page-item" th:classappend="${reviews.last ? 'disabled' : ''}">
+                                    <a class="page-link" th:href="@{/products/{id}/reviews(id=${productId}, page=${reviews.number + 1})}" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item" th:classappend="${reviews.last ? 'disabled' : ''}">
+                                    <a class="page-link" th:href="@{/products/{id}/reviews(id=${productId}, page=${reviews.totalPages - 1})}" aria-label="Last">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+                
+                <!-- 리뷰 없음 -->
+                <div th:if="${reviews == null || reviews.empty}" class="empty-reviews">
+                    <i class="far fa-comment-dots"></i>
+                    <h4>아직 리뷰가 없습니다</h4>
+                    <p class="text-muted">첫 번째 리뷰를 남겨보세요.</p>
+                    <a th:href="@{/products/{id}/review(id=${productId})}" 
+                       class="btn btn-primary" 
+                       sec:authorize="isAuthenticated()">
+                        리뷰 작성하기
+                    </a>
+                    <a th:href="@{/login}" 
+                       class="btn btn-outline-primary" 
+                       sec:authorize="!isAuthenticated()">
+                        로그인하고 리뷰 작성하기
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
 </main>
 
 <th:block layout:fragment="script">
-
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 리뷰 필터링
+            const filterSelect = document.getElementById('filter-reviews');
+            if(filterSelect) {
+                filterSelect.addEventListener('change', function() {
+                    const sort = this.value;
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.set('sort', sort);
+                    window.location.href = currentUrl.toString();
+                });
+                
+                // URL 파라미터에서 현재 정렬 상태 설정
+                const urlParams = new URLSearchParams(window.location.search);
+                const currentSort = urlParams.get('sort');
+                if(currentSort) {
+                    filterSelect.value = currentSort;
+                }
+            }
+            
+            // 도움이 됐어요 버튼
+            document.querySelectorAll('.helpful-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const reviewId = this.getAttribute('data-review-id');
+                    
+                    fetch(`/api/reviews/${reviewId}/helpful`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 도움 수 업데이트
+                        const helpfulCountEl = this.querySelector('.helpful-count');
+                        helpfulCountEl.textContent = data.helpfulCount;
+                        
+                        // 버튼 스타일 변경
+                        this.classList.add('text-primary');
+                        const icon = this.querySelector('i');
+                        icon.classList.replace('far', 'fas');
+                        
+                        // 버튼 비활성화
+                        this.disabled = true;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                });
+            });
+            
+            // 리뷰 이미지 클릭 시 모달로 크게 보기
+            document.querySelectorAll('.review-image').forEach(image => {
+                image.addEventListener('click', function() {
+                    const imgSrc = this.src;
+                    const modal = document.createElement('div');
+                    modal.classList.add('modal', 'fade');
+                    modal.setAttribute('tabindex', '-1');
+                    modal.innerHTML = `
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">리뷰 이미지</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body text-center">
+                                    <img src="${imgSrc}" class="img-fluid" alt="리뷰 이미지">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                    const modalObj = new bootstrap.Modal(modal);
+                    modalObj.show();
+                    
+                    modal.addEventListener('hidden.bs.modal', function() {
+                        document.body.removeChild(modal);
+                    });
+                });
+            });
+        });
+    </script>
 </th:block>
 </body>
 </html>

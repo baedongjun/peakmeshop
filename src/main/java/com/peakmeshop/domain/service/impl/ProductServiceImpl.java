@@ -1,33 +1,27 @@
 package com.peakmeshop.domain.service.impl;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.Map;
-import java.util.HashMap;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-
 import com.peakmeshop.api.dto.*;
 import com.peakmeshop.api.mapper.*;
+import com.peakmeshop.common.exception.BadRequestException;
 import com.peakmeshop.domain.entity.*;
 import com.peakmeshop.domain.repository.*;
+import com.peakmeshop.domain.service.ProductService;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.peakmeshop.common.exception.BadRequestException;
-import com.peakmeshop.domain.service.ProductService;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,19 +30,19 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
-    private final ProductReviewRepository reviewRepository;
-    private final ProductQnaRepository qnaRepository;
-    private final ProductOptionRepository optionRepository;
-    private final ProductOptionValueRepository optionValueRepository;
+    private final ReviewRepository reviewRepository;
+    private final QnaRepository qnaRepository;
+    private final ProductOptionRepository productOptionRepository;
+    private final ProductOptionValueRepository productOptionValueRepository;
     private final ProductImageRepository productImageRepository;
     private final BrandRepository brandRepository;
-    
+
     private final ProductMapper productMapper;
-    private final ProductReviewMapper reviewMapper;
-    private final ProductQnaMapper qnaMapper;
-    private final ProductOptionMapper optionMapper;
-    private final ProductOptionValueMapper optionValueMapper;
-    private final ProductImageMapper imageMapper;
+    private final ReviewMapper reviewMapper;
+    private final QnaMapper qnaMapper;
+    private final ProductOptionMapper productOptionMapper;
+    private final ProductOptionValueMapper productOptionValueMapper;
+    private final ProductImageMapper productImageMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -360,27 +354,27 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductReviewDTO> getProductReviews(Pageable pageable) {
-        Page<ProductReview> reviews = reviewRepository.findAll(pageable);
+    public Page<ReviewDTO> getProductReviews(Pageable pageable) {
+        Page<Review> reviews = reviewRepository.findAll(pageable);
         return reviews.map(reviewMapper::toDTO);
     }
 
     @Override
-    public ProductReviewDTO getReviewById(Long id) {
-        ProductReview review = reviewRepository.findById(id)
+    public ReviewDTO getReviewById(Long id) {
+        Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("리뷰를 찾을 수 없습니다."));
         return reviewMapper.toDTO(review);
     }
 
     @Override
-    public Page<ProductQnaDTO> getProductQnas(Pageable pageable) {
-        Page<ProductQna> qnas = qnaRepository.findAll(pageable);
+    public Page<QnaDTO> getProductQnas(Pageable pageable) {
+        Page<Qna> qnas = qnaRepository.findAll(pageable);
         return qnas.map(qnaMapper::toDTO);
     }
 
     @Override
-    public ProductQnaDTO getQnaById(Long id) {
-        ProductQna qna = qnaRepository.findById(id)
+    public QnaDTO getQnaById(Long id) {
+        Qna qna = qnaRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("문의를 찾을 수 없습니다."));
         return qnaMapper.toDTO(qna);
     }
@@ -398,9 +392,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductOptionDTO> getProductOptions(Long productId) {
-        List<ProductOption> options = optionRepository.findByProductId(productId);
+        List<ProductOption> options = productOptionRepository.findByProductId(productId);
         return options.stream()
-                .map(optionMapper::toDTO)
+                .map(productOptionMapper::toDTO)
                 .collect(Collectors.toList());
     }
 

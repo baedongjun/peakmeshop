@@ -9,22 +9,22 @@
             <h4 class="menu-group-title">쇼핑 정보</h4>
             <ul class="list-unstyled">
                 <li class="menu-item">
-                    <a th:href="@{/mypage/orders}" class="menu-link" th:classappend="${#req.contains('/mypage/orders') ? 'active' : ''}">
+                    <a th:href="@{/mypage/my-orders}" class="menu-link" th:classappend="${#req.contains('/mypage/my-orders') ? 'active' : ''}">
                         <i class="fas fa-shopping-bag me-2"></i> 주문 내역
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a th:href="@{/mypage/cart}" class="menu-link" th:classappend="${#req.contains('/mypage/cart') ? 'active' : ''}">
+                    <a th:href="@{/order/cart}" class="menu-link" th:classappend="${#req.contains('/order/cart') ? 'active' : ''}">
                         <i class="fas fa-shopping-cart me-2"></i> 장바구니
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a th:href="@{/mypage/wishlist}" class="menu-link" th:classappend="${#req.contains('/mypage/wishlist') ? 'active' : ''}">
+                    <a th:href="@{/mypage/my-wishlist}" class="menu-link" th:classappend="${#req.contains('/mypage/my-wishlist') ? 'active' : ''}">
                         <i class="far fa-heart me-2"></i> 위시리스트
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a th:href="@{/mypage/recent-products}" class="menu-link" th:classappend="${#req.contains('/mypage/recent-products') ? 'active' : ''}">
+                    <a th:href="@{/mypage/my-recent}" class="menu-link" th:classappend="${#req.contains('/mypage/my-recent') ? 'active' : ''}">
                         <i class="fas fa-history me-2"></i> 최근 본 상품
                     </a>
                 </li>
@@ -35,12 +35,12 @@
             <h4 class="menu-group-title">혜택 관리</h4>
             <ul class="list-unstyled">
                 <li class="menu-item">
-                    <a th:href="@{/mypage/points}" class="menu-link" th:classappend="${#req.contains('/mypage/points') ? 'active' : ''}">
+                    <a th:href="@{/mypage/my-points}" class="menu-link" th:classappend="${#req.contains('/mypage/my-points') ? 'active' : ''}">
                         <i class="fas fa-coins me-2"></i> 포인트
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a th:href="@{/mypage/coupons}" class="menu-link" th:classappend="${#req.contains('/mypage/coupons') ? 'active' : ''}">
+                    <a th:href="@{/mypage/my-coupons}" class="menu-link" th:classappend="${#req.contains('/mypage/my-coupons') ? 'active' : ''}">
                         <i class="fas fa-ticket-alt me-2"></i> 쿠폰
                     </a>
                 </li>
@@ -51,13 +51,23 @@
             <h4 class="menu-group-title">활동 관리</h4>
             <ul class="list-unstyled">
                 <li class="menu-item">
-                    <a th:href="@{/mypage/reviews}" class="menu-link" th:classappend="${#req.contains('/mypage/reviews') ? 'active' : ''}">
+                    <a th:href="@{/mypage/my-reviews}" class="menu-link" th:classappend="${#req.contains('/mypage/my-reviews') ? 'active' : ''}">
                         <i class="far fa-comment-dots me-2"></i> 상품 리뷰
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a th:href="@{/mypage/qna}" class="menu-link" th:classappend="${#req.contains('/mypage/qna') ? 'active' : ''}">
+                    <a th:href="@{/mypage/my-inquiries}" class="menu-link" th:classappend="${#req.contains('/mypage/my-inquiries') ? 'active' : ''}">
+                        <i class="far fa-question-circle me-2"></i> 나의 문의 내역
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a th:href="@{/support/inquiry}" class="menu-link" th:classappend="${#req.contains('/support/inquiry') ? 'active' : ''}">
                         <i class="far fa-question-circle me-2"></i> 상품 문의
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a th:href="@{/support/faq}" class="menu-link" th:classappend="${#req.contains('/support/faq') ? 'active' : ''}">
+                        <i class="far fa-question-circle me-2"></i> FAQ
                     </a>
                 </li>
             </ul>
@@ -67,18 +77,13 @@
             <h4 class="menu-group-title">회원 정보</h4>
             <ul class="list-unstyled">
                 <li class="menu-item">
-                    <a th:href="@{/mypage/profile}" class="menu-link" th:classappend="${#req.contains('/mypage/profile') ? 'active' : ''}">
+                    <a th:href="@{/mypage/my-profile}" class="menu-link" th:classappend="${#req.contains('/mypage/my-profile') ? 'active' : ''}">
                         <i class="far fa-user me-2"></i> 회원정보 수정
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a th:href="@{/mypage/address}" class="menu-link" th:classappend="${#req.contains('/mypage/address') ? 'active' : ''}">
+                    <a th:href="@{/mypage/my-addresses}" class="menu-link" th:classappend="${#req.contains('/mypage/my-address') ? 'active' : ''}">
                         <i class="fas fa-map-marker-alt me-2"></i> 배송지 관리
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a th:href="@{/mypage/password}" class="menu-link" th:classappend="${#req.contains('/mypage/password') ? 'active' : ''}">
-                        <i class="fas fa-lock me-2"></i> 비밀번호 변경
                     </a>
                 </li>
             </ul>

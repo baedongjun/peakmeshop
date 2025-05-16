@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.peakmeshop.domain.entity.Qna;
 
 public interface QnaRepository extends JpaRepository<Qna, Long> {
+    Long countByProductId(Long productId);
 
     Page<Qna> findByProductId(Long productId, Pageable pageable);
 

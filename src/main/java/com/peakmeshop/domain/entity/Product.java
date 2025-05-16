@@ -91,6 +91,10 @@ public class Product {
 
     private Boolean isActive;
 
+    private Boolean freeShipping;
+
+    private BigDecimal shippingFee;
+
     @Column(name = "average_rating")
     private Double averageRating;
 

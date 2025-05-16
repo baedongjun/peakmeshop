@@ -1,18 +1,10 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main-layout}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>주문 상세 정보 - PeakMeShop</title>
-
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-    <!-- Custom CSS -->
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <title>주문 상세 정보</title>
     <th:block layout:fragment="css">
         <style>
             .order-detail-container {
@@ -145,19 +137,21 @@
     </th:block>
 </head>
 <body>
-<!-- Header -->
-<div th:replace="fragments/header :: header"></div>
-
-<!-- Main Content -->
-<main class="container py-5">
-    <div id="alertContainer"></div>
+<!-- 메인 콘텐츠 -->
+<main layout:fragment="content" class="container py-5">
+    <div id="alertContainer">
+        <div th:if="${message}" th:class="${'alert alert-' + messageType}" role="alert">
+            <span th:text="${message}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
 
     <div class="row mb-4">
         <div class="col-12">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a th:href="@{/}">홈</a></li>
-                    <li class="breadcrumb-item"><a th:href="@{/account/orders}">내 주문</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/mypage/orders}">내 주문</a></li>
                     <li class="breadcrumb-item active" aria-current="page">주문 상세</li>
                 </ol>
             </nav>
@@ -168,9 +162,14 @@
         <div class="col-md-8">
             <h1 class="h3 mb-0">주문 상세 정보</h1>
         </div>
-        <div class="col-md-4 text-md-end">
-            <button id="cancelOrderBtn" class="btn btn-outline-danger">주문 취소</button>
-            <a th:href="@{/account/orders}" class="btn btn-outline-secondary ms-2">주문 목록으로</a>
+        <div class="col-md-4 text-md-end" th:if="${order.status != 'CANCELED' && order.status != 'DELIVERED'}">
+            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelOrderModal" 
+                    th:if="${order.status == 'PENDING' || order.status == 'PROCESSING'}">주문 취소</button>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#confirmOrderModal" 
+                    th:if="${order.status == 'SHIPPED'}">구매 확정</button>
+            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#returnOrderModal" 
+                    th:if="${order.status == 'DELIVERED'}">교환/반품</button>
+            <a th:href="@{/mypage/orders}" class="btn btn-outline-secondary ms-2">주문 목록으로</a>
         </div>
     </div>
 
@@ -178,11 +177,22 @@
         <div class="card-header bg-light">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <h5 class="mb-0">주문 번호: <span id="orderNumber"></span></h5>
+                    <h5 class="mb-0">주문 번호: <span th:text="${order.orderNumber}"></span></h5>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <span class="me-3">주문일: <span id="orderDate"></span></span>
-                    <span class="badge bg-primary" id="orderStatus">처리 중</span>
+                    <span class="me-3">주문일: <span th:text="${#temporals.format(order.orderDate, 'yyyy-MM-dd HH:mm')}"></span></span>
+                    <span th:class="${'badge ' + 
+                         (order.status == 'PENDING' ? 'bg-warning' : 
+                         (order.status == 'PROCESSING' ? 'bg-primary' : 
+                         (order.status == 'SHIPPED' ? 'bg-info' : 
+                         (order.status == 'DELIVERED' ? 'bg-success' : 
+                         (order.status == 'CANCELED' ? 'bg-danger' : 'bg-secondary'))))}"
+                         th:text="${order.status == 'PENDING' ? '주문 접수' : 
+                         (order.status == 'PROCESSING' ? '처리 중' : 
+                         (order.status == 'SHIPPED' ? '배송 중' : 
+                         (order.status == 'DELIVERED' ? '배송 완료' : 
+                         (order.status == 'CANCELED' ? '주문 취소' : '상태 미확인'))))}">
+                    </span>
                 </div>
             </div>
         </div>
@@ -190,20 +200,33 @@
             <div class="row">
                 <div class="col-md-4 mb-4 mb-md-0">
                     <h5>고객 정보</h5>
-                    <div id="customerInfo" class="mt-3">
-                        <!-- Customer info will be populated by JavaScript -->
+                    <div class="mt-3">
+                        <p><strong>이름:</strong> <span th:text="${order.customer.name}"></span></p>
+                        <p><strong>이메일:</strong> <span th:text="${order.customer.email}"></span></p>
+                        <p><strong>전화번호:</strong> <span th:text="${order.customer.phone}"></span></p>
                     </div>
                 </div>
                 <div class="col-md-4 mb-4 mb-md-0">
                     <h5>배송 주소</h5>
-                    <div id="shippingAddress" class="mt-3">
-                        <!-- Shipping address will be populated by JavaScript -->
+                    <div class="mt-3">
+                        <p><strong>받는 사람:</strong> <span th:text="${order.shippingAddress.name}"></span></p>
+                        <p><strong>주소:</strong> <span th:text="${order.shippingAddress.address}"></span></p>
+                        <p><strong>상세 주소:</strong> <span th:text="${order.shippingAddress.addressDetail}"></span></p>
+                        <p><strong>우편번호:</strong> <span th:text="${order.shippingAddress.zipCode}"></span></p>
+                        <p><strong>전화번호:</strong> <span th:text="${order.shippingAddress.phone}"></span></p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <h5>청구 주소</h5>
-                    <div id="billingAddress" class="mt-3">
-                        <!-- Billing address will be populated by JavaScript -->
+                    <div class="mt-3" th:if="${order.billingAddressSameAsShipping}">
+                        <p>배송 주소와 동일</p>
+                    </div>
+                    <div class="mt-3" th:unless="${order.billingAddressSameAsShipping}">
+                        <p><strong>이름:</strong> <span th:text="${order.billingAddress.name}"></span></p>
+                        <p><strong>주소:</strong> <span th:text="${order.billingAddress.address}"></span></p>
+                        <p><strong>상세 주소:</strong> <span th:text="${order.billingAddress.addressDetail}"></span></p>
+                        <p><strong>우편번호:</strong> <span th:text="${order.billingAddress.zipCode}"></span></p>
+                        <p><strong>전화번호:</strong> <span th:text="${order.billingAddress.phone}"></span></p>
                     </div>
                 </div>
             </div>
@@ -213,16 +236,49 @@
             <div class="row">
                 <div class="col-md-6 mb-4 mb-md-0">
                     <h5>결제 정보</h5>
-                    <div id="paymentInfo" class="mt-3">
-                        <!-- Payment info will be populated by JavaScript -->
+                    <div class="mt-3">
+                        <p><strong>결제 방법:</strong> <span th:text="${order.payment.method}"></span></p>
+                        <p th:if="${order.payment.method == 'CARD'}">
+                            <strong>카드:</strong> <span th:text="${order.payment.cardInfo}"></span>
+                        </p>
+                        <p th:if="${order.payment.method == 'BANK_TRANSFER'}">
+                            <strong>입금자명:</strong> <span th:text="${order.payment.depositor}"></span>
+                        </p>
+                        <p><strong>결제 상태:</strong> 
+                            <span th:class="${'badge ' + (order.payment.status == 'PAID' ? 'bg-success' : 'bg-warning')}"
+                                  th:text="${order.payment.status == 'PAID' ? '결제 완료' : '결제 대기'}"></span>
+                        </p>
+                        <p th:if="${order.payment.paidAt != null}">
+                            <strong>결제일:</strong> <span th:text="${#temporals.format(order.payment.paidAt, 'yyyy-MM-dd HH:mm')}"></span>
+                        </p>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <h5>배송 정보</h5>
-                    <div id="trackingInfo" class="mt-3">
-                        <p><strong>배송 상태:</strong> <span id="orderStatus2" class="badge bg-primary">처리 중</span></p>
-                        <p><strong>운송장 번호:</strong> <span id="trackingNumber"></span></p>
-                        <p><a id="trackingUrl" href="#" target="_blank" class="btn btn-sm btn-outline-primary">배송 추적</a></p>
+                    <div class="mt-3">
+                        <p><strong>배송 상태:</strong> 
+                            <span th:class="${'badge ' + 
+                                 (order.status == 'PENDING' ? 'bg-warning' : 
+                                 (order.status == 'PROCESSING' ? 'bg-primary' : 
+                                 (order.status == 'SHIPPED' ? 'bg-info' : 
+                                 (order.status == 'DELIVERED' ? 'bg-success' : 
+                                 (order.status == 'CANCELED' ? 'bg-danger' : 'bg-secondary'))))}"
+                                 th:text="${order.status == 'PENDING' ? '주문 접수' : 
+                                 (order.status == 'PROCESSING' ? '처리 중' : 
+                                 (order.status == 'SHIPPED' ? '배송 중' : 
+                                 (order.status == 'DELIVERED' ? '배송 완료' : 
+                                 (order.status == 'CANCELED' ? '주문 취소' : '상태 미확인'))))}">
+                            </span>
+                        </p>
+                        <p th:if="${order.shipping != null && order.shipping.trackingNumber != null}">
+                            <strong>배송업체:</strong> <span th:text="${order.shipping.carrier}"></span>
+                        </p>
+                        <p th:if="${order.shipping != null && order.shipping.trackingNumber != null}">
+                            <strong>운송장 번호:</strong> <span th:text="${order.shipping.trackingNumber}"></span>
+                        </p>
+                        <p th:if="${order.shipping != null && order.shipping.trackingNumber != null}">
+                            <a th:href="${order.shipping.trackingUrl}" target="_blank" class="btn btn-sm btn-outline-primary">배송 추적</a>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -244,8 +300,21 @@
                         <th>소계</th>
                     </tr>
                     </thead>
-                    <tbody id="orderItems">
-                    <!-- Order items will be populated by JavaScript -->
+                    <tbody>
+                    <tr th:each="item : ${order.items}">
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img th:src="${item.product.thumbnail}" class="order-item-img me-3" alt="상품 이미지">
+                                <div>
+                                    <h6 class="mb-0"><a th:href="@{'/shop/product/' + ${item.product.id}}" th:text="${item.product.name}"></a></h6>
+                                    <span class="text-muted" th:if="${item.optionText}" th:text="${item.optionText}"></span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>₩<span th:text="${#numbers.formatInteger(item.price, 0, 'COMMA')}"></span></td>
+                        <td th:text="${item.quantity}"></td>
+                        <td>₩<span th:text="${#numbers.formatInteger(item.price * item.quantity, 0, 'COMMA')}"></span></td>
+                    </tr>
                     </tbody>
                 </table>
             </div>
@@ -262,47 +331,187 @@
                     <table class="table table-borderless">
                         <tr>
                             <td>소계</td>
-                            <td class="text-end" id="subtotal">₩0</td>
+                            <td class="text-end">₩<span th:text="${#numbers.formatInteger(order.subtotal, 0, 'COMMA')}">0</span></td>
                         </tr>
                         <tr>
                             <td>배송비</td>
-                            <td class="text-end" id="shipping">₩0</td>
+                            <td class="text-end">₩<span th:text="${#numbers.formatInteger(order.shippingFee, 0, 'COMMA')}">0</span></td>
                         </tr>
                         <tr>
                             <td>세금</td>
-                            <td class="text-end" id="tax">₩0</td>
+                            <td class="text-end">₩<span th:text="${#numbers.formatInteger(order.tax, 0, 'COMMA')}">0</span></td>
                         </tr>
-                        <tr id="discountRow">
+                        <tr th:if="${order.discount > 0}">
                             <td>할인</td>
-                            <td class="text-end text-danger" id="discount">-₩0</td>
+                            <td class="text-end text-danger">-₩<span th:text="${#numbers.formatInteger(order.discount, 0, 'COMMA')}">0</span></td>
                         </tr>
                         <tr class="fw-bold">
                             <td>총계</td>
-                            <td class="text-end" id="total">₩0</td>
+                            <td class="text-end">₩<span th:text="${#numbers.formatInteger(order.total, 0, 'COMMA')}">0</span></td>
                         </tr>
                     </table>
                 </div>
             </div>
         </div>
     </div>
+    
+    <!-- 주문 취소 모달 -->
+    <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelOrderModalLabel">주문 취소</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form th:action="@{/mypage/orders/cancel}" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" name="orderId" th:value="${order.id}">
+                        <p>주문을 취소하시겠습니까? 취소 후에는 복구할 수 없습니다.</p>
+                        <div class="mb-3">
+                            <label for="cancelReason" class="form-label">취소 사유</label>
+                            <select class="form-select" id="cancelReason" name="reason" required>
+                                <option value="">선택해주세요</option>
+                                <option value="단순 변심">단순 변심</option>
+                                <option value="배송 지연">배송 지연</option>
+                                <option value="상품 품절">상품 품절</option>
+                                <option value="다른 상품 주문">다른 상품 주문</option>
+                                <option value="기타">기타</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="cancelReasonDetailDiv" style="display: none;">
+                            <label for="cancelReasonDetail" class="form-label">상세 사유</label>
+                            <textarea class="form-control" id="cancelReasonDetail" name="reasonDetail" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="submit" class="btn btn-danger">확인</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 구매 확정 모달 -->
+    <div class="modal fade" id="confirmOrderModal" tabindex="-1" aria-labelledby="confirmOrderModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmOrderModalLabel">구매 확정</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form th:action="@{/mypage/orders/confirm}" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" name="orderId" th:value="${order.id}">
+                        <p>구매를 확정하시겠습니까? 확정 후에는 반품/교환이 어려울 수 있습니다.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="submit" class="btn btn-success">확인</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 교환/반품 모달 -->
+    <div class="modal fade" id="returnOrderModal" tabindex="-1" aria-labelledby="returnOrderModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="returnOrderModalLabel">교환/반품 신청</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form th:action="@{/mypage/orders/return}" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" name="orderId" th:value="${order.id}">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">신청 유형</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="returnType" id="returnTypeExchange" value="exchange" checked>
+                                <label class="form-check-label" for="returnTypeExchange">교환</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="returnType" id="returnTypeRefund" value="refund">
+                                <label class="form-check-label" for="returnTypeRefund">반품</label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">교환/반품 상품 선택</label>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>선택</th>
+                                            <th>상품</th>
+                                            <th>수량</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="item, itemStat : ${order.items}">
+                                            <td class="text-center">
+                                                <div class="form-check">
+                                                    <input class="form-check-input return-item-check" type="checkbox" name="returnItems" th:value="${item.id}" th:id="${'returnItem' + itemStat.index}">
+                                                    <label class="form-check-label" th:for="${'returnItem' + itemStat.index}"></label>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <img th:src="${item.product.thumbnail}" class="order-item-img me-3" alt="상품 이미지" style="width: 60px; height: 60px;">
+                                                    <div>
+                                                        <p class="mb-0" th:text="${item.product.name}"></p>
+                                                        <small class="text-muted" th:if="${item.optionText}" th:text="${item.optionText}"></small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <select class="form-select form-select-sm return-item-quantity" name="returnQuantities" th:disabled="${item.quantity == 1}">
+                                                    <option th:each="i : ${#numbers.sequence(1, item.quantity)}" th:value="${i}" th:text="${i}"></option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="returnReason" class="form-label">사유</label>
+                            <select class="form-select" id="returnReason" name="reason" required>
+                                <option value="">선택해주세요</option>
+                                <option value="단순 변심">단순 변심</option>
+                                <option value="상품 하자">상품 하자</option>
+                                <option value="상품 불량">상품 불량</option>
+                                <option value="오배송">오배송</option>
+                                <option value="사이즈 맞지 않음">사이즈 맞지 않음</option>
+                                <option value="기타">기타</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3" id="returnReasonDetailDiv" style="display: none;">
+                            <label for="returnReasonDetail" class="form-label">상세 사유</label>
+                            <textarea class="form-control" id="returnReasonDetail" name="reasonDetail" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="submit" class="btn btn-primary">신청</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </main>
 
-<!-- Footer -->
-<div th:replace="fragments/footer :: footer"></div>
-
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- Custom JS -->
-<script th:src="@{/js/order-detail.js}"></script>
 <th:block layout:fragment="script">
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // 주문 취소 모달
+            // 취소 사유 선택 시 기타 선택 처리
             const cancelReasonSelect = document.getElementById('cancelReason');
             const cancelReasonDetailDiv = document.getElementById('cancelReasonDetailDiv');
-            const confirmCancelBtn = document.getElementById('confirmCancelBtn');
-
+            
             if (cancelReasonSelect) {
                 cancelReasonSelect.addEventListener('change', function() {
                     if (this.value === '기타') {
@@ -312,70 +521,11 @@
                     }
                 });
             }
-
-            if (confirmCancelBtn) {
-                confirmCancelBtn.addEventListener('click', function() {
-                    const cancelReason = cancelReasonSelect.value;
-
-                    if (!cancelReason) {
-                        alert('취소 사유를 선택해주세요.');
-                        return;
-                    }
-
-                    if (cancelReason === '기타') {
-                        const cancelReasonDetail = document.getElementById('cancelReasonDetail').value;
-                        if (!cancelReasonDetail) {
-                            alert('상세 사유를 입력해주세요.');
-                            return;
-                        }
-                    }
-
-                    // 실제 구현에서는 서버에 주문 취소 요청
-                    console.log('주문 취소 요청:', {
-                        orderId: 1,
-                        reason: cancelReason,
-                        reasonDetail: cancelReason === '기타' ? document.getElementById('cancelReasonDetail').value : ''
-                    });
-
-                    // 임시 알림
-                    alert('주문이 취소되었습니다.');
-
-                    // 모달 닫기
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('cancelOrderModal'));
-                    modal.hide();
-
-                    // 페이지 새로고침 (실제로는 AJAX로 구현)
-                    // location.reload();
-                });
-            }
-
-            // 구매 확정 모달
-            const confirmOrderBtn = document.getElementById('confirmOrderBtn');
-
-            if (confirmOrderBtn) {
-                confirmOrderBtn.addEventListener('click', function() {
-                    // 실제 구현에서는 서버에 구매 확정 요청
-                    console.log('구매 확정 요청:', {
-                        orderId: 1
-                    });
-
-                    // 임시 알림
-                    alert('구매가 확정되었습니다.');
-
-                    // 모달 닫기
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('confirmOrderModal'));
-                    modal.hide();
-
-                    // 페이지 새로고침 (실제로는 AJAX로 구현)
-                    // location.reload();
-                });
-            }
-
-            // 교환/반품 모달
+            
+            // 교환/반품 사유 선택 시 기타 선택 처리
             const returnReasonSelect = document.getElementById('returnReason');
             const returnReasonDetailDiv = document.getElementById('returnReasonDetailDiv');
-            const submitReturnBtn = document.getElementById('submitReturnBtn');
-
+            
             if (returnReasonSelect) {
                 returnReasonSelect.addEventListener('change', function() {
                     if (this.value === '기타') {
@@ -383,65 +533,6 @@
                     } else {
                         returnReasonDetailDiv.style.display = 'none';
                     }
-                });
-            }
-
-            if (submitReturnBtn) {
-                submitReturnBtn.addEventListener('click', function() {
-                    const returnType = document.querySelector('input[name="returnType"]:checked').value;
-                    const returnReason = returnReasonSelect.value;
-                    const selectedItems = document.querySelectorAll('.return-item-check:checked');
-
-                    if (selectedItems.length === 0) {
-                        alert('교환/반품할 상품을 선택해주세요.');
-                        return;
-                    }
-
-                    if (!returnReason) {
-                        alert('사유를 선택해주세요.');
-                        return;
-                    }
-
-                    if (returnReason === '기타') {
-                        const returnReasonDetail = document.getElementById('returnReasonDetail').value;
-                        if (!returnReasonDetail) {
-                            alert('상세 사유를 입력해주세요.');
-                            return;
-                        }
-                    }
-
-                    // 선택된 상품 정보 수집
-                    const items = [];
-                    selectedItems.forEach(item => {
-                        const itemId = item.value;
-                        const row = item.closest('tr');
-                        const quantitySelect = row.querySelector('.return-item-quantity');
-                        const quantity = quantitySelect ? quantitySelect.value : 1;
-
-                        items.push({
-                            itemId: itemId,
-                            quantity: quantity
-                        });
-                    });
-
-                    // 실제 구현에서는 서버에 교환/반품 요청
-                    console.log('교환/반품 요청:', {
-                        orderId: 1,
-                        type: returnType,
-                        reason: returnReason,
-                        reasonDetail: returnReason === '기타' ? document.getElementById('returnReasonDetail').value : '',
-                        items: items
-                    });
-
-                    // 임시 알림
-                    alert(`${returnType === 'exchange' ? '교환' : '반품'} 신청이 완료되었습니다.`);
-
-                    // 모달 닫기
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('returnOrderModal'));
-                    modal.hide();
-
-                    // 페이지 새로고침 (실제로는 AJAX로 구현)
-                    // location.reload();
                 });
             }
         });

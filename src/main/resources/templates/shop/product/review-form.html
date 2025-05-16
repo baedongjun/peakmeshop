@@ -4,18 +4,382 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layouts/main-layout}">
 <head>
-    <title></title>
+    <title>상품 후기 작성</title>
     <th:block layout:fragment="css">
-
+        <style>
+            .review-form-container {
+                min-height: 60vh;
+            }
+            .review-form {
+                border-radius: 0.5rem;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+                padding: 2rem;
+                background-color: #fff;
+            }
+            .rating-container {
+                display: flex;
+                flex-direction: row-reverse;
+                justify-content: flex-end;
+            }
+            .rating {
+                display: none;
+            }
+            .rating + label {
+                font-size: 1.5rem;
+                cursor: pointer;
+                color: #ccc;
+                margin-right: 0.25rem;
+            }
+            .rating:checked ~ label,
+            .rating:hover ~ label {
+                color: #ffc107;
+            }
+            .image-preview-container {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 1rem;
+                margin-top: 1rem;
+            }
+            .image-preview {
+                width: 120px;
+                height: 120px;
+                border-radius: 0.5rem;
+                overflow: hidden;
+                position: relative;
+                border: 1px solid #dee2e6;
+            }
+            .image-preview img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            .image-preview .remove-btn {
+                position: absolute;
+                top: 0.25rem;
+                right: 0.25rem;
+                width: 24px;
+                height: 24px;
+                background-color: rgba(255, 255, 255, 0.8);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                color: #dc3545;
+                font-size: 0.75rem;
+                border: none;
+            }
+            .help-text {
+                font-size: 0.85rem;
+                color: #6c757d;
+            }
+            .product-info {
+                display: flex;
+                align-items: center;
+                padding: 1rem;
+                background-color: #f8f9fa;
+                border-radius: 0.5rem;
+                margin-bottom: 1.5rem;
+            }
+            .product-image {
+                width: 80px;
+                height: 80px;
+                object-fit: cover;
+                border-radius: 0.25rem;
+                margin-right: 1rem;
+            }
+            .product-name {
+                font-weight: 600;
+                margin-bottom: 0.25rem;
+            }
+            .product-meta {
+                font-size: 0.85rem;
+                color: #6c757d;
+            }
+            .file-drop-area {
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                max-width: 100%;
+                padding: 2rem;
+                border: 1px dashed #ccc;
+                border-radius: 0.5rem;
+                transition: 0.2s;
+                background-color: #f8f9fa;
+                margin-top: 0.5rem;
+                min-height: 140px;
+            }
+            .file-drop-area.is-active {
+                background-color: rgba(13, 110, 253, 0.05);
+                border-color: #0d6efd;
+            }
+            .file-message {
+                font-size: 0.9rem;
+                color: #6c757d;
+                text-align: center;
+            }
+            .file-input {
+                position: absolute;
+                left: 0;
+                top: 0;
+                height: 100%;
+                width: 100%;
+                cursor: pointer;
+                opacity: 0;
+            }
+            .file-input:focus ~ .file-drop-area {
+                border-color: #0d6efd;
+            }
+        </style>
     </th:block>
 </head>
 <body>
 <main layout:fragment="content">
-
+    <section class="py-5">
+        <div class="container">
+            <!-- 페이지 헤더 -->
+            <div class="mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a th:href="@{/}">홈</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/products}">상품</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/products/{id}(id=${productId})}">상품 상세</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">후기 작성</li>
+                    </ol>
+                </nav>
+                <h2 class="mb-0">상품 후기 작성</h2>
+            </div>
+            
+            <div class="review-form-container">
+                <!-- 상품 정보 -->
+                <div class="product-info" th:if="${product != null}">
+                    <img th:src="${product.mainImageUrl}" class="product-image" alt="상품 이미지">
+                    <div>
+                        <h5 class="product-name" th:text="${product.name}">상품명</h5>
+                        <div class="product-meta">
+                            <span th:if="${product.orderNumber}" th:text="'주문번호: ' + ${product.orderNumber}">주문번호: 123456789</span>
+                            <span th:if="${product.purchaseDate}" th:text="'구매일: ' + ${#temporals.format(product.purchaseDate, 'yyyy.MM.dd')}">구매일: 2023.05.01</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 리뷰 작성 폼 -->
+                <div class="card review-form">
+                    <form id="reviewForm" th:action="@{/api/reviews}" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="productId" th:value="${productId}">
+                        <input type="hidden" name="orderId" th:value="${orderId}" th:if="${orderId != null}">
+                        
+                        <!-- 별점 -->
+                        <div class="mb-4">
+                            <label class="form-label">별점</label>
+                            <div class="rating-container">
+                                <input type="radio" id="star5" name="rating" value="5" class="rating" required>
+                                <label for="star5"><i class="fas fa-star"></i></label>
+                                <input type="radio" id="star4" name="rating" value="4" class="rating">
+                                <label for="star4"><i class="fas fa-star"></i></label>
+                                <input type="radio" id="star3" name="rating" value="3" class="rating">
+                                <label for="star3"><i class="fas fa-star"></i></label>
+                                <input type="radio" id="star2" name="rating" value="2" class="rating">
+                                <label for="star2"><i class="fas fa-star"></i></label>
+                                <input type="radio" id="star1" name="rating" value="1" class="rating">
+                                <label for="star1"><i class="fas fa-star"></i></label>
+                            </div>
+                        </div>
+                        
+                        <!-- 제목 -->
+                        <div class="mb-4">
+                            <label for="title" class="form-label">제목</label>
+                            <input type="text" class="form-control" id="title" name="title" required minlength="2" maxlength="100" placeholder="후기 제목을 입력해주세요">
+                        </div>
+                        
+                        <!-- 내용 -->
+                        <div class="mb-4">
+                            <label for="content" class="form-label">내용</label>
+                            <textarea class="form-control" id="content" name="content" rows="5" required minlength="10" maxlength="2000" placeholder="상품에 대한 후기를 작성해주세요"></textarea>
+                            <small class="help-text">최소 10자 이상 작성해주세요.</small>
+                        </div>
+                        
+                        <!-- 이미지 업로드 -->
+                        <div class="mb-4">
+                            <label class="form-label">사진 첨부</label>
+                            <div class="file-drop-area">
+                                <input type="file" id="reviewImages" name="reviewImages" class="file-input" accept="image/*" multiple>
+                                <div class="file-message">
+                                    <i class="fas fa-cloud-upload-alt fs-3 mb-2"></i>
+                                    <p>이미지를 드래그하거나 클릭하여 업로드하세요<br><small>(최대 5개, 각 5MB 이하)</small></p>
+                                </div>
+                            </div>
+                            <div id="imagePreviewContainer" class="image-preview-container"></div>
+                        </div>
+                        
+                        <!-- 제출 버튼 -->
+                        <div class="d-flex justify-content-between">
+                            <a th:href="@{/products/{id}(id=${productId})}" class="btn btn-outline-secondary">취소</a>
+                            <button type="submit" class="btn btn-primary">등록하기</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
 </main>
 
 <th:block layout:fragment="script">
-
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 파일 업로드 관련
+            const fileInput = document.getElementById('reviewImages');
+            const fileDropArea = document.querySelector('.file-drop-area');
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+            
+            // 드래그 앤 드롭 이벤트 처리
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                fileDropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                fileDropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                fileDropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                fileDropArea.classList.add('is-active');
+            }
+            
+            function unhighlight() {
+                fileDropArea.classList.remove('is-active');
+            }
+            
+            // 파일 드롭 처리
+            fileDropArea.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            }
+            
+            // 파일 선택 처리
+            fileInput.addEventListener('change', function() {
+                handleFiles(this.files);
+            });
+            
+            function handleFiles(files) {
+                const currentFiles = imagePreviewContainer.querySelectorAll('.image-preview').length;
+                
+                // 최대 5개 이미지 제한
+                if (currentFiles + files.length > 5) {
+                    alert('이미지는 최대 5개까지 업로드할 수 있습니다.');
+                    return;
+                }
+                
+                // 각 파일 처리
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    
+                    // 파일 타입 확인
+                    if (!file.type.match('image.*')) {
+                        alert('이미지 파일만 업로드할 수 있습니다.');
+                        continue;
+                    }
+                    
+                    // 파일 크기 확인 (5MB 제한)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('각 이미지 파일은 5MB 이하여야 합니다.');
+                        continue;
+                    }
+                    
+                    previewImage(file);
+                }
+            }
+            
+            function previewImage(file) {
+                const reader = new FileReader();
+                
+                reader.onloadend = function() {
+                    const preview = document.createElement('div');
+                    preview.className = 'image-preview';
+                    preview.innerHTML = `
+                        <img src="${reader.result}" alt="이미지 미리보기">
+                        <button type="button" class="remove-btn"><i class="fas fa-times"></i></button>
+                    `;
+                    
+                    // 삭제 버튼 이벤트
+                    const removeBtn = preview.querySelector('.remove-btn');
+                    removeBtn.addEventListener('click', function() {
+                        preview.remove();
+                    });
+                    
+                    imagePreviewContainer.appendChild(preview);
+                };
+                
+                reader.readAsDataURL(file);
+            }
+            
+            // 폼 제출 처리
+            const reviewForm = document.getElementById('reviewForm');
+            
+            reviewForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // FormData 객체 생성
+                const formData = new FormData(reviewForm);
+                
+                // 파일 필드 초기화 후 미리보기에서 선택된 파일만 추가
+                formData.delete('reviewImages');
+                
+                // 미리보기에서 제거되지 않은 파일들만 다시 추가
+                const fileList = fileInput.files;
+                const previewImages = document.querySelectorAll('.image-preview img');
+                const previewUrls = Array.from(previewImages).map(img => img.src);
+                
+                for (let i = 0; i < fileList.length; i++) {
+                    const file = fileList[i];
+                    const reader = new FileReader();
+                    reader.onloadend = function() {
+                        if (previewUrls.includes(reader.result)) {
+                            formData.append('reviewImages', file);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+                
+                // AJAX 요청
+                fetch(reviewForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').getAttribute('content')
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('서버 오류가 발생했습니다.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 성공 시 상품 상세 페이지로 이동
+                    alert('후기가 등록되었습니다. 감사합니다!');
+                    window.location.href = `/products/${formData.get('productId')}`;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('후기 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+                });
+            });
+        });
+    </script>
 </th:block>
 </body>
 </html>
