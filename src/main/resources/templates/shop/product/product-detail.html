@@ -379,7 +379,7 @@
                             <div class="product-meta-item">
                                 <span class="product-meta-label">배송비</span>
                                 <span th:if="${product != null && product.freeShipping}">무료배송</span>
-                                <span th:unless="${product != null && product.freeShipping}" th:text="${#numbers.formatInteger(product != null ? product.shippingFee : 3000, 0, 'COMMA') + '원'}">3,000원</span>
+                                <span th:unless="${product != null && product.freeShipping}" th:text="${#numbers.formatInteger((product != null ? product.shippingFee : 3000), 0, 'COMMA') + '원'}">3,000원</span>
                             </div>
                             <div class="product-meta-item">
                                 <span class="product-meta-label">재고</span>
@@ -522,7 +522,7 @@
                                             <div class="me-2" th:text="${star + '점'}">5점</div>
                                             <div class="progress flex-grow-1" style="height: 10px;">
                                                 <div class="progress-bar bg-warning" role="progressbar" 
-                                                     th:style="'width: ' + (product.ratingCounts[star-1] * 100 / (product.reviewCount > 0 ? product.reviewCount : 1)) + '%'" 
+                                                     th:style="'width: ' + ${(product.ratingCounts[star-1] * 100 / (product.reviewCount > 0 ? product.reviewCount : 1))} + '%'"
                                                      th:aria-valuenow="${product.ratingCounts[star-1]}" 
                                                      aria-valuemin="0" th:aria-valuemax="${product.reviewCount}"></div>
                                             </div>
@@ -603,7 +603,7 @@
                                             <li>배송지역: 전국</li>
                                             <li>배송비용: 
                                                 <span th:if="${product != null && product.freeShipping}">무료배송</span>
-                                                <span th:unless="${product != null && product.freeShipping}" th:text="${#numbers.formatInteger(product != null ? product.shippingFee : 3000, 0, 'COMMA') + '원'}">3,000원</span>
+                                                <span th:unless="${product != null && product.freeShipping}" th:text="${#numbers.formatInteger((product != null ? product.shippingFee : 3000), 0, 'COMMA') + '원'}">3,000원</span>
                                             </li>
                                             <li>배송기간: 2~3일 소요 (주말, 공휴일 제외)</li>
                                         </ul>
@@ -640,7 +640,7 @@
                 <div class="row" th:if="${relatedProducts != null && !#lists.isEmpty(relatedProducts)}">
                     <div class="col-md-3 col-sm-6 mb-3" th:each="related : ${relatedProducts}">
                         <div class="card related-product-card h-100">
-                            <img th:src="${related.mainImageUrl}" class="card-img-top related-product-img" alt="관련 상품 이미지">
+                            <img th:src="${related.mainImage}" class="card-img-top related-product-img" alt="관련 상품 이미지">
                             <div class="card-body">
                                 <h5 class="related-product-title" th:text="${related.name}">관련 상품명</h5>
                                 <p class="related-product-price" th:text="${#numbers.formatInteger(related.price, 0, 'COMMA') + '원'}">50,000원</p>
