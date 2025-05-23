@@ -1,6 +1,7 @@
 // auth.js
 document.addEventListener("DOMContentLoaded", () => {
     initSignupForm();
+    initLoginForm();
 });
 
 function initSignupForm() {
@@ -68,6 +69,59 @@ function initSignupForm() {
                         showGeneralError('회원가입 처리 중 오류가 발생했습니다.');
                     }
                 });
+        });
+    }
+}
+
+function initLoginForm() {
+    const loginForm = document.getElementById('loginForm');
+    
+    if (loginForm) {
+        loginForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            // 폼 데이터 수집
+            const formData = {
+                userId: document.getElementById('userId').value,
+                password: document.getElementById('password').value,
+                'remember-me': document.getElementById('remember-me').checked
+            };
+
+            // CSRF 토큰 가져오기
+            const csrfToken = document.querySelector('input[name="_csrf"]').value;
+
+            // AJAX 요청 전송
+            fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errors => {
+                        throw errors;
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // 성공 처리
+                console.log('로그인 성공:', data);
+                showSuccessMessage('로그인되었습니다.');
+                
+                // 메인 페이지로 리다이렉트
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            })
+            .catch(errors => {
+                // 오류 처리
+                console.error('로그인 오류:', errors);
+                showGeneralError('아이디 또는 비밀번호가 올바르지 않습니다.');
+            });
         });
     }
 }

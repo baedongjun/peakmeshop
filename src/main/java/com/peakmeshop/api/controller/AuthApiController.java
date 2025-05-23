@@ -3,7 +3,6 @@ package com.peakmeshop.api.controller;
 import com.peakmeshop.api.dto.AuthDTO;
 import com.peakmeshop.api.dto.AuthResponseDTO;
 import com.peakmeshop.api.dto.LoginRequest;
-import com.peakmeshop.api.dto.SignupRequest;
 import com.peakmeshop.domain.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +31,7 @@ public class AuthApiController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/register")
+    @PostMapping("/signup")
     public ResponseEntity<Void> register(@RequestBody AuthDTO.Register register) {
         authService.register(register);
         return ResponseEntity.ok().build();
