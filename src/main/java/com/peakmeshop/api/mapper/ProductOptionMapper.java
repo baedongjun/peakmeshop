@@ -2,6 +2,7 @@ package com.peakmeshop.api.mapper;
 
 import com.peakmeshop.domain.entity.ProductOption;
 import com.peakmeshop.api.dto.ProductOptionDTO;
+import com.peakmeshop.domain.entity.ProductOptionValue;
 import org.mapstruct.*;
 
 @Mapper(

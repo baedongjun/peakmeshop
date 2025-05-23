@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+    <!-- 배경 -->
+    <rect width="400" height="400" fill="#f5f5f5"/>
+    
+    <!-- 상품 아이콘 -->
+    <g transform="translate(100, 100)">
+        <!-- 상자 -->
+        <rect x="0" y="0" width="200" height="200" fill="#ffffff" stroke="#dddddd" stroke-width="2"/>
+        
+        <!-- 상자 디테일 -->
+        <line x1="0" y1="50" x2="200" y2="50" stroke="#dddddd" stroke-width="2"/>
+        <line x1="0" y1="100" x2="200" y2="100" stroke="#dddddd" stroke-width="2"/>
+        <line x1="0" y1="150" x2="200" y2="150" stroke="#dddddd" stroke-width="2"/>
+        
+        <!-- 상품 아이콘 -->
+        <g transform="translate(100, 100)">
+            <circle cx="0" cy="0" r="40" fill="#e0e0e0"/>
+            <path d="M-20,-20 L20,-20 L20,20 L-20,20 Z" fill="#cccccc"/>
+            <path d="M-10,-10 L10,-10 L10,10 L-10,10 Z" fill="#bbbbbb"/>
+        </g>
+    </g>
+    
+    <!-- 텍스트 -->
+    <text x="200" y="350" font-family="Arial" font-size="24" fill="#999999" text-anchor="middle">
+        상품 이미지 없음
+    </text>
+</svg> 

@@ -90,4 +90,7 @@ public interface ProductService {
      * @return 상품 목록
      */
     List<Product> getProductsByIds(List<Long> ids);
+
+    // 상품 조회수 증가
+    void incrementViewCount(Long id);
 }

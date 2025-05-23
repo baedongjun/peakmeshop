@@ -104,6 +104,9 @@ public class Product {
     @Column(name = "sales_count")
     private Integer salesCount;
 
+    @Column(name = "view_count")
+    private Integer viewCount = 0;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -240,5 +243,9 @@ public class Product {
         if (!isOnSale()) return BigDecimal.ZERO;
         return BigDecimal.ONE.subtract(salePrice.divide(price, 2, BigDecimal.ROUND_HALF_UP))
                 .multiply(new BigDecimal("100"));
+    }
+
+    public void incrementViewCount() {
+        this.viewCount = (this.viewCount == null ? 0 : this.viewCount) + 1;
     }
 }

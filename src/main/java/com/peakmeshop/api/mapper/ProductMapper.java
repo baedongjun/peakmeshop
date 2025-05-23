@@ -12,7 +12,8 @@ import java.util.List;
 
 @Mapper(
         componentModel = "spring",
-        uses = {BaseMapper.class, CategoryMapper.class, BrandMapper.class},
+        uses = {BaseMapper.class, CategoryMapper.class, BrandMapper.class, ProductOptionMapper.class, ProductOptionValueMapper.class},
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
         nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
 )
@@ -26,6 +27,7 @@ public interface ProductMapper {
     @Mapping(target = "inventoryId", source = "inventory.id")
     @Mapping(target = "supplierId", source = "supplier.id")
     @Mapping(target = "supplierName", source = "supplier.name")
+    @Mapping(target = "options", source = "options")
     ProductDTO toDTO(Product product);
 
     @Mapping(target = "category", ignore = true)
@@ -50,28 +52,29 @@ public interface ProductMapper {
             List<ProductOptionValueDTO> sizeOptions = new ArrayList<>();
 
             for (ProductOption option : source.getOptions()) {
+                if (!option.isEnabled()) continue;
+
                 String name = option.getDisplayName() != null ? option.getDisplayName() : option.getName();
+                if (option.getOptionValues() == null) continue;
 
-                if (option.getOptionValues() == null || !option.isEnabled()) continue;
-
-                List<ProductOptionValue> values = option.getOptionValues();
-
-                for (ProductOptionValue value : values) {
+                for (ProductOptionValue value : option.getOptionValues()) {
                     if (!value.isEnabled()) continue;
 
                     ProductOptionValueDTO dto = ProductOptionValueDTO.builder()
                             .id(value.getId())
-                            .name(value.getName())
+                            .optionId(option.getId())
+                            .name(name)
                             .value(value.getValue())
                             .stock(value.getStock())
                             .sku(value.getSku())
                             .isActive(value.isActive())
                             .additionalPrice(value.getAdditionalPrice())
+                            .enabled(value.isEnabled())
                             .build();
 
-                    if ("색상".equalsIgnoreCase(name)) {
+                    if ("색상".equalsIgnoreCase(name) || "color".equalsIgnoreCase(name)) {
                         colorOptions.add(dto);
-                    } else if ("사이즈".equalsIgnoreCase(name)) {
+                    } else if ("사이즈".equalsIgnoreCase(name) || "size".equalsIgnoreCase(name)) {
                         sizeOptions.add(dto);
                     }
                 }

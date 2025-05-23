@@ -109,7 +109,7 @@ public class ProductOptionServiceImpl implements ProductOptionService {
         ProductOptionValue existingValue = productOptionValueRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("상품 옵션 값을 찾을 수 없습니다: " + id));
 
-        existingValue.setName(valueDTO.getName());
+        existingValue.getOption().setName(valueDTO.getName());
         existingValue.setValue(valueDTO.getValue());
         existingValue.setSortOrder(valueDTO.getSortOrder());
         existingValue.setAdditionalPrice(valueDTO.getAdditionalPrice());
@@ -117,14 +117,14 @@ public class ProductOptionServiceImpl implements ProductOptionService {
         existingValue.setStock(valueDTO.getStock());
 
         productOptionValueRepository.save(existingValue);
-        log.info("상품 옵션 값 업데이트: 값={}", existingValue.getName());
+        log.info("상품 옵션 값 업데이트: 값={}", existingValue.getOption().getName());
     }
 
     @Override
     public void deleteOptionValue(Long id) {
         productOptionValueRepository.findById(id).ifPresent(value -> {
             productOptionValueRepository.delete(value);
-            log.info("상품 옵션 값 삭제: 값={}", value.getName());
+            log.info("상품 옵션 값 삭제: 값={}", value.getOption().getName());
         });
     }
 
@@ -160,7 +160,7 @@ public class ProductOptionServiceImpl implements ProductOptionService {
         productOptionValueRepository.findById(id).ifPresent(optionValue -> {
             optionValue.setAdditionalPrice(additionalPrice);
             productOptionValueRepository.save(optionValue);
-            log.info("상품 옵션 추가 가격 업데이트: 옵션={}, 가격={}", optionValue.getName(), additionalPrice);
+            log.info("상품 옵션 추가 가격 업데이트: 옵션={}, 가격={}", optionValue.getOption().getName(), additionalPrice);
         });
     }
 
@@ -185,7 +185,7 @@ public class ProductOptionServiceImpl implements ProductOptionService {
         productOptionValueRepository.findById(id).ifPresent(value -> {
             value.setStock(stock);
             productOptionValueRepository.save(value);
-            log.info("상품 옵션 값 재고 업데이트: 값={}, 재고={}", value.getName(), stock);
+            log.info("상품 옵션 값 재고 업데이트: 값={}, 재고={}", value.getOption().getName(), stock);
         });
     }
 } 

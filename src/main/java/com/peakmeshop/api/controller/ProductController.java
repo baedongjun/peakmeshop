@@ -122,4 +122,10 @@ public class ProductController {
     public ResponseEntity<Page<ProductDTO>> getDiscountedProducts(@PageableDefault(size = 10) Pageable pageable) {
         return ResponseEntity.ok(productService.getDiscountedProducts(pageable));
     }
+
+    @PostMapping("/{id}/view")
+    public ResponseEntity<Void> incrementViewCount(@PathVariable Long id) {
+        productService.incrementViewCount(id);
+        return ResponseEntity.ok().build();
+    }
 }

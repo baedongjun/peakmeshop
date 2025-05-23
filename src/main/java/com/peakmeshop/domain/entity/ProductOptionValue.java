@@ -25,10 +25,12 @@ public class ProductOptionValue {
     private ProductOption option;
 
     @Column(nullable = false)
-    private String name;
-
-    @Column(nullable = false)
     private String value;
+
+    @Column(name = "display_value")
+    private String displayValue;
+
+    private String description;
 
     private Integer sortOrder;
 
@@ -38,14 +40,20 @@ public class ProductOptionValue {
     @Column(columnDefinition = "boolean default true")
     private boolean enabled;
 
+    @Column(columnDefinition = "boolean default true")
+    private boolean isActive;
+
     @Column(nullable = false)
     private Integer stock;
 
     @Column
     private String sku;
 
-    @Column(nullable = false)
-    private boolean isActive;
+    @Column(name = "color_code")
+    private String colorCode;
+
+    @Column(name = "image_url")
+    private String imageUrl;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -65,4 +73,5 @@ public class ProductOptionValue {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-} 
+
+}

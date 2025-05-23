@@ -1,39 +1,25 @@
 package com.peakmeshop.api.controller;
 
-import java.util.List;
-
+import com.peakmeshop.api.dto.ProductAttributeDTO;
+import com.peakmeshop.domain.entity.ProductAttributeOption;
+import com.peakmeshop.domain.service.ProductAttributeService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.peakmeshop.api.dto.ProductAttributeDTO;
-import com.peakmeshop.domain.service.ProductAttributeService;
+import java.util.List;
 
 @RestController
-@RequestMapping("/api/product-attributes")
+@RequestMapping("/api/v1/product-attributes")
+@RequiredArgsConstructor
 public class ProductAttributeController {
 
     private final ProductAttributeService productAttributeService;
 
-    public ProductAttributeController(ProductAttributeService productAttributeService) {
-        this.productAttributeService = productAttributeService;
-    }
-
     @GetMapping
-    public ResponseEntity<Page<ProductAttributeDTO>> getAllAttributes(
-            @PageableDefault(size = 20) Pageable pageable) {
+    public ResponseEntity<Page<ProductAttributeDTO>> getAllAttributes(Pageable pageable) {
         return ResponseEntity.ok(productAttributeService.getAllAttributes(pageable));
     }
 
@@ -52,13 +38,11 @@ public class ProductAttributeController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductAttributeDTO> createAttribute(@RequestBody ProductAttributeDTO attributeDTO) {
-        return new ResponseEntity<>(productAttributeService.createAttribute(attributeDTO), HttpStatus.CREATED);
+        return ResponseEntity.ok(productAttributeService.createAttribute(attributeDTO));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductAttributeDTO> updateAttribute(
             @PathVariable Long id,
             @RequestBody ProductAttributeDTO attributeDTO) {
@@ -66,7 +50,6 @@ public class ProductAttributeController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteAttribute(@PathVariable Long id) {
         if (productAttributeService.deleteAttribute(id)) {
             return ResponseEntity.noContent().build();
@@ -74,46 +57,25 @@ public class ProductAttributeController {
         return ResponseEntity.notFound().build();
     }
 
-    @GetMapping("/filterable")
-    public ResponseEntity<List<ProductAttributeDTO>> getFilterableAttributes() {
-        return ResponseEntity.ok(productAttributeService.getFilterableAttributes());
+    @GetMapping("/product/{productId}/options")
+    public ResponseEntity<List<String>> getAttributeOptions(
+            @PathVariable Long productId,
+            @RequestParam String type) {
+        return ResponseEntity.ok(productAttributeService.getAttributeOptions(productId, type));
     }
 
-    @GetMapping("/searchable")
-    public ResponseEntity<List<ProductAttributeDTO>> getSearchableAttributes() {
-        return ResponseEntity.ok(productAttributeService.getSearchableAttributes());
+    @GetMapping("/option/{attributeOptionId}/values")
+    public ResponseEntity<List<String>> getAttributeOptionValues(@PathVariable Long attributeOptionId) {
+        return ResponseEntity.ok(productAttributeService.getAttributeOptionValues(attributeOptionId));
     }
 
-    @GetMapping("/comparable")
-    public ResponseEntity<List<ProductAttributeDTO>> getComparableAttributes() {
-        return ResponseEntity.ok(productAttributeService.getComparableAttributes());
+    @GetMapping("/option/{attributeOptionId}")
+    public ResponseEntity<ProductAttributeOption> getAttributeOption(@PathVariable Long attributeOptionId) {
+        return ResponseEntity.ok(productAttributeService.getAttributeOption(attributeOptionId));
     }
 
-    @GetMapping("/product-listing")
-    public ResponseEntity<List<ProductAttributeDTO>> getAttributesForProductListing() {
-        return ResponseEntity.ok(productAttributeService.getAttributesForProductListing());
-    }
-
-    @PostMapping("/{attributeId}/options")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> addAttributeOption(
-            @PathVariable Long attributeId,
-            @RequestParam String option) {
-        productAttributeService.addAttributeOption(attributeId, option);
-        return ResponseEntity.ok().build();
-    }
-
-    @DeleteMapping("/{attributeId}/options")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> removeAttributeOption(
-            @PathVariable Long attributeId,
-            @RequestParam String option) {
-        productAttributeService.removeAttributeOption(attributeId, option);
-        return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/{attributeId}/options")
-    public ResponseEntity<List<String>> getAttributeOptions(@PathVariable Long attributeId) {
-        return ResponseEntity.ok(productAttributeService.getAttributeOptions(attributeId));
+    @GetMapping("/option/{attributeOptionId}/code")
+    public ResponseEntity<String> getAttributeOptionCode(@PathVariable Long attributeOptionId) {
+        return ResponseEntity.ok(productAttributeService.getCode(attributeOptionId));
     }
 }

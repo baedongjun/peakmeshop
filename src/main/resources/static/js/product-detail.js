@@ -1,703 +1,808 @@
 // 상품 상세 정보를 가져오는 함수
 async function fetchProductDetail(productId) {
     try {
-        const response = await fetch(`/api/products/${productId}`)
-
+        const response = await fetch(`/api/products/${productId}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
         if (!response.ok) {
-            throw new Error("상품 정보를 불러오는데 실패했습니다.")
+            throw new Error('상품 정보를 가져오는데 실패했습니다.');
         }
-
-        return await response.json()
+        return await response.json();
     } catch (error) {
-        console.error("상품 상세 정보 조회 오류:", error)
-        return null
+        handleError(error, '상품 정보를 불러오는데 실패했습니다.');
+        return null;
     }
 }
 
 // 관련 상품 목록을 가져오는 함수
 async function fetchRelatedProducts(productId, categoryId, limit = 4) {
     try {
-        const response = await fetch(`/api/products/related?productId=${productId}&categoryId=${categoryId}&limit=${limit}`)
-
+        const response = await fetch(`/api/products/category/${categoryId}?size=${limit}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
         if (!response.ok) {
-            throw new Error("관련 상품을 불러오는데 실패했습니다.")
+            throw new Error('관련 상품을 불러오는데 실패했습니다.');
         }
-
-        return await response.json()
+        const data = await response.json();
+        // 현재 상품을 제외한 상품들만 반환
+        return data.content.filter(product => product.id !== productId);
     } catch (error) {
-        console.error("관련 상품 조회 오류:", error)
-        return []
+        handleError(error, '관련 상품을 불러오는데 실패했습니다.');
+        return [];
     }
 }
 
 // 상품 리뷰 목록을 가져오는 함수
 async function fetchProductReviews(productId, page = 0, size = 5) {
     try {
-        const response = await fetch(`/api/reviews/product/${productId}?page=${page}&size=${size}`)
-
+        const response = await fetch(`/api/reviews/product/${productId}?page=${page}&size=${size}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
         if (!response.ok) {
-            throw new Error("상품 리뷰를 불러오는데 실패했습니다.")
+            throw new Error('상품 리뷰를 불러오는데 실패했습니다.');
         }
-
-        return await response.json()
+        return await response.json();
     } catch (error) {
-        console.error("상품 리뷰 조회 오류:", error)
-        return { content: [], totalElements: 0, totalPages: 0 }
+        handleError(error, '상품 리뷰를 불러오는데 실패했습니다.');
+        return { content: [], totalElements: 0, totalPages: 0 };
     }
+}
+
+// 상품 조회수 증가 함수
+async function trackProductView(productId) {
+    try {
+        await fetch(`/api/products/${productId}/view`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+    } catch (error) {
+        console.error('상품 조회수 증가 실패:', error);
+    }
+}
+
+// 에러 처리 함수
+function handleError(error, message) {
+    console.error(error);
+    
+    // 토스트 메시지 생성
+    const toast = document.createElement('div');
+    toast.className = 'toast align-items-center text-white bg-danger border-0 position-fixed bottom-0 end-0 m-3';
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    // 토스트 메시지 자동 제거
+    toast.addEventListener('hidden.bs.toast', () => {
+        toast.remove();
+    });
 }
 
 // 별점을 렌더링하는 함수
 function renderRatingStars(rating) {
-    let starsHTML = ""
-
+    let starsHTML = '';
+    
     // 꽉 찬 별
     for (let i = 1; i <= Math.floor(rating); i++) {
-        starsHTML += '<i class="fas fa-star"></i>'
+        starsHTML += '<i class="fas fa-star"></i>';
     }
-
+    
     // 반 별
     if (rating % 1 >= 0.5) {
-        starsHTML += '<i class="fas fa-star-half-alt"></i>'
+        starsHTML += '<i class="fas fa-star-half-alt"></i>';
     }
-
+    
     // 빈 별
-    const emptyStars = 5 - Math.floor(rating) - (rating % 1 >= 0.5 ? 1 : 0)
+    const emptyStars = 5 - Math.floor(rating) - (rating % 1 >= 0.5 ? 1 : 0);
     for (let i = 1; i <= emptyStars; i++) {
-        starsHTML += '<i class="far fa-star"></i>'
+        starsHTML += '<i class="far fa-star"></i>';
     }
-
-    return starsHTML
+    
+    return starsHTML;
 }
 
-// 상품 상세 정보를 화면에 렌더링하는 함수
-function renderProductDetail(product) {
-    if (!product) {
-        document.getElementById("productNotFound").style.display = "block"
-        document.getElementById("productDetail").style.display = "none"
-        return
-    }
-
-    document.getElementById("productNotFound").style.display = "none"
-    document.getElementById("productDetail").style.display = "block"
-
-    // 상품 이미지 갤러리 렌더링
-    renderProductGallery(product)
-
-    // 상품 정보 렌더링
-    document.getElementById("productName").textContent = product.name
-
-    // 별점 렌더링
-    const ratingElement = document.getElementById("productRating")
-    ratingElement.innerHTML = `
-        ${renderRatingStars(product.rating)}
-        <span class="ms-2 text-muted">(${product.reviewCount || 0} 리뷰)</span>
-    `
-
-    // 가격 렌더링
-    const priceElement = document.getElementById("productPrice")
-    if (product.originalPrice > product.price) {
-        priceElement.innerHTML = `
-            <span class="original-price">₩${product.originalPrice.toLocaleString()}</span>
-            <span class="current-price">₩${product.price.toLocaleString()}</span>
-        `
-    } else {
-        priceElement.innerHTML = `<span class="current-price">₩${product.price.toLocaleString()}</span>`
-    }
-
-    // 상품 설명 렌더링
-    document.getElementById("productDescription").innerHTML = product.description
-
-    // 상품 SKU, 카테고리, 태그 렌더링
-    document.getElementById("productSku").textContent = product.sku || "N/A"
-    document.getElementById("productCategory").textContent = product.categoryName || "N/A"
-
-    // 태그 렌더링
-    const tagsElement = document.getElementById("productTags")
-    if (product.tags && product.tags.length > 0) {
-        tagsElement.innerHTML = product.tags
-            .map((tag) => `<a href="/shop?tag=${tag}" class="text-decoration-none me-2">${tag}</a>`)
-            .join(", ")
-    } else {
-        tagsElement.textContent = "N/A"
-    }
-
-    // 재고 상태 렌더링
-    const stockElement = document.getElementById("productStock")
-    if (product.stockQuantity > 0) {
-        stockElement.innerHTML = `<span class="text-success">재고 있음 (${product.stockQuantity}개)</span>`
-    } else {
-        stockElement.innerHTML = '<span class="text-danger">품절</span>'
-    }
-
-    // 색상 옵션 렌더링
-    renderColorOptions(product.colors || [])
-
-    // 사이즈 옵션 렌더링
-    renderSizeOptions(product.sizes || [])
-
-    // 수량 입력 필드 초기화
-    document.getElementById("productQuantity").value = 1
-
-    // 장바구니, 위시리스트 버튼 이벤트 설정
-    setupActionButtons(product.id)
-}
-
-// 상품 이미지 갤러리 렌더링 함수
+// 상품 이미지 갤러리 렌더링
 function renderProductGallery(product) {
-    const mainImageElement = document.getElementById("mainProductImage")
-    const thumbnailsContainer = document.getElementById("productThumbnails")
+    const mainImage = document.getElementById('mainProductImage');
+    const thumbnailsContainer = document.getElementById('productThumbnails');
+    
+    if (!mainImage || !thumbnailsContainer) return;
 
-    // 기본 이미지 URL 또는 플레이스홀더
-    const defaultImageUrl = product.imageUrl || "/placeholder.svg?height=600&width=600"
+    // 기본 이미지 URL
+    const DEFAULT_PRODUCT_IMAGE = '/images/default-product.svg';
 
     // 메인 이미지 설정
-    mainImageElement.src = defaultImageUrl
-    mainImageElement.alt = product.name
+    mainImage.src = DEFAULT_PRODUCT_IMAGE; // 먼저 기본 이미지 표시
+    mainImage.alt = product.name || '상품 이미지';
 
-    // 썸네일 이미지 렌더링
     if (product.images && product.images.length > 0) {
-        // 첫 번째 이미지를 메인 이미지로 설정
-        mainImageElement.src = product.images[0].url
+        const firstImage = new Image();
+        firstImage.onload = () => {
+            mainImage.src = firstImage.src;
+        };
+        firstImage.onerror = () => {
+            mainImage.src = DEFAULT_PRODUCT_IMAGE;
+        };
+        firstImage.src = product.images[0].imageUrl;
+    }
 
-        // 썸네일 이미지 렌더링
-        thumbnailsContainer.innerHTML = product.images
-            .map(
-                (image, index) => `
-            <div class="product-thumbnail ${index === 0 ? "active" : ""}">
-                <img src="${image.url}" alt="${product.name} - 이미지 ${index + 1}" 
-                     onclick="changeMainImage(this.src)">
-            </div>
-        `,
-            )
-            .join("")
+    // 썸네일 이미지 설정
+    thumbnailsContainer.innerHTML = '';
+    if (product.images && product.images.length > 0) {
+        product.images.forEach((image, index) => {
+            const thumbnail = document.createElement('div');
+            thumbnail.className = `product-thumbnail ${index === 0 ? 'active' : ''}`;
+            thumbnail.setAttribute('data-image', image.imageUrl);
+            
+            const img = document.createElement('img');
+            img.src = DEFAULT_PRODUCT_IMAGE; // 먼저 기본 이미지 표시
+            img.alt = `${product.name || '상품'} - 이미지 ${index + 1}`;
+            
+            // 실제 이미지 로드
+            const productImage = new Image();
+            productImage.onload = () => {
+                img.src = productImage.src;
+            };
+            productImage.onerror = () => {
+                img.src = DEFAULT_PRODUCT_IMAGE;
+            };
+            productImage.src = image.imageUrl;
+            
+            thumbnail.appendChild(img);
+            thumbnail.addEventListener('click', () => {
+                mainImage.src = image.imageUrl;
+                document.querySelectorAll('.product-thumbnail').forEach(thumb => thumb.classList.remove('active'));
+                thumbnail.classList.add('active');
+            });
+            
+            thumbnailsContainer.appendChild(thumbnail);
+        });
     } else {
-        // 이미지가 없는 경우 기본 이미지만 표시
-        thumbnailsContainer.innerHTML = `
-            <div class="product-thumbnail active">
-                <img src="${defaultImageUrl}" alt="${product.name}">
-            </div>
-        `
+        // 이미지가 없는 경우 기본 이미지 썸네일 추가
+        const thumbnail = document.createElement('div');
+        thumbnail.className = 'product-thumbnail active';
+        thumbnail.setAttribute('data-image', DEFAULT_PRODUCT_IMAGE);
+        
+        const img = document.createElement('img');
+        img.src = DEFAULT_PRODUCT_IMAGE;
+        img.alt = '상품 이미지';
+        
+        thumbnail.appendChild(img);
+        thumbnailsContainer.appendChild(thumbnail);
     }
 }
 
-// 메인 이미지 변경 함수
-function changeMainImage(imageUrl) {
-    const mainImageElement = document.getElementById("mainProductImage")
-    mainImageElement.src = imageUrl
-
-    // 썸네일 활성화 상태 변경
-    document.querySelectorAll(".product-thumbnail").forEach((thumbnail) => {
-        if (thumbnail.querySelector("img").src === imageUrl) {
-            thumbnail.classList.add("active")
-        } else {
-            thumbnail.classList.remove("active")
-        }
-    })
-}
-
-// 색상 옵션 렌더링 함수
+// 색상 옵션 렌더링
 function renderColorOptions(colors) {
-    const colorsContainer = document.getElementById("productColors")
-
+    const colorContainer = document.getElementById('productColors');
+    if (!colorContainer) return;
+    
     if (!colors || colors.length === 0) {
-        colorsContainer.innerHTML = "<p>색상 옵션이 없습니다.</p>"
-        return
+        colorContainer.innerHTML = '<div class="no-options">색상 옵션이 없습니다.</div>';
+        return;
     }
 
-    colorsContainer.innerHTML = colors
-        .map(
-            (color) => `
-        <div class="color-option" style="background-color: ${color.hexCode}" 
-             data-color-id="${color.id}" data-color-name="${color.name}"
-             title="${color.name}" onclick="selectColor(this)"></div>
-    `,
-        )
-        .join("")
+    let html = '';
+    colors.forEach(color => {
+        const isDisabled = !color.enabled || color.stock <= 0;
+        const colorClass = isDisabled ? 'color-option disabled' : 'color-option';
+        const style = color.value.startsWith('#') ? `background-color: ${color.value}` : '';
+        
+        html += `
+            <div class="${colorClass}" 
+                 data-color-id="${color.id}"
+                 data-option-id="${color.optionId}"
+                 data-stock="${color.stock}"
+                 style="${style}"
+                 ${isDisabled ? 'title="품절"' : ''}>
+                ${!color.value.startsWith('#') ? color.value : ''}
+            </div>
+        `;
+    });
+
+    colorContainer.innerHTML = html;
+
+    // 색상 선택 이벤트 리스너
+    colorContainer.querySelectorAll('.color-option:not(.disabled)').forEach(option => {
+        option.addEventListener('click', () => {
+            // 이전 선택 제거
+            colorContainer.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('active'));
+            // 현재 선택 활성화
+            option.classList.add('active');
+            // 사이즈 옵션 업데이트
+            updateSizeOptions();
+        });
+    });
 }
 
-// 색상 선택 함수
-function selectColor(element) {
-    // 이전 선택 해제
-    document.querySelectorAll(".color-option").forEach((option) => {
-        option.classList.remove("active")
-    })
-
-    // 현재 선택 활성화
-    element.classList.add("active")
-
-    // 선택된 색상 ID와 이름 저장
-    document.getElementById("selectedColorId").value = element.dataset.colorId
-    document.getElementById("selectedColorName").value = element.dataset.colorName
-}
-
-// 사이즈 옵션 렌더링 함수
+// 사이즈 옵션 렌더링
 function renderSizeOptions(sizes) {
-    const sizesContainer = document.getElementById("productSizes")
-
+    const sizeContainer = document.getElementById('productSizes');
+    if (!sizeContainer) return;
+    
     if (!sizes || sizes.length === 0) {
-        sizesContainer.innerHTML = "<p>사이즈 옵션이 없습니다.</p>"
-        return
+        sizeContainer.innerHTML = '<div class="no-options">사이즈 옵션이 없습니다.</div>';
+        return;
     }
 
-    sizesContainer.innerHTML = sizes
-        .map(
-            (size) => `
-        <div class="size-option" data-size-id="${size.id}" data-size-name="${size.name}"
-             onclick="selectSize(this)">${size.name}</div>
-    `,
-        )
-        .join("")
+    let html = '';
+    sizes.forEach(size => {
+        const isDisabled = !size.enabled || size.stock <= 0;
+        const sizeClass = isDisabled ? 'size-option disabled' : 'size-option';
+        
+        html += `
+            <div class="${sizeClass}"
+                 data-size-id="${size.id}"
+                 data-option-id="${size.optionId}"
+                 data-stock="${size.stock}"
+                 ${isDisabled ? 'title="품절"' : ''}>
+                ${size.value}
+            </div>
+        `;
+    });
+
+    sizeContainer.innerHTML = html;
+
+    // 사이즈 선택 이벤트 리스너
+    sizeContainer.querySelectorAll('.size-option:not(.disabled)').forEach(option => {
+        option.addEventListener('click', () => {
+            // 이전 선택 제거
+            sizeContainer.querySelectorAll('.size-option').forEach(opt => opt.classList.remove('active'));
+            // 현재 선택 활성화
+            option.classList.add('active');
+        });
+    });
 }
 
-// 사이즈 선택 함수
-function selectSize(element) {
-    // 이전 선택 해제
-    document.querySelectorAll(".size-option").forEach((option) => {
-        option.classList.remove("active")
-    })
+// 선택된 색상에 따른 사이즈 옵션 업데이트
+function updateSizeOptions() {
+    const selectedColor = document.querySelector('.color-option.active');
+    if (!selectedColor) return;
 
-    // 현재 선택 활성화
-    element.classList.add("active")
+    const colorId = selectedColor.dataset.colorId;
+    const sizeContainer = document.getElementById('productSizes');
+    const sizes = window.productData.sizeOptions.filter(size => 
+        size.optionId === selectedColor.dataset.optionId && size.stock > 0
+    );
 
-    // 선택된 사이즈 ID와 이름 저장
-    document.getElementById("selectedSizeId").value = element.dataset.sizeId
-    document.getElementById("selectedSizeName").value = element.dataset.sizeName
+    renderSizeOptions(sizes);
 }
 
 // 수량 증가 함수
 function increaseQuantity() {
-    const quantityInput = document.getElementById("productQuantity")
-    const currentQuantity = Number.parseInt(quantityInput.value)
-    const maxQuantity = Number.parseInt(quantityInput.getAttribute("max")) || 10
-
-    if (currentQuantity < maxQuantity) {
-        quantityInput.value = currentQuantity + 1
+    const quantityInput = document.getElementById('productQuantity');
+    const currentValue = parseInt(quantityInput.value);
+    const maxValue = parseInt(quantityInput.getAttribute('max'));
+    
+    if (currentValue < maxValue) {
+        quantityInput.value = currentValue + 1;
     }
 }
 
 // 수량 감소 함수
 function decreaseQuantity() {
-    const quantityInput = document.getElementById("productQuantity")
-    const currentQuantity = Number.parseInt(quantityInput.value)
-
-    if (currentQuantity > 1) {
-        quantityInput.value = currentQuantity - 1
+    const quantityInput = document.getElementById('productQuantity');
+    const currentValue = parseInt(quantityInput.value);
+    const minValue = parseInt(quantityInput.getAttribute('min'));
+    
+    if (currentValue > minValue) {
+        quantityInput.value = currentValue - 1;
     }
+}
+
+// 장바구니 아이콘 업데이트 함수
+async function updateCartIcon() {
+    try {
+        const response = await fetch('/api/cart/count');
+        if (response.ok) {
+            const count = await response.json();
+            const cartIcon = document.getElementById('cartCount');
+            if (cartIcon) {
+                cartIcon.textContent = count;
+            }
+        }
+    } catch (error) {
+        console.error('장바구니 아이콘 업데이트 실패:', error);
+    }
+}
+
+// 위시리스트 아이콘 업데이트 함수
+async function updateWishlistIcon() {
+    try {
+        const response = await fetch('/api/wishlist/count', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        // 인증되지 않은 경우 처리
+        if (response.status === 401 || response.status === 403) {
+            const wishlistIcon = document.getElementById('wishlistCount');
+            if (wishlistIcon) {
+                wishlistIcon.textContent = '0';
+            }
+            return;
+        }
+        
+        if (!response.ok) {
+            throw new Error('위시리스트 개수를 가져오는데 실패했습니다.');
+        }
+        
+        const count = await response.json();
+        const wishlistIcon = document.getElementById('wishlistCount');
+        if (wishlistIcon) {
+            wishlistIcon.textContent = count;
+        }
+    } catch (error) {
+        console.error('위시리스트 아이콘 업데이트 실패:', error);
+        // 에러 발생 시 아이콘을 0으로 설정
+        const wishlistIcon = document.getElementById('wishlistCount');
+        if (wishlistIcon) {
+            wishlistIcon.textContent = '0';
+        }
+    }
+}
+
+// 장바구니 추가 함수
+async function addToCart() {
+    const colorOption = document.querySelector('.color-option.active');
+    const sizeOption = document.querySelector('.size-option.active');
+    const quantity = document.getElementById('productQuantity').value;
+    
+    if (!colorOption || !sizeOption) {
+        handleError(null, '색상과 사이즈를 선택해주세요.');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/cart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                productId: getProductIdFromUrl(),
+                colorId: colorOption.getAttribute('data-color-id'),
+                sizeId: sizeOption.getAttribute('data-size-id'),
+                quantity: parseInt(quantity)
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('장바구니 추가에 실패했습니다.');
+        }
+        
+        alert('장바구니에 추가되었습니다.');
+        // 장바구니 아이콘 업데이트
+        await updateCartIcon();
+    } catch (error) {
+        handleError(error, '장바구니 추가에 실패했습니다.');
+    }
+}
+
+// 바로구매 함수
+async function buyNow() {
+    const colorOption = document.querySelector('.color-option.active');
+    const sizeOption = document.querySelector('.size-option.active');
+    const quantity = document.getElementById('productQuantity').value;
+    
+    if (!colorOption || !sizeOption) {
+        handleError(null, '색상과 사이즈를 선택해주세요.');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/cart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                productId: getProductIdFromUrl(),
+                colorId: colorOption.getAttribute('data-color-id'),
+                sizeId: sizeOption.getAttribute('data-size-id'),
+                quantity: parseInt(quantity)
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('장바구니 추가에 실패했습니다.');
+        }
+        
+        // 장바구니에 추가 후 주문 페이지로 이동
+        window.location.href = '/order';
+    } catch (error) {
+        handleError(error, '바로구매 처리에 실패했습니다.');
+    }
+}
+
+// 위시리스트 추가/제거 함수
+async function toggleWishlist() {
+    const wishButton = document.getElementById('addToWishlistBtn');
+    const isActive = wishButton.classList.contains('active');
+    const productId = getProductIdFromUrl();
+    
+    try {
+        const response = await fetch(`/api/wishlist/items/${productId}`, {
+            method: isActive ? 'DELETE' : 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        // 인증되지 않은 경우 로그인 페이지로 리다이렉트
+        if (response.status === 401 || response.status === 403) {
+            window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+            return;
+        }
+        
+        if (!response.ok) {
+            throw new Error('위시리스트 업데이트에 실패했습니다.');
+        }
+        
+        // 버튼 상태 업데이트
+        wishButton.classList.toggle('active');
+        const icon = wishButton.querySelector('i');
+        if (icon) {
+            icon.classList.toggle('far');
+            icon.classList.toggle('fas');
+        }
+        
+        // 위시리스트 아이콘 업데이트
+        await updateWishlistIcon();
+        
+        // 성공 메시지 표시
+        const message = isActive ? '위시리스트에서 제거되었습니다.' : '위시리스트에 추가되었습니다.';
+        const toast = document.createElement('div');
+        toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed bottom-0 end-0 m-3';
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+        document.body.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+        
+        // 토스트 메시지 자동 제거
+        toast.addEventListener('hidden.bs.toast', () => {
+            toast.remove();
+        });
+    } catch (error) {
+        handleError(error, '위시리스트 업데이트에 실패했습니다.');
+    }
+}
+
+// URL에서 상품 ID 가져오기
+function getProductIdFromUrl() {
+    const pathParts = window.location.pathname.split('/');
+    return pathParts[pathParts.length - 1];
+}
+
+// 상품 상세 정보를 화면에 렌더링하는 함수
+function renderProductDetail(product) {
+    // 상품 데이터를 전역 변수로 저장
+    window.productData = product;
+
+    const productNotFound = document.getElementById('productNotFound');
+    const productDetail = document.getElementById('productDetail');
+
+    if (!product) {
+        if (productNotFound) {
+            productNotFound.style.display = 'block';
+        }
+        if (productDetail) {
+            productDetail.style.display = 'none';
+        }
+        return;
+    }
+
+    if (productNotFound) {
+        productNotFound.style.display = 'none';
+    }
+    if (productDetail) {
+        productDetail.style.display = 'block';
+    }
+
+    // 상품 이미지 갤러리 렌더링
+    renderProductGallery(product);
+
+    // 상품 정보 렌더링
+    document.querySelector('.product-title').textContent = product.name;
+    document.querySelector('.product-brand').textContent = product.brandName;
+
+    // 별점 렌더링
+    const ratingContainer = document.getElementById('productRating');
+    if (ratingContainer) {
+        ratingContainer.innerHTML = `
+            ${renderRatingStars(product.averageRating || 0)}
+            <span class="review-count">(${product.reviewCount || 0}개 리뷰)</span>
+        `;
+    }
+
+    // 가격 렌더링
+    const priceContainer = document.getElementById('productPrice');
+    if (priceContainer) {
+        if (product.salePrice && product.salePrice < product.price) {
+            priceContainer.innerHTML = `
+                <span class="original-price">${product.price.toLocaleString()}원</span>
+                <span class="current-price">${product.salePrice.toLocaleString()}원</span>
+                <span class="discount-percent">${Math.round((1 - product.salePrice / product.price) * 100)}% 할인</span>
+            `;
+        } else {
+            priceContainer.innerHTML = `
+                <span class="current-price">${product.price.toLocaleString()}원</span>
+            `;
+        }
+    }
+
+    // 상품 설명 렌더링
+    const descriptionElement = document.getElementById('productDescription');
+    if (descriptionElement) {
+        descriptionElement.innerHTML = product.description;
+    }
+
+    // 상품 SKU, 카테고리, 태그 렌더링
+    const skuElement = document.getElementById('productSku');
+    if (skuElement) {
+        skuElement.textContent = product.sku || 'N/A';
+    }
+
+    const categoryElement = document.getElementById('productCategory');
+    if (categoryElement) {
+        categoryElement.textContent = product.categoryName || 'N/A';
+    }
+
+    // 태그 렌더링
+    const tagsElement = document.getElementById('productTags');
+    if (tagsElement) {
+        if (product.tags && product.tags.length > 0) {
+            tagsElement.innerHTML = product.tags
+                .map(tag => `<a href="/shop?tag=${tag}" class="text-decoration-none me-2">${tag}</a>`)
+                .join(', ');
+        } else {
+            tagsElement.textContent = 'N/A';
+        }
+    }
+
+    // 재고 상태 렌더링
+    const stockElement = document.getElementById('productStock');
+    if (stockElement) {
+        if (product.stockQuantity > 0) {
+            stockElement.innerHTML = `<span class="text-success">재고 있음 (${product.stockQuantity}개)</span>`;
+        } else {
+            stockElement.innerHTML = '<span class="text-danger">품절</span>';
+        }
+    }
+
+    // 옵션 렌더링
+    if (product.colorOptions && product.colorOptions.length > 0) {
+        renderColorOptions(product.colorOptions);
+    } else {
+        const colorContainer = document.getElementById('productColors');
+        if (colorContainer) {
+            colorContainer.innerHTML = '<div class="no-options">색상 옵션이 없습니다.</div>';
+        }
+    }
+    
+    if (product.sizeOptions && product.sizeOptions.length > 0) {
+        renderSizeOptions(product.sizeOptions);
+    } else {
+        const sizeContainer = document.getElementById('productSizes');
+        if (sizeContainer) {
+            sizeContainer.innerHTML = '<div class="no-options">사이즈 옵션이 없습니다.</div>';
+        }
+    }
+
+    // 수량 입력 필드 초기화
+    const quantityElement = document.getElementById('productQuantity');
+    if (quantityElement) {
+        quantityElement.value = 1;
+    }
+
+    // 장바구니, 위시리스트 버튼 이벤트 설정
+    setupActionButtons(product.id);
+
+    // 관련 상품 렌더링
+    if (product.categoryId) {
+        fetchRelatedProducts(product.id, product.categoryId)
+            .then(relatedProducts => {
+                renderRelatedProducts(relatedProducts);
+            });
+    }
+
+    // 리뷰 렌더링
+    fetchProductReviews(product.id)
+        .then(reviews => {
+            renderProductReviews(reviews);
+        });
 }
 
 // 장바구니, 위시리스트 버튼 이벤트 설정 함수
 function setupActionButtons(productId) {
     // 장바구니 담기 버튼
-    const addToCartBtn = document.getElementById("addToCartBtn")
+    const addToCartBtn = document.getElementById('addToCartBtn');
     if (addToCartBtn) {
-        addToCartBtn.onclick = () => {
-            addToCart(productId)
-        }
+        addToCartBtn.onclick = addToCart;
     }
 
-    // 위시리스트 추가 버튼
-    const addToWishlistBtn = document.getElementById("addToWishlistBtn")
+    // 바로구매 버튼
+    const buyNowBtn = document.getElementById('buyNowBtn');
+    if (buyNowBtn) {
+        buyNowBtn.onclick = buyNow;
+    }
+
+    // 위시리스트 추가/제거 버튼
+    const addToWishlistBtn = document.getElementById('addToWishlistBtn');
     if (addToWishlistBtn) {
-        addToWishlistBtn.onclick = () => {
-            addToWishlist(productId)
-        }
+        addToWishlistBtn.onclick = toggleWishlist;
     }
-}
-
-// 장바구니에 상품 추가 함수
-function addToCart(productId) {
-    const colorId = document.getElementById("selectedColorId").value
-    const sizeId = document.getElementById("selectedSizeId").value
-    const quantity = Number.parseInt(document.getElementById("productQuantity").value)
-
-    // 색상과 사이즈 선택 여부 확인
-    if (!colorId && document.querySelectorAll(".color-option").length > 0) {
-        alert("색상을 선택해주세요.")
-        return
-    }
-
-    if (!sizeId && document.querySelectorAll(".size-option").length > 0) {
-        alert("사이즈를 선택해주세요.")
-        return
-    }
-
-    console.log(
-        `상품 ID: ${productId}, 색상 ID: ${colorId}, 사이즈 ID: ${sizeId}, 수량: ${quantity}를 장바구니에 추가합니다.`,
-    )
-
-    // API 호출
-    fetch("/api/cart/add", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            productId: productId,
-            colorId: colorId || null,
-            sizeId: sizeId || null,
-            quantity: quantity,
-        }),
-    })
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error("장바구니 추가 실패")
-            }
-            return response.json()
-        })
-        .then((data) => {
-            // 성공 메시지 표시
-            alert("상품이 장바구니에 추가되었습니다.")
-
-            // 장바구니 아이콘 업데이트 (선택 사항)
-            updateCartIcon()
-        })
-        .catch((error) => {
-            console.error("장바구니 추가 오류:", error)
-            alert("장바구니에 추가하는데 실패했습니다.")
-        })
-}
-
-// 위시리스트에 상품 추가 함수
-function addToWishlist(productId) {
-    console.log(`상품 ID: ${productId}를 위시리스트에 추가합니다.`)
-
-    // API 호출
-    fetch("/api/wishlist/add", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            productId: productId,
-        }),
-    })
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error("위시리스트 추가 실패")
-            }
-            return response.json()
-        })
-        .then((data) => {
-            // 성공 메시지 표시
-            alert("상품이 위시리스트에 추가되었습니다.")
-
-            // 위시리스트 아이콘 업데이트 (선택 사항)
-            updateWishlistIcon()
-        })
-        .catch((error) => {
-            console.error("위시리스트 추가 오류:", error)
-            alert("위시리스트에 추가하는데 실패했습니다.")
-        })
-}
-
-// 장바구니 아이콘 업데이트 함수
-function updateCartIcon() {
-    // 장바구니 아이콘 업데이트 로직
-    // 예: 장바구니 아이템 수 표시
-    fetch("/api/cart/count")
-        .then((response) => response.json())
-        .then((data) => {
-            const cartCountElement = document.querySelector(".cart-count")
-            if (cartCountElement) {
-                cartCountElement.textContent = data.count
-                cartCountElement.style.display = data.count > 0 ? "block" : "none"
-            }
-        })
-        .catch((error) => console.error("장바구니 카운트 조회 오류:", error))
-}
-
-// 위시리스트 아이콘 업데이트 함수
-function updateWishlistIcon() {
-    // 위시리스트 아이콘 업데이트 로직
-    // 예: 위시리스트 아이템 수 표시
-    fetch("/api/wishlist/count")
-        .then((response) => response.json())
-        .then((data) => {
-            const wishlistCountElement = document.querySelector(".wishlist-count")
-            if (wishlistCountElement) {
-                wishlistCountElement.textContent = data.count
-                wishlistCountElement.style.display = data.count > 0 ? "block" : "none"
-            }
-        })
-        .catch((error) => console.error("위시리스트 카운트 조회 오류:", error))
 }
 
 // 관련 상품 렌더링 함수
 function renderRelatedProducts(products) {
-    const relatedProductsContainer = document.getElementById("relatedProducts")
+    const relatedProductsContainer = document.querySelector('.related-products .row');
+    if (!relatedProductsContainer) return;
 
     if (!products || products.length === 0) {
-        relatedProductsContainer.innerHTML = '<p class="text-center">관련 상품이 없습니다.</p>'
-        return
+        relatedProductsContainer.innerHTML = `
+            <div class="col-12 text-center py-4">
+                <p>관련 상품이 없습니다.</p>
+            </div>
+        `;
+        return;
     }
 
-    relatedProductsContainer.innerHTML = products
-        .map(
-            (product) => `
-        <div class="col-md-6 col-lg-3">
-            <div class="product-card">
-                <div class="product-img-container">
-                    ${product.new ? '<span class="product-badge badge-new">NEW</span>' : ""}
-                    ${product.discountRate > 0 ? `<span class="product-badge badge-sale">${product.discountRate}% OFF</span>` : ""}
-                    ${product.hot ? '<span class="product-badge badge-hot">HOT</span>' : ""}
-                    
-                    <img src="${product.imageUrl || "/placeholder.svg?height=250&width=250"}" class="product-img" alt="${product.name}">
-                    
-                    <div class="product-actions">
-                        <button class="product-action-btn" title="장바구니에 담기" onclick="addToCart(${product.id})">
-                            <i class="fas fa-shopping-cart"></i>
-                        </button>
-                        <button class="product-action-btn" title="위시리스트에 추가" onclick="addToWishlist(${product.id})">
-                            <i class="fas fa-heart"></i>
-                        </button>
-                        <button class="product-action-btn" title="빠른 보기" onclick="quickView(${product.id})">
-                            <i class="fas fa-eye"></i>
-                        </button>
+    // 기본 이미지 URL
+    const DEFAULT_PRODUCT_IMAGE = '/images/default-product.svg';
+
+    relatedProductsContainer.innerHTML = products.map(product => {
+        // 가격 정보 처리
+        const price = product.price || 0;
+        const originalPrice = product.originalPrice || price;
+        const discountRate = product.discountRate || 0;
+        
+        // 상품 이미지 URL 결정
+        let productImageUrl = DEFAULT_PRODUCT_IMAGE;
+        if (product.images && product.images.length > 0) {
+            productImageUrl = product.images[0].imageUrl;
+        } else if (product.mainImage) {
+            productImageUrl = product.mainImage;
+        }
+        
+        return `
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card related-product-card h-100">
+                    <div class="product-image-container">
+                        <img src="${DEFAULT_PRODUCT_IMAGE}" 
+                             class="card-img-top related-product-img" 
+                             alt="${product.name || '상품 이미지'}"
+                             data-src="${productImageUrl}"
+                             onload="this.classList.add('loaded')">
                     </div>
-                </div>
-                <div class="card-body">
-                    <h5 class="product-title">
-                        <a href="/products/${product.id}" class="text-decoration-none text-dark">${product.name}</a>
-                    </h5>
-                    <div class="product-rating">
-                        ${renderRatingStars(product.rating)}
-                        <span class="ms-1 text-muted">(${product.rating})</span>
+                    <div class="card-body">
+                        <h5 class="related-product-title">${product.name || '상품명 없음'}</h5>
+                        <p class="related-product-price">
+                            ${originalPrice > price ? 
+                                `<span class="original-price">₩${originalPrice.toLocaleString()}</span>` : 
+                                ''}
+                            <span class="current-price">₩${price.toLocaleString()}</span>
+                            ${discountRate > 0 ? 
+                                `<span class="discount-percent">${discountRate}%</span>` : 
+                                ''}
+                        </p>
                     </div>
-                    <div class="product-price">
-                        ${
-                product.originalPrice > product.price
-                    ? `<span class="original-price">₩${product.originalPrice.toLocaleString()}</span>`
-                    : ""
-            }
-                        <span>₩${product.price.toLocaleString()}</span>
-                    </div>
+                    <a href="/products/${product.id}" class="stretched-link"></a>
                 </div>
             </div>
-        </div>
-    `,
-        )
-        .join("")
+        `;
+    }).join('');
+
+    // 이미지 지연 로딩 처리
+    const images = relatedProductsContainer.querySelectorAll('img[data-src]');
+    images.forEach(img => {
+        const productImage = new Image();
+        productImage.onload = () => {
+            img.src = productImage.src;
+            img.classList.add('loaded');
+        };
+        productImage.onerror = () => {
+            img.src = DEFAULT_PRODUCT_IMAGE;
+            img.classList.add('loaded');
+        };
+        productImage.src = img.dataset.src;
+    });
 }
 
 // 상품 리뷰 렌더링 함수
-function renderProductReviews(reviews, totalReviews, totalPages, currentPage) {
-    const reviewsContainer = document.getElementById("productReviews")
-    const reviewPagination = document.getElementById("reviewPagination")
+function renderProductReviews(reviews) {
+    const reviewsContainer = document.querySelector('#reviews .card');
+    if (!reviewsContainer) return;
 
-    if (!reviews || reviews.length === 0) {
-        reviewsContainer.innerHTML = '<p class="text-center">이 상품에 대한 리뷰가 아직 없습니다.</p>'
-        reviewPagination.innerHTML = ""
-        return
+    if (!reviews.content || reviews.content.length === 0) {
+        reviewsContainer.innerHTML = `
+            <div class="text-center py-4">
+                <i class="far fa-comment-dots fs-1 text-muted mb-3"></i>
+                <p>아직 리뷰가 없습니다. 첫 번째 리뷰를 작성해보세요.</p>
+            </div>
+        `;
+        return;
     }
 
-    // 리뷰 목록 렌더링
-    reviewsContainer.innerHTML = reviews
-        .map(
-            (review) => `
-        <div class="review-item">
-            <div class="review-header">
-                <div class="review-user">
-                    <img src="${review.userProfileImage || "/placeholder.svg?height=50&width=50"}" alt="${review.userName}" class="review-user-img">
-                    <div>
-                        <h5 class="review-user-name">${review.userName}</h5>
-                        <div class="review-date">${new Date(review.createdAt).toLocaleDateString()}</div>
+    reviewsContainer.innerHTML = reviews.content.map(review => `
+        <div class="card review-card mb-3">
+            <div class="card-body">
+                <div class="review-header">
+                    <div class="reviewer-info">
+                        <div class="reviewer-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">${review.memberName}</h6>
+                            <div class="review-rating">
+                                ${renderRatingStars(review.rating)}
+                            </div>
+                            <small class="review-date">${new Date(review.createdDate).toLocaleDateString()}</small>
+                        </div>
                     </div>
                 </div>
-                <div class="review-rating">
-                    ${renderRatingStars(review.rating)}
-                </div>
+                
+                <h5 class="card-title">${review.title}</h5>
+                <p class="card-text">${review.content}</p>
+                
+                ${review.images && review.images.length > 0 ? `
+                    <div class="review-images">
+                        ${review.images.map(image => `
+                            <img src="${image.imageUrl}" class="review-image" alt="리뷰 이미지">
+                        `).join('')}
+                    </div>
+                ` : ''}
             </div>
-            <div class="review-content">
-                <p>${review.content}</p>
-            </div>
-            ${
-                review.images && review.images.length > 0
-                    ? `
-                <div class="review-images">
-                    ${review.images
-                        .map(
-                            (image) => `
-                        <img src="${image.url}" alt="리뷰 이미지" class="review-image" onclick="showImageModal('${image.url}')">
-                    `,
-                        )
-                        .join("")}
-                </div>
-            `
-                    : ""
-            }
         </div>
-    `,
-        )
-        .join("")
-
-    // 페이지네이션 렌더링
-    renderReviewPagination(currentPage, totalPages)
+    `).join('');
 }
 
-// 리뷰 페이지네이션 렌더링 함수
-function renderReviewPagination(currentPage, totalPages) {
-    const paginationElement = document.getElementById("reviewPagination")
-
-    if (totalPages <= 1) {
-        paginationElement.innerHTML = ""
-        return
-    }
-
-    let paginationHTML = ""
-
-    // 이전 버튼
-    paginationHTML += `
-        <li class="page-item ${currentPage <= 0 ? "disabled" : ""}">
-            <a class="page-link" href="#reviews" onclick="${currentPage > 0 ? `loadReviewPage(${currentPage - 1})` : ""}" tabindex="${currentPage <= 0 ? "-1" : "0"}" aria-disabled="${currentPage <= 0 ? "true" : "false"}">이전</a>
-        </li>
-    `
-
-    // 페이지 번호
-    const startPage = Math.max(0, currentPage - 2)
-    const endPage = Math.min(totalPages - 1, startPage + 4)
-
-    for (let i = startPage; i <= endPage; i++) {
-        paginationHTML += `
-            <li class="page-item ${i === currentPage ? "active" : ""}">
-                <a class="page-link" href="#reviews" onclick="loadReviewPage(${i})">${i + 1}</a>
-            </li>
-        `
-    }
-
-    // 다음 버튼
-    paginationHTML += `
-        <li class="page-item ${currentPage >= totalPages - 1 ? "disabled" : ""}">
-            <a class="page-link" href="#reviews" onclick="${currentPage < totalPages - 1 ? `loadReviewPage(${currentPage + 1})` : ""}" tabindex="${currentPage >= totalPages - 1 ? "-1" : "0"}" aria-disabled="${currentPage >= totalPages - 1 ? "true" : "false"}">다음</a>
-        </li>
-    `
-
-    paginationElement.innerHTML = paginationHTML
-}
-
-// 리뷰 페이지 로드 함수
-async function loadReviewPage(page) {
-    const productId = getProductIdFromUrl()
-    const reviewsData = await fetchProductReviews(productId, page)
-
-    renderProductReviews(reviewsData.content, reviewsData.totalElements, reviewsData.totalPages, page)
-}
-
-// 이미지 모달 표시 함수
-function showImageModal(imageUrl) {
-    const modal = document.getElementById("imageModal")
-    const modalImg = document.getElementById("modalImage")
-
-    modalImg.src = imageUrl
-    const bsModal = new bootstrap.Modal(modal)
-    bsModal.show()
-}
-
-// URL에서 상품 ID 추출 함수
-function getProductIdFromUrl() {
-    const pathParts = window.location.pathname.split("/")
-    return pathParts[pathParts.length - 1]
-}
-
-// 탭 전환 함수
-function switchTab(tabId) {
-    // 모든 탭 컨텐츠 숨기기
-    document.querySelectorAll(".tab-content").forEach((tab) => {
-        tab.style.display = "none"
-    })
-
-    // 모든 탭 버튼 비활성화
-    document.querySelectorAll(".tab-btn").forEach((btn) => {
-        btn.classList.remove("active")
-    })
-
-    // 선택한 탭 컨텐츠 표시
-    document.getElementById(tabId).style.display = "block"
-
-    // 선택한 탭 버튼 활성화
-    document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add("active")
-}
-
-// 모달 인스턴스 생성
-let quickViewModal;
-
-document.addEventListener('DOMContentLoaded', function() {
-    // 퀵뷰 모달
-    const quickViewModalElement = document.getElementById('quickViewModal');
-    quickViewModal = new bootstrap.Modal(quickViewModalElement, {
-        backdrop: 'static',
-        keyboard: false
-    });
-});
-
-// 퀵뷰 모달 표시
-function showQuickView(productId) {
-    fetch(`/api/products/${productId}`)
-    .then(response => {
-        if (!response.ok) throw new Error('상품 정보를 가져오는데 실패했습니다.');
-        return response.json();
-    })
-    .then(data => {
-        document.getElementById('quickViewTitle').textContent = data.name;
-        document.getElementById('quickViewPrice').textContent = data.price.toLocaleString() + '원';
-        document.getElementById('quickViewDescription').textContent = data.description;
+// 페이지 로드 시 초기화
+document.addEventListener('DOMContentLoaded', async () => {
+    const productId = getProductIdFromUrl();
+    if (productId) {
+        // 상품 조회수 증가
+        await trackProductView(productId);
         
-        const imageContainer = document.getElementById('quickViewImages');
-        imageContainer.innerHTML = '';
-        data.images.forEach(image => {
-            const img = document.createElement('img');
-            img.src = image;
-            img.alt = data.name;
-            img.className = 'img-fluid';
-            imageContainer.appendChild(img);
-        });
-        
-        quickViewModal.show();
-    })
-    .catch(error => {
-        alert(error.message);
-    });
-}
-
-// 페이지 로드 시 실행
-document.addEventListener("DOMContentLoaded", async () => {
-    // URL에서 상품 ID 추출
-    const productId = getProductIdFromUrl()
-
-    // 상품 상세 정보 로드
-    const product = await fetchProductDetail(productId)
-    renderProductDetail(product)
-
-    if (product) {
-        // 관련 상품 로드
-        const relatedProducts = await fetchRelatedProducts(productId, product.categoryId)
-        renderRelatedProducts(relatedProducts)
-
-        // 상품 리뷰 로드
-        const reviewsData = await fetchProductReviews(productId)
-        renderProductReviews(reviewsData.content, reviewsData.totalElements, reviewsData.totalPages, 0)
-    }
-
-    // 탭 전환 이벤트 리스너
-    document.querySelectorAll(".tab-btn").forEach((btn) => {
-        btn.addEventListener("click", function () {
-            switchTab(this.dataset.tab)
-        })
-    })
-
-    // 기본 탭 설정
-    switchTab("description")
-
-    // 수량 증가/감소 버튼 이벤트 리스너
-    document.getElementById("decreaseQuantity").addEventListener("click", decreaseQuantity)
-    document.getElementById("increaseQuantity").addEventListener("click", increaseQuantity)
-
-    // 이미지 모달 닫기 버튼 이벤트 리스너
-    document.querySelector("#imageModal .btn-close").addEventListener("click", () => {
-        const modal = document.getElementById("imageModal")
-        const bsModal = bootstrap.Modal.getInstance(modal)
-        if (bsModal) {
-            bsModal.hide()
+        // 상품 정보 로드
+        const product = await fetchProductDetail(productId);
+        if (product) {
+            renderProductDetail(product);
         }
-    })
-})
+    }
+    
+    // 장바구니, 위시리스트 아이콘 업데이트
+    updateCartIcon();
+    updateWishlistIcon();
+});
 

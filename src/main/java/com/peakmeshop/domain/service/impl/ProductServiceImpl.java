@@ -56,6 +56,11 @@ public class ProductServiceImpl implements ProductService {
     public ProductDTO getProductById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
+        
+        // 상품 옵션 정보 가져오기
+        List<ProductOption> options = productOptionRepository.findByProductId(id);
+        product.setOptions(options);
+        
         return productMapper.toDTO(product);
     }
 
@@ -470,5 +475,14 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<Product> getProductsByIds(List<Long> ids) {
         return productRepository.findAllById(ids);
+    }
+
+    @Override
+    @Transactional
+    public void incrementViewCount(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다."));
+        product.incrementViewCount();
+        productRepository.save(product);
     }
 }

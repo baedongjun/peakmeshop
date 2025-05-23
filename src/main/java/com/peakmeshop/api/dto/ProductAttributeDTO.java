@@ -16,16 +16,12 @@ import lombok.NoArgsConstructor;
 public class ProductAttributeDTO {
     private Long id;
     private Long productId;
-    private String name;
+    private Long attributeOptionId;
     private String code;
+    private String value;
     private String description;
-    private String type;
-    private boolean required;
-    private boolean filterable;
-    private boolean searchable;
-    private boolean comparable;
-    private boolean showInProductListing;
-    private List<String> options = new ArrayList<>();
+    private Integer sortOrder;
+    private boolean enabled;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

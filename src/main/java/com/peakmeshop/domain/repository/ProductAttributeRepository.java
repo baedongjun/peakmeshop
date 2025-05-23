@@ -15,16 +15,10 @@ public interface ProductAttributeRepository extends JpaRepository<ProductAttribu
 
     Optional<ProductAttribute> findByCode(String code);
 
-    List<ProductAttribute> findByFilterableTrue();
-
-    List<ProductAttribute> findBySearchableTrue();
-
-    List<ProductAttribute> findByComparableTrue();
-
-    List<ProductAttribute> findByShowInProductListingTrue();
-
     List<ProductAttribute> findByProduct_Id(Long productId);
 
     @Query("SELECT pa FROM ProductAttribute pa WHERE pa.product.id = :productId")
     List<ProductAttribute> findByProductId(@Param("productId") Long productId);
+
+    List<ProductAttribute> findByAttributeOptionId(Long attributeOptionId);
 }

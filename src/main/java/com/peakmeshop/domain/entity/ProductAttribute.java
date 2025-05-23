@@ -21,58 +21,50 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.Builder;
+import lombok.AllArgsConstructor;
 
 @Entity
 @Table(name = "product_attributes")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class ProductAttribute {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String name;
-
-    @Column(nullable = false, unique = true)
-    private String code;
-
-    @Column
-    private String description;
-
-    @Column(nullable = false)
-    private String type; // 예: text, number, select, boolean 등
-
-    @Column(nullable = false)
-    private boolean required;
-
-    @Column(nullable = false)
-    private boolean filterable;
-
-    @Column(nullable = false)
-    private boolean searchable;
-
-    @Column(nullable = false)
-    private boolean comparable;
-
-    @Column(nullable = false)
-    private boolean showInProductListing;
-
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "product_attribute_options", joinColumns = @JoinColumn(name = "attribute_id"))
-    @Column(name = "option_value")
-    private List<String> options = new ArrayList<>();
-
-    // Product와의 관계 추가
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private Product product;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "attribute_option_id")
+    private ProductAttributeOption attributeOption;
+
+    @Column(nullable = false)
+    private String code;
+
+    @Column(nullable = false)
+    private String value;
+
+    @Column(length = 1000)
+    private String description;
+
+    @Column(name = "sort_order")
+    private Integer sortOrder;
+
+    @Column(columnDefinition = "boolean default true")
+    private boolean enabled;
+
     @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }

@@ -1,24 +1,20 @@
 package com.peakmeshop.domain.service.impl;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.peakmeshop.api.dto.BannerDTO;
+import com.peakmeshop.api.mapper.BannerMapper;
 import com.peakmeshop.domain.entity.Banner;
 import com.peakmeshop.domain.repository.BannerRepository;
 import com.peakmeshop.domain.service.BannerService;
 import com.peakmeshop.domain.service.FileStorageService;
-import com.peakmeshop.api.mapper.BannerMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -68,7 +64,7 @@ public class BannerServiceImpl implements BannerService {
     public BannerDTO updateBanner(Long id, BannerDTO bannerDTO) {
         Banner existingBanner = bannerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Banner not found with id: " + id));
-        
+
         Banner updatedBanner = bannerMapper.toEntity(bannerDTO);
         existingBanner.setTitle(updatedBanner.getTitle());
         existingBanner.setSubtitle(updatedBanner.getSubtitle());
@@ -83,7 +79,7 @@ public class BannerServiceImpl implements BannerService {
         existingBanner.setActive(updatedBanner.isActive());
         existingBanner.setBackgroundColor(updatedBanner.getBackgroundColor());
         existingBanner.setTextColor(updatedBanner.getTextColor());
-        
+
         return bannerMapper.toDTO(bannerRepository.save(existingBanner));
     }
 
@@ -103,14 +99,14 @@ public class BannerServiceImpl implements BannerService {
     public void changeBannerOrder(Long id, int newOrder) {
         Banner banner = bannerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Banner not found with id: " + id));
-        
+
         int oldOrder = banner.getSortOrder();
         if (newOrder > oldOrder) {
             bannerRepository.decreaseOrderBetween(oldOrder + 1, newOrder);
         } else if (newOrder < oldOrder) {
             bannerRepository.increaseOrderBetween(newOrder, oldOrder - 1);
         }
-        
+
         banner.setSortOrder(newOrder);
         bannerRepository.save(banner);
     }

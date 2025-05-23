@@ -3,10 +3,12 @@ package com.peakmeshop.domain.service;
 import java.util.List;
 import java.util.Optional;
 
+import com.peakmeshop.domain.entity.ProductOption;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.peakmeshop.api.dto.ProductAttributeDTO;
+import com.peakmeshop.domain.entity.ProductAttributeOption;
 
 public interface ProductAttributeService {
 
@@ -22,17 +24,15 @@ public interface ProductAttributeService {
 
     boolean deleteAttribute(Long id);
 
-    List<ProductAttributeDTO> getFilterableAttributes();
+    void addAttributeOption(Long attributeId, ProductOption option);
 
-    List<ProductAttributeDTO> getSearchableAttributes();
+    void removeAttributeOption(Long attributeId, ProductOption option);
 
-    List<ProductAttributeDTO> getComparableAttributes();
+    List<String> getAttributeOptions(Long productId, String type);
 
-    List<ProductAttributeDTO> getAttributesForProductListing();
+    List<String> getAttributeOptionValues(Long attributeOptionId);
 
-    void addAttributeOption(Long attributeId, String option);
+    ProductAttributeOption getAttributeOption(Long attributeOptionId);
 
-    void removeAttributeOption(Long attributeId, String option);
-
-    List<String> getAttributeOptions(Long attributeId);
+    String getCode(Long attributeOptionId);
 }

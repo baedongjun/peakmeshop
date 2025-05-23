@@ -1,0 +1,315 @@
+/* 상품 이미지 갤러리 */
+.product-gallery {
+    position: relative;
+    margin-bottom: 2rem;
+}
+.main-image-container {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    background-color: #f8f9fa;
+    height: 400px;
+}
+.main-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+.main-image:hover {
+    transform: scale(1.05);
+}
+.product-thumbnails {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+.product-thumbnail {
+    width: 80px;
+    height: 80px;
+    border-radius: 0.25rem;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+.product-thumbnail.active {
+    border-color: #0d6efd;
+    opacity: 1;
+}
+.product-thumbnail:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+.product-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 상품 정보 */
+.product-title {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+.product-brand {
+    font-size: 1rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+.product-rating {
+    margin-bottom: 1rem;
+}
+.product-rating .fas.fa-star,
+.product-rating .fas.fa-star-half-alt {
+    color: #ffc107;
+}
+.product-rating .far.fa-star {
+    color: #e4e5e9;
+}
+.review-count {
+    color: #6c757d;
+    margin-left: 0.5rem;
+    font-size: 0.9rem;
+}
+.product-price {
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+}
+.original-price {
+    text-decoration: line-through;
+    color: #6c757d;
+    margin-right: 0.5rem;
+    font-size: 1.2rem;
+}
+.current-price {
+    color: #dc3545;
+    font-weight: bold;
+}
+.discount-percent {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+    margin-left: 0.5rem;
+}
+.product-description {
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+.product-meta {
+    margin-bottom: 1.5rem;
+}
+.product-meta-item {
+    margin-bottom: 0.5rem;
+}
+.product-meta-label {
+    font-weight: 600;
+    min-width: 100px;
+    display: inline-block;
+}
+
+/* 색상 및 사이즈 옵션 */
+.product-options {
+    margin: 20px 0;
+}
+.option-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+}
+.color-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.color-option {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+.color-option:hover:not(.disabled) {
+    border-color: #666;
+}
+.color-option.active {
+    border-color: #000;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+}
+.color-option.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.size-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.size-option {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+.size-option:hover:not(.disabled) {
+    border-color: #666;
+}
+.size-option.active {
+    border-color: #000;
+    background-color: #f8f8f8;
+}
+.size-option.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+.no-options {
+    color: #999;
+    font-size: 14px;
+    padding: 10px 0;
+}
+
+/* 수량 선택 */
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+.quantity-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    cursor: pointer;
+}
+.quantity-input {
+    width: 60px;
+    height: 40px;
+    text-align: center;
+    border: 1px solid #dee2e6;
+    border-left: none;
+    border-right: none;
+}
+
+/* 장바구니, 바로구매 버튼 */
+.product-action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+.product-action-buttons .btn {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+}
+.wish-button {
+    border: 1px solid #dee2e6;
+    background-color: white;
+    padding: 0.75rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.wish-button:hover {
+    background-color: #f8f9fa;
+}
+.wish-button i {
+    color: #6c757d;
+}
+.wish-button.active i {
+    color: #dc3545;
+}
+
+/* 상품 탭 */
+.product-tabs {
+    margin-top: 3rem;
+}
+.tab-content {
+    padding: 2rem 0;
+}
+.nav-tabs .nav-link {
+    font-weight: 600;
+    color: #6c757d;
+    border: none;
+    padding: 1rem 1.5rem;
+    border-bottom: 2px solid transparent;
+}
+.nav-tabs .nav-link.active {
+    color: #0d6efd;
+    border-bottom: 2px solid #0d6efd;
+}
+.product-detail-content {
+    line-height: 1.8;
+}
+.product-detail-content h4 {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+.product-detail-content img {
+    max-width: 100%;
+    height: auto;
+    margin: 1rem 0;
+    border-radius: 0.5rem;
+}
+.product-detail-content table {
+    width: 100%;
+    margin-bottom: 1rem;
+    border-collapse: collapse;
+}
+.product-detail-content table th,
+.product-detail-content table td {
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+}
+.product-detail-content table th {
+    background-color: #f8f9fa;
+}
+
+/* 관련 상품 */
+.related-products {
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+}
+.related-product-card {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    border: none;
+    margin-bottom: 1rem;
+}
+.related-product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+.related-product-img {
+    height: 180px;
+    object-fit: cover;
+}
+.related-product-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.related-product-price {
+    font-weight: 700;
+    color: #0d6efd;
+} 
