@@ -1,6 +1,7 @@
 package com.peakmeshop.common.config;
 
 import com.peakmeshop.common.event.CustomAuthenticationFailureHandler;
+import com.peakmeshop.common.event.CustomAuthenticationSuccessHandler;
 import com.peakmeshop.common.event.CustomLogoutSuccessHandler;
 import com.peakmeshop.common.security.CustomUserDetailsService;
 import com.peakmeshop.common.security.CustomPersistentTokenRepository;
@@ -26,6 +27,7 @@ public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
     private final CustomPersistentTokenRepository tokenRepository;
     private final CustomAuthenticationFailureHandler authenticationFailureHandler;
+    private final CustomAuthenticationSuccessHandler authenticationSuccessHandler;
     private final CustomLogoutSuccessHandler logoutSuccessHandler;
 
     @Bean
@@ -43,6 +45,7 @@ public class SecurityConfig {
                         .loginPage("/login")
                         .loginProcessingUrl("/api/auth/login")
                         .defaultSuccessUrl("/")
+                        .successHandler(authenticationSuccessHandler)
                         .failureHandler(authenticationFailureHandler)
                         .usernameParameter("userId")
                         .passwordParameter("password")
@@ -80,7 +83,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
+    public static PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 }

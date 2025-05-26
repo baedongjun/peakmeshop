@@ -1,7 +1,6 @@
 // auth.js
 document.addEventListener("DOMContentLoaded", () => {
     initSignupForm();
-    initLoginForm();
 });
 
 function initSignupForm() {
@@ -37,11 +36,24 @@ function initSignupForm() {
             })
                 .then(response => {
                     if (!response.ok) {
-                        return response.json().then(errors => {
-                            throw errors;
+                        return response.text().then(text => {
+                            try {
+                                // JSON 파싱 시도
+                                const errors = JSON.parse(text);
+                                throw errors;
+                            } catch (e) {
+                                // JSON 파싱 실패 시 일반 텍스트로 처리
+                                throw { message: text || '회원가입 처리 중 오류가 발생했습니다.' };
+                            }
                         });
                     }
-                    return response.json();
+                    return response.text().then(text => {
+                        try {
+                            return text ? JSON.parse(text) : {};
+                        } catch (e) {
+                            return {};
+                        }
+                    });
                 })
                 .then(data => {
                     // 성공 처리
@@ -60,68 +72,20 @@ function initSignupForm() {
                     console.error('회원가입 오류:', errors);
 
                     if (typeof errors === 'object' && errors !== null) {
-                        // 필드별 오류 메시지 표시
-                        Object.keys(errors).forEach(field => {
-                            showFieldError(field, errors[field]);
-                        });
+                        if (errors.message) {
+                            // 일반 오류 메시지
+                            showGeneralError(errors.message);
+                        } else {
+                            // 필드별 오류 메시지
+                            Object.keys(errors).forEach(field => {
+                                showFieldError(field, errors[field]);
+                            });
+                        }
                     } else {
                         // 일반 오류 메시지 표시
                         showGeneralError('회원가입 처리 중 오류가 발생했습니다.');
                     }
                 });
-        });
-    }
-}
-
-function initLoginForm() {
-    const loginForm = document.getElementById('loginForm');
-    
-    if (loginForm) {
-        loginForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            
-            // 폼 데이터 수집
-            const formData = {
-                userId: document.getElementById('userId').value,
-                password: document.getElementById('password').value,
-                'remember-me': document.getElementById('remember-me').checked
-            };
-
-            // CSRF 토큰 가져오기
-            const csrfToken = document.querySelector('input[name="_csrf"]').value;
-
-            // AJAX 요청 전송
-            fetch('/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(errors => {
-                        throw errors;
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                // 성공 처리
-                console.log('로그인 성공:', data);
-                showSuccessMessage('로그인되었습니다.');
-                
-                // 메인 페이지로 리다이렉트
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 1000);
-            })
-            .catch(errors => {
-                // 오류 처리
-                console.error('로그인 오류:', errors);
-                showGeneralError('아이디 또는 비밀번호가 올바르지 않습니다.');
-            });
         });
     }
 }

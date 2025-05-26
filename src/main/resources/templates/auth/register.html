@@ -4,6 +4,8 @@
       layout:decorate="~{layouts/main-layout}">
 <head>
     <title>회원가입</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <style>
         .register-form {
             max-width: 500px;
@@ -63,7 +65,7 @@
                         <p th:text="${errorMessage}">오류가 발생했습니다.</p>
                     </div>
 
-                    <form id="signupForm" th:action="@{/api/auth/signup}" method="post" th:object="${signupRequest}">
+                    <form id="signupForm" th:object="${signupRequest}">
                         <div class="form-group">
                             <label for="userId" class="form-label">아이디 *</label>
                             <input type="text" class="form-control" th:classappend="${#fields.hasErrors('userId')} ? 'is-invalid'" id="userId" th:field="*{userId}" required>

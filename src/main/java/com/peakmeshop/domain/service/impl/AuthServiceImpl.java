@@ -101,7 +101,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public AuthResponseDTO signup(@Valid SignupRequest signupRequest) {
+    public void signup(@Valid SignupRequest signupRequest) {
         // 아이디 중복 확인
         if (memberRepository.existsByUserId(signupRequest.getUserId())) {
             throw new RuntimeException("이미 사용 중인 아이디입니다.");
@@ -126,6 +126,8 @@ public class AuthServiceImpl implements AuthService {
         member.setPhone(signupRequest.getPhone());
         member.setUserRole("ROLE_USER");
         member.setStatus("INACTIVE"); // 이메일 인증 전까지는 비활성 상태
+        member.setAgreeTerms(signupRequest.isAgreeTerms());
+        member.setAgreeMarketing(signupRequest.isAgreeMarketing());
         member.setCreatedAt(LocalDateTime.now());
 
         Member savedMember = memberRepository.save(member);
@@ -140,34 +142,6 @@ public class AuthServiceImpl implements AuthService {
 
         // 인증 이메일 발송
         emailService.sendVerificationEmail(savedMember.getEmail(), savedMember.getName(), token);
-
-        // 자동 로그인 처리
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        signupRequest.getUserId(),
-                        signupRequest.getPassword()
-                )
-        );
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-
-        String accessToken = jwtTokenProvider.generateToken(userPrincipal);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(userPrincipal);
-
-        // 리프레시 토큰 저장
-        saveRefreshToken(userPrincipal.getId(), refreshToken);
-
-        return AuthResponseDTO.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .expiresIn(jwtExpirationMs / 1000)
-                .userId(userPrincipal.getUserId())
-                .email(userPrincipal.getEmail())
-                .name(userPrincipal.getName())
-                .role(userPrincipal.getAuthorities().iterator().next().getAuthority())
-                .build();
     }
 
     @Override
@@ -252,6 +226,8 @@ public class AuthServiceImpl implements AuthService {
 
         Member member = verificationToken.getMember();
         member.setStatus("ACTIVE");
+        member.setEmailVerified(true);
+        member.setEnabled(true);
         member.setUpdatedAt(LocalDateTime.now());
         memberRepository.save(member);
 
@@ -306,16 +282,6 @@ public class AuthServiceImpl implements AuthService {
                 .name(userPrincipal.getName())
                 .role(userPrincipal.getAuthorities().iterator().next().getAuthority())
                 .build();
-    }
-
-    @Override
-    public void register(AuthDTO.Register register) {
-
-    }
-
-    @Override
-    public void resendVerification(AuthDTO.ResendVerification resendVerification) {
-
     }
 
     private void saveRefreshToken(Long memberId, String token) {

@@ -10,7 +10,7 @@ public interface AuthService {
 
     AuthResponseDTO login(@Valid LoginRequest loginRequest);
 
-    AuthResponseDTO signup(@Valid SignupRequest signupRequest);
+    void signup(@Valid SignupRequest signupRequest);
 
     Map<String, Object> getUserInfo();
 
@@ -23,8 +23,4 @@ public interface AuthService {
     void logout();
 
     AuthResponseDTO refreshToken(String refreshToken);
-
-    void register(AuthDTO.Register register);
-
-    void resendVerification(AuthDTO.ResendVerification resendVerification);
 }

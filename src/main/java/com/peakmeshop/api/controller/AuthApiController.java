@@ -3,6 +3,7 @@ package com.peakmeshop.api.controller;
 import com.peakmeshop.api.dto.AuthDTO;
 import com.peakmeshop.api.dto.AuthResponseDTO;
 import com.peakmeshop.api.dto.LoginRequest;
+import com.peakmeshop.api.dto.SignupRequest;
 import com.peakmeshop.domain.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -32,20 +33,14 @@ public class AuthApiController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<Void> register(@RequestBody AuthDTO.Register register) {
-        authService.register(register);
+    public ResponseEntity<Void> register(@RequestBody SignupRequest signupRequest) {
+        authService.signup(signupRequest);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/verify-email")
-    public ResponseEntity<Void> verifyEmail(@RequestBody AuthDTO.VerifyEmail verifyEmail) {
-        authService.verifyEmail(verifyEmail.token());
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/resend-verification")
-    public ResponseEntity<Void> resendVerification(@RequestBody AuthDTO.ResendVerification resendVerification) {
-        authService.resendVerification(resendVerification);
+    @GetMapping("/verify-email")
+    public ResponseEntity<Void> verifyEmail(@RequestParam String token) {
+        authService.verifyEmail(token);
         return ResponseEntity.ok().build();
     }
 

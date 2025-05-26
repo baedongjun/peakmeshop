@@ -1,6 +1,6 @@
 package com.peakmeshop.common.event;
 
-import com.peakmeshop.common.security.CustomUserDetailsService;
+import com.peakmeshop.common.security.CustomUserDetails;
 import com.peakmeshop.domain.entity.ActivityLog;
 import com.peakmeshop.domain.repository.ActivityLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,9 +31,9 @@ public class AuthenticationEventListener {
         String userId = authentication.getName();
         Long memberId = null;
 
-        if (authentication.getPrincipal() instanceof CustomUserDetailsService.CustomUserDetails) {
-            CustomUserDetailsService.CustomUserDetails userDetails =
-                    (CustomUserDetailsService.CustomUserDetails) authentication.getPrincipal();
+        if (authentication.getPrincipal() instanceof CustomUserDetails) {
+            CustomUserDetails userDetails =
+                    (CustomUserDetails) authentication.getPrincipal();
             memberId = userDetails.getMemberId();
         }
 
@@ -107,9 +107,9 @@ public class AuthenticationEventListener {
         String userId = authentication.getName();
         Long memberId = null;
 
-        if (authentication.getPrincipal() instanceof CustomUserDetailsService.CustomUserDetails) {
-            CustomUserDetailsService.CustomUserDetails userDetails =
-                    (CustomUserDetailsService.CustomUserDetails) authentication.getPrincipal();
+        if (authentication.getPrincipal() instanceof CustomUserDetails) {
+            CustomUserDetails userDetails =
+                    (CustomUserDetails) authentication.getPrincipal();
             memberId = userDetails.getMemberId();
         }
 

@@ -2,7 +2,7 @@ package com.peakmeshop.common.aspect;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.peakmeshop.common.annotation.LogActivity;
-import com.peakmeshop.common.security.CustomUserDetailsService;
+import com.peakmeshop.common.security.CustomUserDetails;
 import com.peakmeshop.domain.entity.ActivityLog;
 import com.peakmeshop.domain.repository.ActivityLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,7 +42,8 @@ public class ActivityLogAspect {
      * LogActivity 어노테이션이 붙은 메서드에 대한 포인트컷
      */
     @Pointcut("@annotation(com.peakmeshop.common.annotation.LogActivity)")
-    public void logActivityPointcut() {}
+    public void logActivityPointcut() {
+    }
 
     /**
      * 메서드 실행 후 활동 로그 기록
@@ -66,9 +67,9 @@ public class ActivityLogAspect {
                     !authentication.getPrincipal().equals("anonymousUser")) {
                 userId = authentication.getName();
 
-                if (authentication.getPrincipal() instanceof CustomUserDetailsService.CustomUserDetails) {
-                    CustomUserDetailsService.CustomUserDetails userDetails =
-                            (CustomUserDetailsService.CustomUserDetails) authentication.getPrincipal();
+                if (authentication.getPrincipal() instanceof CustomUserDetails) {
+                    CustomUserDetails userDetails =
+                            (CustomUserDetails) authentication.getPrincipal();
                     memberId = userDetails.getMemberId();
                 }
             }
