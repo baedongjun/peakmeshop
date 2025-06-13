@@ -112,6 +112,11 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("이미 사용 중인 이메일입니다.");
         }
 
+        // 휴대폰 번호 중복 확인
+        if (memberRepository.existsByPhone(signupRequest.getPhone())) {
+            throw new RuntimeException("이미 사용 중인 연락처입니다.");
+        }
+
         // 비밀번호 일치 확인
         if (!signupRequest.getPassword().equals(signupRequest.getPasswordConfirm())) {
             throw new RuntimeException("비밀번호가 일치하지 않습니다.");
@@ -125,23 +130,15 @@ public class AuthServiceImpl implements AuthService {
         member.setName(signupRequest.getName());
         member.setPhone(signupRequest.getPhone());
         member.setUserRole("ROLE_USER");
-        member.setStatus("INACTIVE"); // 이메일 인증 전까지는 비활성 상태
+        member.setStatus("ACTIVE");
+        member.setEnabled(true);
         member.setAgreeTerms(signupRequest.isAgreeTerms());
         member.setAgreeMarketing(signupRequest.isAgreeMarketing());
+        member.setUpdatedAt(LocalDateTime.now());
         member.setCreatedAt(LocalDateTime.now());
+        member.setLastLoginAt(LocalDateTime.now());
 
-        Member savedMember = memberRepository.save(member);
-
-        // 이메일 인증 토큰 생성
-        String token = UUID.randomUUID().toString();
-        VerificationToken verificationToken = new VerificationToken();
-        verificationToken.setToken(token);
-        verificationToken.setMember(savedMember);
-        verificationToken.setExpiryAt(LocalDateTime.now().plusHours(24)); // 24시간 유효
-        verificationTokenRepository.save(verificationToken);
-
-        // 인증 이메일 발송
-        emailService.sendVerificationEmail(savedMember.getEmail(), savedMember.getName(), token);
+        memberRepository.save(member);
     }
 
     @Override

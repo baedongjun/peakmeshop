@@ -24,8 +24,6 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomUserDetailsService userDetailsService;
-    private final CustomPersistentTokenRepository tokenRepository;
     private final CustomAuthenticationFailureHandler authenticationFailureHandler;
     private final CustomAuthenticationSuccessHandler authenticationSuccessHandler;
     private final CustomLogoutSuccessHandler logoutSuccessHandler;
@@ -60,10 +58,8 @@ public class SecurityConfig {
                         .permitAll()
                 )
                 .rememberMe(remember -> remember
-                        .key("uniqueAndSecretKey")
-                        .tokenRepository(tokenRepository)
-                        .tokenValiditySeconds(86400) // 1일
-                        .userDetailsService(userDetailsService)
+                        .rememberMeParameter("remember-me")
+                        .tokenValiditySeconds(86400)  // 24시간
                 )
                 .sessionManagement(session -> session
                         .maximumSessions(1)
