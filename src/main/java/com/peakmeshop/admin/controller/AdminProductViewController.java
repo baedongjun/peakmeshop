@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  * 관리자 상품 관리 관련 뷰 컨트롤러
  */
 @Controller
-@RequestMapping("/admin")
+@RequestMapping("/admin/products")
 @RequiredArgsConstructor
 public class AdminProductViewController {
 
@@ -28,7 +28,7 @@ public class AdminProductViewController {
     /**
      * 상품 관리 페이지
      */
-    @GetMapping("/products")
+    @GetMapping("/")
     public String products(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String status,
@@ -52,7 +52,7 @@ public class AdminProductViewController {
     /**
      * 상품 등록 페이지
      */
-    @GetMapping("/products/new")
+    @GetMapping("/new")
     public String createProduct(Model model) {
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("suppliers", supplierService.getAllSuppliers(Pageable.unpaged()));
@@ -62,7 +62,7 @@ public class AdminProductViewController {
     /**
      * 상품 수정 페이지
      */
-    @GetMapping("/products/{id}/edit")
+    @GetMapping("/{id}/edit")
     public String editProduct(@PathVariable Long id, Model model) {
         model.addAttribute("productId", id);
         model.addAttribute("product", productService.getProductById(id));
@@ -74,7 +74,7 @@ public class AdminProductViewController {
     /**
      * 상품 상세 페이지
      */
-    @GetMapping("/products/{id}")
+    @GetMapping("/{id}")
     public String productDetail(@PathVariable Long id, Model model) {
         model.addAttribute("productId", id);
         model.addAttribute("product", productService.getProductById(id));
@@ -85,7 +85,7 @@ public class AdminProductViewController {
     /**
      * 상품 통계 페이지
      */
-    @GetMapping("/products/statistics")
+    @GetMapping("/statistics")
     public String productStatistics(
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String startDate,
@@ -103,7 +103,7 @@ public class AdminProductViewController {
     /**
      * 상품 리뷰 관리 페이지
      */
-    @GetMapping("/products/reviews")
+    @GetMapping("/reviews")
     public String productReviews(
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20) Pageable pageable,
@@ -118,7 +118,7 @@ public class AdminProductViewController {
     /**
      * 상품 리뷰 상세 페이지
      */
-    @GetMapping("/products/reviews/{id}")
+    @GetMapping("/reviews/{id}")
     public String reviewDetail(@PathVariable Long id, Model model) {
         model.addAttribute("reviewId", id);
         model.addAttribute("review", productService.getReviewById(id));
@@ -128,7 +128,7 @@ public class AdminProductViewController {
     /**
      * 상품 문의 관리 페이지
      */
-    @GetMapping("/products/qnas")
+    @GetMapping("/qnas")
     public String productQnas(
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20) Pageable pageable,
@@ -143,7 +143,7 @@ public class AdminProductViewController {
     /**
      * 상품 문의 상세 페이지
      */
-    @GetMapping("/products/qnas/{id}")
+    @GetMapping("/qnas/{id}")
     public String qnaDetail(@PathVariable Long id, Model model) {
         model.addAttribute("qnaId", id);
         model.addAttribute("qna", productService.getQnaById(id));
@@ -153,7 +153,7 @@ public class AdminProductViewController {
     /**
      * 상품 재고 관리 페이지
      */
-    @GetMapping("/products/inventory")
+    @GetMapping("/inventory")
     public String productInventory(
             @RequestParam(required = false) String category,
             Model model) {
@@ -167,7 +167,7 @@ public class AdminProductViewController {
     /**
      * 상품 옵션 관리 페이지
      */
-    @GetMapping("/products/{id}/options")
+    @GetMapping("/{id}/options")
     public String productOptions(@PathVariable Long id, Model model) {
         model.addAttribute("productId", id);
         model.addAttribute("product", productService.getProductById(id));

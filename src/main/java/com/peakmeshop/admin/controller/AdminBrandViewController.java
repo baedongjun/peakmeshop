@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
  * 관리자 브랜드 관리 관련 뷰 컨트롤러
  */
 @Controller
-@RequestMapping("/admin")
+@RequestMapping("/admin/brands")
 @RequiredArgsConstructor
 public class AdminBrandViewController {
 
@@ -24,7 +24,7 @@ public class AdminBrandViewController {
     /**
      * 브랜드 관리 페이지
      */
-    @GetMapping("/brands")
+    @GetMapping("/")
     public String brands(
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20) Pageable pageable,
@@ -42,7 +42,7 @@ public class AdminBrandViewController {
     /**
      * 브랜드 등록 페이지
      */
-    @GetMapping("/brands/new")
+    @GetMapping("/new")
     public String createBrand() {
         return "admin/brands/brand-form";
     }
@@ -50,7 +50,7 @@ public class AdminBrandViewController {
     /**
      * 브랜드 수정 페이지
      */
-    @GetMapping("/brands/{id}/edit")
+    @GetMapping("/{id}/edit")
     public String editBrand(@PathVariable Long id, Model model) {
         model.addAttribute("brandId", id);
         model.addAttribute("brand", brandService.getBrandById(id));
@@ -60,7 +60,7 @@ public class AdminBrandViewController {
     /**
      * 브랜드 상세 페이지
      */
-    @GetMapping("/brands/{id}")
+    @GetMapping("/{id}")
     public String brandDetail(@PathVariable Long id, Model model) {
         model.addAttribute("brandId", id);
         model.addAttribute("brand", brandService.getBrandById(id));
@@ -71,7 +71,7 @@ public class AdminBrandViewController {
     /**
      * 브랜드 통계 페이지
      */
-    @GetMapping("/brands/statistics")
+    @GetMapping("/statistics")
     public String brandStatistics(
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String startDate,

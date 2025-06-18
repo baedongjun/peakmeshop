@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  * 관리자 주문 관리 관련 뷰 컨트롤러
  */
 @Controller
-@RequestMapping("/admin")
+@RequestMapping("/admin/orders")
 @RequiredArgsConstructor
 public class AdminOrderViewController {
 
@@ -24,7 +24,7 @@ public class AdminOrderViewController {
     /**
      * 주문 관리 페이지
      */
-    @GetMapping("/orders")
+    @GetMapping("/")
     public String orders(
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20) Pageable pageable,
@@ -42,7 +42,7 @@ public class AdminOrderViewController {
     /**
      * 주문 상세 페이지
      */
-    @GetMapping("/orders/{id}")
+    @GetMapping("/{id}")
     public String orderDetail(@PathVariable Long id, Model model) {
         model.addAttribute("orderId", id);
         model.addAttribute("order", orderService.getOrderById(id));
@@ -52,7 +52,7 @@ public class AdminOrderViewController {
     /**
      * 주문 통계 페이지
      */
-    @GetMapping("/orders/statistics")
+    @GetMapping("/statistics")
     public String orderStatistics(
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String startDate,
@@ -68,7 +68,7 @@ public class AdminOrderViewController {
     /**
      * 매출 통계 페이지
      */
-    @GetMapping("/orders/sales")
+    @GetMapping("/sales")
     public String salesStatistics(
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String startDate,
