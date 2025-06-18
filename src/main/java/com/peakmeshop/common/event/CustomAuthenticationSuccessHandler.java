@@ -35,8 +35,8 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         log.info("사용자 정보 조회 완료: {}", member.getName());
 
         // 2. 마지막 로그인 시간 업데이트
-        member.setLastLoginAt(LocalDateTime.now());
-        memberService.updateMember(member.getId(), member);
+        memberService.updateLastLoginAt(member.getId());
+
         log.info("마지막 로그인 시간 업데이트 완료");
 
         // 3. 세션에 사용자 정보 저장

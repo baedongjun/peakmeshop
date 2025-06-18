@@ -308,6 +308,18 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional
+    public MemberDTO updateLastLoginAt(Long id) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+
+        member.setLastLoginAt(LocalDateTime.now());
+
+        Member updatedMember = memberRepository.save(member);
+        return memberMapper.toDTO(updatedMember);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public long countMembers() {
         return memberRepository.count();

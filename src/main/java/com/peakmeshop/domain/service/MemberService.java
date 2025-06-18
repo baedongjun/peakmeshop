@@ -32,6 +32,8 @@ public interface MemberService {
 
     MemberDTO updateMemberStatus(Long id, String status);
 
+    MemberDTO updateLastLoginAt(Long id);
+
     void changePassword(Long id, String currentPassword, String newPassword);
 
     void deleteMember(Long id);
