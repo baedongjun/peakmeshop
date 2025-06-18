@@ -24,7 +24,7 @@ public class AdminOrderViewController {
     /**
      * 주문 관리 페이지
      */
-    @GetMapping("/")
+    @GetMapping
     public String orders(
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20) Pageable pageable,

@@ -18,7 +18,7 @@ import java.util.Map;
  * 관리자 카테고리 관리 관련 뷰 컨트롤러
  */
 @Controller
-@RequestMapping("/admin")
+@RequestMapping("/admin/categories")
 @RequiredArgsConstructor
 public class AdminCategoryViewController {
 
@@ -27,7 +27,7 @@ public class AdminCategoryViewController {
     /**
      * 카테고리 관리 페이지
      */
-    @GetMapping("/categories")
+    @GetMapping
     public String categories(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String status,
@@ -64,7 +64,7 @@ public class AdminCategoryViewController {
     /**
      * 카테고리 등록 페이지
      */
-    @GetMapping("/categories/new")
+    @GetMapping("/new")
     public String createCategory(
             @RequestParam(required = false) String type,
             Model model) {
@@ -77,7 +77,7 @@ public class AdminCategoryViewController {
     /**
      * 카테고리 수정 페이지
      */
-    @GetMapping("/categories/{id}/edit")
+    @GetMapping("/{id}/edit")
     public String editCategory(@PathVariable Long id, Model model) {
         model.addAttribute("categoryId", id);
         return "admin/categories/category-form";
@@ -86,7 +86,7 @@ public class AdminCategoryViewController {
     /**
      * 카테고리 상세 페이지
      */
-    @GetMapping("/categories/{id}")
+    @GetMapping("/{id}")
     public String categoryDetail(@PathVariable Long id, Model model) {
         model.addAttribute("categoryId", id);
         return "admin/categories/category-detail";
@@ -95,7 +95,7 @@ public class AdminCategoryViewController {
     /**
      * 카테고리 순서 관리 페이지
      */
-    @GetMapping("/categories/order")
+    @GetMapping("/order")
     public String categoryOrder(
             @RequestParam(required = false) String type,
             Model model) {
@@ -108,7 +108,7 @@ public class AdminCategoryViewController {
     /**
      * 카테고리 통계 페이지
      */
-    @GetMapping("/categories/statistics")
+    @GetMapping("/statistics")
     public String categoryStatistics(
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String startDate,

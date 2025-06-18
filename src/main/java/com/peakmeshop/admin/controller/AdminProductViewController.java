@@ -28,7 +28,7 @@ public class AdminProductViewController {
     /**
      * 상품 관리 페이지
      */
-    @GetMapping("/")
+    @GetMapping
     public String products(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String status,

@@ -11,13 +11,13 @@ import org.springframework.web.bind.annotation.RequestParam;
  * 관리자 배송 관리 관련 뷰 컨트롤러
  */
 @Controller
-@RequestMapping("/admin")
+@RequestMapping("/admin/shipments")
 public class AdminShipmentViewController {
 
     /**
      * 배송 관리 페이지
      */
-    @GetMapping("/shipments")
+    @GetMapping
     public String shipments(
             @RequestParam(required = false) String status,
             Model model) {
@@ -30,7 +30,7 @@ public class AdminShipmentViewController {
     /**
      * 배송 등록 페이지
      */
-    @GetMapping("/shipments/new")
+    @GetMapping("/new")
     public String createShipment() {
         return "admin/shipments/shipments-form";
     }
@@ -38,7 +38,7 @@ public class AdminShipmentViewController {
     /**
      * 배송 상세/수정 페이지
      */
-    @GetMapping("/shipments/{id}")
+    @GetMapping("/{id}")
     public String shipmentDetail(@PathVariable Long id, Model model) {
         model.addAttribute("shipmentId", id);
         return "admin/shipments/shipments-detail";
@@ -47,7 +47,7 @@ public class AdminShipmentViewController {
     /**
      * 배송 수정 페이지
      */
-    @GetMapping("/shipments/{id}/edit")
+    @GetMapping("/{id}/edit")
     public String editShipment(@PathVariable Long id, Model model) {
         model.addAttribute("shipmentId", id);
         return "admin/shipments/shipments-form";
@@ -56,7 +56,7 @@ public class AdminShipmentViewController {
     /**
      * 배송비 설정 페이지
      */
-    @GetMapping("/shipments/fees")
+    @GetMapping("/fees")
     public String shippingFees(Model model) {
         return "admin/shipments/fees";
     }
@@ -64,7 +64,7 @@ public class AdminShipmentViewController {
     /**
      * 배송 지역 설정 페이지
      */
-    @GetMapping("/shipments/areas")
+    @GetMapping("/areas")
     public String shippingAreas(Model model) {
         return "admin/shipments/areas";
     }
@@ -72,7 +72,7 @@ public class AdminShipmentViewController {
     /**
      * 택배사 관리 페이지
      */
-    @GetMapping("/shipments/carriers")
+    @GetMapping("/carriers")
     public String shippingCarriers(Model model) {
         return "admin/shipments/carriers";
     }
@@ -80,7 +80,7 @@ public class AdminShipmentViewController {
     /**
      * 배송 통계 페이지
      */
-    @GetMapping("/shipments/statistics")
+    @GetMapping("/statistics")
     public String shipmentStatistics(
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String startDate,

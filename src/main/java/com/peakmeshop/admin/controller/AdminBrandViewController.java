@@ -24,7 +24,7 @@ public class AdminBrandViewController {
     /**
      * 브랜드 관리 페이지
      */
-    @GetMapping("/")
+    @GetMapping
     public String brands(
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20) Pageable pageable,

@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
  * 관리자 이메일 관리 관련 뷰 컨트롤러
  */
 @Controller
-@RequestMapping("/admin")
+@RequestMapping("/admin/emails")
 @RequiredArgsConstructor
 public class AdminEmailViewController {
 
@@ -27,7 +27,7 @@ public class AdminEmailViewController {
     /**
      * 이메일 발송 관리 페이지
      */
-    @GetMapping("/emails")
+    @GetMapping
     public String emails(
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20) Pageable pageable,
@@ -53,7 +53,7 @@ public class AdminEmailViewController {
     /**
      * 이메일 발송 페이지
      */
-    @GetMapping("/emails/send")
+    @GetMapping("/send")
     public String sendEmail(
             @RequestParam(required = false) String type,
             Model model) {
@@ -66,7 +66,7 @@ public class AdminEmailViewController {
     /**
      * 이메일 발송 내역 상세 페이지
      */
-    @GetMapping("/emails/{id}")
+    @GetMapping("/{id}")
     public String emailDetail(@PathVariable Long id, Model model) {
         model.addAttribute("emailId", id);
         return "admin/emails/detail";

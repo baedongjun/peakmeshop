@@ -10,13 +10,13 @@ import org.springframework.web.bind.annotation.RequestParam;
  * 관리자 메뉴 관리 관련 뷰 컨트롤러
  */
 @Controller
-@RequestMapping("/admin")
+@RequestMapping("/admin/menus")
 public class AdminMenuViewController {
 
     /**
      * 메뉴 관리 페이지
      */
-    @GetMapping("/menus")
+    @GetMapping
     public String menus(@RequestParam(required = false, defaultValue = "HEADER") String type, Model model) {
         model.addAttribute("menuType", type);
         return "admin/menus/menus";

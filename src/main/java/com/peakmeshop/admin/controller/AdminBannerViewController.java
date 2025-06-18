@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
  * 관리자 배너 관리 관련 뷰 컨트롤러
  */ 
 @Controller
-@RequestMapping("/admin")
+@RequestMapping("/admin/banners")
 @RequiredArgsConstructor
 public class AdminBannerViewController {
 
@@ -25,7 +25,7 @@ public class AdminBannerViewController {
     /**
      * 배너 관리 페이지
      */
-    @GetMapping("/banners")
+    @GetMapping
     public String banners(
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20) Pageable pageable,

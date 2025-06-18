@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
  * 관리자 회원 관리 관련 뷰 컨트롤러
  */
 @Controller
-@RequestMapping("/admin")
+@RequestMapping("/admin/members")
 @RequiredArgsConstructor
 public class AdminMemberViewController {
 
@@ -26,7 +26,7 @@ public class AdminMemberViewController {
     /**
      * 회원 관리 페이지
      */
-    @GetMapping("/members")
+    @GetMapping
     public String members(
             @RequestParam(required = false) String grade,
             @RequestParam(required = false) String status,
@@ -76,7 +76,7 @@ public class AdminMemberViewController {
     /**
      * 회원 등록 페이지
      */
-    @GetMapping("/members/new")
+    @GetMapping("/new")
     public String createMember(Model model) {
         model.addAttribute("grades", memberService.getAllGrades());
         return "admin/members/member-form";
@@ -85,7 +85,7 @@ public class AdminMemberViewController {
     /**
      * 회원 수정 페이지
      */
-    @GetMapping("/members/{id}/edit")
+    @GetMapping("/{id}/edit")
     public String editMember(@PathVariable Long id, Model model) {
         model.addAttribute("memberId", id);
         model.addAttribute("member", memberService.getMemberById(id));
@@ -96,7 +96,7 @@ public class AdminMemberViewController {
     /**
      * 회원 상세 페이지
      */
-    @GetMapping("/members/{id}")
+    @GetMapping("/{id}")
     public String memberDetail(@PathVariable Long id, Model model) {
         model.addAttribute("memberId", id);
         model.addAttribute("member", memberService.getMemberById(id));
@@ -151,7 +151,7 @@ public class AdminMemberViewController {
     /**
      * 회원 통계 페이지
      */
-    @GetMapping("/members/statistics")
+    @GetMapping("/statistics")
     public String memberStatistics(
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String startDate,
@@ -167,7 +167,7 @@ public class AdminMemberViewController {
     /**
      * 휴면 회원 관리 페이지
      */
-    @GetMapping("/members/dormant")
+    @GetMapping("/dormant")
     public String dormantMembers(
             @RequestParam(required = false) String searchType,
             @RequestParam(required = false) String searchKeyword,
@@ -206,7 +206,7 @@ public class AdminMemberViewController {
     /**
      * 탈퇴 회원 관리 페이지
      */
-    @GetMapping("/members/withdrawn")
+    @GetMapping("/withdrawn")
     public String withdrawnMembers(
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,

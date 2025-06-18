@@ -33,7 +33,7 @@ public class AdminStatisticsViewController {
     /**
      * 통계 메인 페이지
      */
-    @GetMapping("/statistics")
+    @GetMapping
     public String statistics(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String period,
@@ -50,7 +50,7 @@ public class AdminStatisticsViewController {
     /**
      * 매출 통계 페이지
      */
-    @GetMapping("/statistics/sales")
+    @GetMapping("/sales")
     public String salesStatistics(
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String startDate,
@@ -65,7 +65,7 @@ public class AdminStatisticsViewController {
     /**
      * 상품 통계 페이지
      */
-    @GetMapping("/statistics/products")
+    @GetMapping("/products")
     public String productStatistics(
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String startDate,
@@ -82,7 +82,7 @@ public class AdminStatisticsViewController {
     /**
      * 회원 통계 페이지
      */
-    @GetMapping("/statistics/members")
+    @GetMapping("/members")
     public String memberStatistics(
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String startDate,
@@ -97,7 +97,7 @@ public class AdminStatisticsViewController {
     /**
      * 방문자 통계 페이지
      */
-    @GetMapping("/statistics/visitors")
+    @GetMapping("/visitors")
     public String visitorStatistics(
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String startDate,

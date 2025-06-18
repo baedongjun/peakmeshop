@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
  * 관리자 공급사 관리 관련 뷰 컨트롤러
  */
 @Controller
-@RequestMapping("/admin")
+@RequestMapping("/admin/suppliers")
 @RequiredArgsConstructor
 public class AdminSupplierViewController {
 
@@ -25,7 +25,7 @@ public class AdminSupplierViewController {
     /**
      * 공급사 관리 페이지
      */
-    @GetMapping("/suppliers")
+    @GetMapping
     public String suppliers(
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20) Pageable pageable,
@@ -43,7 +43,7 @@ public class AdminSupplierViewController {
     /**
      * 공급사 등록 페이지
      */
-    @GetMapping("/suppliers/new")
+    @GetMapping("/new")
     public String createSupplier() {
         return "admin/suppliers/supplier-form";
     }
@@ -51,7 +51,7 @@ public class AdminSupplierViewController {
     /**
      * 공급사 수정 페이지
      */
-    @GetMapping("/suppliers/{id}/edit")
+    @GetMapping("/{id}/edit")
     public String editSupplier(@PathVariable Long id, Model model) {
         model.addAttribute("supplierId", id);
         model.addAttribute("supplier", supplierService.getSupplierById(id));
@@ -61,7 +61,7 @@ public class AdminSupplierViewController {
     /**
      * 공급사 상세 페이지
      */
-    @GetMapping("/suppliers/{id}")
+    @GetMapping("/{id}")
     public String supplierDetail(@PathVariable Long id, @PageableDefault(size = 20) Pageable pageable, Model model) {
         SupplierDTO supplier = supplierService.getSupplierById(id)
                 .orElseThrow(() -> new IllegalArgumentException("공급사를 찾을 수 없습니다: " + id));
@@ -75,7 +75,7 @@ public class AdminSupplierViewController {
     /**
      * 공급사 정산 관리 페이지
      */
-    @GetMapping("/suppliers/settlements")
+    @GetMapping("/settlements")
     public String settlements(
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20) Pageable pageable,
@@ -91,7 +91,7 @@ public class AdminSupplierViewController {
     /**
      * 공급사 정산 상세 페이지
      */
-    @GetMapping("/suppliers/settlements/{id}")
+    @GetMapping("/settlements/{id}")
     public String settlementDetail(@PathVariable Long id, Model model) {
         model.addAttribute("settlementId", id);
         return "admin/suppliers/settlement-detail";
@@ -100,7 +100,7 @@ public class AdminSupplierViewController {
     /**
      * 공급사 통계 페이지
      */
-    @GetMapping("/suppliers/statistics")
+    @GetMapping("/statistics")
     public String supplierStatistics(
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String startDate,
@@ -121,7 +121,7 @@ public class AdminSupplierViewController {
     /**
      * 공급사 계약 관리 페이지
      */
-    @GetMapping("/suppliers/contracts")
+    @GetMapping("/contracts")
     public String contracts(
             @RequestParam(required = false) String status,
             @PageableDefault(size = 20) Pageable pageable,
@@ -137,7 +137,7 @@ public class AdminSupplierViewController {
     /**
      * 공급사 계약 상세 페이지
      */
-    @GetMapping("/suppliers/contracts/{id}")
+    @GetMapping("/contracts/{id}")
     public String contractDetail(@PathVariable Long id, Model model) {
         model.addAttribute("contractId", id);
         model.addAttribute("contract", supplierService.getContractById(id));
