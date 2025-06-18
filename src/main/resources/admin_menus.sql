@@ -75,9 +75,15 @@ INSERT INTO admin_menus (name, url, icon, sort_order, is_visible, parent_id, cre
 INSERT INTO admin_menus (name, url, icon, sort_order, is_visible, parent_id, created_at, updated_at) VALUES
 ('통계 대시보드', '/admin/statistics/dashboard', 'fas fa-tachometer-alt', 1, true,
  (SELECT id FROM admin_menus WHERE url = '/admin/statistics'), NOW(), NOW()),
-('매출 통계', '/admin/statistics/statistics', 'fas fa-chart-line', 2, true,
+('메인 통계', '/admin/statistics', 'fas fa-chart-line', 2, true,
  (SELECT id FROM admin_menus WHERE url = '/admin/statistics'), NOW(), NOW()),
-('마케팅 통계', '/admin/marketing/statistics', 'fas fa-chart-pie', 3, true,
+('매출 통계', '/admin/statistics/sales', 'fas fa-chart-line', 3, true,
+ (SELECT id FROM admin_menus WHERE url = '/admin/statistics'), NOW(), NOW()),
+('상품 통계', '/admin/statistics/products', 'fas fa-chart-line', 3, true,
+ (SELECT id FROM admin_menus WHERE url = '/admin/statistics'), NOW(), NOW()),
+('회원 통계', '/admin/statistics/members', 'fas fa-chart-line', 4, true,
+ (SELECT id FROM admin_menus WHERE url = '/admin/statistics'), NOW(), NOW()),
+('방문자 통계', '/admin/statistics/visitors', 'fas fa-chart-pie', 5, true,
  (SELECT id FROM admin_menus WHERE url = '/admin/statistics'), NOW(), NOW());
 
 -- 설정 하위 메뉴
